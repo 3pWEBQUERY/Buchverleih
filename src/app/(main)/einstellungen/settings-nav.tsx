@@ -47,8 +47,8 @@ export function SettingsNav({ groups }: { groups: NavGroup[] }) {
           {groups.flatMap((g) => g.items.map((i) => (
             <a key={i.id} href={`#${i.id}`} data-id={i.id} aria-current={active === i.id ? "location" : undefined}
               className={cx(
-                "flex-none h-9 px-4 rounded-[6px] inline-flex items-center text-[13.5px] font-semibold transition-colors duration-200",
-                active === i.id ? (g.danger ? "bg-late text-paper" : "bg-ink text-paper") : "text-ink-2 bg-paper-2 hover:bg-paper-3",
+                "flex-none h-9 px-3.5 rounded-[6px] inline-flex items-center text-[13.5px] font-medium transition-colors duration-200",
+                active === i.id ? (g.danger ? "bg-late/10 text-late" : "bg-accent-soft text-accent-hover") : "text-ink-2 bg-paper-2 hover:bg-paper-3",
               )}>
               {i.label}
             </a>
@@ -57,7 +57,7 @@ export function SettingsNav({ groups }: { groups: NavGroup[] }) {
       </div>
 
       {/* Desktop */}
-      <nav aria-label="Abschnitte" className="hidden lg:block sticky top-10 self-start">
+      <nav aria-label="Abschnitte" className="hidden lg:block sticky top-10 self-start pt-2">
         {groups.map((g) => (
           <div key={g.title} className="mb-6">
             <p className={cx("eyebrow mb-2 px-3", g.danger && "!text-late")}>{g.title}</p>
@@ -69,9 +69,9 @@ export function SettingsNav({ groups }: { groups: NavGroup[] }) {
                     <a href={`#${i.id}`} aria-current={on ? "location" : undefined}
                       className={cx(
                         "relative flex items-center h-9 px-3 rounded-[6px] text-[14.5px] transition-colors duration-200",
-                        on ? "bg-paper-2 text-ink font-semibold" : "text-muted hover:text-ink hover:bg-paper-2/60",
+                        on ? (g.danger ? "bg-late/[0.07] text-late font-medium" : "bg-accent-soft/60 text-accent-hover font-medium") : "text-muted hover:text-ink hover:bg-paper-2/60",
                       )}>
-                      <span className={cx("absolute left-0 top-2 bottom-2 w-[3px] rounded-full transition-opacity duration-200", g.danger ? "bg-late" : "bg-ink", on ? "opacity-100" : "opacity-0")} />
+                      <span className={cx("absolute left-0 top-2 bottom-2 w-[3px] rounded-full transition-opacity duration-200", g.danger ? "bg-late" : "bg-accent", on ? "opacity-100" : "opacity-0")} />
                       {i.label}
                     </a>
                   </li>

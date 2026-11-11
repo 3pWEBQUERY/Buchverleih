@@ -5,14 +5,14 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { browserSupportsWebAuthn, startRegistration } from "@simplewebauthn/browser";
 import { api, ApiError } from "@/lib/client";
 import { useToast } from "@/components/toast";
-import { Button, Check, Field, Input, Notice, Segmented, Switch, cx } from "@/components/ui";
+import { Button, Check, Field, Input, Notice, Switch, cx } from "@/components/ui";
 import { readTheme, saveTheme, type Theme } from "@/components/theme-sync";
 import { useLater } from "@/components/use-later";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : "Etwas ist schiefgelaufen. Versuche es erneut.");
 
 /** Eintrag einer Liste innerhalb einer Einstellungszeile */
-const itemCls = "panel-quiet flex items-center justify-between gap-4 pl-4 pr-2 py-2.5 min-h-[60px]";
+const itemCls = "rounded-[8px] bg-paper-2 flex items-center justify-between gap-4 pl-4 pr-2 py-2.5 min-h-[60px]";
 const listCls = "space-y-2 mb-5";
 
 /* ------------------------------------------------------------------ Profil */
@@ -52,7 +52,7 @@ export function ProfileForm({ firstName, plz, municipality }: { firstName: strin
         <Input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 4))} inputMode="numeric" autoComplete="postal-code" required className="tnum" />
       </Field>
       <div className="sm:col-span-2">
-        <Button type="submit" variant={dirty ? "primary" : "ghost"} disabled={!dirty || busy}>{busy ? "Speichert …" : dirty ? "Änderungen speichern" : "Gespeichert"}</Button>
+        <Button type="submit" variant={dirty ? "primary" : "secondary"} disabled={!dirty || busy}>{busy ? "Speichert …" : dirty ? "Änderungen speichern" : "Gespeichert"}</Button>
       </div>
     </form>
   );
@@ -117,18 +117,18 @@ export function PhoneSection({ phone, verifiedAt }: { phone: string | null; veri
       <div>
         <div className={itemCls}>
           <span className="min-w-0">
-            <span className="block font-[520] tracking-[-0.035em] text-[24px] leading-tight tnum">{fmtPhone(phone)}</span>
-            <span className="chip !bg-transparent !px-0 !h-6 text-ok"><span className="h-1.5 w-1.5 rounded-full bg-ok" /> Bestätigt am {verifiedAt}</span>
+            <span className="block font-[560] tracking-[-0.03em] text-[20px] leading-tight tnum">{fmtPhone(phone)}</span>
+            <span className="mt-1 inline-flex items-center gap-1.5 text-[13px] text-ok"><span className="h-1.5 w-1.5 rounded-full bg-ok" /> Bestätigt am {verifiedAt}</span>
           </span>
         </div>
-        <Button variant="ghost" size="sm" className="mt-4" onClick={() => setEditing(true)}>Andere Nummer bestätigen</Button>
+        <Button variant="secondary" size="sm" className="mt-3" onClick={() => setEditing(true)}>Andere Nummer bestätigen</Button>
       </div>
     );
   }
 
   return (
     <div className="max-w-md">
-      {!verifiedAt && <p className="chip !bg-late/10 !text-late mb-5"><span className="h-1.5 w-1.5 rounded-full bg-late" /> Noch nicht bestätigt – ohne Nummer keine Anfragen</p>}
+      {!verifiedAt && <p className="inline-flex items-center gap-2 rounded-[6px] bg-late/[0.08] text-late text-[13.5px] font-medium px-3 py-2 mb-5"><span className="h-1.5 w-1.5 rounded-full bg-late" /> Noch nicht bestätigt – ohne Nummer keine Anfragen</p>}
       {step === "number" ? (
         <form onSubmit={send} className="flex flex-col gap-4" noValidate>
           <Field label="Mobilnummer" hint="Wir schicken dir einen sechsstelligen Code per SMS." error={error}>
@@ -223,7 +223,7 @@ export function PasskeyList({ passkeys }: { passkeys: { id: string; name: string
         <p className="text-ink-2 mb-5 text-[15px]">Du meldest dich bisher per E-Mail-Link an.</p>
       )}
       {supported ? (
-        <Button variant="ghost" size="sm" onClick={add} disabled={busy}>{busy ? "Wartet auf dein Gerät …" : "Passkey hinzufügen"}</Button>
+        <Button variant="secondary" size="sm" onClick={add} disabled={busy}>{busy ? "Wartet auf dein Gerät …" : "Passkey hinzufügen"}</Button>
       ) : (
         <p className="text-sm text-muted">Dieser Browser unterstützt keine Passkeys. Die Anmeldung per E-Mail-Link funktioniert weiterhin.</p>
       )}
@@ -317,7 +317,7 @@ export function SpotList({ spots }: { spots: Spot[] }) {
           </div>
         </form>
       ) : (
-        <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>Übergabeort hinzufügen</Button>
+        <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>Übergabeort hinzufügen</Button>
       )}
     </div>
   );
@@ -344,7 +344,7 @@ export function ShelfPause({ paused }: { paused: boolean }) {
 
   return (
     <div className={cx("rounded-[10px] border px-4 transition-colors duration-300", on ? "bg-lent/10 border-lent/30" : "bg-paper border-line")}>
-      <Switch checked={on} onChange={(v) => set(v)} label={<span className="font-semibold">Regal pausieren</span>} hint={on ? "Pausiert. Niemand kann anfragen." : "Offen. Anfragen sind möglich."} />
+      <Switch checked={on} onChange={(v) => set(v)} label={<span className="font-medium">Regal pausieren</span>} hint={on ? "Pausiert. Niemand kann anfragen." : "Offen. Anfragen sind möglich."} />
     </div>
   );
 }
@@ -417,10 +417,25 @@ export function BlockList({ blocks }: { blocks: { id: string; name: string; sinc
 export function ThemeChoice() {
   const [theme, setTheme] = useState<Theme>("system");
   useEffect(() => setTheme(readTheme()), []);
+  const opts: { value: Theme; label: string; desc: string; swatch: string }[] = [
+    { value: "light", label: "Hell", desc: "Papier und Tinte", swatch: "bg-[#faf8f4]" },
+    { value: "dark", label: "Dunkel", desc: "Für den Abend", swatch: "bg-[#171614]" },
+    { value: "system", label: "System", desc: "Wie dein Gerät", swatch: "bg-[linear-gradient(90deg,#faf8f4_50%,#171614_50%)]" },
+  ];
   return (
-    <Segmented<Theme> name="Darstellung" value={theme} className="max-w-[340px]"
-      onChange={(t) => { setTheme(t); saveTheme(t); }}
-      options={[{ value: "light", label: "Hell" }, { value: "dark", label: "Dunkel" }, { value: "system", label: "System" }]} />
+    <div role="radiogroup" aria-label="Darstellung" className="grid grid-cols-3 gap-2 max-w-[460px]">
+      {opts.map((o) => {
+        const on = theme === o.value;
+        return (
+          <button key={o.value} type="button" role="radio" aria-checked={on} onClick={() => { setTheme(o.value); saveTheme(o.value); }}
+            className={cx("text-left rounded-[10px] border p-2.5 transition-colors", on ? "border-accent bg-accent-soft/35" : "border-line hover:border-ink-2")}>
+            <span aria-hidden className={cx("block h-12 rounded-[6px] border border-line", o.swatch)} />
+            <span className="block text-[14px] font-medium mt-2.5 px-0.5">{o.label}</span>
+            <span className="block text-[12px] text-muted px-0.5">{o.desc}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -428,7 +443,7 @@ export function ThemeChoice() {
 export function ExportData() {
   return (
     <a href="/api/v1/me/export" download
-      className="inline-flex items-center gap-2 h-11 px-5 rounded-[6px] border border-line-strong font-semibold text-[15px] hover:border-ink hover:bg-paper-2 transition-colors duration-200">
+      className="inline-flex items-center gap-2 h-11 px-5 rounded-[6px] bg-accent-soft text-accent-hover font-medium text-[15px] hover:bg-accent hover:text-accent-ink transition-colors duration-200">
       <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 4v11" /><path d="m7 10 5 5 5-5" /><path d="M5 20h14" /></svg>
       Daten herunterladen
     </a>
@@ -473,7 +488,7 @@ export function DeleteAccount() {
         <div>
           <p className="text-[15px] text-ink-2 max-w-prose">Deine Bücher verschwinden aus allen Regalen. Wunschliste, Kreise und Übergabeorte werden gelöscht.</p>
           <button type="button" onClick={() => { setConfirm(true); setError(null); }}
-            className="mt-5 inline-flex items-center h-11 px-5 rounded-[6px] border border-late/60 text-late font-semibold text-[15px] hover:bg-late hover:text-paper hover:border-late transition-colors duration-200">
+            className="mt-5 inline-flex items-center h-11 px-5 rounded-[6px] border border-late/50 text-late font-medium text-[15px] hover:bg-late hover:text-paper hover:border-late transition-colors duration-200">
             Konto löschen …
           </button>
         </div>
