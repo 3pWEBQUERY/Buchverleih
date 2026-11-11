@@ -8,10 +8,10 @@ import { IconCheck, IconPlus } from "./icons";
  * Auswahlkarten mit Erklärung und Plus/Minus-Regler. Gewählt in der Markenfarbe, nie Schwarz.
  */
 /** Auswahlkarte: gewählt in der Markenfarbe, nie Schwarz */
-export function OptionCard({ on, title, desc, icon, multi, compact, onClick }: { on: boolean; title: string; desc?: string; icon?: ReactNode; multi?: boolean; compact?: boolean; onClick: () => void }) {
+export function OptionCard({ on, title, desc, icon, multi, compact, descDesktopOnly, onClick }: { on: boolean; title: string; desc?: string; icon?: ReactNode; multi?: boolean; compact?: boolean; descDesktopOnly?: boolean; onClick: () => void }) {
   return (
     <button type="button" role={multi ? undefined : "radio"} aria-checked={multi ? undefined : on} aria-pressed={multi ? on : undefined} onClick={onClick}
-      className={cx("group relative text-left rounded-[10px] border transition-[border-color,background-color] duration-150",
+      className={cx("group relative flex flex-col justify-start text-left rounded-[10px] border transition-[border-color,background-color] duration-150",
         compact ? "px-4 py-3.5" : "px-4 py-3.5 sm:py-4",
         on ? "border-accent bg-accent-soft/35" : "border-line hover:border-ink-2 bg-paper")}>
       <span className={cx("absolute top-3.5 right-3.5 h-5 w-5 grid place-items-center border transition-colors",
@@ -21,7 +21,7 @@ export function OptionCard({ on, title, desc, icon, multi, compact, onClick }: {
       </span>
       {icon && <span className={cx("hidden sm:block mb-3 transition-colors", on ? "text-accent-hover" : "text-muted")}>{icon}</span>}
       <span className="block font-medium text-[15px] pr-7">{title}</span>
-      {desc && <span className="block text-[13px] text-muted mt-1 leading-snug pr-2">{desc}</span>}
+      {desc && <span className={cx("text-[13px] text-muted mt-1 leading-snug pr-2", descDesktopOnly ? "hidden sm:block" : "block")}>{desc}</span>}
     </button>
   );
 }

@@ -214,14 +214,14 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
   return (
     <section aria-label="Nächster Schritt" className={cx(
       "anim-rise rounded-[12px]",
-      myTurn ? "bg-paper-2 px-5 py-6 md:p-9" : "border border-line px-5 py-6 md:px-8 md:py-7",
+      myTurn ? "bg-paper-2 px-5 py-6 md:p-8" : "border border-line px-5 py-6 md:px-8 md:py-7",
     )}>
       <p className="eyebrow flex items-center gap-2">
         <span aria-hidden className={cx("h-2 w-2 rounded-full", myTurn ? "bg-accent live-dot" : loan.turn === "done" ? "bg-done" : "bg-wait")} />
         {eyebrow}
       </p>
       {heading && (
-        <h2 className={cx("mt-3", myTurn ? "display text-[40px] md:text-[56px]" : "text-[30px] md:text-[38px] font-[560] tracking-[-0.035em] leading-[1.02]")}>{heading}</h2>
+        <h2 className={cx("mt-2.5 font-[560] tracking-[-0.035em] leading-[1.05]", myTurn ? "text-[30px] md:text-[40px]" : "text-[24px] md:text-[30px]")}>{heading}</h2>
       )}
       {context && <p className={cx("text-[16px] md:text-[17px] leading-relaxed text-ink-2 max-w-2xl", heading ? "mt-3" : "")}>{context}</p>}
       {main && <div className="mt-7">{main}</div>}

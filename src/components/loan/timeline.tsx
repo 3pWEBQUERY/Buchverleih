@@ -78,7 +78,7 @@ export function Timeline({ loan }: { loan: LoanView }) {
             <li key={st.key} className="min-w-0" aria-current={isCur ? "step" : undefined}>
               <span aria-hidden className={cx(
                 "block h-1.5 rounded-full origin-left anim-rise",
-                st.done ? "bg-ink" : isCur ? (trouble ? "bg-late" : "bg-accent") : ended ? "bg-paper-3 opacity-60" : "bg-paper-3",
+                st.done ? "bg-ink-2" : isCur ? (trouble ? "bg-late" : "bg-accent") : ended ? "bg-paper-3 opacity-60" : "bg-paper-3",
               )} style={{ animationDelay: `${i * 60}ms` }} />
               <span className={cx("sr-only md:not-sr-only md:flex items-center gap-1.5 mt-3 text-[13.5px] font-semibold leading-tight", !st.done && !isCur && "text-muted font-medium")}>
                 {isCur && <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full live-dot flex-none", trouble ? "bg-late" : "bg-accent")} />}

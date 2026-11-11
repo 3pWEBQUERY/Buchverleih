@@ -27,6 +27,7 @@ export type LoanListItem = {
   photo_key: string | null;
   photo_w: number | null;
   photo_h: number | null;
+  cover_key: string | null;
   unread: number;
   step: NextStep;
   turn: Turn;
@@ -41,6 +42,7 @@ type Joined = LoanRow & {
   photo_key: string | null;
   photo_w: number | null;
   photo_h: number | null;
+  cover_key: string | null;
   case_response: string | null;
   case_kind: string | null;
   rated_by_me: boolean;
@@ -51,7 +53,7 @@ type Joined = LoanRow & {
 
 const JOINED = (userId: string) => sql`
   select l.*, l.wanted::text as wanted, w.title, w.authors, e.work_id, o.first_name as owner_name, b.first_name as borrower_name,
-         ph.key as photo_key, ph.width as photo_w, ph.height as photo_h,
+         ph.key as photo_key, ph.width as photo_w, ph.height as photo_h, e.cover_key,
          oc.response as case_response, oc.kind::text as case_kind,
          exists (select 1 from ratings r where r.loan_id = l.id and r.from_user = ${userId}) as rated_by_me,
          (select count(*)::int from notifications n where n.loan_id = l.id and n.user_id = ${userId} and n.channel = 'app' and n.read_at is null) as unread,
@@ -100,7 +102,7 @@ export async function myLoans(userId: string): Promise<LoanListItem[]> {
       id: r.id, kind: r.kind, status: r.status, role: s.role, title: r.title, authors: r.authors, copy_id: r.copy_id, work_id: r.work_id,
       other_name: s.role === "owner" ? r.borrower_name : r.owner_name, other_id: s.role === "owner" ? r.borrower_id : r.owner_id,
       wanted: r.wanted, due_at: r.due_at, respond_by: r.respond_by, requested_at: r.requested_at, closed_at: r.closed_at,
-      photo_key: r.photo_key, photo_w: r.photo_w, photo_h: r.photo_h, unread: r.unread, step: s.step, turn: s.turn, waitingText: s.waitingText,
+      photo_key: r.photo_key, photo_w: r.photo_w, photo_h: r.photo_h, cover_key: r.cover_key, unread: r.unread, step: s.step, turn: s.turn, waitingText: s.waitingText,
     } satisfies LoanListItem;
   });
   const rank = (i: LoanListItem) => (i.turn === "me" && i.step ? 0 : i.turn === "other" || i.turn === "system" ? 1 : 2);
@@ -207,6 +209,7 @@ export async function loanView(loanId: string, userId: string) {
     copyId: r.copy_id,
     workId: r.work_id,
     photo: r.photo_key ? { key: r.photo_key, w: r.photo_w, h: r.photo_h } : null,
+    coverKey: r.cover_key,
     wanted: parseRange(r.wanted),
     message: r.message,
     times: {

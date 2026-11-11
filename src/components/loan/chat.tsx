@@ -140,7 +140,7 @@ export function Chat({
                 {m.proposal_at && (
                   <div className={cx(
                     "rounded-[12px] w-72 max-w-full overflow-hidden border transition-colors",
-                    m.proposal_status === "accepted" ? "border-ok bg-paper" : m.proposal_status === "countered" ? "border-line bg-paper opacity-60" : "border-ink bg-paper",
+                    m.proposal_status === "accepted" ? "border-ok bg-paper" : m.proposal_status === "countered" ? "border-line bg-paper opacity-60" : "border-accent/50 bg-paper",
                   )}>
                     <div className="px-4 pt-3.5 pb-3">
                       <p className="eyebrow flex items-center gap-1.5"><IconCalendar width={14} height={14} /> Terminvorschlag</p>
@@ -171,7 +171,7 @@ export function Chat({
                   <p className={cx(
                     "px-4 py-2.5 rounded-[12px] text-[15px] leading-snug whitespace-pre-wrap break-words",
                     m.proposal_at && "mt-1",
-                    mine ? "bg-ink text-paper rounded-br-[6px]" : "bg-paper-2 text-ink rounded-bl-[6px]",
+                    mine ? "bg-accent-soft text-ink rounded-br-[4px]" : "bg-paper-2 text-ink rounded-bl-[4px]",
                   )}>{m.body}</p>
                 )}
                 <span className="flex items-center gap-2 mt-1 px-1 text-[11.5px] text-muted">
@@ -204,9 +204,9 @@ export function Chat({
               </label>
             </div>
           )}
-          <div className="flex items-center gap-1.5 rounded-full border border-line-strong bg-paper p-1 focus-within:border-ink focus-within:ring-[3px] focus-within:ring-ink/10 transition-[border-color,box-shadow]">
+          <div className="flex items-center gap-1.5 rounded-[8px] border border-line-strong bg-paper p-1 focus-within:border-accent transition-[border-color]">
             <button type="button" onClick={() => setProposing((p) => !p)} aria-pressed={proposing}
-              className={cx("h-10 w-10 flex-none grid place-items-center rounded-full transition-colors", proposing ? "bg-accent text-accent-ink" : "text-ink-2 hover:bg-paper-2")}
+              className={cx("h-10 w-10 flex-none grid place-items-center rounded-[6px] transition-colors", proposing ? "bg-accent text-accent-ink" : "text-ink-2 hover:bg-paper-2")}
               aria-label="Termin vorschlagen" title="Termin vorschlagen">
               <IconCalendar />
             </button>

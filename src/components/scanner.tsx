@@ -15,19 +15,23 @@ type Props = {
   paused?: boolean;
   fallbackHint: string;
   className?: string;
+  /** Wird gerufen, wenn keine Kamera verfügbar oder sie blockiert ist */
+  onUnavailable?: () => void;
 };
 
 type Detector = { detect: (src: CanvasImageSource) => Promise<{ rawValue: string }[]> };
 
-export function Scanner({ mode, onResult, continuous, paused, fallbackHint, className }: Props) {
+export function Scanner({ mode, onResult, continuous, paused, fallbackHint, className, onUnavailable }: Props) {
   const video = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const last = useRef<{ text: string; at: number } | null>(null);
   const pausedRef = useRef(paused);
   const cb = useRef(onResult);
+  const unavailable = useRef(onUnavailable);
   pausedRef.current = paused;
   cb.current = onResult;
+  unavailable.current = onUnavailable;
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -86,6 +90,7 @@ export function Scanner({ mode, onResult, continuous, paused, fallbackHint, clas
         }
       } catch (e) {
         const name = (e as Error).name;
+        unavailable.current?.();
         setError(
           name === "NotAllowedError" || name === "SecurityError"
             ? `Die Kamera ist blockiert. ${fallbackHint}`
@@ -103,7 +108,14 @@ export function Scanner({ mode, onResult, continuous, paused, fallbackHint, clas
   }, [mode, fallbackHint]);
 
   if (error) {
-    return <div className={cx("border border-line-strong rounded-sm p-5 text-[15px]", className)} role="alert">{error}</div>;
+    return (
+      <div className={cx("border border-dashed border-line-strong rounded-[8px] p-5 text-[15px] leading-snug flex items-start gap-3", className)} role="alert">
+        <svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={1.6} aria-hidden className="flex-none mt-0.5 opacity-60">
+          <path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.4-2h5.8l1.4 2h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z" /><circle cx="12" cy="13" r="3.2" /><path d="M3 3l18 18" />
+        </svg>
+        <span>{error}</span>
+      </div>
+    );
   }
 
   return (
