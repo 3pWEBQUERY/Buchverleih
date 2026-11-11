@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cx } from "./ui";
 import { DocToc } from "./doc-toc";
+import { IconArrowRight } from "./icons";
 
 /**
  * Lesetexte (Hilfe, Regeln, Nutzungsbedingungen, Datenschutz) wie eine gut gesetzte
@@ -147,5 +148,34 @@ export function DocCompare({ left, right }: { left: { title: string; items: Reac
         </div>
       ))}
     </div>
+  );
+}
+
+/** Kurzfassung über dem Text: die wichtigsten Punkte als Karten mit Sprung zum Abschnitt */
+export function DocSummary({ eyebrow, title, items, note }: { eyebrow: string; title: string; items: [title: string, text: string, href: string][]; note?: string }) {
+  return (
+    <section aria-labelledby="kurzfassung">
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 mb-5 md:mb-6">
+        <div>
+          <p className="eyebrow">{eyebrow}</p>
+          <h2 id="kurzfassung" className="text-[24px] md:text-[28px] font-[560] tracking-[-0.03em] mt-2">{title}</h2>
+        </div>
+        {note && <p className="text-[13px] text-muted max-w-sm">{note}</p>}
+      </div>
+      <ol className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {items.map(([t, text, href], i) => (
+          <li key={t} className="anim-rise" style={{ animationDelay: `${80 + i * 50}ms` }}>
+            <a href={href} className="group rounded-[10px] border border-line p-5 flex flex-col h-full min-h-[176px] hover:border-accent transition-colors duration-150">
+              <span className="text-[13px] tnum text-accent-hover font-medium">{String(i + 1).padStart(2, "0")}</span>
+              <span className="font-medium text-[17px] mt-3">{t}</span>
+              <span className="text-muted text-[14px] mt-1.5 leading-relaxed">{text}</span>
+              <span className="mt-auto pt-4 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-accent-hover">
+                Mehr dazu <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-1" />
+              </span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }

@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { DocPage, DocSection, type TocItem } from "@/components/doc";
-import { IconArrowRight } from "@/components/icons";
+import { DocPage, DocSection, DocSummary, type TocItem } from "@/components/doc";
 
 export const metadata = {
   title: "Regeln",
@@ -21,7 +20,12 @@ const TOC: TocItem[] = [
 
 export default function Page() {
   return (
-    <DocPage eyebrow="Gemeinschaft" title={<>Regeln. <em>Kurz und für alle.</em></>} toc={TOC} intro={<InShort />}
+    <DocPage eyebrow="Gemeinschaft" title={<>Regeln. <em>Kurz und für alle.</em></>} toc={TOC} intro={<DocSummary eyebrow="Kurz gesagt" title="Vier Dinge, auf die sich alle verlassen" items={[
+        ["Kostenlos", "Verleihen, tauschen, verschenken. Nie verkaufen, keine Preise im Chat.", "#kostenlos"],
+        ["Pünktlich", "Termine halten, Bücher rechtzeitig zurückgeben, Anfragen beantworten.", "#puenktlich"],
+        ["Sorgfältig", "Ein fremdes Buch lesen, wie es gemeint ist: ohne Notizen, ohne Weitergabe.", "#sorgfalt"],
+        ["Respektvoll", "Freundlich schreiben, Nein akzeptieren, öffentlich treffen.", "#respekt"],
+      ]} />}
       lead="Leihregal funktioniert, weil Menschen einander ihre Bücher anvertrauen. Diese Regeln halten das Vertrauen aufrecht. Sie sind kurz, und sie gelten für alle.">
 
       <DocSection id="kostenlos" title="Leihen ist kostenlos">
@@ -100,36 +104,5 @@ export default function Page() {
         </p>
       </DocSection>
     </DocPage>
-  );
-}
-
-const SHORT: [n: string, title: string, text: string, href: string][] = [
-  ["01", "Kostenlos", "Verleihen, tauschen, verschenken. Nie verkaufen, keine Preise im Chat.", "#kostenlos"],
-  ["02", "Pünktlich", "Termine halten, Bücher rechtzeitig zurückgeben, Anfragen beantworten.", "#puenktlich"],
-  ["03", "Sorgfältig", "Ein fremdes Buch lesen, wie es gemeint ist: ohne Notizen, ohne Weitergabe.", "#sorgfalt"],
-  ["04", "Respektvoll", "Freundlich schreiben, Nein akzeptieren, öffentlich treffen.", "#respekt"],
-];
-
-/** Kurz gesagt: die vier wichtigsten Regeln als Karten */
-function InShort() {
-  return (
-    <section aria-labelledby="kurz">
-      <p className="eyebrow">Kurz gesagt</p>
-      <h2 id="kurz" className="text-[24px] md:text-[28px] font-[560] tracking-[-0.03em] mt-2 mb-5 md:mb-6">Vier Dinge, auf die sich alle verlassen</h2>
-      <ol className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {SHORT.map(([n, title, text, href], i) => (
-          <li key={n} className="anim-rise" style={{ animationDelay: `${80 + i * 50}ms` }}>
-            <a href={href} className="group rounded-[10px] border border-line p-5 flex flex-col h-full min-h-[176px] hover:border-accent transition-colors duration-150">
-              <span className="text-[13px] tnum text-accent-hover font-medium">{n}</span>
-              <span className="font-medium text-[17px] mt-3">{title}</span>
-              <span className="text-muted text-[14px] mt-1.5 leading-relaxed">{text}</span>
-              <span className="mt-auto pt-4 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-accent-hover">
-                Mehr dazu <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-1" />
-              </span>
-            </a>
-          </li>
-        ))}
-      </ol>
-    </section>
   );
 }
