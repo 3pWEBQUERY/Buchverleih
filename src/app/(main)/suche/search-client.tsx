@@ -3,7 +3,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Cover } from "@/components/cover";
-import { Spine } from "@/components/spine";
+import { BookRow } from "@/components/regal/book-row";
+import { StepSection } from "@/components/step-section";
 import { useToast } from "@/components/toast";
 import { IconSearch, IconClose, IconArrowRight } from "@/components/icons";
 import { Button, LinkButton, cx } from "@/components/ui";
@@ -162,13 +163,14 @@ export function SearchClient({
     <div>
       <header className="mb-8 md:mb-10 anim-rise">
         <p className="eyebrow">{place ? `Suche · rund um ${place}` : "Suche"}</p>
-        <h1 className="display text-[32px] md:text-[44px] mt-3">Was liest du <em>als Nächstes?</em></h1>
+        <h1 className="display text-[32px] md:text-[44px] mt-2">Was liest du <em>als Nächstes?</em></h1>
+        <p className="text-[15.5px] md:text-[16px] text-ink-2 mt-3 max-w-xl leading-relaxed">Ergebnisse erscheinen beim Tippen, mit Entfernung und Verfügbarkeit. Enter öffnet den ersten Treffer.</p>
       </header>
 
       <form role="search" onSubmit={(e) => e.preventDefault()} className="relative anim-rise" style={{ animationDelay: "40ms" }}>
         <label htmlFor="suche-q" className="sr-only">Titel, Autorin oder ISBN</label>
-        <span aria-hidden className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 text-ink-2 pointer-events-none">
-          <IconSearch width={22} height={22} />
+        <span aria-hidden className="absolute left-5 top-1/2 -translate-y-1/2 text-muted pointer-events-none">
+          <IconSearch width={20} height={20} />
         </span>
         <input
           id="suche-q"
@@ -183,15 +185,15 @@ export function SearchClient({
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={onKeyDown}
           placeholder="Titel, Autorin oder ISBN"
-          className="w-full h-16 md:h-[72px] bg-paper border border-line-strong rounded-[6px] pl-14 md:pl-16 pr-14 text-[18px] md:text-[21px] tracking-[-0.01em] placeholder:text-muted/80 hover:border-ink-2 focus:outline-none focus:border-ink focus:ring-[4px] focus:ring-ink/10 transition-[border-color,box-shadow] duration-150 [&::-webkit-search-cancel-button]:appearance-none"
+          className="w-full h-14 md:h-[60px] bg-paper border border-line-strong rounded-[10px] pl-13 pr-14 text-[17px] md:text-[18px] tracking-[-0.01em] placeholder:text-muted/80 hover:border-ink-2 focus:outline-none focus:border-accent transition-colors duration-150 [&::-webkit-search-cancel-button]:appearance-none"
         />
         {q ? (
           <button type="button" onClick={() => { setQ(""); inputRef.current?.focus(); }} aria-label="Suchbegriff löschen"
-            className="absolute right-3 top-1/2 -translate-y-1/2 h-11 w-11 grid place-items-center rounded-full text-ink-2 hover:bg-paper-2 hover:text-ink transition-colors">
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-[6px] text-ink-2 hover:bg-paper-2 hover:text-ink transition-colors">
             <IconClose />
           </button>
         ) : (
-          <kbd aria-hidden className="hidden md:grid absolute right-6 top-1/2 -translate-y-1/2 h-7 w-7 place-items-center text-[13px] text-muted border border-line-strong rounded-[7px] font-sans">/</kbd>
+          <kbd aria-hidden className="hidden md:grid absolute right-5 top-1/2 -translate-y-1/2 h-7 w-7 place-items-center text-[13px] text-muted border border-line-strong rounded-[6px] font-sans">/</kbd>
         )}
       </form>
 
@@ -201,58 +203,59 @@ export function SearchClient({
 
       <FilterChips f={f} set={set} reset={() => setF(DEFAULTS)} n={n} hasOrigin={hasOrigin} />
 
-      <section aria-labelledby="treffer" className="mt-10 md:mt-12 min-w-0">
-        <div className={cx("flex items-baseline justify-between gap-4 mb-5", !summary && "sr-only")}>
-          <h2 id="treffer" className="ui-title text-[17px] md:text-[19px]" aria-live="polite">{summary ?? " "}</h2>
-          <span className={cx("text-[13px] text-muted transition-opacity", loading ? "opacity-100" : "opacity-0")} aria-hidden>sucht …</span>
-        </div>
-
-        {error && <p role="alert" className="panel-quiet text-late px-5 py-4 mb-5">{error}</p>}
+      <div className="mt-10 md:mt-12 min-w-0" aria-busy={loading}>
+        <p className="sr-only" aria-live="polite">{summary ?? ""}</p>
+        {error && <p role="alert" className="rounded-[10px] bg-late/[0.06] text-late px-5 py-4 mb-5">{error}</p>}
 
         {results === null && loading && <ResultSkeleton />}
 
-        {stage.length > 0 && <Stage hits={stage} href={href} radius={f.radius} />}
+        {stage.length > 0 && (
+          <StepSection id="frei" n={1} first title="Gleich um die Ecke" desc={`Jetzt frei, bis ${f.radius} km${where}. Ein Tippen zeigt alle Exemplare des Titels.`}
+            aside={`${stage.length} Titel`}>
+            <Stage hits={stage} href={href} />
+          </StepSection>
+        )}
 
         {results && rest.length > 0 && (
-          <>
-            {stage.length > 0 && (
-              <h3 className="ui-title text-[22px] md:text-[26px] mt-14 md:mt-16 mb-6">Alles im Umkreis</h3>
-            )}
-            <ul className={cx("grid md:grid-cols-2 gap-3 transition-opacity duration-150", loading && "opacity-60")}>
+          <StepSection id="treffer" n={stage.length > 0 ? 2 : 1} first={stage.length === 0}
+            title={resultsFor ? <>Treffer für «{resultsFor}»</> : stage.length > 0 ? "Alles im Umkreis" : "Im Umkreis"}
+            desc={summary ?? undefined}
+            aside={<span className={cx("transition-opacity", loading ? "opacity-100" : "opacity-0")}>sucht …</span>}>
+            <ul className={cx("grid xl:grid-cols-2 gap-3 transition-opacity duration-150", loading && "opacity-60")}>
               {rest.map((h, i) => (
                 <ResultCard key={h.work_id} h={h} href={href(h)} i={i} />
               ))}
             </ul>
-          </>
+          </StepSection>
         )}
 
         {results && results.length === 0 && !loading && (
           <NoHits q={resultsFor} f={f} n={n} loggedIn={loggedIn}
             widen={() => set("radius", 25)} reset={() => setF({ ...DEFAULTS, radius: f.radius })} />
         )}
-      </section>
+      </div>
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ Filter */
 
-const chip = "h-10 px-4 rounded-full text-[14px] font-semibold inline-flex items-center gap-2 whitespace-nowrap flex-none border transition-[background-color,color,border-color] duration-200";
-const chipOff = "border-line-strong text-ink-2 hover:border-ink hover:text-ink";
-const chipOn = "bg-ink border-ink text-paper";
+const chip = "h-9 px-3.5 rounded-[6px] text-[13.5px] font-medium inline-flex items-center gap-2 whitespace-nowrap flex-none border transition-[background-color,color,border-color] duration-150";
+const chipOff = "border-line bg-paper text-ink-2 hover:border-ink-2 hover:text-ink";
+const chipOn = "border-accent bg-accent-soft/50 text-accent-hover";
 
 function FilterChips({ f, set, reset, n, hasOrigin }: { f: Filters; set: <K extends keyof Filters>(k: K, v: Filters[K]) => void; reset: () => void; n: number; hasOrigin: boolean }) {
   return (
-    <div className="mt-5 -mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto md:overflow-visible anim-rise [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ animationDelay: "80ms" }}>
-      <div role="group" aria-label="Filter" className="flex md:flex-wrap items-center gap-2 w-max md:w-auto pb-1">
+    <div className="mt-3 -mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto md:overflow-visible anim-rise [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ animationDelay: "80ms" }}>
+      <div role="group" aria-label="Filter" className="flex md:flex-wrap items-center gap-2 w-max md:w-full pb-1 md:p-2 md:rounded-[10px] md:bg-paper-2">
         <div role="radiogroup" aria-label="Umkreis in Kilometern"
-          className={cx("flex-none inline-flex items-center h-10 pl-4 pr-1 gap-0.5 rounded-[6px] bg-paper-2", !hasOrigin && "opacity-50 pointer-events-none")}>
+          className={cx("flex-none inline-flex items-center h-9 pl-3 pr-1 gap-0.5 rounded-[6px] border border-line bg-paper", !hasOrigin && "opacity-50 pointer-events-none")}>
           <span className="text-[13px] font-medium text-muted mr-1.5">Umkreis</span>
           {RADII.map((r) => {
             const on = f.radius === r;
             return (
               <button key={r} type="button" role="radio" aria-checked={on} onClick={() => set("radius", r)}
-                className={cx("h-8 min-w-8 px-2.5 rounded-[6px] text-[13.5px] font-semibold tnum transition-colors duration-200", on ? "bg-accent-soft text-accent-hover" : "text-ink-2 hover:bg-paper-3")}>
+                className={cx("h-7 min-w-7 px-2 rounded-[4px] text-[13px] font-medium tnum transition-colors duration-150", on ? "bg-accent text-accent-ink" : "text-ink-2 hover:bg-paper-2")}>
                 {r}{on && <span className="font-medium"> km</span>}
               </button>
             );
@@ -260,10 +263,10 @@ function FilterChips({ f, set, reset, n, hasOrigin }: { f: Filters; set: <K exte
         </div>
 
         <button type="button" aria-pressed={f.available} onClick={() => set("available", !f.available)} className={cx(chip, f.available ? chipOn : chipOff)}>
-          <span aria-hidden className={cx("h-2 w-2 rounded-full", f.available ? "bg-paper" : "bg-ok")} /> Jetzt frei
+          <span aria-hidden className="h-2 w-2 rounded-full bg-ok" /> Jetzt frei
         </button>
 
-        <span aria-hidden className="h-6 w-px bg-line-strong mx-1 flex-none" />
+        <span aria-hidden className="h-5 w-px bg-line-strong mx-1 flex-none" />
 
         {(["lend", "swap", "gift"] as const).map((o) => {
           const on = f.offer === o;
@@ -274,7 +277,7 @@ function FilterChips({ f, set, reset, n, hasOrigin }: { f: Filters; set: <K exte
           );
         })}
 
-        <span aria-hidden className="h-6 w-px bg-line-strong mx-1 flex-none" />
+        <span aria-hidden className="h-5 w-px bg-line-strong mx-1 flex-none" />
 
         <PillSelect label="Sprache" value={f.language} onChange={(v) => set("language", v)}
           options={[["", "Alle Sprachen"], ...Object.entries(languageLabel)]} />
@@ -284,7 +287,7 @@ function FilterChips({ f, set, reset, n, hasOrigin }: { f: Filters; set: <K exte
           options={[["0", "Jeder Zustand"], ["1", conditionLabel[1]], ["2", `${conditionLabel[2]} oder besser`], ["3", `${conditionLabel[3]} oder besser`]]} />
 
         {n > 0 && (
-          <button type="button" onClick={reset} className="h-10 px-3 text-[14px] font-medium text-muted hover:text-ink underline-offset-4 hover:underline flex-none">
+          <button type="button" onClick={reset} className="h-9 px-3 text-[13.5px] font-medium text-accent-hover hover:underline underline-offset-4 flex-none md:ml-auto">
             Zurücksetzen
           </button>
         )}
@@ -299,10 +302,10 @@ function PillSelect({ label, value, onChange, options }: { label: string; value:
     <label className="relative flex-none">
       <span className="sr-only">{label}</span>
       <select value={value} onChange={(e) => onChange(e.target.value)}
-        className={cx(chip, on ? chipOn : chipOff, "appearance-none [field-sizing:content] pr-9 cursor-pointer focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/20 [&>option]:bg-paper [&>option]:text-ink [&>option]:font-normal")}>
+        className={cx(chip, on ? chipOn : chipOff, "appearance-none [field-sizing:content] pr-8 cursor-pointer focus:outline-none focus-visible:border-accent [&>option]:bg-paper [&>option]:text-ink [&>option]:font-normal")}>
         {options.map(([v, l]) => <option key={v} value={v}>{v === "" || v === "0" ? label : l}</option>)}
       </select>
-      <svg aria-hidden viewBox="0 0 12 8" className={cx("absolute right-3.5 top-1/2 -translate-y-1/2 w-2.5 pointer-events-none", on ? "text-paper" : "text-muted")} fill="none" stroke="currentColor" strokeWidth="1.6">
+      <svg aria-hidden viewBox="0 0 12 8" className={cx("absolute right-3 top-1/2 -translate-y-1/2 w-2.5 pointer-events-none", on ? "text-accent-hover" : "text-muted")} fill="none" stroke="currentColor" strokeWidth="1.6">
         <path d="M1 1.5l5 5 5-5" />
       </svg>
     </label>
@@ -311,36 +314,16 @@ function PillSelect({ label, value, onChange, options }: { label: string; value:
 
 /* ---------------------------------------------------------------- Treffer */
 
-function Stage({ hits, href, radius }: { hits: WorkHit[]; href: (h: WorkHit) => string; radius: number }) {
+/** «Gleich um die Ecke»: dasselbe Brett wie im Regal, Status immer ganz unten */
+function Stage({ hits, href }: { hits: WorkHit[]; href: (h: WorkHit) => string }) {
   return (
-    <div className="surface-night rounded-[12px] px-5 md:px-9 pt-7 md:pt-9 pb-7 md:pb-8 -mx-1 md:mx-0 anim-rise">
-      <div className="flex items-end justify-between gap-4 mb-2">
-        <div>
-          <p className="text-[12px] font-medium text-night-muted">Jetzt frei · bis {radius} km</p>
-          <h3 className="text-[26px] md:text-[32px] font-[560] tracking-[-0.03em] leading-none mt-2">Gleich um die Ecke</h3>
-        </div>
-      </div>
-      <ul className="shelf" aria-label="Jetzt frei in deiner Nähe">
-        {hits.map((h, i) => {
-          const cover = coverOf(h);
-          const w = 116;
-          return (
-            <li key={h.work_id} style={{ width: w, animationDelay: `${Math.min(i, 10) * 30}ms` }} className="anim-rise">
-              <Link href={href(h)} className="book block group">
-                <div className="flex items-end" style={{ height: 196 }}>
-                  <div className="book-face"><Cover data={cover} width={116} height={174} uniform /></div>
-                </div>
-                <div className="h-[3px] bg-night-ink/90 rounded-full" />
-                <p className="pt-2.5 text-[13.5px] font-medium leading-snug line-clamp-2 group-hover:underline">{h.title}</p>
-                <p className="text-[12px] text-night-muted mt-1 flex items-center gap-1.5">
-                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#8fd09a]" />
-                  frei{h.nearest_m != null && <> · {fmtDistance(h.nearest_m)}</>}
-                </p>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+    <div className="surface-night rounded-[12px] px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5 -mx-1 md:mx-0 anim-rise">
+      <BookRow label="Jetzt frei in deiner Nähe" height={165}
+        items={hits.map((h) => ({
+          id: h.work_id, work_id: h.work_id, title: h.title, authors: h.authors,
+          photo_key: h.cover?.photo_key ?? null, photo_w: h.cover?.photo_w ?? null, photo_h: h.cover?.photo_h ?? null, cover_key: h.cover?.cover_key ?? null,
+          href: href(h), note: { tone: "ok" as const, text: `frei${h.nearest_m != null ? ` · ${fmtDistance(h.nearest_m)}` : ""}` },
+        }))} />
     </div>
   );
 }
@@ -348,25 +331,26 @@ function Stage({ hits, href, radius }: { hits: WorkHit[]; href: (h: WorkHit) => 
 function ResultCard({ h, href, i }: { h: WorkHit; href: string; i: number }) {
   const dist = fmtDistance(h.nearest_m);
   return (
-    <li className="anim-rise" style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
-      <Link href={href} className="book group panel h-full flex gap-4 md:gap-5 p-4 md:p-5 hover:border-ink transition-colors duration-200">
-        <div className="flex-none self-start pt-0.5">
-          <div className="book-face"><Cover data={coverOf(h)} width={76} /></div>
-        </div>
-        <div className="min-w-0 flex-1 flex flex-col">
+    <li className="anim-rise min-w-0" style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
+      <Link href={href} className="book group rounded-[10px] border border-line h-full grid grid-cols-[64px_minmax(0,1fr)] md:grid-cols-[72px_minmax(0,1fr)] gap-4 md:gap-5 p-4 md:p-5 hover:border-accent transition-colors duration-150">
+        <span className="self-start">
+          <span className="book-face block md:hidden"><Cover data={coverOf(h)} width={64} height={96} uniform /></span>
+          <span className="book-face hidden md:block"><Cover data={coverOf(h)} width={72} height={108} uniform /></span>
+        </span>
+        <div className="min-w-0 flex flex-col">
           <div className="flex items-start justify-between gap-3">
-            <p className="font-serif text-[22px] md:text-[25px] leading-[1.05] line-clamp-2">{h.title}</p>
-            {dist && <span className="flex-none text-[13.5px] font-semibold tnum text-ink-2 pt-1">{dist}</span>}
+            <p className="font-serif text-[19px] md:text-[20px] leading-[1.15] line-clamp-2">{h.title}</p>
+            {dist && <span className="flex-none text-[13px] font-medium tnum text-ink-2 pt-0.5">{dist}</span>}
           </div>
-          {h.authors.length > 0 && <p className="text-[14px] text-muted mt-1 truncate">{h.authors.join(", ")}</p>}
-          <div className="mt-auto pt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-            <span className="chip">
+          {h.authors.length > 0 && <p className="text-[13.5px] text-muted mt-0.5 truncate">{h.authors.join(", ")}</p>}
+          <div className="mt-auto pt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px]">
+            <span className={cx("inline-flex items-center gap-1.5 font-medium", h.available_now ? "text-ok" : "text-ink-2")}>
               <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", h.available_now ? "bg-ok" : "bg-lent")} />
               <span className="sr-only">{availabilityText(h)}</span>
               <span aria-hidden>{availabilityChip(h)}</span>
             </span>
-            {h.offers.length > 0 && <span className="text-[13px] text-muted">{h.offers.map((o) => offerLabel[o]).join(" · ")}</span>}
-            <IconArrowRight aria-hidden width={16} height={16} className="ml-auto text-muted opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-[opacity,transform] duration-200" />
+            {h.offers.length > 0 && <span className="text-muted">{h.offers.map((o) => offerLabel[o]).join(" · ")}</span>}
+            <IconArrowRight aria-hidden width={16} height={16} className="ml-auto text-accent-hover opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-[opacity,transform] duration-200" />
           </div>
         </div>
       </Link>
@@ -376,10 +360,10 @@ function ResultCard({ h, href, i }: { h: WorkHit; href: string; i: number }) {
 
 function ResultSkeleton() {
   return (
-    <ul aria-hidden className="grid md:grid-cols-2 gap-3">
+    <ul aria-hidden className="grid xl:grid-cols-2 gap-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <li key={i} className="panel flex gap-5 p-5">
-          <div className="skeleton w-[76px] h-[112px] flex-none" />
+        <li key={i} className="rounded-[10px] border border-line flex gap-5 p-5">
+          <div className="skeleton w-[72px] h-[108px] flex-none" />
           <div className="flex-1">
             <div className="skeleton h-6" style={{ width: `${55 + ((i * 17) % 35)}%` }} />
             <div className="skeleton h-3.5 w-1/3 mt-2.5" />
@@ -416,20 +400,20 @@ function PlzBar({ plz, place, onSet }: { plz: string; place: string | null; onSe
   if (!editing && plz) {
     return (
       <p className="mt-4 text-[14px] text-muted flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="chip"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ink" /> <span className="tnum">{plz}</span>{place && <> {place}</>}</span>
+        <span className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[6px] bg-paper-2 text-ink-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent" /> <span className="tnum">{plz}</span>{place && <> {place}</>}</span>
         <button type="button" className="underline underline-offset-4 hover:text-ink" onClick={() => setEditing(true)}>Ändern</button>
         <Link href="/anmelden?next=/suche" className="underline underline-offset-4 hover:text-ink">Anmelden und anfragen</Link>
       </p>
     );
   }
   return (
-    <form onSubmit={submit} className="mt-5 panel-quiet rounded-[10px] p-5 md:p-6 flex flex-wrap items-end justify-between gap-4">
+    <form onSubmit={submit} className="mt-4 rounded-[10px] border border-line p-5 md:p-6 flex flex-wrap items-end justify-between gap-4">
       <label htmlFor="suche-plz" className="block text-[15px] text-ink-2 max-w-md">Deine Postleitzahl, damit wir zeigen können, was in der Nähe steht.</label>
       <div className="flex items-center gap-2">
         <input id="suche-plz" inputMode="numeric" autoComplete="postal-code" maxLength={4} placeholder="8180" value={value}
           onChange={(e) => setValue(e.target.value.replace(/\D/g, ""))} aria-describedby={err ? "suche-plz-err" : undefined}
-          className="w-28 h-11 bg-paper border border-line-strong rounded-[6px] px-5 text-[16px] tnum tracking-[0.08em] placeholder:text-muted/70 focus:outline-none focus:border-ink focus:ring-[3px] focus:ring-ink/10" />
-        <Button type="submit" disabled={value.length !== 4}>Bestand zeigen</Button>
+          className="w-28 h-11 bg-paper border border-line-strong rounded-[6px] px-5 text-[16px] tnum tracking-[0.08em] placeholder:text-muted/70 focus:outline-none focus:border-accent" />
+        <Button type="submit" variant="primary" disabled={value.length !== 4}>Bestand zeigen</Button>
       </div>
       {err && <span id="suche-plz-err" role="alert" className="basis-full block text-sm text-late">{err}</span>}
     </form>
@@ -479,11 +463,9 @@ function NoHits({ q, f, n, loggedIn, widen, reset }: { q: string; f: Filters; n:
 
   return (
     <div className="anim-rise space-y-4">
-      <div className="panel-quiet rounded-[10px] p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6">
-        <div aria-hidden className="flex items-end gap-[3px] flex-none">
-          <Spine title="Leer" height={78} />
-          <Spine title="Regal" height={70} />
-          <span className="h-[54px] w-[30px] rounded-[3px] border border-dashed border-line-strong" />
+      <div className="rounded-[10px] border border-dashed border-line-strong p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6">
+        <div aria-hidden className="flex items-end gap-1.5 flex-none">
+          {[0, 1, 2].map((k) => <span key={k} className="block w-[30px] h-[45px] rounded-[3px] border border-dashed border-line-strong" />)}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-ink text-[17px] max-w-xl">{sentence}</p>
@@ -495,9 +477,9 @@ function NoHits({ q, f, n, loggedIn, widen, reset }: { q: string; f: Filters; n:
       </div>
 
       {q.length >= 2 && !loggedIn && (
-        <div className="panel p-5 md:p-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="rounded-[10px] border border-line p-5 md:p-6 flex flex-wrap items-center justify-between gap-4">
           <p className="text-ink-2 max-w-lg">Mit der Wunschliste melden wir uns, sobald der Titel in deiner Nähe frei wird.</p>
-          <LinkButton href={`/anmelden?next=${encodeURIComponent(`/suche?q=${q}`)}`} variant="ghost">Anmelden</LinkButton>
+          <LinkButton href={`/anmelden?next=${encodeURIComponent(`/suche?q=${q}`)}`} variant="secondary">Anmelden</LinkButton>
         </div>
       )}
 
@@ -505,17 +487,17 @@ function NoHits({ q, f, n, loggedIn, widen, reset }: { q: string; f: Filters; n:
         works.length === 0 ? (
           <p className="text-muted text-sm px-1">Auch im Katalog finden wir «{q}» nicht. Prüfe die Schreibweise oder suche nach der ISBN.</p>
         ) : (
-          <div className="panel">
+          <div className="rounded-[10px] border border-line">
             <p className="px-5 md:px-6 pt-5 pb-3 text-[14px] text-muted">Setz den Titel auf die Wunschliste. Wir melden uns, sobald ein Exemplar in der Nähe frei wird.</p>
             <ul className="divide-y divide-line border-t border-line">
               {works.map((w) => (
                 <li key={w.work_id} className="flex items-center justify-between gap-4 px-5 md:px-6 py-3.5">
                   <div className="min-w-0">
-                    <div className="font-serif text-[20px] leading-tight truncate">{w.title}</div>
+                    <div className="font-serif text-[18px] leading-tight truncate">{w.title}</div>
                     {w.authors.length > 0 && <div className="text-sm text-muted truncate">{w.authors.join(", ")}</div>}
                   </div>
                   {added.has(w.work_id) ? (
-                    <Link href="/wunschliste" className="chip hover:bg-paper-3"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok" /> Auf der Wunschliste</Link>
+                    <Link href="/wunschliste" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ok hover:underline underline-offset-4"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok" /> Auf der Wunschliste</Link>
                   ) : (
                     <Button type="button" variant={works.length === 1 ? "primary" : "secondary"} size="sm" disabled={busy === w.work_id} onClick={() => wish(w.work_id)}>
                       Auf die Wunschliste

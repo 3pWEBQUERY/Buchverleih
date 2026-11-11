@@ -3,6 +3,9 @@ import { sql } from "@/lib/db";
 import { Spine } from "@/components/spine";
 import { PlzExplorer } from "./plz-explorer";
 import { IconArrowRight, IconCheck } from "@/components/icons";
+import { CalendarView } from "@/components/calendar";
+import { demoCalendar } from "@/lib/loans/calendar-demo";
+import { addDays, todayCH } from "@/lib/dates";
 
 /**
  * Startseite abgemeldet (PRD 8.4): echte Bücher aus der Region statt Werbetext,
@@ -19,6 +22,7 @@ const CLASSICS: [string, string][] = [
 ];
 
 export async function Landing() {
+  const today = todayCH();
   const [[stats], titles] = await Promise.all([
     sql<{ copies: number; members: number; places: number }[]>`
       select (select count(*)::int from copies c join users u on u.id = c.owner_id where c.removed_at is null and cardinality(c.offers) > 0 and c.visibility = 'all' and u.deleted_at is null) as copies,
@@ -87,7 +91,7 @@ export async function Landing() {
         </div>
         <ol className="grid grid-flow-col auto-cols-[82%] sm:auto-cols-[48%] lg:grid-flow-row lg:grid-cols-4 gap-4 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 lg:mx-0 lg:px-0 pb-2" style={{ scrollbarWidth: "none" }}>
           <Step n="01" title="Anfragen" text="Exemplar und Zeitraum wählen. Die Person, der es gehört, antwortet innert 72 Stunden.">
-            <MiniCalendar />
+            <MiniCalendar today={today} />
           </Step>
           <Step n="02" title="Übergeben" text="Am Kiosk, im Treppenhaus, im Milchkasten. Ein Scan auf dem anderen Handy startet die Leihfrist.">
             <MiniQr />
@@ -101,7 +105,7 @@ export async function Landing() {
           </Step>
           <Step n="04" title="Zurückgeben" text="Diesmal zeigst du den Code. Nach dem Scan steht das Buch wieder im Regal – pünktlich vermerkt.">
             <div className="flex items-center gap-3">
-              <span className="h-12 w-12 rounded-full bg-ink text-paper grid place-items-center anim-pop"><IconCheck width={22} height={22} /></span>
+              <span className="h-12 w-12 rounded-full bg-accent-soft text-accent-hover grid place-items-center anim-pop"><IconCheck width={22} height={22} /></span>
               <div className="leading-tight"><p className="font-semibold">Zurück</p><p className="text-[13px] text-muted">beide haben bestätigt</p></div>
             </div>
           </Step>
@@ -117,7 +121,12 @@ export async function Landing() {
             <p className="eyebrow !text-night-muted">Verleihkalender</p>
             <h3 className="text-[34px] md:text-[42px] mt-3 max-w-md">Ein Exemplar, ein Kalender.</h3>
             <p className="text-night-muted mt-3 max-w-md">Buche im Voraus, auch wenn das Buch gerade weg ist. Zeiträume überschneiden sich nie – das erzwingt die Datenbank, nicht der gute Wille.</p>
-            <div className="mt-auto pt-8"><CalendarBars /></div>
+            <div className="mt-auto pt-8">
+              {/* Derselbe Verleihkalender wie in der App, mit Beispieldaten */}
+              <div className="rounded-[10px] bg-paper text-ink p-4 md:p-5" aria-label="Beispiel eines Verleihkalenders">
+                <CalendarView cal={demoCalendar(today)} fit />
+              </div>
+            </div>
           </article>
           <article className="rounded-[10px] p-7 md:p-9 md:col-span-2 bg-accent text-accent-ink flex flex-col justify-between">
             <p className="eyebrow !text-accent-ink/75">Kein Geld im Ablauf</p>
@@ -239,15 +248,11 @@ function Step({ n, title, text, children }: { n: string; title: string; text: st
   );
 }
 
-function MiniCalendar() {
+/** Vorschau im Schritt «Anfragen»: derselbe Kalender wie in der App, mit gewähltem Zeitraum */
+function MiniCalendar({ today }: { today: string }) {
   return (
-    <div className="space-y-2" aria-hidden>
-      <div className="flex gap-1">
-        <span className="h-7 rounded-[5px] bg-lent" style={{ width: "34%" }} />
-        <span className="h-7 w-[7%] rounded-[5px]" style={{ backgroundImage: "repeating-linear-gradient(135deg, var(--line-strong) 0 1px, transparent 1px 5px)" }} />
-        <span className="h-7 flex-1 rounded-[5px] border-2 border-ink bg-ink/5 grid place-items-center text-[11px] font-semibold">deine Anfrage</span>
-      </div>
-      <div className="flex justify-between text-[11px] text-muted"><span>Nov</span><span>Dez</span><span>Jan</span></div>
+    <div aria-hidden className="rounded-[8px] bg-paper p-3 -mx-1">
+      <CalendarView cal={demoCalendar(today)} compact fit showLegend={false} selection={{ start: addDays(today, 66), end: addDays(today, 80), ok: true }} />
     </div>
   );
 }
@@ -264,22 +269,3 @@ function MiniQr() {
   );
 }
 
-function CalendarBars() {
-  const rows = [
-    [["Lea", 0, 30, "bg-lent"], ["Jonas", 36, 28, "bg-wait"]],
-    [["gesperrt", 8, 18, "bg-night-2 border border-night-line text-night-muted"], ["Samira", 32, 40, "bg-wait"]],
-    [["Marc", 4, 26, "bg-lent"], ["frei", 36, 50, "border border-dashed border-night-line text-night-muted"]],
-  ] as const;
-  return (
-    <div className="space-y-2.5" aria-hidden>
-      {rows.map((r, i) => (
-        <div key={i} className="relative h-9">
-          {r.map(([l, x, w, c]) => (
-            <span key={l} className={`absolute top-0 h-full rounded-[6px] px-3 text-[12px] font-semibold text-white flex items-center ${c}`} style={{ left: `${x}%`, width: `${w}%` }}>{l}</span>
-          ))}
-        </div>
-      ))}
-      <div className="relative h-px bg-night-line mt-4"><span className="absolute left-[22%] -top-3 h-6 w-px bg-[var(--accent)]" /><span className="absolute left-[22%] top-3 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider text-[var(--accent)]">heute</span></div>
-    </div>
-  );
-}
