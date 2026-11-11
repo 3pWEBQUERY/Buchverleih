@@ -35,7 +35,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const overdue = loan.status === "active" && t.due_at && new Date(t.due_at) < new Date();
   const tone = loanTone(loan.status, t.due_at);
   const cover = { title: loan.title, authors: loan.authors, photoKey: loan.photo?.key, photoW: loan.photo?.w, photoH: loan.photo?.h, seed: loan.workId };
-  const chatClosed = ["declined", "withdrawn", "expired"].includes(loan.status);
+  const chatClosed = ["declined", "withdrawn", "expired", "cancelled"].includes(loan.status);
 
   const details: [string, ReactNode][] = [
     ...(loan.kind === "lend" && loan.wanted ? [["Zeitraum", fmtRange(loan.wanted)] as [string, string]] : []),

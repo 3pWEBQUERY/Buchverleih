@@ -194,8 +194,8 @@ async function acceptTx(tx: TxSql, loanId: string, actor: ActorRef, input: Accep
   }
 
   if (input.proposalAt) {
-    await tx`insert into messages (loan_id, sender_id, proposal_place, proposal_at, proposal_status)
-             values (${loanId}, ${loan.owner_id}, ${input.proposalPlace ?? null}, ${input.proposalAt}, 'open')`;
+    await tx`insert into messages (loan_id, sender_id, proposal_place, proposal_at, proposal_status, proposal_accepted_by)
+             values (${loanId}, ${loan.owner_id}, ${input.proposalPlace ?? null}, ${input.proposalAt}, 'open', array[${loan.owner_id}]::uuid[])`;
   }
 
   if (loan.kind === "lend") await afterAcceptConsecutive(tx, loan);

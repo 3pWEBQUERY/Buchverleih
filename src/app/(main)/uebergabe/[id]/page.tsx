@@ -4,7 +4,8 @@ import { pageUser } from "@/lib/page";
 import { sql } from "@/lib/db";
 import { listMessages, threadMembers } from "@/lib/chat";
 import { dayToDate, fmtDay, fmtDayTime } from "@/lib/dates";
-import { Dl } from "@/components/ui";
+import { Avatar, Faces } from "@/components/kreise/faces";
+import { IconArrowLeft, IconChat } from "@/components/icons";
 import { HandoverChat } from "./live";
 
 export const metadata = { title: "Übergabe-Chat" };
@@ -29,26 +30,54 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const messages = await listMessages({ type: "handover", id });
   const myLoan = user.id === h.prev_bid ? h.prev_id : h.next_id;
 
+  const agreed: [string, string | null][] = [
+    ["Weg", h.route === "direct" ? `Direkt von ${h.prev_b} an ${h.next_b}` : h.route === "via_owner" ? `Über ${h.owner}` : null],
+    ["Ort", h.agreed_place],
+    ["Zeit", h.agreed_at ? fmtDayTime(h.agreed_at) : null],
+  ];
+  const people: [string, string][] = [[h.prev_b, `hat es bis ${fmtDay(dayToDate(h.prev_end))}`], [h.next_b, `ab ${fmtDay(dayToDate(h.next_start))}`], [h.owner, "verleiht"]];
+
   return (
-    <div className="max-w-3xl">
-      <p className="eyebrow">Übergabe-Chat</p>
-      <h1 className="display text-4xl md:text-5xl mt-3">{m.title}</h1>
-      <p className="text-ink-2 mt-3">{h.prev_b} hat das Buch bis {fmtDay(dayToDate(h.prev_end))}, {h.next_b} ab {fmtDay(dayToDate(h.next_start))}. {h.owner} verleiht.</p>
+    <div>
+      <Link href={`/vorgaenge/${user.id === h.owner_id ? h.next_id : myLoan}`} className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
+        <IconArrowLeft width={16} height={16} /> Zum Vorgang
+      </Link>
 
-      <section className="mt-8 border-y-2 border-ink py-4" aria-label="Vereinbart">
-        <p className="eyebrow mb-2">Vereinbart</p>
-        <Dl className="border-y-0" items={[
-          ["Weg", h.route === "direct" ? `Direkt von ${h.prev_b} an ${h.next_b}` : h.route === "via_owner" ? `Über ${h.owner}` : "Noch offen"],
-          ["Ort", h.agreed_place ?? "Noch offen"],
-          ["Zeit", h.agreed_at ? fmtDayTime(h.agreed_at) : "Noch offen"],
-        ]} />
-        <p className="text-sm text-muted mt-2">Ein Terminvorschlag gilt erst, wenn alle drei angenommen haben.</p>
-      </section>
+      <header className="mb-8 md:mb-10 anim-rise">
+        <p className="eyebrow">Übergabe-Chat</p>
+        <h1 className="display text-[44px] md:text-[72px] mt-3">{m.title}</h1>
+        <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-3">
+          {people.map(([n, t]) => (
+            <li key={n + t} className="flex items-center gap-2.5">
+              <Avatar name={n} size={32} />
+              <span className="text-[14px]"><span className="font-semibold">{n}</span> <span className="text-muted">{t}</span></span>
+            </li>
+          ))}
+        </ul>
+      </header>
 
-      <section className="mt-10">
-        <HandoverChat id={id} me={user.id} initial={JSON.parse(JSON.stringify(messages))} readOnly={m.readOnly} defaultPlace={h.agreed_place} />
-      </section>
-      <p className="mt-8 text-sm"><Link href={`/vorgaenge/${user.id === h.owner_id ? h.next_id : myLoan}`} className="underline underline-offset-4">Zum Vorgang</Link></p>
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10 lg:items-start">
+        <section aria-label="Vereinbart" className="lg:order-2 lg:sticky lg:top-8 rounded-[22px] bg-paper-2 p-5 md:p-6">
+          <p className="eyebrow">Vereinbart</p>
+          <dl className="mt-3 divide-y divide-line">
+            {agreed.map(([k, v]) => (
+              <div key={k} className="flex justify-between gap-6 py-3 text-[15px]">
+                <dt className="text-muted">{k}</dt>
+                <dd className={v ? "text-right font-semibold" : "text-right text-muted inline-flex items-center gap-1.5"}>{v ?? <><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait" />Noch offen</>}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="text-[13px] text-muted mt-3">Ein Terminvorschlag gilt erst, wenn alle drei angenommen haben.</p>
+        </section>
+
+        <section aria-labelledby="chat" className="lg:order-1 panel !rounded-[18px] overflow-hidden min-w-0">
+          <div className="flex items-center justify-between gap-4 px-5 md:px-6 h-16 border-b border-line">
+            <h2 id="chat" className="ui-title text-[19px] flex items-center gap-2.5"><IconChat width={18} height={18} className="text-muted" /> Zu dritt</h2>
+            <Faces names={[h.prev_b, h.next_b, h.owner]} total={3} size={28} />
+          </div>
+          <HandoverChat id={id} me={user.id} initial={JSON.parse(JSON.stringify(messages))} readOnly={m.readOnly} defaultPlace={h.agreed_place} />
+        </section>
+      </div>
     </div>
   );
 }

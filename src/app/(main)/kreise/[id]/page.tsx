@@ -78,7 +78,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           </div>
           <p className="sr-only">{settingsText(circle)}</p>
         </div>
-        <div className="flex items-end gap-4 anim-rise" style={{ animationDelay: "80ms" }}>
+        <div className="anim-rise w-full lg:w-auto" style={{ animationDelay: "80ms" }}>
           <dl className="grid grid-cols-2 gap-2">
             {([[circle.member_count, circle.member_count === 1 ? "Mitglied" : "Mitglieder"], [circle.copy_count, circle.copy_count === 1 ? "Buch" : "Bücher"]] as [number, string][]).map(([n, l]) => (
               <div key={l} className="panel-quiet px-5 py-4 min-w-[124px]">
@@ -97,7 +97,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <p className="text-[12px] uppercase tracking-[0.12em] font-semibold text-night-muted">{copies.length} {copies.length === 1 ? "Buch" : "Bücher"}</p>
             <h2 id="regal" className="font-serif text-[36px] md:text-[48px] leading-none mt-2">Gemeinsames Regal</h2>
           </div>
-          <Faces names={active.slice(0, 5).map((m) => m.first_name)} total={active.length} ring="ring-night" />
+          <Faces names={active.slice(0, 5).map((m) => m.first_name)} total={active.length} ring="ring-night" night />
         </div>
         {copies.length === 0 ? (
           <div className="mt-6 mb-2 rounded-[14px] border border-night-line p-6 flex flex-wrap items-center justify-between gap-4">

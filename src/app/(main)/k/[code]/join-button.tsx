@@ -31,10 +31,10 @@ export function JoinButton({ code, circleId, approval }: { code: string; circleI
   if (sent) return <p className="text-ink-2 anim-rise">Deine Anfrage ist gesendet. Sobald ein Admin dich freigibt, erhältst du eine Nachricht.</p>;
   return (
     <>
-      <p className="text-ink-2 mb-5">
+      <p className="text-ink-2 mb-6 max-w-sm mx-auto">
         {approval ? "Die Admins sehen deine Anfrage und geben dich frei." : "Du siehst danach das gemeinsame Regal und kannst eigene Bücher dazustellen."}
       </p>
-      <Button variant="primary" size="lg" disabled={busy} onClick={join}>{approval ? "Beitritt anfragen" : "Beitreten"}</Button>
+      <Button variant="primary" size="lg" disabled={busy} onClick={join} className="w-full sm:w-auto">{approval ? "Beitritt anfragen" : "Beitreten"}</Button>
     </>
   );
 }

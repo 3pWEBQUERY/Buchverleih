@@ -14,6 +14,7 @@ import { Monogram } from "@/components/person/monogram";
 import { conditionHint, conditionLabel, languageLabel, offerLabel, trustLabel } from "@/lib/i18n/de-CH";
 import { fmtDistance } from "@/lib/geo";
 import { RequestPanel } from "./request-panel";
+import { CorrectionForm } from "./correction";
 import { CalendarView } from "@/components/calendar";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -161,9 +162,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <OwnCalendar cal={cal} />
           </section>
         )}
-        <p className="text-sm text-muted">
-          Etwas stimmt an den Titeldaten nicht? <Link href={`/titel/${copy.work_id}#korrektur`} className="underline underline-offset-4 hover:text-ink">Fehler melden</Link>
-        </p>
+        <CorrectionForm editionId={copy.edition_id} loggedIn={Boolean(user)} />
       </div>
     </div>
   );

@@ -32,8 +32,8 @@ export function CircleFields({ v, set, nameError }: { v: CircleValues; set: (p: 
         <Segmented name="Leihfrist im Kreis" value={v.loanDays} onChange={(d) => set({ loanDays: d })}
           options={([14, 28, 42, 56] as const).map((d) => ({ value: d, label: `${d} Tage` }))} />
       </Field>
-      <div className="border-y border-line">
-        <Switch checked={v.autoAccept} onChange={(b) => set({ autoAccept: b })} label="Anfragen automatisch annehmen"
+      <div className="border-y border-line py-1">
+        <Switch checked={v.autoAccept} onChange={(b) => set({ autoAccept: b })} label={<span className="font-semibold text-[15px]">Anfragen automatisch annehmen</span>}
           hint="Anfragen von Mitgliedern gelten sofort als angenommen, wenn der Kalender frei ist." />
       </div>
       <Field label={<>Fester Übergabeort <span className="text-muted font-normal">(freiwillig)</span></>} hint="Zum Beispiel «Regal im Treppenhaus». Sonst vereinbart ihr den Ort pro Leihe.">
@@ -81,14 +81,14 @@ export function CircleForm() {
   }
 
   return (
-    <div className="max-w-xl">
-      <Link href="/kreise" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink mb-6 md:mb-8">
+    <div className="max-w-2xl">
+      <Link href="/kreise" className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
         <IconArrowLeft width={16} height={16} /> Kreise
       </Link>
-      <PageTitle sub="Du wirst Admin. Danach erhältst du einen Einladungslink. Alles lässt sich später ändern.">Kreis gründen</PageTitle>
-      <form onSubmit={submit} noValidate>
+      <PageTitle sub="Du wirst Admin. Danach erhältst du einen Einladungslink. Alles lässt sich später ändern.">Kreis <em>gründen</em></PageTitle>
+      <form onSubmit={submit} noValidate className="panel !rounded-[18px] p-5 md:p-8 anim-rise" style={{ animationDelay: "60ms" }}>
         <CircleFields v={v} set={(p) => { setV((c) => ({ ...c, ...p })); if (p.name !== undefined) setNameError(null); }} nameError={nameError} />
-        <div className="mt-8">
+        <div className="mt-8 pt-6 border-t border-line">
           <Button type="submit" variant="primary" size="lg" disabled={busy} className="w-full sm:w-auto">
             {busy ? "Wird gegründet …" : "Kreis gründen"}
           </Button>
