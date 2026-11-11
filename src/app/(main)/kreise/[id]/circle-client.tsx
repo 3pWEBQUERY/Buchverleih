@@ -58,12 +58,12 @@ export function InviteBox({ circleId, url, admin, appUrl }: { circleId: string; 
   }
 
   return (
-    <section className="panel-quiet !rounded-[18px] p-5 md:p-6">
+    <section className="panel-quiet !rounded-[10px] p-5 md:p-6">
       <h2 className="ui-title text-[19px]">Einladen</h2>
       {link ? (
         <>
           <p className="text-[14px] text-muted mt-1 mb-4">Wer diesen Link öffnet, kann dem Kreis beitreten.</p>
-          <div className="flex items-center gap-1.5 bg-paper border border-line-strong rounded-full p-1 pl-4 focus-within:border-ink transition-colors">
+          <div className="flex items-center gap-1.5 bg-paper border border-line-strong rounded-[6px] p-1 pl-4 focus-within:border-ink transition-colors">
             <input ref={input} readOnly value={link} aria-label="Einladungslink" onFocus={(e) => e.target.select()}
               className="min-w-0 flex-1 bg-transparent h-10 text-[14px] text-ink-2 focus:outline-none focus-visible:outline-none" />
             <Button type="button" size="sm" onClick={copy} className="h-10 flex-none">Kopieren</Button>
@@ -122,7 +122,7 @@ export function MemberList({ circleId, me, admin, members }: { circleId: string;
       {admin && pending.length > 0 && (
         <section>
           <SectionTitle aside={<span className="tnum">{pending.length}</span>}>Beitrittsanfragen</SectionTitle>
-          <ul className="panel !rounded-[18px] divide-y divide-line overflow-hidden">
+          <ul className="panel !rounded-[10px] divide-y divide-line overflow-hidden">
             {pending.map((m) => (
               <li key={m.user_id} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 md:px-5 py-4 anim-rise">
                 <Person m={m} />
@@ -138,7 +138,7 @@ export function MemberList({ circleId, me, admin, members }: { circleId: string;
 
       <section>
         <SectionTitle aside={<span className="tnum">{active.length}</span>}>Mitglieder</SectionTitle>
-        <ul className="panel !rounded-[18px] divide-y divide-line overflow-hidden">
+        <ul className="panel !rounded-[10px] divide-y divide-line overflow-hidden">
           {active.map((m) => (
             <li key={m.user_id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-x-6 gap-y-2 px-4 md:px-5 py-3.5">
               <Person m={m} me={m.user_id === me} />
@@ -204,7 +204,7 @@ export function CircleSettings({ circleId, initial }: { circleId: string; initia
   }
 
   return (
-    <section className="panel !rounded-[18px] p-5 md:p-6">
+    <section className="panel !rounded-[10px] p-5 md:p-6">
       <h2 className="ui-title text-[19px]">Einstellungen</h2>
       {!open ? (
         <>

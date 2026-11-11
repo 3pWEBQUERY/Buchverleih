@@ -56,7 +56,7 @@ export default async function BenachrichtigungenPage() {
       </header>
 
       {items.length === 0 ? (
-        <div className="panel-quiet rounded-[18px] p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6">
+        <div className="panel-quiet rounded-[10px] p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6">
           <div aria-hidden className="flex items-end gap-[3px] flex-none">
             <Spine title="Anfragen" height={74} />
             <Spine title="Fristen" height={66} />

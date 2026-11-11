@@ -60,7 +60,7 @@ export function Onboarding({ initialStep, next, firstName, devCodes }: { initial
                 <Input required type="date" value={birth} onChange={(e) => setBirth(e.target.value)} max={new Date().toISOString().slice(0, 10)} />
               </Field>
             </div>
-            <ul className="panel-quiet rounded-[14px] p-5 space-y-3 text-[14px] text-ink-2">
+            <ul className="panel-quiet rounded-[8px] p-5 space-y-3 text-[14px] text-ink-2">
               <li className="grid grid-cols-[20px_1fr] gap-3"><IconPin /><span>Die Postleitzahl findet Bücher in deiner Nähe. Dein Standort wird auf rund 100 m gerundet und zusätzlich verschoben angezeigt.</span></li>
               <li className="grid grid-cols-[20px_1fr] gap-3"><IconCalendar width={18} height={18} className="mt-0.5" /><span>Für ein eigenes Konto brauchst du mindestens 16 Jahre. Gespeichert wird nur, dass du alt genug bist.</span></li>
             </ul>

@@ -213,7 +213,7 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
 
   return (
     <section aria-label="Nächster Schritt" className={cx(
-      "anim-rise rounded-[22px]",
+      "anim-rise rounded-[12px]",
       myTurn ? "bg-paper-2 px-5 py-6 md:p-9" : "border border-line px-5 py-6 md:px-8 md:py-7",
     )}>
       <p className="eyebrow flex items-center gap-2">
@@ -221,7 +221,7 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
         {eyebrow}
       </p>
       {heading && (
-        <h2 className={cx("mt-3", myTurn ? "display text-[40px] md:text-[56px]" : "font-serif text-[30px] md:text-[38px] leading-[1.02]")}>{heading}</h2>
+        <h2 className={cx("mt-3", myTurn ? "display text-[40px] md:text-[56px]" : "text-[30px] md:text-[38px] font-[560] tracking-[-0.035em] leading-[1.02]")}>{heading}</h2>
       )}
       {context && <p className={cx("text-[16px] md:text-[17px] leading-relaxed text-ink-2 max-w-2xl", heading ? "mt-3" : "")}>{context}</p>}
       {main && <div className="mt-7">{main}</div>}
@@ -416,7 +416,7 @@ function RateForm({ busy, onRate }: { busy: boolean; onRate: (v: "good" | "probl
       <div className="flex flex-wrap gap-2">
         {Object.entries(ratingReasonLabel).map(([k, l]) => (
           <Check key={k} label={l} checked={reasons.includes(k)} onChange={(v) => setReasons((r) => (v ? [...r, k] : r.filter((x) => x !== k)))}
-            className="min-h-11 pl-3 pr-4 rounded-full bg-paper border border-line has-[:checked]:border-ink transition-colors" />
+            className="min-h-11 pl-3 pr-4 rounded-[6px] bg-paper border border-line has-[:checked]:border-ink transition-colors" />
         ))}
       </div>
       <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Was ist passiert? Geht nur an die Moderation." maxLength={500} />

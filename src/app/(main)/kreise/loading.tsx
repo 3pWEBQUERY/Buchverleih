@@ -7,7 +7,7 @@ export default function Loading() {
       </header>
       <div className="grid md:grid-cols-2 gap-3 md:gap-4">
         {[0, 1].map((i) => (
-          <div key={i} className="panel !rounded-[18px] p-5 md:p-7">
+          <div key={i} className="panel !rounded-[10px] p-5 md:p-7">
             <div className="skeleton h-3 w-24" />
             <div className="skeleton h-9 w-56 mt-3" />
             <div className="skeleton h-[84px] w-full mt-6 rounded-[12px]" />

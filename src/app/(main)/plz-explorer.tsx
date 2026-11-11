@@ -38,16 +38,16 @@ export function PlzExplorer() {
     <div>
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-end">
         <div className="min-w-0">
-          <p className="text-[13px] uppercase tracking-[0.12em] font-semibold text-night-muted">Was steht in deiner Nähe?</p>
-          <p className="font-serif text-[30px] md:text-[40px] leading-tight mt-2">Postleitzahl eingeben, Bestand sehen.</p>
+          <p className="text-[13px] font-medium text-night-muted">Was steht in deiner Nähe?</p>
+          <p className="text-[30px] md:text-[40px] font-[560] tracking-[-0.035em] leading-tight mt-2">Postleitzahl eingeben, Bestand sehen.</p>
         </div>
-        <form onSubmit={look} className="min-w-0 flex items-center gap-2 p-1.5 pl-5 rounded-full bg-night-2 border border-night-line focus-within:border-night-ink transition-colors w-full md:w-[420px]">
+        <form onSubmit={look} className="min-w-0 flex items-center gap-2 p-1.5 pl-5 rounded-[6px] bg-night-2 border border-night-line focus-within:border-night-ink transition-colors w-full md:w-[420px]">
           <IconSearch width={20} height={20} className="text-night-muted flex-none" />
           <input inputMode="numeric" autoComplete="postal-code" maxLength={4} size={6} placeholder="z. B. 8180" value={plz} aria-label="Postleitzahl"
             onChange={(e) => setPlz(e.target.value.replace(/\D/g, ""))}
             className="flex-1 min-w-0 bg-transparent h-12 text-[20px] tnum tracking-[0.06em] placeholder:text-night-muted/60 focus:outline-none" />
           <button type="submit" disabled={plz.length !== 4}
-            className="h-12 px-6 flex-none rounded-full bg-accent text-accent-ink font-semibold disabled:opacity-40 hover:bg-accent-hover transition-colors active:scale-[0.97]">
+            className="h-12 px-6 flex-none rounded-[6px] bg-accent text-accent-ink font-semibold disabled:opacity-40 hover:bg-accent-hover transition-colors active:scale-[0.97]">
             Ansehen
           </button>
         </form>
@@ -62,23 +62,23 @@ export function PlzExplorer() {
         {!loading && res && !res.known && <p className="text-night-muted">Diese Postleitzahl kennen wir nicht. Prüfe die vier Ziffern.</p>}
         {!loading && res?.known && !res.open && (
           <div className="max-w-xl anim-rise">
-            <p className="font-serif text-[30px]">{res.municipality} ist noch nicht offen.</p>
+            <p className="text-[30px] font-[560] tracking-[-0.035em]">{res.municipality} ist noch nicht offen.</p>
             <p className="text-night-muted mt-2">Wir öffnen Region für Region, sobald genug Bücher zusammenkommen. Trag dich ein, dann melden wir uns einmal.</p>
             {joined ? (
               <p className="mt-5 font-medium">Danke. Wir schreiben dir, wenn {res.municipality} startet.</p>
             ) : (
               <form onSubmit={wait} className="mt-5 flex flex-wrap gap-2">
                 <input type="email" required placeholder="E-Mail-Adresse" value={email} onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 px-5 rounded-full bg-night-2 border border-night-line focus:border-night-ink focus:outline-none w-72" />
-                <button className="h-12 px-6 rounded-full bg-night-ink text-night font-semibold">Auf die Warteliste</button>
+                  className="h-12 px-5 rounded-[6px] bg-night-2 border border-night-line focus:border-night-ink focus:outline-none w-72" />
+                <button className="h-12 px-6 rounded-[6px] bg-night-ink text-night font-semibold">Auf die Warteliste</button>
               </form>
             )}
           </div>
         )}
         {!loading && res?.open && res.copies.length === 0 && (
-          <div className="flex flex-wrap items-center gap-4 justify-between rounded-[14px] border border-night-line p-6 anim-rise">
+          <div className="flex flex-wrap items-center gap-4 justify-between rounded-[8px] border border-night-line p-6 anim-rise">
             <p>Rund um {res.municipality} steht noch nichts im Regal. Stell das erste Buch hinein.</p>
-            <Link href="/anmelden?next=/regal/neu" className="h-11 px-5 rounded-full bg-night-ink text-night font-semibold inline-flex items-center">Buch einstellen</Link>
+            <Link href="/anmelden?next=/regal/neu" className="h-11 px-5 rounded-[6px] bg-night-ink text-night font-semibold inline-flex items-center">Buch einstellen</Link>
           </div>
         )}
         {!loading && res?.open && res.copies.length > 0 && (

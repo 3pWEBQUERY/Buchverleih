@@ -2,7 +2,7 @@
 export default function Loading() {
   return (
     <div aria-busy="true" aria-label="Titel lädt" className="space-y-14 md:space-y-16">
-      <div className="surface-night rounded-[22px] -mx-1 md:mx-0 p-6 md:p-10 lg:p-12 grid md:grid-cols-[auto_1fr] gap-8 md:gap-12 items-end">
+      <div className="surface-night rounded-[12px] -mx-1 md:mx-0 p-6 md:p-10 lg:p-12 grid md:grid-cols-[auto_1fr] gap-8 md:gap-12 items-end">
         <div className="w-[150px] h-[226px] md:w-[210px] md:h-[316px] lg:w-[260px] lg:h-[390px] rounded-xs bg-night-2" />
         <div>
           <div className="h-3 w-24 rounded bg-night-2" />

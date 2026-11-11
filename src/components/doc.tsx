@@ -33,7 +33,7 @@ export function DocPage({ eyebrow, title, lead, draft, toc, updated, intro, chil
       </header>
 
       {draft && (
-        <div role="note" className="mt-8 panel-quiet rounded-[14px] px-5 py-4 md:px-6 flex gap-4 items-start border-l-[3px] border-lent">
+        <div role="note" className="mt-8 panel-quiet rounded-[8px] px-5 py-4 md:px-6 flex gap-4 items-start border-l-[3px] border-lent">
           <div>
             <p className="font-semibold">Entwurf – Prüfung durch eine Fachperson ausstehend</p>
             <p className="text-sm text-ink-2 mt-1">Dieser Text ist noch nicht rechtlich geprüft und gilt erst nach der Prüfung. Stellen in eckigen Klammern werden vorher ergänzt.</p>
@@ -49,7 +49,7 @@ export function DocPage({ eyebrow, title, lead, draft, toc, updated, intro, chil
         </aside>
 
         <article className="min-w-0 max-w-[68ch]">
-          <details className="lg:hidden mb-10 panel-quiet rounded-[14px] group">
+          <details className="lg:hidden mb-10 panel-quiet rounded-[8px] group">
             <summary className="px-5 h-14 cursor-pointer list-none flex items-center justify-between text-[15px] font-semibold [&::-webkit-details-marker]:hidden">
               <span className="flex items-center gap-2.5">Inhalt <span className="text-[13px] font-medium text-muted tnum">{toc.length} Abschnitte</span></span>
               <span aria-hidden className="h-8 w-8 rounded-full bg-paper grid place-items-center text-lg leading-none transition-transform duration-200 group-open:rotate-45">+</span>
@@ -58,7 +58,7 @@ export function DocPage({ eyebrow, title, lead, draft, toc, updated, intro, chil
               {toc.map(([id, label], i) => (
                 <li key={id}>
                   <a href={`#${id}`} className="flex gap-3 py-2 text-ink-2 hover:text-ink">
-                    <span className="text-muted tnum w-5 text-right font-serif">{i + 1}</span> {label}
+                    <span className="text-muted tnum w-5 text-right font-[520] tracking-[-0.035em]">{i + 1}</span> {label}
                   </a>
                 </li>
               ))}
@@ -84,7 +84,7 @@ const DOC_TEXT = cx(
 export function DocSection({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
     <section id={id} aria-labelledby={`${id}-t`} className="scroll-mt-24 pt-10 md:pt-14 first:pt-0 [&+&]:border-t [&+&]:border-line [&+&]:mt-10 md:[&+&]:mt-14">
-      <h2 id={`${id}-t`} className="font-serif text-[32px] md:text-[42px] leading-[1.02] tracking-[-0.02em] mb-5">{title}</h2>
+      <h2 id={`${id}-t`} className="text-[32px] md:text-[42px] leading-[1.02] tracking-[-0.02em] mb-5">{title}</h2>
       {children}
     </section>
   );
@@ -99,7 +99,7 @@ export function DocTable({ head, rows, caption }: { head: string[]; rows: ReactN
   return (
     <figure className="mt-7 mb-3">
       {caption && <figcaption className="text-sm text-muted pb-2">{caption}</figcaption>}
-      <div className="hidden sm:block panel rounded-[14px] overflow-hidden">
+      <div className="hidden sm:block panel rounded-[8px] overflow-hidden">
         <table className="w-full text-[15px] leading-normal border-collapse">
           <thead>
             <tr className="bg-paper-2 text-left">
@@ -115,7 +115,7 @@ export function DocTable({ head, rows, caption }: { head: string[]; rows: ReactN
           </tbody>
         </table>
       </div>
-      <dl className="sm:hidden panel rounded-[14px] divide-y divide-line text-[15px] leading-normal">
+      <dl className="sm:hidden panel rounded-[8px] divide-y divide-line text-[15px] leading-normal">
         {rows.map((r, i) => (
           <div key={i} className="px-4 py-3.5">
             <dt className="font-semibold">{r[0]}</dt>
@@ -136,7 +136,7 @@ export function DocCompare({ left, right }: { left: { title: string; items: Reac
   return (
     <div className="mt-7 grid gap-3 sm:grid-cols-2">
       {[left, right].map((col, i) => (
-        <div key={col.title} className={cx("rounded-[14px] p-5 md:p-6", i === 0 ? "panel-quiet" : "border border-late/30 bg-late/[0.04]")}>
+        <div key={col.title} className={cx("rounded-[8px] p-5 md:p-6", i === 0 ? "panel-quiet" : "border border-late/30 bg-late/[0.04]")}>
           <p className="flex items-center gap-2.5 ui-title text-[17px]">
             <span className={cx("h-7 w-7 rounded-full grid place-items-center flex-none text-[15px]", i === 0 ? "bg-ink text-paper" : "bg-late text-paper")} aria-hidden>
               {i === 0

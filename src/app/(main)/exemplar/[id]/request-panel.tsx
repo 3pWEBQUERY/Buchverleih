@@ -62,14 +62,14 @@ export function RequestPanel({
   const ok = fits && !tooFar;
 
   return (
-    <section className="panel !border-ink rounded-[18px] p-5 md:p-8 anim-rise" style={{ animationDelay: "140ms" }} aria-labelledby="anfrage">
+    <section className="panel !border-ink rounded-[10px] p-5 md:p-8 anim-rise" style={{ animationDelay: "140ms" }} aria-labelledby="anfrage">
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-5 mb-6">
         <div>
           <p className="eyebrow flex items-center gap-2">
             {kind === "lend" && freeNow && <span aria-hidden className="h-2 w-2 rounded-full bg-ok live-dot" />}
             Anfrage
           </p>
-          <h2 id="anfrage" className="font-serif text-[36px] md:text-[48px] leading-none mt-2">{heading}</h2>
+          <h2 id="anfrage" className="text-[36px] md:text-[48px] leading-none mt-2">{heading}</h2>
         </div>
         {offers.length > 1 && (
           <Segmented name="Angebotsart" value={kind} onChange={setKind} className="w-full sm:w-auto sm:min-w-80" options={offers.map((o) => ({ value: o, label: offerLabel[o] }))} />

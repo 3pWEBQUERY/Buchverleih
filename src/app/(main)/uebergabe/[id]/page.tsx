@@ -57,7 +57,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       </header>
 
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10 lg:items-start">
-        <section aria-label="Vereinbart" className="lg:order-2 lg:sticky lg:top-8 rounded-[22px] bg-paper-2 p-5 md:p-6">
+        <section aria-label="Vereinbart" className="lg:order-2 lg:sticky lg:top-8 rounded-[12px] bg-paper-2 p-5 md:p-6">
           <p className="eyebrow">Vereinbart</p>
           <dl className="mt-3 divide-y divide-line">
             {agreed.map(([k, v]) => (
@@ -70,7 +70,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <p className="text-[13px] text-muted mt-3">Ein Terminvorschlag gilt erst, wenn alle drei angenommen haben.</p>
         </section>
 
-        <section aria-labelledby="chat" className="lg:order-1 panel !rounded-[18px] overflow-hidden min-w-0">
+        <section aria-labelledby="chat" className="lg:order-1 panel !rounded-[10px] overflow-hidden min-w-0">
           <div className="flex items-center justify-between gap-4 px-5 md:px-6 h-16 border-b border-line">
             <h2 id="chat" className="ui-title text-[19px] flex items-center gap-2.5"><IconChat width={18} height={18} className="text-muted" /> Zu dritt</h2>
             <Faces names={[h.prev_b, h.next_b, h.owner]} total={3} size={28} />

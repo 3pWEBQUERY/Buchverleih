@@ -21,7 +21,7 @@ export default async function Page() {
       <p className="eyebrow anim-rise">Konto</p>
       <h1 className="display text-[52px] md:text-[84px] mt-4 anim-rise" style={{ animationDelay: "40ms" }}>Dein Konto ist <em>gesperrt.</em></h1>
       {reason && (
-        <div className="mt-8 rounded-[14px] bg-late/[0.06] border-l-[3px] border-late px-5 py-4 anim-rise" style={{ animationDelay: "80ms" }}>
+        <div className="mt-8 rounded-[8px] bg-late/[0.06] border-l-[3px] border-late px-5 py-4 anim-rise" style={{ animationDelay: "80ms" }}>
           <p className="eyebrow !text-late">Grund</p>
           <p className="text-[17px] mt-1.5">{reason}</p>
         </div>

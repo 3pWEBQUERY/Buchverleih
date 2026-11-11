@@ -22,7 +22,7 @@ export function VerifyLink({ token, next }: { token: string; next: string | null
   }
   if (error)
     return (
-      <div className="panel-quiet rounded-[14px] p-6 anim-rise" role="alert">
+      <div className="panel-quiet rounded-[8px] p-6 anim-rise" role="alert">
         <p className="ui-title text-[18px]">Der Link funktioniert nicht mehr.</p>
         <p className="text-ink-2 mt-1.5">{error}</p>
         <LinkButton href="/anmelden" variant="primary" className="mt-6">Neuen Link anfordern</LinkButton>

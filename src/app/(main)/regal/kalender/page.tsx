@@ -33,7 +33,7 @@ export default async function Page() {
           <div className="grid grid-cols-2 gap-2 anim-rise" style={{ animationDelay: "80ms" }}>
             {([[rows.length, rows.length === 1 ? "Buch" : "Bücher"], [busy, "mit Terminen"]] as [number, string][]).map(([n, l]) => (
               <div key={l} className="panel-quiet px-5 py-4 min-w-[124px]">
-                <p className="font-serif text-[40px] leading-none tnum">{n}</p>
+                <p className="font-[520] tracking-[-0.035em] text-[40px] leading-none tnum">{n}</p>
                 <p className="text-[13px] text-muted mt-1.5">{l}</p>
               </div>
             ))}
@@ -54,7 +54,7 @@ export default async function Page() {
             <span className="chip"><span className="h-2.5 w-4 rounded-[3px] bg-paper-3 border border-line-strong" /> gesperrt</span>
             <span className="chip"><span className="h-2.5 w-4 rounded-[3px] bg-paper border border-line" /> ausserhalb des Buchungshorizonts</span>
           </div>
-          <ul className="panel !rounded-[18px] divide-y divide-line overflow-hidden">
+          <ul className="panel !rounded-[10px] divide-y divide-line overflow-hidden">
             {rows.map(({ copy, cal }, i) => {
               const st = shelfStatusText(copy);
               return (

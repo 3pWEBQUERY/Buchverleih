@@ -44,7 +44,7 @@ export async function AuthStage({ eyebrow, title, lead, children }: { eyebrow: s
       {/* ----------------------------------------------------------- Bühne (Desktop) */}
       <aside className="surface-night relative overflow-hidden hidden lg:flex flex-col" aria-label="Leihregal">
         <div className="px-10 xl:px-16 pt-16 xl:pt-20 max-w-[720px]">
-          <p className="inline-flex items-center gap-2 h-8 px-3.5 rounded-full border border-night-line text-[13px] font-medium text-night-muted anim-rise">
+          <p className="inline-flex items-center gap-2 h-8 px-3.5 rounded-[6px] border border-night-line text-[13px] font-medium text-night-muted anim-rise">
             <span className="h-2 w-2 rounded-full bg-[var(--accent)] live-dot" /> {eyebrow}
           </p>
           <p className="display text-[76px] xl:text-[96px] mt-8 anim-rise" style={{ animationDelay: "60ms" }}>{title}</p>
@@ -53,7 +53,7 @@ export async function AuthStage({ eyebrow, title, lead, children }: { eyebrow: s
             {([[copies, "Bücher im Umlauf"], [members, "Mitglieder"], ["0", "CHF Gebühr"]] as const).map(([n, l]) => (
               <div key={l}>
                 <dt className="sr-only">{l}</dt>
-                <dd className="font-serif text-[44px] leading-none tnum">{n}</dd>
+                <dd className="font-[520] tracking-[-0.035em] text-[44px] leading-none tnum">{n}</dd>
                 <dd className="text-[13px] text-night-muted mt-1.5">{l}</dd>
               </div>
             ))}
@@ -73,7 +73,7 @@ export async function AuthStage({ eyebrow, title, lead, children }: { eyebrow: s
 
       {/* ------------------------------------------------------- Regalband (Mobil) */}
       <div className="lg:hidden px-4 md:px-10 pt-4" aria-hidden>
-        <div className="surface-night rounded-[18px] overflow-hidden">
+        <div className="surface-night rounded-[10px] overflow-hidden">
           <p className="eyebrow !text-night-muted px-5 pt-4">{eyebrow}</p>
           <div className="mt-3 overflow-hidden" style={{ height: 96 }}>
             {/* in voller Grösse gesetzt und verkleinert, damit die Proportionen dem Desktop-Regal entsprechen */}

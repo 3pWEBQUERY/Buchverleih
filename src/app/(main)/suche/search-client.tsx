@@ -183,7 +183,7 @@ export function SearchClient({
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={onKeyDown}
           placeholder="Titel, Autorin oder ISBN"
-          className="w-full h-16 md:h-[72px] bg-paper border border-line-strong rounded-full pl-14 md:pl-16 pr-14 text-[18px] md:text-[21px] tracking-[-0.01em] placeholder:text-muted/80 hover:border-ink-2 focus:outline-none focus:border-ink focus:ring-[4px] focus:ring-ink/10 transition-[border-color,box-shadow] duration-150 [&::-webkit-search-cancel-button]:appearance-none"
+          className="w-full h-16 md:h-[72px] bg-paper border border-line-strong rounded-[6px] pl-14 md:pl-16 pr-14 text-[18px] md:text-[21px] tracking-[-0.01em] placeholder:text-muted/80 hover:border-ink-2 focus:outline-none focus:border-ink focus:ring-[4px] focus:ring-ink/10 transition-[border-color,box-shadow] duration-150 [&::-webkit-search-cancel-button]:appearance-none"
         />
         {q ? (
           <button type="button" onClick={() => { setQ(""); inputRef.current?.focus(); }} aria-label="Suchbegriff löschen"
@@ -246,13 +246,13 @@ function FilterChips({ f, set, reset, n, hasOrigin }: { f: Filters; set: <K exte
     <div className="mt-5 -mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto md:overflow-visible anim-rise [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ animationDelay: "80ms" }}>
       <div role="group" aria-label="Filter" className="flex md:flex-wrap items-center gap-2 w-max md:w-auto pb-1">
         <div role="radiogroup" aria-label="Umkreis in Kilometern"
-          className={cx("flex-none inline-flex items-center h-10 pl-4 pr-1 gap-0.5 rounded-full bg-paper-2", !hasOrigin && "opacity-50 pointer-events-none")}>
+          className={cx("flex-none inline-flex items-center h-10 pl-4 pr-1 gap-0.5 rounded-[6px] bg-paper-2", !hasOrigin && "opacity-50 pointer-events-none")}>
           <span className="text-[13px] font-medium text-muted mr-1.5">Umkreis</span>
           {RADII.map((r) => {
             const on = f.radius === r;
             return (
               <button key={r} type="button" role="radio" aria-checked={on} onClick={() => set("radius", r)}
-                className={cx("h-8 min-w-8 px-2.5 rounded-full text-[13.5px] font-semibold tnum transition-colors duration-200", on ? "bg-ink text-paper" : "text-ink-2 hover:bg-paper-3")}>
+                className={cx("h-8 min-w-8 px-2.5 rounded-[6px] text-[13.5px] font-semibold tnum transition-colors duration-200", on ? "bg-ink text-paper" : "text-ink-2 hover:bg-paper-3")}>
                 {r}{on && <span className="font-medium"> km</span>}
               </button>
             );
@@ -313,11 +313,11 @@ function PillSelect({ label, value, onChange, options }: { label: string; value:
 
 function Stage({ hits, href, radius }: { hits: WorkHit[]; href: (h: WorkHit) => string; radius: number }) {
   return (
-    <div className="surface-night rounded-[22px] px-5 md:px-9 pt-7 md:pt-9 pb-7 md:pb-8 -mx-1 md:mx-0 anim-rise">
+    <div className="surface-night rounded-[12px] px-5 md:px-9 pt-7 md:pt-9 pb-7 md:pb-8 -mx-1 md:mx-0 anim-rise">
       <div className="flex items-end justify-between gap-4 mb-2">
         <div>
-          <p className="text-[12px] uppercase tracking-[0.12em] font-semibold text-night-muted">Jetzt frei · bis {radius} km</p>
-          <h3 className="font-serif text-[36px] md:text-[48px] leading-none mt-2">Gleich um die Ecke</h3>
+          <p className="text-[12px] font-medium text-night-muted">Jetzt frei · bis {radius} km</p>
+          <h3 className="text-[36px] md:text-[48px] leading-none mt-2">Gleich um die Ecke</h3>
         </div>
       </div>
       <ul className="shelf" aria-label="Jetzt frei in deiner Nähe">
@@ -423,12 +423,12 @@ function PlzBar({ plz, place, onSet }: { plz: string; place: string | null; onSe
     );
   }
   return (
-    <form onSubmit={submit} className="mt-5 panel-quiet rounded-[18px] p-5 md:p-6 flex flex-wrap items-end justify-between gap-4">
+    <form onSubmit={submit} className="mt-5 panel-quiet rounded-[10px] p-5 md:p-6 flex flex-wrap items-end justify-between gap-4">
       <label htmlFor="suche-plz" className="block text-[15px] text-ink-2 max-w-md">Deine Postleitzahl, damit wir zeigen können, was in der Nähe steht.</label>
       <div className="flex items-center gap-2">
         <input id="suche-plz" inputMode="numeric" autoComplete="postal-code" maxLength={4} placeholder="8180" value={value}
           onChange={(e) => setValue(e.target.value.replace(/\D/g, ""))} aria-describedby={err ? "suche-plz-err" : undefined}
-          className="w-28 h-11 bg-paper border border-line-strong rounded-full px-5 text-[16px] tnum tracking-[0.08em] placeholder:text-muted/70 focus:outline-none focus:border-ink focus:ring-[3px] focus:ring-ink/10" />
+          className="w-28 h-11 bg-paper border border-line-strong rounded-[6px] px-5 text-[16px] tnum tracking-[0.08em] placeholder:text-muted/70 focus:outline-none focus:border-ink focus:ring-[3px] focus:ring-ink/10" />
         <Button type="submit" disabled={value.length !== 4}>Bestand zeigen</Button>
       </div>
       {err && <span id="suche-plz-err" role="alert" className="basis-full block text-sm text-late">{err}</span>}
@@ -479,7 +479,7 @@ function NoHits({ q, f, n, loggedIn, widen, reset }: { q: string; f: Filters; n:
 
   return (
     <div className="anim-rise space-y-4">
-      <div className="panel-quiet rounded-[18px] p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6">
+      <div className="panel-quiet rounded-[10px] p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6">
         <div aria-hidden className="flex items-end gap-[3px] flex-none">
           <Spine title="Leer" height={78} />
           <Spine title="Regal" height={70} />

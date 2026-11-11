@@ -44,7 +44,7 @@ const who = (loan: LoanListItem) => `${offerNoun[loan.kind]} · ${loan.role === 
 function Unread({ n, className }: { n: number; className?: string }) {
   if (n <= 0) return null;
   return (
-    <span className={cx("inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full bg-ink text-paper text-[12px] font-semibold tnum", className)}>
+    <span className={cx("inline-flex items-center gap-1.5 h-6 px-2.5 rounded-[6px] bg-ink text-paper text-[12px] font-semibold tnum", className)}>
       {n} neu
     </span>
   );
@@ -92,7 +92,7 @@ export function LoanRow({ loan, variant, i = 0 }: { loan: LoanListItem; variant?
             {v === "action" ? (
               <>
                 <StatusText tone={overdue ? "late" : loanTone(loan.status, loan.due_at)} className={overdue ? "text-late" : "text-muted"}>{when ?? statusLabel[loan.status]}</StatusText>
-                <span className="h-9 px-4 rounded-full bg-accent text-accent-ink text-[13.5px] font-semibold inline-flex items-center gap-1.5 whitespace-nowrap group-hover:bg-accent-hover transition-colors">
+                <span className="h-9 px-4 rounded-[6px] bg-accent text-accent-ink text-[13.5px] font-semibold inline-flex items-center gap-1.5 whitespace-nowrap group-hover:bg-accent-hover transition-colors">
                   {loan.step!.label} <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
                 </span>
               </>

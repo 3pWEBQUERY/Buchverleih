@@ -30,7 +30,7 @@ export default async function Page() {
           <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "80ms" }}>
             {tiles.map(([n, l, href], i) => (
               <Tile key={l} href={n > 0 ? href : null}>
-                <dd className="font-serif text-[40px] leading-none tnum flex items-center gap-2">
+                <dd className="font-[520] tracking-[-0.035em] text-[40px] leading-none tnum flex items-center gap-2">
                   {n}
                   {i === 0 && n > 0 && <span aria-hidden className="h-2 w-2 rounded-full bg-accent live-dot" />}
                 </dd>
@@ -57,7 +57,7 @@ export default async function Page() {
         <div className="space-y-14 md:space-y-16">
           <section id="wartet" className="scroll-mt-24">
             <SectionTitle aside={mine.length > 0 ? `${mine.length} ${mine.length === 1 ? "Vorgang" : "Vorgänge"}` : undefined}>
-              Wartet auf dich {mine.length > 0 && <span className="ml-2 inline-grid place-items-center h-7 min-w-7 px-2 rounded-full bg-accent text-accent-ink text-[14px] tnum align-middle">{mine.length}</span>}
+              Wartet auf dich {mine.length > 0 && <span className="ml-2 inline-grid place-items-center h-7 min-w-7 px-2 rounded-[6px] bg-accent text-accent-ink text-[14px] tnum align-middle">{mine.length}</span>}
             </SectionTitle>
             {mine.length === 0 ? (
               <div className="panel-quiet px-6 py-6 flex items-center gap-4">

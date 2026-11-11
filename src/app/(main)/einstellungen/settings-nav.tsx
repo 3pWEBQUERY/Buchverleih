@@ -47,7 +47,7 @@ export function SettingsNav({ groups }: { groups: NavGroup[] }) {
           {groups.flatMap((g) => g.items.map((i) => (
             <a key={i.id} href={`#${i.id}`} data-id={i.id} aria-current={active === i.id ? "location" : undefined}
               className={cx(
-                "flex-none h-9 px-4 rounded-full inline-flex items-center text-[13.5px] font-semibold transition-colors duration-200",
+                "flex-none h-9 px-4 rounded-[6px] inline-flex items-center text-[13.5px] font-semibold transition-colors duration-200",
                 active === i.id ? (g.danger ? "bg-late text-paper" : "bg-ink text-paper") : "text-ink-2 bg-paper-2 hover:bg-paper-3",
               )}>
               {i.label}
@@ -68,7 +68,7 @@ export function SettingsNav({ groups }: { groups: NavGroup[] }) {
                   <li key={i.id}>
                     <a href={`#${i.id}`} aria-current={on ? "location" : undefined}
                       className={cx(
-                        "relative flex items-center h-9 px-3 rounded-full text-[14.5px] transition-colors duration-200",
+                        "relative flex items-center h-9 px-3 rounded-[6px] text-[14.5px] transition-colors duration-200",
                         on ? "bg-paper-2 text-ink font-semibold" : "text-muted hover:text-ink hover:bg-paper-2/60",
                       )}>
                       <span className={cx("absolute left-0 top-2 bottom-2 w-[3px] rounded-full transition-opacity duration-200", g.danger ? "bg-late" : "bg-ink", on ? "opacity-100" : "opacity-0")} />

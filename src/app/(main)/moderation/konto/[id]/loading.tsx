@@ -8,10 +8,10 @@ export default function Loading() {
         <div className="flex-1"><div className="skeleton h-3 w-40 mb-3" /><div className="skeleton h-12 md:h-16 w-1/3 mb-3" /><div className="skeleton h-4 w-1/2" /></div>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-14">
-        {Array.from({ length: 5 }, (_, i) => <div key={i} className="skeleton h-[92px] rounded-[14px]" />)}
+        {Array.from({ length: 5 }, (_, i) => <div key={i} className="skeleton h-[92px] rounded-[8px]" />)}
       </div>
       <div className="grid gap-x-10 gap-y-12 lg:grid-cols-12">
-        <div className="lg:col-span-7 panel rounded-[14px] divide-y divide-line">
+        <div className="lg:col-span-7 panel rounded-[8px] divide-y divide-line">
           {Array.from({ length: 5 }, (_, i) => (
             <div key={i} className="flex justify-between gap-6 px-5 py-4">
               <div className="flex-1"><div className="skeleton h-5 w-1/2 mb-2" /><div className="skeleton h-3 w-1/3" /></div>
@@ -19,7 +19,7 @@ export default function Loading() {
             </div>
           ))}
         </div>
-        <div className="lg:col-span-5 skeleton h-64 rounded-[14px]" />
+        <div className="lg:col-span-5 skeleton h-64 rounded-[8px]" />
       </div>
     </div>
   );

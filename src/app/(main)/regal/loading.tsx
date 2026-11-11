@@ -9,7 +9,7 @@ export default function Loading() {
         <div className="grid grid-cols-3 gap-2">{[0, 1, 2].map((i) => <div key={i} className="skeleton h-[92px] lg:w-[124px] rounded-[10px]" />)}</div>
       </header>
       <div className="flex gap-2 mb-6">{[0, 1, 2].map((i) => <div key={i} className="skeleton h-11 w-32 rounded-full" />)}</div>
-      <div className="surface-night rounded-[22px] px-5 md:px-9 py-8">
+      <div className="surface-night rounded-[12px] px-5 md:px-9 py-8">
         {[0, 1].map((i) => (
           <div key={i} className={i ? "mt-10" : ""}>
             <div className="h-7 w-48 rounded bg-night-2" />

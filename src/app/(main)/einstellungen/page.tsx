@@ -44,8 +44,8 @@ export default async function Page() {
           <p className="eyebrow">Konto und Vorlieben</p>
           <h1 className="display text-[52px] md:text-[84px] mt-3">Einstellungen</h1>
         </div>
-        <div className="panel-quiet flex items-center gap-3.5 pl-3 pr-5 py-3 rounded-full anim-rise min-w-0 max-w-full" style={{ animationDelay: "60ms" }}>
-          <span className="h-11 w-11 flex-none rounded-full bg-ink text-paper grid place-items-center font-serif text-[22px]">{initial}</span>
+        <div className="panel-quiet flex items-center gap-3.5 pl-3 pr-5 py-3 rounded-[6px] anim-rise min-w-0 max-w-full" style={{ animationDelay: "60ms" }}>
+          <span className="h-11 w-11 flex-none rounded-full bg-ink text-paper grid place-items-center font-semibold text-[22px]">{initial}</span>
           <span className="min-w-0 leading-tight">
             <span className="block font-semibold truncate">{user.first_name} · {trustLabel[user.trust_level]}</span>
             <span className="block text-[13px] text-muted truncate">{user.email}</span>
@@ -101,7 +101,7 @@ export default async function Page() {
             </Row>
           </Group>
 
-          <section id="konto-loeschen" aria-labelledby="konto-loeschen-t" className="scroll-mt-32 md:scroll-mt-20 lg:scroll-mt-10 rounded-[14px] border border-late/35 bg-late/[0.04] p-5 md:p-7 md:grid md:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] md:gap-10">
+          <section id="konto-loeschen" aria-labelledby="konto-loeschen-t" className="scroll-mt-32 md:scroll-mt-20 lg:scroll-mt-10 rounded-[8px] border border-late/35 bg-late/[0.04] p-5 md:p-7 md:grid md:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] md:gap-10">
             <div className="mb-5 md:mb-0">
               <p className="eyebrow !text-late">Gefahrenzone</p>
               <h2 id="konto-loeschen-t" className="ui-title text-[18px] mt-2">Konto löschen</h2>
@@ -122,7 +122,7 @@ function Group({ title, text, children }: { title: string; text: string; childre
         <h2 className="ui-title text-[22px] md:text-[26px]">{title}</h2>
         <p className="text-[15px] text-muted mt-1">{text}</p>
       </div>
-      <div className="panel rounded-[14px] divide-y divide-line">{children}</div>
+      <div className="panel rounded-[8px] divide-y divide-line">{children}</div>
     </section>
   );
 }

@@ -78,15 +78,15 @@ export function HandoverCode({ loanId, label, onClose, onDone }: { loanId: strin
         <button onClick={onClose} className="h-11 w-11 -mr-2 grid place-items-center rounded-full hover:bg-neutral-100 transition-colors" aria-label="Schliessen"><IconClose width={24} height={24} /></button>
       </div>
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-10 text-center">
-        <h2 className="font-serif text-[40px] md:text-[56px] leading-none tracking-[-0.03em]">{label}</h2>
+        <h2 className="text-[40px] md:text-[56px] leading-none tracking-[-0.03em]">{label}</h2>
         <p className="mt-3 text-[15px] text-neutral-600 max-w-xs">Halte den Bildschirm der anderen Person hin. Sie scannt ihn mit der Kamera.</p>
         {error ? (
           <p className="mt-10 text-center max-w-sm text-[17px]" role="alert">{error}</p>
         ) : !token ? (
-          <div className="mt-8 w-[min(76vw,340px)] aspect-square rounded-[22px] bg-neutral-100 animate-pulse" />
+          <div className="mt-8 w-[min(76vw,340px)] aspect-square rounded-[12px] bg-neutral-100 animate-pulse" />
         ) : (
           <>
-            <div className="mt-8 p-4 rounded-[22px] border border-neutral-200 anim-pop">
+            <div className="mt-8 p-4 rounded-[12px] border border-neutral-200 anim-pop">
               <div className="w-[min(68vw,320px)] aspect-square [&_svg]:w-full [&_svg]:h-full" dangerouslySetInnerHTML={{ __html: svg }} />
             </div>
             <p className="mt-8 text-[13px] text-neutral-600">Oder die sechs Ziffern eingeben</p>

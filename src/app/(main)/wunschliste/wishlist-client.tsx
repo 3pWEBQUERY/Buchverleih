@@ -116,7 +116,7 @@ export function WishlistClient({ items: initial, matches }: { items: WishItem[];
         <AddTitle onList={new Set(items.map((i) => i.work_id))} autoFocus={items.length === 0} />
 
         {items.length === 0 ? (
-          <div className="mt-6 panel-quiet rounded-[18px] p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6 anim-rise">
+          <div className="mt-6 panel-quiet rounded-[10px] p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6 anim-rise">
             <div aria-hidden className="flex items-end gap-[3px] flex-none">
               <span className="h-[62px] w-[34px] rounded-[3px] border border-dashed border-line-strong" />
               <span className="h-[74px] w-[40px] rounded-[3px] border border-dashed border-line-strong" />
@@ -231,7 +231,7 @@ function AddTitle({ onList, autoFocus }: { onList: Set<string>; autoFocus: boole
         <input id="wunsch-q" ref={ref} type="search" autoComplete="off" autoFocus={autoFocus} value={q} onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Escape") setQ(""); if (e.key === "Enter" && hits?.[0] && !onList.has(hits[0].work_id)) { e.preventDefault(); add(hits[0]); } }}
           placeholder="Titel hinzufügen: Titel oder Autorin"
-          className="w-full h-14 bg-paper border border-line-strong rounded-full pl-13 pr-5 [&::-webkit-search-cancel-button]:appearance-none text-[17px] placeholder:text-muted/80 hover:border-ink-2 focus:outline-none focus:border-ink focus:ring-[4px] focus:ring-ink/10 transition-[border-color,box-shadow]" />
+          className="w-full h-14 bg-paper border border-line-strong rounded-[6px] pl-13 pr-5 [&::-webkit-search-cancel-button]:appearance-none text-[17px] placeholder:text-muted/80 hover:border-ink-2 focus:outline-none focus:border-ink focus:ring-[4px] focus:ring-ink/10 transition-[border-color,box-shadow]" />
       </div>
       {hits && (
         <div className="anim-rise mt-2" aria-live="polite">

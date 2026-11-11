@@ -138,12 +138,12 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
     return (
       <div>
         <PageTitle sub="Alles, was du verleihst, tauschst oder verschenkst, steht hier.">Mein <em>Regal</em></PageTitle>
-        <section className="rounded-[22px] bg-accent text-accent-ink p-8 md:p-12 grid md:grid-cols-[1fr_auto] gap-8 items-end">
+        <section className="rounded-[12px] bg-accent text-accent-ink p-8 md:p-12 grid md:grid-cols-[1fr_auto] gap-8 items-end">
           <div>
             <p className="eyebrow !text-accent-ink/75">Dein Regal ist noch leer</p>
             <h2 className="display text-[44px] md:text-[64px] mt-3 max-w-[14ch]">Ein Buch einstellen dauert <em>unter 20 Sekunden.</em></h2>
           </div>
-          <Link href="/regal/neu" className="h-14 px-7 rounded-full bg-night text-night-ink font-semibold inline-flex items-center gap-2 justify-center"><IconScan width={20} height={20} /> Erstes Buch scannen</Link>
+          <Link href="/regal/neu" className="h-14 px-7 rounded-[6px] bg-night text-night-ink font-semibold inline-flex items-center gap-2 justify-center"><IconScan width={20} height={20} /> Erstes Buch scannen</Link>
         </section>
       </div>
     );
@@ -165,7 +165,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
         <dl className="grid grid-cols-3 gap-2 anim-rise" style={{ animationDelay: "80ms" }}>
           {tiles.map(([n, l], i) => (
             <div key={l} className="panel-quiet px-4 md:px-5 py-4 lg:min-w-[124px]">
-              <dd className="font-serif text-[40px] leading-none tnum flex items-center gap-2">
+              <dd className="font-[520] tracking-[-0.035em] text-[40px] leading-none tnum flex items-center gap-2">
                 {n}
                 {i === 2 && n > 0 && <span aria-hidden className="h-2 w-2 rounded-full bg-accent live-dot" />}
               </dd>
@@ -193,11 +193,11 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
       ) : (
         <>
           {/* Das Büchergestell: eine dunkle Fläche, jede Gruppe ein Brett */}
-          <div className="surface-night rounded-[22px] px-5 md:px-9 pt-7 md:pt-9 pb-4 md:pb-6 -mx-1 md:mx-0">
+          <div className="surface-night rounded-[12px] px-5 md:px-9 pt-7 md:pt-9 pb-4 md:pb-6 -mx-1 md:mx-0">
             {groups.map((g, gi) => (
               <section key={g.key} aria-labelledby={`g-${g.key}`} className={cx(gi > 0 && "mt-8 md:mt-10")}>
                 <div className="flex items-baseline justify-between gap-4">
-                  <h2 id={`g-${g.key}`} className="font-serif text-[28px] md:text-[36px] leading-none">{g.label}</h2>
+                  <h2 id={`g-${g.key}`} className="text-[28px] md:text-[36px] leading-none">{g.label}</h2>
                   <span className="text-[13px] text-night-muted tnum">{plural(g.items.length, "Buch", "Bücher")}</span>
                 </div>
                 <BookRow items={g.items} />
@@ -248,7 +248,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
             )}
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm tnum whitespace-nowrap flex items-center gap-2" aria-live="polite">
-                <span className="h-8 min-w-8 px-2 rounded-full bg-ink text-paper grid place-items-center font-semibold">{sel.size}</span> <span className="text-muted hidden sm:inline">ausgewählt</span>
+                <span className="h-8 min-w-8 px-2 rounded-[6px] bg-ink text-paper grid place-items-center font-semibold">{sel.size}</span> <span className="text-muted hidden sm:inline">ausgewählt</span>
               </p>
               <div className="flex items-center gap-1 overflow-x-auto" role="toolbar" aria-label="Aktionen für die Auswahl">
                 {([

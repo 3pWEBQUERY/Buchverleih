@@ -181,7 +181,7 @@ export function CopyEditor({ copy, calendar, circles }: { copy: CopyDetail; cale
               <div className="flex flex-wrap gap-2">
                 {circles.map((c) => (
                   <Check key={c.id} checked={s.circleIds.includes(c.id)} label={c.name}
-                    className="min-h-11 pl-3 pr-4 rounded-full border border-line has-[:checked]:border-ink transition-colors"
+                    className="min-h-11 pl-3 pr-4 rounded-[6px] border border-line has-[:checked]:border-ink transition-colors"
                     onChange={(v) => save({ circleIds: v ? [...s.circleIds, c.id] : s.circleIds.filter((x) => x !== c.id) })} />
                 ))}
               </div>
@@ -245,7 +245,7 @@ export function CopyEditor({ copy, calendar, circles }: { copy: CopyDetail; cale
           </div>
         </Group>
 
-        <section className="panel-quiet !rounded-[18px] px-5 md:px-8 py-6 md:py-7 grid md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-x-10 gap-y-4 items-center" aria-label="Aus dem Regal nehmen">
+        <section className="panel-quiet !rounded-[10px] px-5 md:px-8 py-6 md:py-7 grid md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-x-10 gap-y-4 items-center" aria-label="Aus dem Regal nehmen">
           <div>
             <h2 className="ui-title text-[17px]">Aus dem Regal nehmen</h2>
             <p className="text-[14px] text-muted mt-1">Das Buch verschwindet aus deinem Regal und aus allen Kreisen. Offene Anfragen verfallen.</p>
@@ -265,7 +265,7 @@ export function CopyEditor({ copy, calendar, circles }: { copy: CopyDetail; cale
 function Group({ title, desc, children, i = 0 }: { title: string; desc?: ReactNode; children: ReactNode; i?: number }) {
   const id = `grp-${title.toLowerCase().replace(/[^a-zäöü]+/g, "-")}`;
   return (
-    <section className="panel !rounded-[18px] px-5 md:px-8 anim-rise" style={{ animationDelay: `${i * 40}ms` }} aria-labelledby={id}>
+    <section className="panel !rounded-[10px] px-5 md:px-8 anim-rise" style={{ animationDelay: `${i * 40}ms` }} aria-labelledby={id}>
       <div className="pt-6 md:pt-7 pb-1">
         <h2 id={id} className="ui-title text-[20px] md:text-[22px]">{title}</h2>
         {desc && <p className="text-[14px] text-muted mt-1 max-w-xl">{desc}</p>}
@@ -432,7 +432,7 @@ function BlockForm({ copyId, calendar }: { copyId: string; calendar: Calendar })
       {!open ? (
         <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>Sperrzeit eintragen</Button>
       ) : (
-        <form onSubmit={submit} className="panel-quiet !rounded-[14px] p-4 md:p-5 anim-rise">
+        <form onSubmit={submit} className="panel-quiet !rounded-[8px] p-4 md:p-5 anim-rise">
           <p className="text-sm text-muted mb-4">Zeiten, in denen du das Buch selbst brauchst, zum Beispiel zum Lesen oder in den Ferien.</p>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Erster Tag">

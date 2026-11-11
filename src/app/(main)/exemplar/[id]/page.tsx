@@ -73,7 +73,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       {/* -------------------------------------------------- Cover, links fix */}
       <aside className="md:col-span-5" aria-label="Cover und Fotos">
         <div className="md:sticky md:top-10">
-          <div className="panel-quiet rounded-[22px] px-6 py-8 md:px-8 md:py-12 grid place-items-center">
+          <div className="panel-quiet rounded-[12px] px-6 py-8 md:px-8 md:py-12 grid place-items-center">
             <div className="md:hidden"><Cover large priority width={170} data={cover} className="anim-cover" /></div>
             <div className="hidden md:block lg:hidden"><Cover large priority width={220} data={cover} className="anim-cover" /></div>
             <div className="hidden lg:block"><Cover large priority width={280} data={cover} className="anim-cover" /></div>
@@ -135,7 +135,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               {numbers.map(([n, l], i) => (
                 <div key={l} className={cx("flex flex-col-reverse", i > 0 && "border-l border-line pl-4 md:pl-6")}>
                   <dt className="text-[13px] text-muted mt-1">{l}</dt>
-                  <dd className="font-serif text-[32px] md:text-[40px] leading-none tnum">{n}</dd>
+                  <dd className="font-[520] tracking-[-0.035em] text-[32px] md:text-[40px] leading-none tnum">{n}</dd>
                 </div>
               ))}
             </dl>
@@ -155,9 +155,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           />
         )}
         {own && cal && (
-          <section className="panel rounded-[18px] p-5 md:p-8" aria-labelledby="kalender">
+          <section className="panel rounded-[10px] p-5 md:p-8" aria-labelledby="kalender">
             <p className="eyebrow">Nur für dich mit Namen</p>
-            <h2 id="kalender" className="font-serif text-[34px] md:text-[44px] leading-none mt-2">Verleihkalender</h2>
+            <h2 id="kalender" className="text-[34px] md:text-[44px] leading-none mt-2">Verleihkalender</h2>
             <p className="text-[14px] text-muted mt-3 mb-6">Andere sehen hier nur frei und belegt, ohne Namen.</p>
             <OwnCalendar cal={cal} />
           </section>

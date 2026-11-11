@@ -12,15 +12,15 @@ export function NavLink({ href, icon, children, exact, tab }: { href: string; ic
     return (
       <Link href={href} aria-current={active ? "page" : undefined}
         className={cx("flex flex-col items-center justify-center gap-1 transition-colors", active ? "text-ink" : "text-muted")}>
-        <span className={cx("grid place-items-center h-8 w-12 rounded-full transition-colors duration-200", active && "bg-paper-3")}>{icon}</span>
+        <span className={cx("grid place-items-center h-8 w-12 rounded-[6px] transition-colors duration-200", active && "bg-paper-3")}>{icon}</span>
         <span className={cx("leading-none", active && "font-semibold")}>{children}</span>
       </Link>
     );
   }
   return (
     <Link href={href} aria-current={active ? "page" : undefined}
-      className={cx("relative flex items-center gap-3 px-3 h-10 rounded-full transition-colors duration-150", active ? "bg-ink text-paper font-semibold" : "text-ink-2 hover:text-ink hover:bg-paper-3")}>
-      <span className={active ? "text-paper" : "text-muted"}>{icon}</span>
+      className={cx("relative flex items-center gap-3 px-3 h-10 rounded-[6px] transition-colors duration-150", active ? "bg-paper text-ink font-medium outline outline-1 outline-line-strong" : "text-ink-2 hover:text-ink hover:bg-paper-3")}>
+      <span className={active ? "text-ink" : "text-muted"}>{icon}</span>
       <span className="flex-1 flex items-center justify-between gap-2">{children}</span>
     </Link>
   );
@@ -29,7 +29,7 @@ export function NavLink({ href, icon, children, exact, tab }: { href: string; ic
 /** Suchfeld-Attrappe in der Seitenleiste: öffnet die Suche, Taste «/» */
 export function SearchTrigger() {
   return (
-    <Link href="/suche?fokus=1" className="h-11 px-4 rounded-full border border-line-strong bg-paper flex items-center gap-2.5 text-muted hover:border-ink transition-colors text-[15px]">
+    <Link href="/suche?fokus=1" className="h-11 px-4 rounded-[6px] border border-line-strong bg-paper flex items-center gap-2.5 text-muted hover:border-ink transition-colors text-[15px]">
       <IconSearch width={18} height={18} />
       <span className="flex-1">Titel, Autorin, ISBN</span>
       <kbd className="font-sans text-[12px] border border-line-strong rounded-[4px] px-1.5 leading-5">/</kbd>
@@ -56,7 +56,7 @@ export function UnreadDot({ initial, compact }: { initial: number; compact?: boo
   }, [path]);
   if (!n) return null;
   if (compact) return <span className="block h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-paper" aria-label={`${n} ungelesen`} />;
-  return <span className="min-w-6 h-6 px-1.5 rounded-full bg-accent text-accent-ink text-[12px] font-bold tnum grid place-items-center" aria-label={`${n} ungelesen`}>{n}</span>;
+  return <span className="min-w-6 h-6 px-1.5 rounded-[6px] bg-accent text-accent-ink text-[12px] font-bold tnum grid place-items-center" aria-label={`${n} ungelesen`}>{n}</span>;
 }
 
 /** Tastaturkürzel auf dem Desktop */

@@ -8,11 +8,11 @@ export default function Loading() {
       <div className="grid lg:grid-cols-12 gap-x-10 gap-y-12">
         <div className="lg:col-span-7">
           <div className="skeleton h-12 w-full sm:w-[340px] rounded-full mb-6" />
-          <div className="skeleton w-full aspect-[4/3] rounded-[22px]" />
+          <div className="skeleton w-full aspect-[4/3] rounded-[12px]" />
           <div className="skeleton h-12 w-full mt-5 rounded-[10px]" />
         </div>
         <div className="lg:col-span-5">
-          <div className="panel !rounded-[18px] p-5">
+          <div className="panel !rounded-[10px] p-5">
             <div className="skeleton h-6 w-36" />
             {[0, 1].map((i) => (
               <div key={i} className="flex items-center gap-4 pt-5">

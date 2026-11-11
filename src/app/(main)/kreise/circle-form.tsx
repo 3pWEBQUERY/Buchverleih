@@ -86,7 +86,7 @@ export function CircleForm() {
         <IconArrowLeft width={16} height={16} /> Kreise
       </Link>
       <PageTitle sub="Du wirst Admin. Danach erhältst du einen Einladungslink. Alles lässt sich später ändern.">Kreis <em>gründen</em></PageTitle>
-      <form onSubmit={submit} noValidate className="panel !rounded-[18px] p-5 md:p-8 anim-rise" style={{ animationDelay: "60ms" }}>
+      <form onSubmit={submit} noValidate className="panel !rounded-[10px] p-5 md:p-8 anim-rise" style={{ animationDelay: "60ms" }}>
         <CircleFields v={v} set={(p) => { setV((c) => ({ ...c, ...p })); if (p.name !== undefined) setNameError(null); }} nameError={nameError} />
         <div className="mt-8 pt-6 border-t border-line">
           <Button type="submit" variant="primary" size="lg" disabled={busy} className="w-full sm:w-auto">

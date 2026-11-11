@@ -32,12 +32,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
           <p className="text-ink-2 text-[17px] mt-4 max-w-xl">Fälle, Meldungen, Konten und Betrieb. Jeder Eingriff steht im Protokoll.</p>
         </div>
         <dl className="grid grid-cols-2 gap-2 anim-rise" style={{ animationDelay: "60ms" }}>
-          <Link href="/moderation" className="panel-quiet rounded-[14px] px-5 py-4 min-w-[124px] hover:bg-paper-3 transition-colors">
-            <dd className="font-serif text-[40px] leading-none tnum">{open}</dd>
+          <Link href="/moderation" className="panel-quiet rounded-[8px] px-5 py-4 min-w-[124px] hover:bg-paper-3 transition-colors">
+            <dd className="font-[520] tracking-[-0.035em] text-[40px] leading-none tnum">{open}</dd>
             <dt className="text-[13px] text-muted mt-1.5">offen</dt>
           </Link>
-          <Link href="/moderation" className={cx("rounded-[14px] px-5 py-4 min-w-[124px] transition-colors", urgent > 0 ? "bg-late/10 text-late hover:bg-late/15" : "panel-quiet hover:bg-paper-3")}>
-            <dd className="font-serif text-[40px] leading-none tnum">{urgent}</dd>
+          <Link href="/moderation" className={cx("rounded-[8px] px-5 py-4 min-w-[124px] transition-colors", urgent > 0 ? "bg-late/10 text-late hover:bg-late/15" : "panel-quiet hover:bg-paper-3")}>
+            <dd className="font-[520] tracking-[-0.035em] text-[40px] leading-none tnum">{urgent}</dd>
             <dt className={cx("text-[13px] mt-1.5", urgent > 0 ? "text-late" : "text-muted")}>dringend</dt>
           </Link>
         </dl>
@@ -66,11 +66,11 @@ async function Queue({ q }: { q: QueueData }) {
   const [links, current] = await Promise.all([targetLinks(q.reports), correctionCurrent(q.corrections.map((c) => c.id))]);
   if (!q.cases.length && !q.reports.length && !q.corrections.length) {
     return (
-      <div className="panel-quiet rounded-[18px] px-6 py-10 md:px-10 md:py-14 flex flex-wrap items-center justify-between gap-6">
+      <div className="panel-quiet rounded-[10px] px-6 py-10 md:px-10 md:py-14 flex flex-wrap items-center justify-between gap-6">
         <div className="flex items-center gap-5">
           <span className="h-14 w-14 rounded-full bg-ink text-paper grid place-items-center flex-none anim-pop"><IconCheck width={24} height={24} /></span>
           <div>
-            <p className="font-serif text-[32px] md:text-[40px] leading-none">Alles erledigt.</p>
+            <p className="text-[32px] md:text-[40px] font-[560] tracking-[-0.035em] leading-none">Alles erledigt.</p>
             <p className="text-ink-2 mt-2">Keine offenen Fälle, Meldungen oder Korrekturen.</p>
           </div>
         </div>
@@ -88,7 +88,7 @@ async function Queue({ q }: { q: QueueData }) {
             {q.cases.map((c, i) => (
               <li key={c.id} className="anim-rise" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
                 <Link href={`/moderation/vorgang/${c.loan_id}`}
-                  className={cx("group panel rounded-[14px] p-5 md:p-6 flex flex-col h-full hover:border-ink transition-colors", c.needs_decision && "border-late/40")}>
+                  className={cx("group panel rounded-[8px] p-5 md:p-6 flex flex-col h-full hover:border-ink transition-colors", c.needs_decision && "border-late/40")}>
                   <div className="flex items-center justify-between gap-3">
                     <PriorityChip p={c.needs_decision ? "hoch" : "normal"} />
                     <span className="text-[13px] text-muted">eröffnet {ago(c.opened_at)}</span>
@@ -119,7 +119,7 @@ async function Queue({ q }: { q: QueueData }) {
               const href = links[`${r.target_type}:${r.target_id}`];
               const p = reportPriority(r);
               return (
-                <li key={r.id} className={cx("panel rounded-[14px] p-5 md:p-6 flex flex-col anim-rise", p === "hoch" && "border-late/40")} style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
+                <li key={r.id} className={cx("panel rounded-[8px] p-5 md:p-6 flex flex-col anim-rise", p === "hoch" && "border-late/40")} style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
                   <div className="flex items-center justify-between gap-3">
                     <PriorityChip p={p} />
                     <span className="text-[13px] text-muted">{ago(r.created_at)}</span>
@@ -142,7 +142,7 @@ async function Queue({ q }: { q: QueueData }) {
       <section aria-labelledby="q-korrekturen">
         <ModHead id="q-korrekturen" title="Katalogkorrekturen" count={q.corrections.length} />
         {q.corrections.length ? (
-          <ul className="panel rounded-[14px] divide-y divide-line">
+          <ul className="panel rounded-[8px] divide-y divide-line">
             {q.corrections.map((c) => (
               <li key={c.id} className="p-5 md:px-6 grid gap-x-6 gap-y-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
                 <div className="min-w-0">
@@ -212,7 +212,7 @@ async function Kpis() {
         </Notice>
       )}
 
-      <section className="surface-night rounded-[22px] p-7 md:p-10 grid gap-8 md:grid-cols-[1fr_auto] md:items-end anim-rise">
+      <section className="surface-night rounded-[12px] p-7 md:p-10 grid gap-8 md:grid-cols-[1fr_auto] md:items-end anim-rise">
         <div>
           <p className="eyebrow !text-night-muted">Leitkennzahl · letzte 7 Tage</p>
           <p className="display text-[96px] md:text-[150px] tnum mt-4 leading-[0.8]">{fmt(num(k.completed_week) ?? 0, 0)}</p>
@@ -220,11 +220,11 @@ async function Kpis() {
         </div>
         <dl className="grid grid-cols-2 gap-x-10 gap-y-1 md:text-right">
           <div>
-            <dd className="font-serif text-[44px] leading-none tnum">{hit}<span className="text-night-muted">/{rows.length}</span></dd>
+            <dd className="font-[520] tracking-[-0.035em] text-[44px] leading-none tnum">{hit}<span className="text-night-muted">/{rows.length}</span></dd>
             <dt className="text-[13px] text-night-muted mt-1.5">Ziele erreicht</dt>
           </div>
           <div>
-            <dd className="font-serif text-[44px] leading-none tnum">{rows.length - known}</dd>
+            <dd className="font-[520] tracking-[-0.035em] text-[44px] leading-none tnum">{rows.length - known}</dd>
             <dt className="text-[13px] text-night-muted mt-1.5">ohne Daten</dt>
           </div>
         </dl>
@@ -256,7 +256,7 @@ function KpiTile({ k, i }: { k: Kpi; i: number }) {
   const fill = k.value === null ? 0 : Math.max(2, Math.min(100, (k.value / max) * 100));
   const mark = (k.goal / max) * 100;
   return (
-    <li className="panel rounded-[14px] p-5 flex flex-col sm:min-h-[228px] anim-rise" style={{ animationDelay: `${i * 35}ms` }}>
+    <li className="panel rounded-[8px] p-5 flex flex-col sm:min-h-[228px] anim-rise" style={{ animationDelay: `${i * 35}ms` }}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="ui-title text-[15px]">{k.label}</p>
@@ -266,7 +266,7 @@ function KpiTile({ k, i }: { k: Kpi; i: number }) {
           ? <Chip>Keine Daten</Chip>
           : <Chip tone={ok ? "ok" : "late"} strong>{ok ? "Erreicht" : "Unter Ziel"}</Chip>}
       </div>
-      <p className="font-serif text-[52px] leading-none tnum mt-5">
+      <p className="font-[520] tracking-[-0.035em] text-[52px] leading-none tnum mt-5">
         {k.value === null ? <span className="text-muted">–</span> : <>{fmt(k.value, k.digits)}<span className="text-[26px] text-muted">{k.unit}</span></>}
       </p>
       <div className="mt-auto pt-5">
@@ -291,7 +291,7 @@ async function Flags() {
   return (
     <div className="grid gap-4 lg:grid-cols-2 items-start">
       {regions.map((r, i) => (
-        <section key={r.id} className="panel rounded-[14px] overflow-hidden anim-rise" style={{ animationDelay: `${i * 50}ms` }}>
+        <section key={r.id} className="panel rounded-[8px] overflow-hidden anim-rise" style={{ animationDelay: `${i * 50}ms` }}>
           <div className="flex items-center justify-between gap-4 px-5 md:px-6 pt-5 pb-4">
             <div>
               <p className="eyebrow">Region</p>
@@ -325,17 +325,17 @@ async function Accounts({ q }: { q: string }) {
         <label className="sr-only" htmlFor="mod-q">Vorname oder E-Mail</label>
         <div className="relative flex-1">
           <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-          <Input id="mod-q" name="q" defaultValue={q} placeholder="Vorname oder E-Mail" autoComplete="off" className="pl-11 rounded-full" />
+          <Input id="mod-q" name="q" defaultValue={q} placeholder="Vorname oder E-Mail" autoComplete="off" className="pl-11 rounded-[6px]" />
         </div>
         <Button type="submit" className="h-12">Suchen</Button>
       </form>
       <p className="eyebrow mt-8 mb-3">{q ? `${users.length} Treffer für «${q}»` : "Neueste Konten"}</p>
       {users.length ? (
-        <ul className="panel rounded-[14px] divide-y divide-line overflow-hidden">
+        <ul className="panel rounded-[8px] divide-y divide-line overflow-hidden">
           {users.map((u) => (
             <li key={u.id}>
               <Link href={`/moderation/konto/${u.id}`} className="group flex items-center gap-4 px-4 md:px-5 py-3.5 hover:bg-paper-2 transition-colors">
-                <span className="h-10 w-10 flex-none rounded-full bg-paper-3 grid place-items-center font-serif text-[19px]">{(u.first_name || "?").slice(0, 1).toUpperCase()}</span>
+                <span className="h-10 w-10 flex-none rounded-full bg-paper-3 grid place-items-center font-semibold text-[19px]">{(u.first_name || "?").slice(0, 1).toUpperCase()}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[15px] font-semibold">{u.first_name || "Ohne Namen"}</span>
                   <span className="block text-sm text-muted truncate">{u.email}{u.municipality ? ` · ${u.municipality}` : ""}</span>
@@ -363,7 +363,7 @@ async function Log() {
   ]);
   const regionNames = Object.fromEntries(flagRows.map((f) => [f.region_id, f.region_name]));
   return (
-    <ol className="panel rounded-[14px] divide-y divide-line">
+    <ol className="panel rounded-[8px] divide-y divide-line">
       {log.map((e) => {
         const href = links[`${e.target_type}:${e.target_id}`];
         const target = e.target_type === "flag" ? flagTarget(String(e.target_id), regionNames) : targetTypeLabel[e.target_type as string] ?? e.target_type;

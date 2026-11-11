@@ -241,8 +241,8 @@ function QuickStart() {
       <ol className="grid grid-flow-col auto-cols-[78%] sm:auto-cols-[46%] lg:grid-flow-row lg:grid-cols-4 gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 scroll-px-4 sm:mx-0 sm:px-0 sm:scroll-px-0 pb-1" style={{ scrollbarWidth: "none" }}>
         {STEPS.map(([n, title, text, href, more], i) => (
           <li key={n} className="snap-start anim-rise" style={{ animationDelay: `${80 + i * 50}ms` }}>
-            <Link href={href} className="group panel-quiet rounded-[18px] p-6 flex flex-col h-full min-h-[236px] hover:bg-paper-3 transition-colors duration-300">
-              <span className="font-serif text-[44px] leading-none text-muted tnum transition-colors group-hover:text-ink">{n}</span>
+            <Link href={href} className="group panel-quiet rounded-[10px] p-6 flex flex-col h-full min-h-[236px] hover:bg-paper-3 transition-colors duration-300">
+              <span className="font-[520] tracking-[-0.035em] text-[44px] leading-none text-muted tnum transition-colors group-hover:text-ink">{n}</span>
               <span className="ui-title text-[21px] mt-5">{title}</span>
               <span className="text-ink-2 text-[15px] mt-2 leading-relaxed">{text}</span>
               <span className="mt-auto pt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold">

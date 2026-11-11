@@ -13,7 +13,7 @@ export default function Loading() {
       </div>
       <div className="space-y-5">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="panel !rounded-[18px] px-5 md:px-8 py-6">
+          <div key={i} className="panel !rounded-[10px] px-5 md:px-8 py-6">
             <div className="skeleton h-6 w-48" />
             {[0, 1].map((k) => (
               <div key={k} className="grid md:grid-cols-[5fr_7fr] gap-x-10 gap-y-3 py-5">

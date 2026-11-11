@@ -115,7 +115,7 @@ export function Erfassen({ initial }: { initial: Added[] }) {
             {TABS.map((t) => (
               <button key={t.id} role="tab" type="button" id={`tab-${t.id}`} aria-selected={tab === t.id} aria-controls={`panel-${t.id}`}
                 onClick={() => switchTab(t.id)}
-                className={cx("h-10 px-5 rounded-full text-[14px] font-semibold whitespace-nowrap transition-[background-color,color] duration-200", tab === t.id ? "bg-ink text-paper" : "text-ink-2 hover:bg-paper-3")}>
+                className={cx("h-10 px-5 rounded-[6px] text-[14px] font-semibold whitespace-nowrap transition-[background-color,color] duration-200", tab === t.id ? "bg-ink text-paper" : "text-ink-2 hover:bg-paper-3")}>
                 {t.label}
               </button>
             ))}
@@ -125,16 +125,16 @@ export function Erfassen({ initial }: { initial: Added[] }) {
             {tab === "scan" && (
               <div className="space-y-5">
                 {/* Die Bühne: Kamera auf dunkler Fläche */}
-                <div className="surface-night rounded-[22px] p-3 md:p-4">
+                <div className="surface-night rounded-[12px] p-3 md:p-4">
                   <div className="flex items-center justify-between gap-3 px-2 pt-1 pb-3">
-                    <p className="text-[12px] uppercase tracking-[0.12em] font-semibold text-night-muted flex items-center gap-2">
+                    <p className="text-[12px] font-medium text-night-muted flex items-center gap-2">
                       <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", pending || looking ? "bg-night-muted" : "bg-accent live-dot")} />
                       {looking ? "Schlägt nach" : pending ? "Pausiert" : "Kamera bereit"}
                     </p>
                     <p className="text-[12.5px] text-night-muted hidden sm:block">Strichcode mit 978 oder 979</p>
                   </div>
                   <div className={cx("overflow-hidden rounded-[14px] transition-[max-height] duration-300 ease-[var(--ease-out-quart)]", pending || looking ? "max-h-32" : "max-h-[70vh]")}>
-                    <Scanner mode="isbn" continuous paused={Boolean(pending || looking)} onResult={lookup} fallbackHint="Gib die ISBN unten von Hand ein." className="!rounded-[14px] !border-night-line" />
+                    <Scanner mode="isbn" continuous paused={Boolean(pending || looking)} onResult={lookup} fallbackHint="Gib die ISBN unten von Hand ein." className="!rounded-[8px] !border-night-line" />
                   </div>
                   <p className="text-[13.5px] text-night-muted px-2 pt-3 pb-1">Halte den Strichcode auf der Rückseite in den Rahmen. Nach jedem Treffer geht es gleich weiter.</p>
                 </div>
@@ -175,10 +175,10 @@ export function Erfassen({ initial }: { initial: Added[] }) {
         </div>
 
         <aside className="lg:col-span-5 min-w-0 lg:sticky lg:top-8 self-start" aria-labelledby="heute">
-          <div className="panel !rounded-[18px] overflow-hidden">
+          <div className="panel !rounded-[10px] overflow-hidden">
             <div className="flex items-center justify-between gap-4 px-5 md:px-6 h-16 border-b border-line">
               <h2 id="heute" className="ui-title text-[19px]">Heute erfasst</h2>
-              <span className="font-serif text-[28px] leading-none tnum">{added.length}</span>
+              <span className="font-[520] tracking-[-0.035em] text-[28px] leading-none tnum">{added.length}</span>
             </div>
             {added.length === 0 ? (
               <div className="px-5 md:px-6 py-7 flex items-end gap-5">
@@ -217,7 +217,7 @@ export function Erfassen({ initial }: { initial: Added[] }) {
 
 function LookupSkeleton({ isbn }: { isbn: string }) {
   return (
-    <div className="panel !rounded-[18px] flex gap-4 p-5" aria-live="polite">
+    <div className="panel !rounded-[10px] flex gap-4 p-5" aria-live="polite">
       <div className="skeleton w-[80px] h-[120px] flex-none" />
       <div className="flex-1 pt-1">
         <p className="text-sm text-muted">ISBN {isbn} wird nachgeschlagen …</p>
@@ -253,12 +253,12 @@ function PendingCard({ edition, ask, onAsked, onCancel, onDone }: {
 
   const meta = [edition.publisher, edition.year, edition.isbn13].filter(Boolean).join(" · ");
   return (
-    <div className="anim-rise panel !rounded-[18px] p-5 md:p-6" aria-live="polite">
+    <div className="anim-rise panel !rounded-[10px] p-5 md:p-6" aria-live="polite">
       <div className="flex gap-4 md:gap-5">
         <div className="anim-cover flex-none"><Cover data={coverOf(edition)} height={128} priority /></div>
         <div className="min-w-0 flex-1">
           <p className="eyebrow flex items-center gap-1.5"><IconCheck width={14} height={14} strokeWidth={2} className="text-ok" /> Gefunden</p>
-          <h2 className="font-serif text-[30px] md:text-[36px] leading-[1.02] mt-2">{edition.title}</h2>
+          <h2 className="text-[30px] md:text-[36px] leading-[1.02] mt-2">{edition.title}</h2>
           <p className="text-ink-2 mt-1.5">{edition.authors.join(", ")}</p>
           {meta && <p className="text-[13px] text-muted mt-1 tnum">{meta}</p>}
         </div>
@@ -288,7 +288,7 @@ function ConditionGrid({ onPick, value }: { onPick: (c: number) => void; value?:
         return (
           <button key={c} type="button" onClick={() => onPick(c)} aria-pressed={on}
             className={cx(
-              "group flex flex-col items-start text-left rounded-[14px] p-4 min-h-[118px] border transition-[background-color,border-color,color,transform] duration-200 active:scale-[0.98] disabled:opacity-45",
+              "group flex flex-col items-start text-left rounded-[8px] p-4 min-h-[118px] border transition-[background-color,border-color,color,transform] duration-200 active:scale-[0.98] disabled:opacity-45",
               on ? "bg-ink text-paper border-ink" : "bg-paper border-line hover:border-ink",
             )}>
             <span aria-hidden className="flex gap-1">
@@ -388,7 +388,7 @@ function SearchTab({ pending, setPending, onIsbn, onManual, ask, onAsked, add }:
       )}
 
       {res && res.editions.length > 0 && (
-        <ul className={cx("mt-6 panel !rounded-[18px] divide-y divide-line overflow-hidden transition-opacity", loading && "opacity-60")} aria-label="Ausgaben">
+        <ul className={cx("mt-6 panel !rounded-[10px] divide-y divide-line overflow-hidden transition-opacity", loading && "opacity-60")} aria-label="Ausgaben">
           {res.editions.map((e) => (
             <li key={e.id}>
               <button type="button" onClick={() => setPending(e)} className="group w-full flex items-center gap-4 py-3 px-4 text-left hover:bg-paper-2 focus-visible:bg-paper-2 transition-colors">
@@ -399,7 +399,7 @@ function SearchTab({ pending, setPending, onIsbn, onManual, ask, onAsked, add }:
                     {[e.authors.join(", "), e.publisher, e.year].filter(Boolean).join(" · ")}
                   </span>
                 </span>
-                <span className="h-9 px-4 rounded-full border border-line-strong text-[13.5px] font-semibold flex-none hidden sm:inline-flex items-center group-hover:bg-ink group-hover:text-paper group-hover:border-ink transition-colors">Wählen</span>
+                <span className="h-9 px-4 rounded-[6px] border border-line-strong text-[13.5px] font-semibold flex-none hidden sm:inline-flex items-center group-hover:bg-ink group-hover:text-paper group-hover:border-ink transition-colors">Wählen</span>
               </button>
             </li>
           ))}
@@ -489,7 +489,7 @@ function ManualTab({ prefill, ask, onAsked, add }: {
   }
 
   return (
-    <form onSubmit={submit} className="panel !rounded-[18px] p-5 md:p-8 space-y-6" noValidate>
+    <form onSubmit={submit} className="panel !rounded-[10px] p-5 md:p-8 space-y-6" noValidate>
       {prefill.notFound && (
         <Notice tone="accent">Zur ISBN {prefill.isbn} haben wir in keinem Katalog etwas gefunden. Erfasse das Buch hier von Hand.</Notice>
       )}
@@ -521,7 +521,7 @@ function ManualTab({ prefill, ask, onAsked, add }: {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={preview} alt="Vorschau des Fotos" className="h-20 w-auto rounded-[6px] outline outline-1 -outline-offset-1 outline-black/10" />
           )}
-          <label className="inline-flex items-center gap-2 h-11 px-5 border border-line-strong rounded-full text-[15px] font-semibold cursor-pointer hover:border-ink hover:bg-paper-2 transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--focus)]">
+          <label className="inline-flex items-center gap-2 h-11 px-5 border border-line-strong rounded-[6px] text-[15px] font-semibold cursor-pointer hover:border-ink hover:bg-paper-2 transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--focus)]">
             <IconCamera width={18} height={18} /> {photo ? "Anderes Foto" : "Foto aufnehmen"}
             <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} />
           </label>

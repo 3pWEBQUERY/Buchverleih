@@ -117,7 +117,7 @@ export function PhoneSection({ phone, verifiedAt }: { phone: string | null; veri
       <div>
         <div className={itemCls}>
           <span className="min-w-0">
-            <span className="block font-serif text-[24px] leading-tight tnum">{fmtPhone(phone)}</span>
+            <span className="block font-[520] tracking-[-0.035em] text-[24px] leading-tight tnum">{fmtPhone(phone)}</span>
             <span className="chip !bg-transparent !px-0 !h-6 text-ok"><span className="h-1.5 w-1.5 rounded-full bg-ok" /> Bestätigt am {verifiedAt}</span>
           </span>
         </div>
@@ -428,7 +428,7 @@ export function ThemeChoice() {
 export function ExportData() {
   return (
     <a href="/api/v1/me/export" download
-      className="inline-flex items-center gap-2 h-11 px-5 rounded-full border border-line-strong font-semibold text-[15px] hover:border-ink hover:bg-paper-2 transition-colors duration-200">
+      className="inline-flex items-center gap-2 h-11 px-5 rounded-[6px] border border-line-strong font-semibold text-[15px] hover:border-ink hover:bg-paper-2 transition-colors duration-200">
       <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 4v11" /><path d="m7 10 5 5 5-5" /><path d="M5 20h14" /></svg>
       Daten herunterladen
     </a>
@@ -473,7 +473,7 @@ export function DeleteAccount() {
         <div>
           <p className="text-[15px] text-ink-2 max-w-prose">Deine Bücher verschwinden aus allen Regalen. Wunschliste, Kreise und Übergabeorte werden gelöscht.</p>
           <button type="button" onClick={() => { setConfirm(true); setError(null); }}
-            className="mt-5 inline-flex items-center h-11 px-5 rounded-full border border-late/60 text-late font-semibold text-[15px] hover:bg-late hover:text-paper hover:border-late transition-colors duration-200">
+            className="mt-5 inline-flex items-center h-11 px-5 rounded-[6px] border border-late/60 text-late font-semibold text-[15px] hover:bg-late hover:text-paper hover:border-late transition-colors duration-200">
             Konto löschen …
           </button>
         </div>
@@ -486,7 +486,7 @@ export function DeleteAccount() {
           </p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3 mt-5">
             <button type="button" onClick={destroy} disabled={busy} autoFocus
-              className="inline-flex items-center h-11 px-5 rounded-full bg-late text-paper font-semibold text-[15px] hover:opacity-90 transition-opacity disabled:opacity-45">
+              className="inline-flex items-center h-11 px-5 rounded-[6px] bg-late text-paper font-semibold text-[15px] hover:opacity-90 transition-opacity disabled:opacity-45">
               {busy ? "Löscht …" : "Endgültig löschen"}
             </button>
             <Button variant="quiet" className="h-11" onClick={() => setConfirm(false)} disabled={busy}>Abbrechen</Button>

@@ -17,7 +17,7 @@ export function Wordmark({ className = "", href = "/" }: { className?: string; h
   return (
     <Link href={href} className={cx("inline-flex items-center gap-2.5 group", className)} aria-label="Leihregal, Start">
       <LogoMark className="transition-transform duration-300 ease-[var(--ease-spring)] group-hover:-rotate-6" />
-      <span className="font-serif text-[26px] leading-none tracking-[-0.02em]">Leihregal</span>
+      <span className="text-[21px] font-[620] leading-none tracking-[-0.04em]">Leihregal</span>
     </Link>
   );
 }

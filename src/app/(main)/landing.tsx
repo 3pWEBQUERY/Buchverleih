@@ -38,11 +38,11 @@ export async function Landing() {
       <section className="landing-stage full-bleed surface-night relative overflow-clip">
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 pt-12 md:pt-16 pb-10 grid lg:grid-cols-[1.25fr_1fr] gap-12 items-center">
           <div>
-            <p className="inline-flex items-center gap-2 h-8 px-3.5 rounded-full border border-night-line text-[13px] font-medium text-night-muted anim-rise">
-              <span className="h-2 w-2 rounded-full bg-[var(--accent)] live-dot" /> Beta in Zürich und im Zürcher Unterland
+            <p className="inline-flex items-center gap-2 h-8 px-3.5 rounded-[6px] border border-night-line text-[13px] font-medium text-night-muted anim-rise">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" /> Beta in Zürich und im Zürcher Unterland
             </p>
             <h1 className="display mt-7 text-[56px] sm:text-[84px] md:text-[104px] xl:text-[120px] anim-rise" style={{ animationDelay: "60ms" }}>
-              Leih dir das Buch <em className="text-[var(--accent)]">von nebenan.</em>
+              Leih dir das Buch <em>von nebenan.</em>
             </h1>
             <p className="mt-7 text-night-muted text-[17px] md:text-[19px] leading-relaxed max-w-xl anim-rise" style={{ animationDelay: "120ms" }}>
               Leihregal verbindet die Bücherregale einer Nachbarschaft. Du leihst, was andere gelesen haben, und verleihst, was bei dir nur steht –
@@ -52,7 +52,7 @@ export async function Landing() {
               {[[stats.copies, "Bücher"], [stats.members, "Mitglieder"], ["0", "CHF Gebühr"]].map(([n, l]) => (
                 <div key={String(l)}>
                   <dt className="sr-only">{l}</dt>
-                  <dd className="font-serif text-[44px] md:text-[52px] leading-none tnum">{n}</dd>
+                  <dd className="font-[520] tracking-[-0.035em] text-[44px] md:text-[52px] leading-none tnum">{n}</dd>
                   <dd className="text-[13px] text-night-muted mt-1.5">{l}</dd>
                 </div>
               ))}
@@ -113,22 +113,22 @@ export async function Landing() {
         <p className="eyebrow">Gebaut für Vertrauen</p>
         <h2 className="display text-[48px] md:text-[76px] mt-4 max-w-[14ch]">Damit das Buch <em>zurückkommt.</em></h2>
         <div className="mt-10 md:mt-14 grid gap-4 md:grid-cols-6 md:auto-rows-[minmax(250px,auto)]">
-          <article className="surface-night rounded-[18px] p-7 md:p-9 md:col-span-4 flex flex-col">
+          <article className="surface-night rounded-[10px] p-7 md:p-9 md:col-span-4 flex flex-col">
             <p className="eyebrow !text-night-muted">Verleihkalender</p>
-            <h3 className="font-serif text-[34px] md:text-[42px] mt-3 max-w-md">Ein Exemplar, ein Kalender.</h3>
+            <h3 className="text-[34px] md:text-[42px] mt-3 max-w-md">Ein Exemplar, ein Kalender.</h3>
             <p className="text-night-muted mt-3 max-w-md">Buche im Voraus, auch wenn das Buch gerade weg ist. Zeiträume überschneiden sich nie – das erzwingt die Datenbank, nicht der gute Wille.</p>
             <div className="mt-auto pt-8"><CalendarBars /></div>
           </article>
-          <article className="rounded-[18px] p-7 md:p-9 md:col-span-2 bg-accent text-accent-ink flex flex-col justify-between">
+          <article className="rounded-[10px] p-7 md:p-9 md:col-span-2 bg-accent text-accent-ink flex flex-col justify-between">
             <p className="eyebrow !text-accent-ink/75">Kein Geld im Ablauf</p>
             <div>
-              <p className="font-serif text-[96px] md:text-[120px] leading-[0.85] tnum">0.–</p>
+              <p className="font-[520] tracking-[-0.035em] text-[96px] md:text-[120px] leading-[0.85] tnum">0.–</p>
               <p className="mt-3 text-[17px] font-medium">Leihen unter Privaten bleibt kostenlos. Ohne Kaution, ohne Gebühr pro Leihe.</p>
             </div>
           </article>
-          <article className="panel-quiet rounded-[18px] p-7 md:p-9 md:col-span-3">
+          <article className="panel-quiet rounded-[10px] p-7 md:p-9 md:col-span-3">
             <p className="eyebrow">Vertrauensstufen</p>
-            <h3 className="font-serif text-[32px] mt-3">Wer neu ist, leiht wenig. Wer verlässlich ist, mehr.</h3>
+            <h3 className="text-[32px] mt-3">Wer neu ist, leiht wenig. Wer verlässlich ist, mehr.</h3>
             <div className="mt-7 space-y-3">
               {[["Neu", 2, "E-Mail und Mobilnummer bestätigt"], ["Bewährt", 5, "3 Leihen, alle pünktlich"], ["Vertraut", 10, "10 Leihen, kein Verlust"]].map(([l, n, d], i) => (
                 <div key={String(l)} className="grid grid-cols-[88px_1fr_auto] items-center gap-3">
@@ -140,29 +140,29 @@ export async function Landing() {
             </div>
             <p className="text-[13px] text-muted mt-5">Keine Sterne, keine Punkte. Drei Zahlen auf dem Profil: verliehen, geliehen, pünktlich zurück.</p>
           </article>
-          <article className="panel rounded-[18px] p-7 md:p-9 md:col-span-3 flex flex-col">
+          <article className="panel rounded-[10px] p-7 md:p-9 md:col-span-3 flex flex-col">
             <p className="eyebrow">Kreise</p>
-            <h3 className="font-serif text-[32px] mt-3">Ein Regal nur für euch.</h3>
+            <h3 className="text-[32px] mt-3">Ein Regal nur für euch.</h3>
             <p className="text-ink-2 mt-3 max-w-md">Lesekreis, Hausgemeinschaft, Büro: Bücher nur für Mitglieder sichtbar, Anfragen auf Wunsch automatisch angenommen, eigene Leihfrist.</p>
             <div className="mt-auto pt-7 flex items-center justify-between">
               <div className="flex -space-x-3">
                 {["L", "M", "J", "A", "S"].map((c, i) => (
-                  <span key={c} className="h-11 w-11 rounded-full ring-[3px] ring-paper grid place-items-center font-serif text-lg" style={{ background: ["#22324a", "#d23c1a", "#2e4a3b", "#b8902f", "#4b2e44"][i], color: "#fff" }}>{c}</span>
+                  <span key={c} className="h-11 w-11 rounded-full ring-[3px] ring-paper grid place-items-center font-semibold text-lg" style={{ background: ["#22324a", "#d23c1a", "#2e4a3b", "#b8902f", "#4b2e44"][i], color: "#fff" }}>{c}</span>
                 ))}
               </div>
               <Link href="/anmelden?next=/kreise/neu" className="inline-flex items-center gap-2 font-semibold link-grow">Kreis gründen <IconArrowRight width={18} height={18} /></Link>
             </div>
           </article>
-          <article className="panel rounded-[18px] p-7 md:p-9 md:col-span-6 grid md:grid-cols-[1fr_1.4fr] gap-8 items-center">
+          <article className="panel rounded-[10px] p-7 md:p-9 md:col-span-6 grid md:grid-cols-[1fr_1.4fr] gap-8 items-center">
             <div>
               <p className="eyebrow">Wenn es hakt</p>
-              <h3 className="font-serif text-[32px] mt-3">Schweigen hat eine Folge.</h3>
+              <h3 className="text-[32px] mt-3">Schweigen hat eine Folge.</h3>
               <p className="text-ink-2 mt-3">Die Eskalation ist bewusst langsam – die meisten Verspätungen sind Vergesslichkeit. Aber nichts bleibt hängen.</p>
             </div>
             <ol className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-line rounded-[12px] overflow-hidden">
               {[["−5 Tage", "Erinnerung mit Knopf «Verlängern»"], ["+3 Tage", "Kulanz vorbei, zählt als unpünktlich"], ["+7 Tage", "Keine neuen Anfragen bis zur Rückgabe"], ["+21 Tage", "Fall mit festen Schritten bis Tag 30"]].map(([d, t], i) => (
                 <li key={d} className="bg-paper p-4">
-                  <span className={`block font-serif text-[26px] leading-none tnum ${i === 3 ? "text-late" : ""}`}>{d}</span>
+                  <span className={`block font-[520] tracking-[-0.035em] text-[26px] leading-none tnum ${i === 3 ? "text-late" : ""}`}>{d}</span>
                   <span className="block text-[13px] text-ink-2 mt-2 leading-snug">{t}</span>
                 </li>
               ))}
@@ -176,10 +176,10 @@ export async function Landing() {
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 py-16 md:py-24 grid md:grid-cols-[1fr_auto] gap-8 items-end">
           <h2 className="display text-[52px] md:text-[96px] max-w-[12ch]">Stell dein erstes Buch <em>ins Regal.</em></h2>
           <div className="flex flex-col sm:flex-row gap-3">
-            <Link href="/anmelden?next=/regal/neu" className="h-14 px-8 rounded-full bg-night text-night-ink font-semibold inline-flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+            <Link href="/anmelden?next=/regal/neu" className="h-14 px-8 rounded-[6px] bg-night text-night-ink font-semibold inline-flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
               Jetzt beginnen <IconArrowRight width={18} height={18} />
             </Link>
-            <Link href="/hilfe" className="h-14 px-8 rounded-full border-2 border-accent-ink/40 font-semibold inline-flex items-center justify-center hover:border-accent-ink transition-colors">
+            <Link href="/hilfe" className="h-14 px-8 rounded-[6px] border-2 border-accent-ink/40 font-semibold inline-flex items-center justify-center hover:border-accent-ink transition-colors">
               So funktioniert es
             </Link>
           </div>
@@ -193,7 +193,7 @@ export async function Landing() {
 function HeroPreview() {
   return (
     <div className="relative hidden lg:block h-[480px]" aria-hidden>
-      <div className="absolute right-0 top-0 w-[350px] rounded-[18px] bg-paper text-ink p-6 rotate-[2deg] anim-cover" style={{ animationDelay: "200ms" }}>
+      <div className="absolute right-0 top-0 w-[350px] rounded-[10px] bg-paper text-ink p-6 anim-cover" style={{ animationDelay: "200ms" }}>
         <div className="flex gap-4">
           <div className="w-[74px] h-[108px] rounded-[3px] flex-none p-2.5 flex flex-col" style={{ background: "#2e4a3b", color: "#eee4cc" }}>
             <span className="block h-px w-6 bg-current opacity-70" />
@@ -213,10 +213,10 @@ function HeroPreview() {
         </div>
         <div className="mt-5 flex items-center justify-between rounded-[12px] bg-paper-2 px-4 py-3">
           <div className="leading-tight"><p className="text-[12px] text-muted">Übergabe</p><p className="font-semibold text-[14.5px]">Sa, 14:00 · Bahnhof Bülach</p></div>
-          <span className="h-9 px-4 rounded-full bg-accent text-accent-ink text-[13px] font-semibold grid place-items-center whitespace-nowrap">Code scannen</span>
+          <span className="h-9 px-4 rounded-[6px] bg-accent text-accent-ink text-[13px] font-semibold grid place-items-center whitespace-nowrap">Code scannen</span>
         </div>
       </div>
-      <div className="absolute left-0 bottom-0 w-[196px] rounded-[18px] bg-white text-black p-4 -rotate-[5deg] anim-cover" style={{ animationDelay: "320ms" }}>
+      <div className="absolute left-0 bottom-0 w-[196px] rounded-[10px] bg-white text-black p-4 anim-cover" style={{ animationDelay: "320ms" }}>
         <p className="font-serif text-[17px]">Übergabecode</p>
         <div className="mt-3 grid grid-cols-9 gap-[2px]">
           {"111011101011010010111101001110110100101110010110101111001011101110110100101111010011101".split("").map((c, i) => <span key={i} className={`aspect-square ${c === "1" ? "bg-black" : ""}`} />)}
@@ -230,8 +230,8 @@ function HeroPreview() {
 
 function Step({ n, title, text, children }: { n: string; title: string; text: string; children: React.ReactNode }) {
   return (
-    <li className="snap-start panel-quiet rounded-[18px] p-6 md:p-7 flex flex-col min-h-[340px] group hover:bg-paper-3 transition-colors duration-300">
-      <span className="font-serif text-[22px] text-muted tnum">{n}</span>
+    <li className="snap-start panel-quiet rounded-[10px] p-6 md:p-7 flex flex-col min-h-[340px] group hover:bg-paper-3 transition-colors duration-300">
+      <span className="font-[520] tracking-[-0.035em] text-[22px] text-muted tnum">{n}</span>
       <h3 className="ui-title text-[24px] mt-1">{title}</h3>
       <p className="text-ink-2 text-[15px] mt-2 leading-relaxed">{text}</p>
       <div className="mt-auto pt-8 transition-transform duration-300 ease-[var(--ease-spring)] group-hover:-translate-y-1">{children}</div>

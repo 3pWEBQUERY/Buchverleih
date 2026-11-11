@@ -15,7 +15,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
   if (!circle) {
     return (
       <div className="min-h-[60vh] grid place-items-center py-6">
-        <div className="w-full max-w-xl panel-quiet !rounded-[22px] p-8 md:p-12 text-center anim-rise">
+        <div className="w-full max-w-xl panel-quiet !rounded-[12px] p-8 md:p-12 text-center anim-rise">
           <div aria-hidden className="flex items-end justify-center gap-1 h-[88px] opacity-60">
             <Spine title="Stiller" author="Max Frisch" height={88} />
             <Spine title="Der Process" author="Franz Kafka" height={88} />
@@ -46,12 +46,12 @@ export default async function Page({ params }: { params: Promise<{ code: string 
             ))}
           </div>
           <div aria-hidden className="h-[3px] bg-night-ink/90 rounded-full max-w-[420px] mx-auto" />
-          <p className="text-[12px] uppercase tracking-[0.12em] font-semibold text-night-muted mt-8">Einladung in einen Kreis</p>
+          <p className="text-[12px] font-medium text-night-muted mt-8">Einladung in einen Kreis</p>
           <h1 className="display text-[48px] md:text-[72px] mt-3 break-words">{circle.name}</h1>
           {circle.description && <p className="text-[17px] text-night-ink/85 mt-5 leading-relaxed max-w-md mx-auto">{circle.description}</p>}
           <div className="mt-6 flex flex-wrap justify-center gap-2 tnum">
-            <span className="h-7 px-3 rounded-full bg-night-2 text-[13px] font-medium inline-flex items-center">{circle.member_count} {circle.member_count === 1 ? "Mitglied" : "Mitglieder"}</span>
-            <span className="h-7 px-3 rounded-full bg-night-2 text-[13px] font-medium inline-flex items-center">{circle.join_mode === "link" ? "Beitritt sofort" : "Beitritt mit Freigabe"}</span>
+            <span className="h-7 px-3 rounded-[6px] bg-night-2 text-[13px] font-medium inline-flex items-center">{circle.member_count} {circle.member_count === 1 ? "Mitglied" : "Mitglieder"}</span>
+            <span className="h-7 px-3 rounded-[6px] bg-night-2 text-[13px] font-medium inline-flex items-center">{circle.join_mode === "link" ? "Beitritt sofort" : "Beitritt mit Freigabe"}</span>
           </div>
         </div>
 

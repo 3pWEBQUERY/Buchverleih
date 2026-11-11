@@ -18,7 +18,7 @@ export default function Loading() {
           </div>
         ))}
       </div>
-      <div className="surface-night rounded-[22px] px-5 md:px-9 pt-8 md:pt-10 pb-8 -mx-1 md:mx-0">
+      <div className="surface-night rounded-[12px] px-5 md:px-9 pt-8 md:pt-10 pb-8 -mx-1 md:mx-0">
         <div className="h-3 w-20 rounded bg-night-2" />
         <div className="h-10 w-56 rounded bg-night-2 mt-3 mb-8" />
         <div className="flex gap-5 items-end overflow-hidden">

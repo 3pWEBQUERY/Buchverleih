@@ -78,7 +78,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
   return (
     <article className="space-y-14 md:space-y-16">
       {/* ------------------------------------------------------------ Kopf */}
-      <header className="surface-night rounded-[22px] -mx-1 md:mx-0 p-6 md:p-10 lg:p-12 grid md:grid-cols-[auto_minmax(0,1fr)] gap-8 md:gap-12 items-end">
+      <header className="surface-night rounded-[12px] -mx-1 md:mx-0 p-6 md:p-10 lg:p-12 grid md:grid-cols-[auto_minmax(0,1fr)] gap-8 md:gap-12 items-end">
         <div className="flex-none">
           <div className="md:hidden"><Cover data={cover} width={150} large priority className="anim-cover" /></div>
           <div className="hidden md:block lg:hidden"><Cover data={cover} width={210} large priority className="anim-cover" /></div>
@@ -86,7 +86,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
         </div>
 
         <div className="min-w-0">
-          <p className="text-[12px] uppercase tracking-[0.12em] font-semibold text-night-muted anim-rise">
+          <p className="text-[12px] font-medium text-night-muted anim-rise">
             {[work.genre, work.editions > 1 ? `${work.editions} Ausgaben` : null].filter(Boolean).join(" · ") || "Titel"}
           </p>
           <h1 lang="de" className={cx("display mt-3 break-words hyphens-auto anim-rise", long ? "text-[44px] md:text-[60px] lg:text-[68px]" : "text-[52px] md:text-[72px] lg:text-[84px]")} style={{ animationDelay: "40ms" }}>
@@ -103,7 +103,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
             ].map(([n, l], i) => (
               <div key={l} className={cx("flex flex-col-reverse", i > 0 && "border-l border-night-line pl-4 md:pl-6")}>
                 <dt className="text-[13px] text-night-muted mt-1.5">{l}</dt>
-                <dd className="font-serif text-[26px] sm:text-[30px] md:text-[40px] leading-none tnum whitespace-nowrap">{n}</dd>
+                <dd className="font-[520] tracking-[-0.035em] text-[26px] sm:text-[30px] md:text-[40px] leading-none tnum whitespace-nowrap">{n}</dd>
               </div>
             ))}
           </dl>
@@ -128,18 +128,18 @@ export default async function TitelPage({ params, searchParams }: Params) {
         </SectionTitle>
 
         {!viewer && !o && (
-          <form method="get" className="panel-quiet rounded-[18px] p-5 md:p-6 mb-5 flex flex-wrap items-center justify-between gap-4">
+          <form method="get" className="panel-quiet rounded-[10px] p-5 md:p-6 mb-5 flex flex-wrap items-center justify-between gap-4">
             <label htmlFor="titel-plz" className="text-[15px] text-ink-2">Deine Postleitzahl, um Entfernungen zu sehen.</label>
             <div className="flex items-center gap-2">
               <input id="titel-plz" name="plz" inputMode="numeric" pattern="\d{4}" maxLength={4} placeholder="8180"
-                className="w-28 h-11 bg-paper border border-line-strong rounded-full px-5 text-[16px] tnum tracking-[0.08em] placeholder:text-muted/70 focus:outline-none focus:border-ink focus:ring-[3px] focus:ring-ink/10" />
-              <button type="submit" className="h-11 px-5 rounded-full bg-ink text-paper font-semibold hover:bg-ink-2 transition-colors">Zeigen</button>
+                className="w-28 h-11 bg-paper border border-line-strong rounded-[6px] px-5 text-[16px] tnum tracking-[0.08em] placeholder:text-muted/70 focus:outline-none focus:border-ink focus:ring-[3px] focus:ring-ink/10" />
+              <button type="submit" className="h-11 px-5 rounded-[6px] bg-ink text-paper font-semibold hover:bg-ink-2 transition-colors">Zeigen</button>
             </div>
           </form>
         )}
 
         {others.length === 0 ? (
-          <div className="panel-quiet rounded-[18px] p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6">
+          <div className="panel-quiet rounded-[10px] p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6">
             <div aria-hidden className="flex items-end gap-[3px] flex-none">
               <Spine title={work.title} author={work.authors[0]} height={78} />
               <span className="h-[60px] w-[34px] rounded-[3px] border border-dashed border-line-strong" />

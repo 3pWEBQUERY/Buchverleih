@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource/instrument-serif/400.css";
-import "@fontsource/instrument-serif/400-italic.css";
-import "@fontsource-variable/instrument-sans/wght.css";
+import "@fontsource-variable/host-grotesk/wght.css";
+import "@fontsource-variable/literata/opsz.css";
+import "@fontsource-variable/literata/opsz-italic.css";
 import "./globals.css";
 import { ToastProvider } from "@/components/toast";
 import { RegisterSW } from "@/components/register-sw";

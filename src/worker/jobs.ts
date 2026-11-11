@@ -6,6 +6,7 @@ import { sendMail } from "@/lib/notify/mail";
 import { sendSms } from "@/lib/notify/sms";
 import { renderNotification, type NotificationType, type NotifyData } from "@/lib/notify";
 import { deleteObject, getObjectBytes, keys, putObject } from "@/lib/storage";
+import { coverCandidates, fetchImage } from "@/lib/catalog/covers";
 
 type Job = { id: number; kind: string; payload: Record<string, unknown>; attempts: number };
 
@@ -91,19 +92,30 @@ const handlers: Record<string, (p: Record<string, unknown>) => Promise<void>> = 
     await deleteObject(u.raw_key).catch(() => {});
   },
 
-  /** Cover nur aus Quellen mit geklärter Nutzung (PRD 7.2); wird erst mit COVERS_OPENLIBRARY=true eingereiht. */
+  /** Original-Cover suchen, Metadaten entfernen, AVIF/WebP-Varianten im Bucket ablegen. */
   async cache_cover(p) {
-    const res = await fetch(p.url as string, { signal: AbortSignal.timeout(10_000) });
-    if (!res.ok) return;
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.length < 2000) return; // Open Library liefert Platzhalter als 1×1-Bild
-    const img = sharp(buf).resize({ width: 800, height: 1200, fit: "inside", withoutEnlargement: true });
-    const meta = await img.clone().toBuffer({ resolveWithObject: true });
-    const key = keys.cover(p.isbn as string);
-    await putObject(`${key}.avif`, await img.clone().avif({ quality: 55 }).toBuffer(), "image/avif");
-    await putObject(`${key}.webp`, await img.clone().webp({ quality: 78 }).toBuffer(), "image/webp");
-    await putObject(`${key}-480.webp`, await sharp(buf).resize({ width: 480 }).webp({ quality: 75 }).toBuffer(), "image/webp");
-    await putObject(`${key}-480.avif`, await sharp(buf).resize({ width: 480 }).avif({ quality: 50 }).toBuffer(), "image/avif");
-    await sql`update editions set cover_key = ${key}, cover_w = ${meta.info.width}, cover_h = ${meta.info.height} where id = ${p.editionId as string}`;
+    const isbn = p.isbn as string;
+    const urls = p.url ? [p.url as string] : await coverCandidates(isbn);
+    for (const url of urls) {
+      const buf = await fetchImage(url);
+      if (!buf) continue;
+      let meta;
+      try {
+        meta = await sharp(buf).metadata();
+      } catch {
+        continue;
+      }
+      if (!meta.width || !meta.height || meta.height < 160 || meta.width / meta.height > 1.2) continue; // zu klein oder kein Buchformat
+      const key = keys.cover(isbn);
+      const big = sharp(buf).rotate().resize({ width: 900, height: 1350, fit: "inside", withoutEnlargement: true });
+      const out = await big.clone().webp({ quality: 82 }).toBuffer({ resolveWithObject: true });
+      await putObject(`${key}.webp`, out.data, "image/webp");
+      await putObject(`${key}.avif`, await big.clone().avif({ quality: 58 }).toBuffer(), "image/avif");
+      const small = sharp(buf).rotate().resize({ width: 480, withoutEnlargement: true });
+      await putObject(`${key}-480.webp`, await small.clone().webp({ quality: 80 }).toBuffer(), "image/webp");
+      await putObject(`${key}-480.avif`, await small.clone().avif({ quality: 55 }).toBuffer(), "image/avif");
+      await sql`update editions set cover_key = ${key}, cover_w = ${out.info.width}, cover_h = ${out.info.height} where isbn13 = ${isbn}`;
+      return;
+    }
   },
 };

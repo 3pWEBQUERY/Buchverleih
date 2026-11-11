@@ -42,9 +42,9 @@ export function LoginForm({ next }: { next: string | null }) {
 
   if (sent) {
     return (
-      <div className="panel-quiet rounded-[18px] p-6 md:p-7 anim-rise" aria-live="polite">
+      <div className="panel-quiet rounded-[10px] p-6 md:p-7 anim-rise" aria-live="polite">
         <span className="h-12 w-12 rounded-full bg-ink text-paper grid place-items-center anim-pop"><IconCheck width={22} height={22} /></span>
-        <p className="font-serif text-[34px] leading-none mt-5">Schau in dein Postfach.</p>
+        <p className="text-[34px] font-[560] tracking-[-0.035em] leading-none mt-5">Schau in dein Postfach.</p>
         <p className="text-ink-2 mt-3">Wir haben einen Link an <strong className="font-semibold text-ink break-all">{email}</strong> geschickt. Er gilt 20 Minuten.</p>
         {sent.devLink && (
           <Notice tone="accent" className="mt-6 text-sm">

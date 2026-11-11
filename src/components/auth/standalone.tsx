@@ -30,7 +30,7 @@ export function StandaloneShell({ children, motif }: { children: ReactNode; moti
 /** Dunkle Bühne mit einem Regal aus Buchrücken; optional mit einer Lücke im Regal */
 function Motif({ label, gap }: { label: string; gap?: number }) {
   return (
-    <div className="order-1 lg:order-2 surface-night rounded-[22px] overflow-hidden flex flex-col h-[148px] lg:h-[460px] anim-rise" aria-hidden>
+    <div className="order-1 lg:order-2 surface-night rounded-[12px] overflow-hidden flex flex-col h-[148px] lg:h-[460px] anim-rise" aria-hidden>
       <p className="eyebrow !text-night-muted px-5 pt-4 lg:px-9 lg:pt-8">{label}</p>
       {/* Mobil verkleinert gesetzt, damit die Proportionen gleich bleiben */}
       <div className="mt-auto overflow-hidden lg:hidden" style={{ height: 105 }}>

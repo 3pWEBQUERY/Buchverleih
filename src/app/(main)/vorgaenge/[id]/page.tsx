@@ -91,7 +91,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
           <div className="order-3 lg:order-none empty:hidden"><NextStep loan={loan} me={user.id} /></div>
 
-          <section aria-labelledby="chat" className="order-5 lg:order-none panel !rounded-[18px] overflow-hidden min-w-0">
+          <section aria-labelledby="chat" className="order-5 lg:order-none panel !rounded-[10px] overflow-hidden min-w-0">
             <div className="flex items-center justify-between gap-4 px-5 md:px-6 h-16 border-b border-line">
               <h2 id="chat" className="ui-title text-[19px] flex items-center gap-2.5">
                 <IconChat width={18} height={18} className="text-muted" /> Chat mit {other?.first_name}
@@ -118,7 +118,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             </div>
           )}
 
-          <details className="order-8 lg:order-none panel !rounded-[18px] group">
+          <details className="order-8 lg:order-none panel !rounded-[10px] group">
             <summary className="cursor-pointer list-none flex items-center justify-between gap-4 px-5 md:px-6 min-h-16 [&::-webkit-details-marker]:hidden">
               <span className="ui-title text-[19px]">Verlauf</span>
               <span className="text-[13px] text-muted inline-flex items-center gap-2">
@@ -133,10 +133,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         {/* Seitenleiste */}
         <aside className="contents lg:flex lg:flex-col lg:gap-4 lg:sticky lg:top-8">
           {other && (
-            <div className="order-4 lg:order-none panel !rounded-[18px] p-5 md:p-6">
+            <div className="order-4 lg:order-none panel !rounded-[10px] p-5 md:p-6">
               <p className="eyebrow">{owner ? "Leiht" : "Verleiht"}</p>
               <Link href={`/profil/${other.id}`} className="group mt-3 flex items-center gap-3.5">
-                <span aria-hidden className="h-12 w-12 flex-none rounded-full bg-ink text-paper grid place-items-center font-serif text-[24px] leading-none">{other.first_name.slice(0, 1)}</span>
+                <span aria-hidden className="h-12 w-12 flex-none rounded-full bg-ink text-paper grid place-items-center font-semibold text-[24px] leading-none">{other.first_name.slice(0, 1)}</span>
                 <span className="min-w-0">
                   <span className="block font-serif text-[28px] leading-none group-hover:underline underline-offset-4 decoration-1 truncate">{other.first_name}</span>
                   {/* Vor der Annahme zeigt der Vorgang das Profil der anderen Seite (PRD 6.1) */}
@@ -146,7 +146,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               <dl className="grid grid-cols-3 gap-1.5 mt-5">
                 {([["verliehen", other.lent], ["geliehen", other.borrowed], ["pünktlich", other.punctual_pct != null ? `${other.punctual_pct}%` : "–"]] as [string, ReactNode][]).map(([l, v]) => (
                   <div key={l} className="panel-quiet px-3 py-3">
-                    <dd className={cx("font-serif tnum leading-none", before ? "text-[34px]" : "text-[28px]")}>{v}</dd>
+                    <dd className={cx("font-[520] tracking-[-0.035em] tnum leading-none", before ? "text-[34px]" : "text-[28px]")}>{v}</dd>
                     <dt className="text-[12px] text-muted mt-1.5">{l}</dt>
                   </div>
                 ))}
@@ -161,7 +161,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             </div>
           )}
 
-          <div className="order-7 lg:order-none panel !rounded-[18px] px-5 md:px-6 py-2">
+          <div className="order-7 lg:order-none panel !rounded-[10px] px-5 md:px-6 py-2">
             <p className="eyebrow pt-3 pb-1">Details</p>
             <dl className="divide-y divide-line">
               {details.map(([k, v]) => (
@@ -174,7 +174,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           </div>
 
           {(loan.conditionNote || loan.conditionPhotoKeys.length > 0 || loan.dropoffPhotoKey || loan.case) && (
-            <div className="order-7 lg:order-none panel !rounded-[18px] p-5 md:p-6 space-y-6">
+            <div className="order-7 lg:order-none panel !rounded-[10px] p-5 md:p-6 space-y-6">
               {loan.conditionNote || loan.conditionPhotoKeys.length ? (
                 <div>
                   <p className="eyebrow mb-2">Zustandsnotiz</p>
@@ -203,7 +203,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           )}
 
           {owner && loan.calendar && loan.kind === "lend" && (
-            <div className="order-7 lg:order-none panel !rounded-[18px] p-5 md:p-6">
+            <div className="order-7 lg:order-none panel !rounded-[10px] p-5 md:p-6">
               <p className="eyebrow mb-3">Verleihkalender</p>
               <CalendarView cal={loan.calendar} compact showLegend={false} selection={loan.status === "requested" && loan.wanted?.end ? { start: loan.wanted.start, end: loan.wanted.end, ok: true } : undefined} />
             </div>

@@ -95,7 +95,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                 const urgent = open && (c.response === "object" || c.stage >= 2);
                 const photos = (c.photo_keys as string[] | null) ?? [];
                 return (
-                  <article key={c.id} className={cx("panel rounded-[14px] p-5 md:p-7", urgent && "border-late/40", !open && "bg-paper-2 border-transparent")}>
+                  <article key={c.id} className={cx("panel rounded-[8px] p-5 md:p-7", urgent && "border-late/40", !open && "bg-paper-2 border-transparent")}>
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       {open
                         ? <PriorityChip p={urgent ? "hoch" : "normal"} />
@@ -141,7 +141,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               <>
                 <Notice className="mb-4">Zugriff wird protokolliert. Einsicht nur, weil ein Fall oder eine Meldung offen ist.</Notice>
                 {messages.length === 0 ? <Quiet>Keine Nachrichten.</Quiet> : (
-                  <ol className="panel rounded-[14px] p-4 md:p-5 space-y-3">
+                  <ol className="panel rounded-[8px] p-4 md:p-5 space-y-3">
                     {(messages as { id: string; sender: string | null; body: string | null; proposal_place: string | null; proposal_at: Date | null; flagged: boolean; created_at: Date }[]).map((m) => {
                       const mine = m.sender === loan.owner_name;
                       return (
@@ -149,7 +149,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                           <p className={cx("text-[12.5px] text-muted mb-1", mine && "text-right")}>
                             <span className="text-ink font-semibold">{m.sender ?? "System"}</span> · {fmtDayTime(m.created_at)}
                           </p>
-                          <div className={cx("rounded-[14px] px-4 py-2.5 text-[15px]", m.flagged ? "bg-late/10 ring-1 ring-late/40" : mine ? "bg-ink text-paper" : "bg-paper-2")}>
+                          <div className={cx("rounded-[8px] px-4 py-2.5 text-[15px]", m.flagged ? "bg-late/10 ring-1 ring-late/40" : mine ? "bg-ink text-paper" : "bg-paper-2")}>
                             {m.body && <p className="whitespace-pre-line">{m.body}</p>}
                             {m.proposal_at && <p>Terminvorschlag: {m.proposal_place ? `${m.proposal_place}, ` : ""}{fmtDayTime(m.proposal_at)}</p>}
                           </div>
@@ -167,7 +167,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </div>
 
         <aside className="lg:col-span-5 min-w-0 flex flex-col gap-12">
-          <section aria-labelledby="stamm" className="panel-quiet rounded-[14px] p-5 md:p-6">
+          <section aria-labelledby="stamm" className="panel-quiet rounded-[8px] p-5 md:p-6">
             <h2 id="stamm" className="ui-title text-[18px] mb-3">Stammdaten</h2>
             <Dl items={facts} className="border-line-strong/60" />
             {loan.condition_note && <p className="text-sm mt-4"><span className="text-muted">Zustandsnotiz Leiher: </span>{loan.condition_note}</p>}

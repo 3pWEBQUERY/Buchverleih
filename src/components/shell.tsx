@@ -20,7 +20,7 @@ export function AppShell({ user, unread, children }: { user: SessionUser; unread
       <aside className="hidden md:flex flex-col sticky top-0 h-dvh border-r border-line bg-paper-2/60 px-4 py-6">
         <Wordmark className="px-2 mb-8" />
         <SearchTrigger />
-        <Link href="/regal/neu" className="mt-3 mb-7 h-11 rounded-full bg-accent text-accent-ink font-semibold text-[15px] flex items-center justify-center gap-2 hover:bg-accent-hover transition-colors active:scale-[0.98]">
+        <Link href="/regal/neu" className="mt-3 mb-7 h-11 rounded-[6px] bg-accent text-accent-ink font-medium text-[15px] flex items-center justify-center gap-2 hover:bg-accent-hover transition-colors">
           <IconScan width={18} height={18} /> Buch erfassen
         </Link>
         <nav className="flex flex-col gap-0.5 text-[15px]" aria-label="Hauptnavigation">
@@ -36,8 +36,8 @@ export function AppShell({ user, unread, children }: { user: SessionUser; unread
         </nav>
 
         <div className="mt-auto">
-          <Link href={`/profil/${user.id}`} className="flex items-center gap-3 rounded-[12px] p-2 hover:bg-paper-3 transition-colors">
-            <span className="h-10 w-10 rounded-full bg-ink text-paper grid place-items-center font-serif text-xl">{initial}</span>
+          <Link href={`/profil/${user.id}`} className="flex items-center gap-3 rounded-[8px] p-2 hover:bg-paper-3 transition-colors">
+            <span className="h-10 w-10 rounded-full bg-ink text-paper grid place-items-center text-[17px] font-semibold">{initial}</span>
             <span className="min-w-0 leading-tight">
               <span className="block font-semibold truncate">{user.first_name || "Profil"}</span>
               <span className="block text-[13px] text-muted truncate">{trustLabel[user.trust_level]} · {user.municipality}</span>
@@ -73,7 +73,7 @@ export function AppShell({ user, unread, children }: { user: SessionUser; unread
             </Link>
           </div>
           <NavLink href="/regal" icon={<IconShelf />} tab>Regal</NavLink>
-          <NavLink href={`/profil/${user.id}`} icon={<span className="h-6 w-6 rounded-full bg-ink text-paper grid place-items-center font-serif text-[13px]">{initial}</span>} tab>Profil</NavLink>
+          <NavLink href={`/profil/${user.id}`} icon={<span className="h-6 w-6 rounded-full bg-ink text-paper grid place-items-center text-[11px] font-semibold">{initial}</span>} tab>Profil</NavLink>
         </div>
       </nav>
     </div>
@@ -87,9 +87,9 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 h-16 flex items-center justify-between">
           <Wordmark />
           <nav className="flex items-center gap-1 md:gap-2 text-[15px] font-medium">
-            <Link href="/suche" className="hidden sm:inline-flex px-3 h-10 items-center rounded-full hover:bg-paper-2">Bücher finden</Link>
-            <Link href="/hilfe" className="hidden sm:inline-flex px-3 h-10 items-center rounded-full hover:bg-paper-2">So funktioniert es</Link>
-            <Link href="/anmelden" className="ml-1 inline-flex px-5 h-10 items-center rounded-full bg-ink text-paper hover:bg-ink-2 transition-colors">Anmelden</Link>
+            <Link href="/suche" className="hidden sm:inline-flex px-3 h-10 items-center rounded-[6px] hover:bg-paper-2">Bücher finden</Link>
+            <Link href="/hilfe" className="hidden sm:inline-flex px-3 h-10 items-center rounded-[6px] hover:bg-paper-2">So funktioniert es</Link>
+            <Link href="/anmelden" className="ml-1 inline-flex px-5 h-10 items-center rounded-[6px] bg-ink text-paper hover:bg-ink-2 transition-colors">Anmelden</Link>
           </nav>
         </div>
       </header>
@@ -97,7 +97,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       <footer className="surface-night">
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 py-14 grid gap-10 md:grid-cols-[1.3fr_1fr_1fr_1fr]">
           <div>
-            <div className="flex items-center gap-2.5 text-night-ink"><LogoMark /><span className="font-serif text-[26px] leading-none">Leihregal</span></div>
+            <div className="flex items-center gap-2.5 text-night-ink"><LogoMark /><span className="text-[21px] font-[620] leading-none tracking-[-0.04em]">Leihregal</span></div>
             <p className="text-night-muted mt-4 max-w-xs text-[15px]">Bücher aus Regalen in deiner Nähe. Kostenlos unter Privatpersonen, mit festen Fristen und einer Bestätigung bei jeder Übergabe.</p>
           </div>
           <FooterCol title="Entdecken" links={[["/suche", "Bücher finden"], ["/anmelden?next=/regal/neu", "Buch einstellen"], ["/anmelden?next=/kreise/neu", "Kreis gründen"]]} />
@@ -116,7 +116,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
 function FooterCol({ title, links }: { title: string; links: [string, string][] }) {
   return (
     <div>
-      <p className="text-[12px] uppercase tracking-[0.12em] font-semibold text-night-muted mb-4">{title}</p>
+      <p className="text-[12px] font-medium text-night-muted mb-4">{title}</p>
       <ul className="space-y-2.5 text-[15px] text-night-ink">
         {links.map(([href, label]) => <li key={href}><Link href={href} className="link-grow">{label}</Link></li>)}
       </ul>

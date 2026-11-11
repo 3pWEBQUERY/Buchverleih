@@ -26,8 +26,9 @@ export const env = {
   get smsProvider() {
     return (process.env.SMS_PROVIDER || "console") as "console" | "webhook";
   },
-  get coversOpenLibrary() {
-    return bool(process.env.COVERS_OPENLIBRARY, false);
+  /** Original-Cover laden (Open Library, Google Books). Standard: an. */
+  get covers() {
+    return bool(process.env.COVERS, true);
   },
   s3: {
     // Railway-Buckets liefern eigene Variablennamen; beide Schreibweisen werden akzeptiert.

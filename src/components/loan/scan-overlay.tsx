@@ -37,9 +37,9 @@ export function ScanOverlay({ loanId, label, onClose, onDone }: { loanId: string
         <button onClick={onClose} className="h-11 w-11 -mr-2 grid place-items-center rounded-full hover:bg-night-2 transition-colors" aria-label="Schliessen"><IconClose width={24} height={24} /></button>
       </div>
       <div className="flex-1 overflow-y-auto px-5 pb-8 max-w-lg w-full mx-auto">
-        <h2 className="font-serif text-[40px] md:text-[52px] leading-none tracking-[-0.03em]">{label}</h2>
+        <h2 className="text-[40px] md:text-[52px] leading-none tracking-[-0.03em]">{label}</h2>
         <p className="mt-3 text-[15px] text-night-muted">Richte die Kamera auf den Code auf dem anderen Bildschirm.</p>
-        <Scanner mode="qr" paused={busy} fallbackHint="Gib die sechs Ziffern unter dem Code ein." className="mt-6 !rounded-[18px] !border-night-line"
+        <Scanner mode="qr" paused={busy} fallbackHint="Gib die sechs Ziffern unter dem Code ein." className="mt-6 !rounded-[10px] !border-night-line"
           onResult={(text) => {
             const token = text.includes("/h/") ? text.split("/h/")[1] : text;
             redeem(() => api("/handover/redeem", { body: { token } }));

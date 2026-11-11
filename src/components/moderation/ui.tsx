@@ -38,7 +38,7 @@ export function ModHead({ title, count, aside, id }: { title: ReactNode; count?:
       <h2 id={id} className="ui-title text-[20px] md:text-[22px] flex items-center gap-2.5">
         {title}
         {count !== undefined && (
-          <span className={cx("inline-grid place-items-center h-7 min-w-7 px-2 rounded-full text-[13px] font-semibold tnum", count > 0 ? "bg-ink text-paper" : "bg-paper-2 text-muted")}>{count}</span>
+          <span className={cx("inline-grid place-items-center h-7 min-w-7 px-2 rounded-[6px] text-[13px] font-semibold tnum", count > 0 ? "bg-ink text-paper" : "bg-paper-2 text-muted")}>{count}</span>
         )}
       </h2>
       {aside && <div className="hidden sm:block text-sm text-muted text-right">{aside}</div>}
@@ -48,12 +48,12 @@ export function ModHead({ title, count, aside, id }: { title: ReactNode; count?:
 
 /** Ruhiger Hinweis, wenn eine Liste leer ist */
 export function Quiet({ children }: { children: ReactNode }) {
-  return <p className="panel-quiet rounded-[14px] px-5 py-4 text-ink-2 text-[15px]">{children}</p>;
+  return <p className="panel-quiet rounded-[8px] px-5 py-4 text-ink-2 text-[15px]">{children}</p>;
 }
 
 export function BackLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className="inline-flex items-center gap-1.5 h-9 pl-2.5 pr-4 rounded-full border border-line-strong text-[13.5px] font-semibold text-ink-2 hover:border-ink hover:text-ink transition-colors mb-8">
+    <Link href={href} className="inline-flex items-center gap-1.5 h-9 pl-2.5 pr-4 rounded-[6px] border border-line-strong text-[13.5px] font-semibold text-ink-2 hover:border-ink hover:text-ink transition-colors mb-8">
       <IconArrowLeft width={16} height={16} /> {children}
     </Link>
   );
@@ -62,9 +62,9 @@ export function BackLink({ href, children }: { href: string; children: ReactNode
 /** Kennzahl als Kachel mit grosser Serif-Zahl */
 export function StatTile({ label, value, sub, className }: { label: ReactNode; value: ReactNode; sub?: ReactNode; className?: string }) {
   return (
-    <div className={cx("panel-quiet rounded-[14px] px-5 py-4", className)}>
+    <div className={cx("panel-quiet rounded-[8px] px-5 py-4", className)}>
       <dt className="text-[13px] text-muted">{label}</dt>
-      <dd className="font-serif text-[36px] md:text-[40px] leading-none tnum mt-2">{value}</dd>
+      <dd className="font-[520] tracking-[-0.035em] text-[36px] md:text-[40px] leading-none tnum mt-2">{value}</dd>
       {sub && <dd className="text-[12.5px] text-muted mt-1.5">{sub}</dd>}
     </div>
   );

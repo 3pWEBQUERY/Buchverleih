@@ -109,7 +109,7 @@ export default async function ProfilPage({ params }: Params) {
               <dt className="text-[13px] md:text-[14px] text-muted mt-2 leading-snug">
                 {s.label}{s.note && <span className="block text-[12px] mt-0.5">{s.note}</span>}
               </dt>
-              <dd className="font-serif text-[40px] md:text-[72px] leading-[0.9] tnum whitespace-nowrap">{s.n}</dd>
+              <dd className="font-[520] tracking-[-0.035em] text-[40px] md:text-[72px] leading-[0.9] tnum whitespace-nowrap">{s.n}</dd>
             </div>
           ))}
         </dl>
@@ -126,18 +126,18 @@ export default async function ProfilPage({ params }: Params) {
       </section>
 
       {/* ----------------------------------------------------------- Regal */}
-      <section aria-labelledby="regal" className="surface-night rounded-[22px] px-5 md:px-9 pt-8 md:pt-10 pb-8 -mx-1 md:mx-0">
+      <section aria-labelledby="regal" className="surface-night rounded-[12px] px-5 md:px-9 pt-8 md:pt-10 pb-8 -mx-1 md:mx-0">
         <div className="flex items-end justify-between gap-4 mb-6">
           <div>
-            <p className="text-[12px] uppercase tracking-[0.12em] font-semibold text-night-muted">
+            <p className="text-[12px] font-medium text-night-muted">
               {shelf.length === 1 ? "1 Buch" : `${shelf.length} Bücher`}{own && " · so sehen es andere"}
             </p>
-            <h2 id="regal" className="font-serif text-[36px] md:text-[48px] leading-none mt-2">{own ? "Dein Regal" : `Regal von ${p.first_name}`}</h2>
+            <h2 id="regal" className="text-[36px] md:text-[48px] leading-none mt-2">{own ? "Dein Regal" : `Regal von ${p.first_name}`}</h2>
           </div>
           {own && shelf.length > 0 && <Link href="/regal" className="hidden sm:inline-flex font-semibold link-grow">Verwalten</Link>}
         </div>
         {shelf.length === 0 ? (
-          <div className="rounded-[14px] border border-night-line p-6 flex flex-wrap items-center justify-between gap-4">
+          <div className="rounded-[8px] border border-night-line p-6 flex flex-wrap items-center justify-between gap-4">
             {own ? (
               <>
                 <p className="text-night-muted">In deinem Regal steht noch nichts, das andere sehen.</p>
@@ -146,7 +146,7 @@ export default async function ProfilPage({ params }: Params) {
             ) : (
               <>
                 <p className="text-night-muted">{p.first_name} bietet gerade keine Bücher an, die du sehen kannst.</p>
-                <Link href="/suche" className="h-11 px-5 rounded-full bg-night-ink text-night font-semibold inline-flex items-center">Weiter suchen</Link>
+                <Link href="/suche" className="h-11 px-5 rounded-[6px] bg-night-ink text-night font-semibold inline-flex items-center">Weiter suchen</Link>
               </>
             )}
           </div>

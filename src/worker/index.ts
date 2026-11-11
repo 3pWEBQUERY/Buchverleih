@@ -43,11 +43,12 @@ async function scheduler() {
       // Täglicher Lauf für Titelalarm, Tauschtreffer und Aufbewahrung
       const daily = await lastRun("daily");
       if (!daily || Date.now() - daily.getTime() >= 24 * 3600_000) {
+        const covers = await backfillCovers();
         const alarms = await runTitleAlarms();
         const matches = await runSwapMatches();
         const retention = await runRetention();
-        await heartbeat("daily", { alarms, matches, ...retention });
-        console.log("[daily]", { alarms, matches, ...retention });
+        await heartbeat("daily", { alarms, matches, covers, ...retention });
+        console.log("[daily]", { alarms, matches, covers, ...retention });
       }
     } catch (e) {
       console.error("[scheduler]", (e as Error).message);
@@ -56,9 +57,25 @@ async function scheduler() {
   }
 }
 
+/** Fehlende Original-Cover nachladen (bestehende Ausgaben mit ISBN) */
+async function backfillCovers() {
+  if (process.env.COVERS === "false") return 0;
+  const rows = await sql<{ id: string; isbn13: string }[]>`
+    update editions set cover_checked_at = now()
+     where id in (select id from editions where isbn13 is not null and cover_key is null
+                   and (cover_checked_at is null or cover_checked_at < now() - interval '7 days') limit 300)
+    returning id, isbn13`;
+  for (const r of rows) {
+    await sql`insert into jobs (kind, payload) values ('cache_cover', ${sql.json({ editionId: r.id, isbn: r.isbn13 })})`;
+  }
+  return rows.length;
+}
+
 async function main() {
   console.log(`[worker] gestartet · Fristenlauf alle ${DEADLINE_MINUTES} Min.`);
   await ensureCors();
+  const queued = await backfillCovers().catch(() => 0);
+  if (queued) console.log(`[covers] ${queued} Cover zum Nachladen eingereiht`);
   await Promise.all([jobLoop(), scheduler()]);
 }
 

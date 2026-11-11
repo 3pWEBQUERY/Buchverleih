@@ -50,7 +50,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     <div>
       <BackLink href="/moderation?ansicht=konten">Konten</BackLink>
       <header className="mb-10 md:mb-12 flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-7 anim-rise">
-        <span className="h-20 w-20 md:h-24 md:w-24 flex-none rounded-full bg-ink text-paper grid place-items-center font-serif text-[44px] md:text-[52px]">{initial}</span>
+        <span className="h-20 w-20 md:h-24 md:w-24 flex-none rounded-full bg-ink text-paper grid place-items-center font-semibold text-[44px] md:text-[52px]">{initial}</span>
         <div className="min-w-0">
           <p className="eyebrow">{roleLabel[u.role] ?? u.role} · Stufe {trustLabel[u.trust_level] ?? u.trust_level}</p>
           <h1 className="display text-[52px] md:text-[76px] mt-2">{u.first_name || "Ohne Namen"}</h1>
@@ -79,7 +79,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           {self ? (
             <Notice>Das ist dein eigenes Konto. Sperren und Leihsperre setzt eine andere Person aus der Moderation.</Notice>
           ) : (
-            <div className="panel rounded-[14px] divide-y divide-line">
+            <div className="panel rounded-[8px] divide-y divide-line">
               <div className="px-5 md:px-6">
                 <SuspendSwitch userId={u.id} suspended={Boolean(u.lending_suspended_at)} />
               </div>
@@ -96,7 +96,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <section aria-labelledby="vorgaenge">
             <ModHead id="vorgaenge" title="Vorgänge" count={loans.length} aside={loans.length === 50 ? "die letzten 50" : undefined} />
             {loans.length === 0 ? <Quiet>Noch keine Vorgänge.</Quiet> : (
-              <ul className="panel rounded-[14px] divide-y divide-line overflow-hidden">
+              <ul className="panel rounded-[8px] divide-y divide-line overflow-hidden">
                 {loans.map((l) => {
                   const bad = l.status === "disputed" || l.status === "lost";
                   return (
@@ -120,7 +120,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <section aria-labelledby="meldungen">
             <ModHead id="meldungen" title="Meldungen zu diesem Konto" count={reports.length} />
             {reports.length === 0 ? <Quiet>Keine Meldungen.</Quiet> : (
-              <ul className="panel rounded-[14px] divide-y divide-line">
+              <ul className="panel rounded-[8px] divide-y divide-line">
                 {reports.map((r) => (
                   <li key={r.id} className="px-5 py-4">
                     <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">

@@ -65,8 +65,11 @@ export async function editionByIsbn(raw: string, userId?: string): Promise<Editi
   const isbn = normalizeIsbn(raw);
   if (!isbn) throw err.invalid("Diese ISBN ist ungültig. Prüfe die Ziffern unter dem Strichcode.");
   const [existing] = await sql<Edition[]>`select ${EDITION_SELECT} from editions e join works w on w.id = e.work_id where e.isbn13 = ${isbn}`;
-  if (existing) return existing;
-  const rec = await lookupExternal(isbn, { covers: env.coversOpenLibrary });
+  if (existing) {
+    if (!existing.cover_key) await requestCover(sql, existing.id, isbn);
+    return existing;
+  }
+  const rec = await lookupExternal(isbn, { covers: false });
   if (!rec) return null;
   return saveRecord(rec, userId);
 }
@@ -80,9 +83,20 @@ async function saveRecord(rec: CatalogRecord, userId?: string) {
               ${rec.year ?? null}, ${rec.language ?? null}, ${rec.binding ?? null}, ${rec.pages ?? null}, ${rec.source}, ${userId ?? null})
       on conflict (isbn13) do update set title = editions.title
       returning id`;
-    if (rec.coverUrl) await enqueue(tx, "cache_cover", { editionId: e.id, isbn: rec.isbn13, url: rec.coverUrl });
+    await requestCover(tx, e.id, rec.isbn13);
     return (await editionById(tx, e.id))!;
   });
+}
+
+/** Original-Cover anfordern – höchstens einmal pro Woche und Ausgabe. */
+export async function requestCover(tx: Tx, editionId: string, isbn: string) {
+  if (!env.covers) return;
+  const r = await tx`
+    update editions set cover_checked_at = now()
+     where id = ${editionId} and cover_key is null
+       and (cover_checked_at is null or cover_checked_at < now() - interval '7 days')
+    returning id`;
+  if (r.length) await enqueue(tx, "cache_cover", { editionId, isbn });
 }
 
 /** Bücher ohne ISBN: Titel, Autor, Foto von Hand (PRD 7.1). */
@@ -102,6 +116,7 @@ export async function createManualEdition(
       insert into editions (work_id, isbn13, title, publisher, year, language, source, created_by)
       values (${workId}, ${isbn}, ${input.title.trim()}, ${input.publisher ?? null}, ${input.year ?? null}, ${input.language ?? null}, 'manual', ${userId})
       returning id`;
+    if (isbn) await requestCover(tx, e.id, isbn);
     return (await editionById(tx, e.id))!;
   });
 }

@@ -15,7 +15,7 @@ export default function Loading() {
             <div key={g}>
               <div className="skeleton h-6 w-32 mb-2" />
               <div className="skeleton h-4 w-64 mb-5" />
-              <div className="panel rounded-[14px] divide-y divide-line">
+              <div className="panel rounded-[8px] divide-y divide-line">
                 {Array.from({ length: 3 }, (_, i) => (
                   <div key={i} className="p-5 md:p-7 md:grid md:grid-cols-[15rem_minmax(0,1fr)] md:gap-10">
                     <div className="mb-5 md:mb-0">
@@ -24,7 +24,7 @@ export default function Loading() {
                     </div>
                     <div className="flex flex-col gap-3">
                       <div className="skeleton h-12 w-full rounded-[10px]" />
-                      <div className="skeleton h-9 w-36 rounded-full" />
+                      <div className="skeleton h-9 w-36 rounded-[6px]" />
                     </div>
                   </div>
                 ))}

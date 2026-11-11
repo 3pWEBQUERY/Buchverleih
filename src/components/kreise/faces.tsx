@@ -14,7 +14,7 @@ function hash(s: string) {
 export function Avatar({ name, size = 40, className, night }: { name: string; size?: number; className?: string; night?: boolean }) {
   const tones = night ? NIGHT_TONES : TONES;
   return (
-    <span aria-hidden className={cx("grid place-items-center rounded-full font-serif leading-none flex-none select-none", tones[hash(name) % tones.length], className)}
+    <span aria-hidden className={cx("grid place-items-center rounded-full font-semibold tracking-[-0.02em] leading-none flex-none select-none", tones[hash(name) % tones.length], className)}
       style={{ width: size, height: size, fontSize: Math.round(size * 0.48) }}>
       {(name || "?").slice(0, 1).toUpperCase()}
     </span>

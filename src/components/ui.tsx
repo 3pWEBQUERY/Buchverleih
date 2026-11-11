@@ -10,19 +10,19 @@ type Variant = "primary" | "secondary" | "ghost" | "quiet" | "danger";
 type Size = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2 font-semibold tracking-[-0.01em] select-none transition-[background-color,color,border-color,transform] duration-200 ease-[var(--ease-out-quart)] active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none whitespace-nowrap";
+  "inline-flex items-center justify-center gap-2 font-medium tracking-[-0.012em] select-none transition-[background-color,color,border-color] duration-150 disabled:opacity-40 disabled:pointer-events-none whitespace-nowrap";
 const variants: Record<Variant, string> = {
   // Die Akzentfarbe gehört allein dem nächsten Schritt
-  primary: "bg-accent text-accent-ink hover:bg-accent-hover rounded-full",
-  secondary: "bg-ink text-paper hover:bg-ink-2 rounded-full",
-  ghost: "text-ink border border-line-strong hover:border-ink hover:bg-paper-2 rounded-full",
+  primary: "bg-accent text-accent-ink hover:bg-accent-hover rounded-[6px]",
+  secondary: "bg-ink text-paper hover:bg-ink-2 rounded-[6px]",
+  ghost: "text-ink border border-line-strong hover:border-ink rounded-[6px]",
   quiet: "text-muted font-medium hover:text-ink underline-offset-4 hover:underline",
   danger: "text-late font-medium hover:underline underline-offset-4",
 };
 const sizes: Record<Size, string> = {
-  sm: "h-9 px-4 text-[13.5px]",
+  sm: "h-9 px-3.5 text-[13.5px]",
   md: "h-11 px-5 text-[15px]",
-  lg: "h-[52px] px-7 text-base",
+  lg: "h-12 px-6 text-[15.5px]",
 };
 
 export function Button({ variant = "secondary", size = "md", className, ...p }: ComponentProps<"button"> & { variant?: Variant; size?: Size }) {
@@ -45,7 +45,7 @@ export function Field({ label, hint, error, children, className }: { label: Reac
 }
 
 const inputCls =
-  "w-full h-12 bg-paper border border-line-strong rounded-[10px] px-4 text-[16px] placeholder:text-muted/70 hover:border-ink-2 focus:outline-none focus:border-ink focus:ring-[3px] focus:ring-ink/10 transition-[border-color,box-shadow] duration-150";
+  "w-full h-12 bg-paper border border-line-strong rounded-[6px] px-4 text-[16px] placeholder:text-muted/70 hover:border-ink-2 focus:outline-none focus:border-ink focus:ring-[3px] focus:ring-ink/10 transition-[border-color,box-shadow] duration-150";
 
 export function Input({ className, ...p }: ComponentProps<"input">) {
   return <input className={cx(inputCls, className)} {...p} />;
@@ -70,7 +70,7 @@ export function Segmented<T extends string | number>({
   value, onChange, options, name, className, size = "md",
 }: { value: T; onChange: (v: T) => void; options: { value: T; label: ReactNode; hint?: string }[]; name: string; className?: string; size?: "md" | "lg" }) {
   return (
-    <div role="radiogroup" aria-label={name} className={cx("grid gap-1 p-1 bg-paper-2 rounded-full", className)}
+    <div role="radiogroup" aria-label={name} className={cx("grid gap-0.5 p-0.5 bg-paper-2 border border-line rounded-[8px]", className)}
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
       {options.map((o, i) => {
         const on = o.value === value;
@@ -78,10 +78,10 @@ export function Segmented<T extends string | number>({
           <button key={String(o.value)} type="button" role="radio" aria-checked={on} title={o.hint}
             onClick={() => onChange(o.value)}
             className={cx(
-              "px-3 text-[13.5px] font-semibold rounded-full transition-[background-color,color] duration-200",
+              "px-3 text-[13.5px] font-medium rounded-[6px] transition-[background-color,color] duration-150",
               size === "lg" ? "py-3" : "h-9",
               i < 0 && "",
-              on ? "bg-ink text-paper" : "text-ink-2 hover:bg-paper-3",
+              on ? "bg-paper text-ink outline outline-1 outline-line-strong" : "text-muted hover:text-ink",
             )}>
             {o.label}
           </button>
@@ -129,7 +129,7 @@ export function PageTitle({ children, sub, aside }: { children: ReactNode; sub?:
   return (
     <header className="mb-10 md:mb-14 flex flex-wrap items-end justify-between gap-6">
       <div className="min-w-0 anim-rise">
-        <h1 className="display text-[52px] md:text-[84px]">{children}</h1>
+        <h1 className="display text-[44px] md:text-[72px]">{children}</h1>
         {sub && <p className="text-ink-2 text-[17px] mt-4 max-w-xl">{sub}</p>}
       </div>
       {aside}
@@ -140,7 +140,7 @@ export function PageTitle({ children, sub, aside }: { children: ReactNode; sub?:
 /** Leerer Zustand: ein Satz und ein Knopf (PRD 8.1) */
 export function Empty({ text, action }: { text: ReactNode; action?: ReactNode }) {
   return (
-    <div className="panel-quiet px-6 py-8 md:px-8 flex flex-wrap items-center justify-between gap-5">
+    <div className="border border-dashed border-line-strong rounded-[8px] px-6 py-8 md:px-8 flex flex-wrap items-center justify-between gap-5">
       <p className="text-ink-2 text-[16px] max-w-lg">{text}</p>
       {action}
     </div>
@@ -149,7 +149,7 @@ export function Empty({ text, action }: { text: ReactNode; action?: ReactNode })
 
 export function Notice({ children, tone = "neutral", className }: { children: ReactNode; tone?: "neutral" | "late" | "accent"; className?: string }) {
   return (
-    <div className={cx("rounded-[10px] px-5 py-4 text-[15px] border-l-[3px]", tone === "late" ? "border-late bg-late/[0.07]" : tone === "accent" ? "border-accent bg-accent-soft/60" : "border-ink bg-paper-2", className)}>
+    <div className={cx("rounded-[6px] px-5 py-4 text-[15px] border-l-2", tone === "late" ? "border-late bg-late/[0.06]" : tone === "accent" ? "border-accent bg-accent-soft/50" : "border-ink bg-paper-2", className)}>
       {children}
     </div>
   );

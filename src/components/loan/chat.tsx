@@ -139,12 +139,12 @@ export function Chat({
                 {firstOfGroup && <span className="text-[12px] text-muted mb-1 px-1">{mine ? "Du" : m.sender_name}</span>}
                 {m.proposal_at && (
                   <div className={cx(
-                    "rounded-[16px] w-72 max-w-full overflow-hidden border transition-colors",
+                    "rounded-[12px] w-72 max-w-full overflow-hidden border transition-colors",
                     m.proposal_status === "accepted" ? "border-ok bg-paper" : m.proposal_status === "countered" ? "border-line bg-paper opacity-60" : "border-ink bg-paper",
                   )}>
                     <div className="px-4 pt-3.5 pb-3">
                       <p className="eyebrow flex items-center gap-1.5"><IconCalendar width={14} height={14} /> Terminvorschlag</p>
-                      <p className={cx("font-serif text-[24px] leading-tight mt-2 tnum", m.proposal_status === "countered" && "line-through decoration-1")}>{fmtDayTime(m.proposal_at)}</p>
+                      <p className={cx("font-[520] tracking-[-0.035em] text-[24px] leading-tight mt-2 tnum", m.proposal_status === "countered" && "line-through decoration-1")}>{fmtDayTime(m.proposal_at)}</p>
                       {m.proposal_place && <p className="text-[14.5px] text-ink-2 mt-0.5">{m.proposal_place}</p>}
                     </div>
                     <div className={cx("px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13.5px] border-t", m.proposal_status === "accepted" ? "border-ok/40 bg-ok/[0.07]" : "border-line bg-paper-2")}>
@@ -169,7 +169,7 @@ export function Chat({
                 )}
                 {m.body && (
                   <p className={cx(
-                    "px-4 py-2.5 rounded-[16px] text-[15px] leading-snug whitespace-pre-wrap break-words",
+                    "px-4 py-2.5 rounded-[12px] text-[15px] leading-snug whitespace-pre-wrap break-words",
                     m.proposal_at && "mt-1",
                     mine ? "bg-ink text-paper rounded-br-[6px]" : "bg-paper-2 text-ink rounded-bl-[6px]",
                   )}>{m.body}</p>
@@ -193,7 +193,7 @@ export function Chat({
       ) : (
         <form onSubmit={send} className="border-t border-line px-3 md:px-4 pt-3 pb-3">
           {proposing && (
-            <div className="grid sm:grid-cols-2 gap-3 mb-3 p-3 rounded-[14px] bg-paper-2 anim-rise">
+            <div className="grid sm:grid-cols-2 gap-3 mb-3 p-3 rounded-[8px] bg-paper-2 anim-rise">
               <label className="block">
                 <span className="block text-[13px] font-semibold mb-1.5">Datum und Zeit</span>
                 <Input type="datetime-local" required min={minLocal} value={when} onChange={(e) => setWhen(e.target.value)} />

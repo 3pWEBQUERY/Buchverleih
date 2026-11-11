@@ -58,7 +58,9 @@ export function Cover({
   const w = width ?? Math.round(h * ratio);
   const author = data.authors?.[0] ?? "";
   const alt = author ? `${data.title} von ${author}` : data.title;
-  const key = data.photoKey ?? data.coverKey;
+  // Original-Cover zuerst, dann Foto des Mitglieds, sonst typografisch (PRD 7.2)
+  const key = data.coverKey ?? data.photoKey;
+  const natural = Boolean(data.coverKey);
 
   if (key) {
     return (
@@ -71,7 +73,8 @@ export function Cover({
         loading={priority ? "eager" : "lazy"}
         decoding="async"
         className={cx("block bg-paper-3 object-contain outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10 rounded-xs", className)}
-        style={{ width: w, height: h, aspectRatio: `${w} / ${h}` }}
+        // Original-Cover im echten Seitenverhältnis: eine Seite fix, die andere ergibt sich
+        style={natural ? (width && !height ? { width: w, height: "auto" } : { height: h, width: "auto", maxWidth: Math.round(h * 0.95) }) : { width: w, height: h, aspectRatio: `${w} / ${h}` }}
       />
     );
   }

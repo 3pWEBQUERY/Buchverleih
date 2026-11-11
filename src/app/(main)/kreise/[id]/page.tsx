@@ -45,7 +45,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <div className="max-w-2xl">
         <p className="eyebrow flex items-center gap-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait live-dot" /> Anfrage gesendet</p>
         <h1 className="display text-[52px] md:text-[84px] mt-3">{mine.name}</h1>
-        <div className="panel-quiet !rounded-[18px] mt-8 p-6 md:p-8">
+        <div className="panel-quiet !rounded-[10px] mt-8 p-6 md:p-8">
           <p className="text-[17px] text-ink-2">Deine Beitrittsanfrage ist gesendet. Sobald ein Admin dich freigibt, siehst du hier das gemeinsame Regal.</p>
           <LinkButton href="/kreise" className="mt-6">Zu deinen Kreisen</LinkButton>
         </div>
@@ -82,7 +82,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <dl className="grid grid-cols-2 gap-2">
             {([[circle.member_count, circle.member_count === 1 ? "Mitglied" : "Mitglieder"], [circle.copy_count, circle.copy_count === 1 ? "Buch" : "Bücher"]] as [number, string][]).map(([n, l]) => (
               <div key={l} className="panel-quiet px-5 py-4 min-w-[124px]">
-                <dd className="font-serif text-[40px] leading-none tnum">{n}</dd>
+                <dd className="font-[520] tracking-[-0.035em] text-[40px] leading-none tnum">{n}</dd>
                 <dt className="text-[13px] text-muted mt-1.5">{l}</dt>
               </div>
             ))}
@@ -91,18 +91,18 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       </header>
 
       {/* Das gemeinsame Regal auf der dunklen Bühne */}
-      <section className="surface-night rounded-[22px] px-5 md:px-9 pt-7 md:pt-9 pb-5 md:pb-7 -mx-1 md:mx-0" aria-labelledby="regal">
+      <section className="surface-night rounded-[12px] px-5 md:px-9 pt-7 md:pt-9 pb-5 md:pb-7 -mx-1 md:mx-0" aria-labelledby="regal">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="text-[12px] uppercase tracking-[0.12em] font-semibold text-night-muted">{copies.length} {copies.length === 1 ? "Buch" : "Bücher"}</p>
-            <h2 id="regal" className="font-serif text-[36px] md:text-[48px] leading-none mt-2">Gemeinsames Regal</h2>
+            <p className="text-[12px] font-medium text-night-muted">{copies.length} {copies.length === 1 ? "Buch" : "Bücher"}</p>
+            <h2 id="regal" className="text-[36px] md:text-[48px] leading-none mt-2">Gemeinsames Regal</h2>
           </div>
           <Faces names={active.slice(0, 5).map((m) => m.first_name)} total={active.length} ring="ring-night" night />
         </div>
         {copies.length === 0 ? (
-          <div className="mt-6 mb-2 rounded-[14px] border border-night-line p-6 flex flex-wrap items-center justify-between gap-4">
+          <div className="mt-6 mb-2 rounded-[8px] border border-night-line p-6 flex flex-wrap items-center justify-between gap-4">
             <p className="text-night-muted">Noch keine Bücher im Kreis. Wähle in deinem Regal, welche hier stehen.</p>
-            <Link href="/regal" className="h-11 px-5 rounded-full bg-night-ink text-night font-semibold inline-flex items-center">Zum Regal</Link>
+            <Link href="/regal" className="h-11 px-5 rounded-[6px] bg-night-ink text-night font-semibold inline-flex items-center">Zum Regal</Link>
           </div>
         ) : (
           <BookRow
