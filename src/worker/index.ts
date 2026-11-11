@@ -73,9 +73,26 @@ async function backfillCovers() {
   return rows.length;
 }
 
+/** Prüft beim Start, ob der Google-Books-Schlüssel greift – protokolliert nur den Status, nie den Schlüssel. */
+async function checkGoogleBooks() {
+  const key = process.env.GOOGLE_BOOKS_API_KEY;
+  if (!key) {
+    console.log("[google] kein GOOGLE_BOOKS_API_KEY gesetzt – anonymes Kontingent");
+    return;
+  }
+  try {
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:9783150093189&key=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(8000) });
+    const body = res.ok ? await res.json() : null;
+    console.log(res.ok ? `[google] Books API erreichbar, Schlüssel gültig (${body?.totalItems ?? 0} Treffer im Test)` : `[google] Books API antwortet ${res.status} – Schlüssel oder Einschränkungen prüfen`);
+  } catch (e) {
+    console.warn("[google] Books API nicht erreichbar:", (e as Error).message);
+  }
+}
+
 async function main() {
   console.log(`[worker] gestartet · Fristenlauf alle ${DEADLINE_MINUTES} Min.`);
   await ensureCors();
+  await checkGoogleBooks();
   await Promise.all([jobLoop(), scheduler()]);
 }
 
