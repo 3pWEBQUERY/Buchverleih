@@ -29,7 +29,7 @@ function barTone(b: CalendarBar) {
 const weekday = (d: string) => (dayToDate(d).getUTCDay() + 6) % 7;
 
 export function CalendarView({
-  cal, onPick, compact, showLegend = true, showSummary, selection, fit,
+  cal, onPick, compact, showLegend = true, showSummary, selection, fit, range, bare,
 }: {
   cal: Calendar;
   onPick?: (slot: FreeSlot, start: string) => void;
@@ -40,10 +40,14 @@ export function CalendarView({
   selection?: { start: string; end: string; ok: boolean };
   /** Immer in die Breite einpassen, nie scrollen (Vorschauen) */
   fit?: boolean;
+  /** Gemeinsamer Zeitraum, wenn mehrere Kalender untereinander stehen */
+  range?: { start: string; end: string };
+  /** Nur die Spur: ohne Monate, Datumsleiste und Heute-Schild (Achse steht separat) */
+  bare?: boolean;
 }) {
-  const summary = showSummary ?? !compact;
-  const start = addDays(cal.today, compact ? -3 : -7);
-  const end = addDays(cal.horizonEnd, compact ? 7 : 14);
+  const summary = !bare && (showSummary ?? !compact);
+  const start = range?.start ?? addDays(cal.today, compact ? -3 : -7);
+  const end = range?.end ?? addDays(cal.horizonEnd, compact ? 7 : 14);
   const days = diffDays(start, end);
   const minPx = compact ? 3 : 4.5;
   const pct = (d: string) => Math.max(0, Math.min(100, (diffDays(start, d) / days) * 100));
@@ -75,8 +79,8 @@ export function CalendarView({
   const freeNow = free.find((f) => f.start <= cal.today && cal.today < f.end);
   const nextFree = freeNow ?? free[0];
   const trackH = compact ? 32 : 44;
-  const top = compact ? 34 : 40; // Platz für Monate und das Heute-Schild
-  const axis = compact ? 0 : 22; // Datumsleiste unter der Spur
+  const top = bare ? 4 : compact ? 34 : 40; // Platz für Monate und das Heute-Schild
+  const axis = bare || compact ? 0 : 22; // Datumsleiste unter der Spur
   const selH = selection ? 22 : 0;
   const height = top + trackH + axis + selH + 4;
 
@@ -97,7 +101,7 @@ export function CalendarView({
       <div ref={scroller} className={cx(!fit && "overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0")} style={{ scrollbarWidth: "thin" }}>
         <div className="relative select-none w-full" style={{ minWidth: fit ? undefined : days * minPx, height }}>
           {/* Monate */}
-          {months.map((m) => (
+          {!bare && months.map((m) => (
             <span key={m.left} className={cx("absolute top-0 font-medium text-ink-2 whitespace-nowrap", compact ? "text-[11px]" : "text-[12px]")} style={{ left: `${m.left}%` }}>
               <span className="absolute top-[16px] w-px bg-line-strong" style={{ height: top - 16 }} />
               <span className="pl-1.5">{m.label}</span>
@@ -181,7 +185,7 @@ export function CalendarView({
 
           {/* Heute */}
           <div className="absolute w-[2px] -translate-x-1/2 bg-accent pointer-events-none" style={{ left: `${pct(cal.today)}%`, top: top - 4, height: trackH + 8 }} aria-hidden>
-            <span className="absolute -top-[15px] left-1/2 -translate-x-1/2 text-[10px] font-semibold uppercase tracking-[0.06em] bg-accent text-accent-ink rounded-[3px] px-1 leading-[14px]">Heute</span>
+            {!bare && <span className="absolute -top-[15px] left-1/2 -translate-x-1/2 text-[10px] font-semibold uppercase tracking-[0.06em] bg-accent text-accent-ink rounded-[3px] px-1 leading-[14px]">Heute</span>}
           </div>
         </div>
       </div>
@@ -204,6 +208,37 @@ export function CalendarView({
         ))}
         {free.map((f) => <li key={f.start}>Frei ab {fmtDay(dayToDate(f.start))}</li>)}
       </ul>
+    </div>
+  );
+}
+
+/** Gemeinsame Zeitachse über mehreren Kalenderspuren: Monate, Montage, Heute */
+export function CalendarAxis({ start, end, today }: { start: string; end: string; today: string }) {
+  const days = diffDays(start, end);
+  const pct = (d: string) => Math.max(0, Math.min(100, (diffDays(start, d) / days) * 100));
+  const marks = useMemo(() => {
+    const months: { label: string; left: number }[] = [];
+    const mondays: { day: string; left: number }[] = [];
+    for (let i = 0; i < days; i++) {
+      const d = addDays(start, i);
+      if (d.endsWith("-01")) months.push({ label: MONTH.format(dayToDate(d)), left: (i / days) * 100 });
+      if (weekday(d) === 0) mondays.push({ day: d, left: (i / days) * 100 });
+    }
+    if (!months.length || months[0].left > 10) months.unshift({ label: MONTH_SHORT.format(dayToDate(start)), left: 0 });
+    return { months, mondays };
+  }, [start, days]);
+  return (
+    <div className="relative h-[60px] select-none" aria-hidden>
+      {marks.months.map((m) => (
+        <span key={m.left} className="absolute top-0 text-[12px] font-medium text-ink-2 whitespace-nowrap" style={{ left: `${m.left}%` }}>
+          <span className="absolute top-[16px] w-px h-[44px] bg-line-strong" /><span className="pl-1.5">{m.label}</span>
+        </span>
+      ))}
+      {marks.mondays.map((w, i) => (
+        <span key={w.day} className={cx("absolute top-[22px] text-[10.5px] text-muted tnum -translate-x-1/2", i % 2 === 1 && "hidden sm:inline")} style={{ left: `${w.left}%` }}>{Number(w.day.slice(8))}.</span>
+      ))}
+      <span className="absolute bottom-0 w-[2px] h-[14px] -translate-x-1/2 bg-accent" style={{ left: `${pct(today)}%` }} />
+      <span className="absolute bottom-[14px] -translate-x-1/2 text-[10px] font-semibold uppercase tracking-[0.06em] bg-accent text-accent-ink rounded-[3px] px-1 leading-[14px]" style={{ left: `${pct(today)}%` }}>Heute</span>
     </div>
   );
 }
