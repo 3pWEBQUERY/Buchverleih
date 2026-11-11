@@ -1,35 +1,19 @@
-/** Platzhalter in der Form des Profils: Monogramm und Name, drei Zahlen, Regal auf dunkler Fläche */
 export default function Loading() {
   return (
-    <div aria-busy="true" aria-label="Profil lädt" className="space-y-12 md:space-y-16">
-      <div className="grid grid-cols-[auto_1fr] gap-x-5 md:gap-x-10 gap-y-6 items-end">
-        <div className="skeleton h-24 w-24 md:h-[168px] md:w-[168px] rounded-full" />
-        <div>
-          <div className="skeleton h-3 w-48" />
-          <div className="skeleton h-[34px] md:h-[46px] w-40 md:w-72 mt-3" />
+    <div aria-busy="true" aria-label="Profil wird geladen" className="grid lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)] gap-10 xl:gap-16 items-start">
+      <div className="space-y-5">
+        <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-5 items-center lg:block lg:space-y-5">
+          <div className="skeleton h-[88px] lg:h-[218px] rounded-full lg:rounded-[12px]" />
+          <div><div className="skeleton h-7 w-32" /><div className="skeleton h-4 w-44 mt-2" /></div>
         </div>
-        <div className="col-span-2 skeleton h-8 w-64 rounded-full" />
+        <div className="skeleton h-44 rounded-[10px]" />
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="panel-quiet px-4 py-5 md:px-7 md:py-7">
-            <div className="skeleton h-9 md:h-16 w-14 md:w-28" />
-            <div className="skeleton h-3.5 w-4/5 mt-3" />
-          </div>
-        ))}
-      </div>
-      <div className="surface-night rounded-[12px] px-5 md:px-9 pt-8 md:pt-10 pb-8 -mx-1 md:mx-0">
-        <div className="h-3 w-20 rounded bg-night-2" />
-        <div className="h-10 w-56 rounded bg-night-2 mt-3 mb-8" />
-        <div className="flex gap-5 items-end overflow-hidden">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="flex-none w-[112px]">
-              <div className="rounded-xs bg-night-2" style={{ height: 152 + (i % 4) * 8 }} />
-              <div className="h-[3px] bg-night-ink/30 rounded-full mt-0" />
-              <div className="h-3 w-4/5 rounded bg-night-2 mt-3" />
-            </div>
-          ))}
+      <div>
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div><div className="skeleton h-3 w-20" /><div className="skeleton h-[34px] md:h-[42px] w-64 mt-3 rounded-[10px]" /></div>
+          <div className="grid grid-cols-3 gap-2">{[0, 1, 2].map((i) => <div key={i} className="skeleton h-[68px] w-[92px] rounded-[8px]" />)}</div>
         </div>
+        <div className="skeleton h-80 mt-12 rounded-[12px] md:ml-[72px]" />
       </div>
     </div>
   );
