@@ -195,11 +195,42 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
     secondary.push(<Button key="rs" variant="quiet" onClick={() => setPanel(panel === "reschedule" ? null : "reschedule")}>Zeitraum ändern</Button>);
   }
 
+  // ---------------------------------------------------------------- Kopf des Panels
+  const passOn = Boolean((passOnNext && loan.status === "active" && !owner) || passOnAskPrev);
+  const myTurn = passOn || Boolean(step && loan.turn === "me");
+  const heading = passOnNext && loan.status === "active" && !owner ? "Weitergabecode zeigen"
+    : passOnAskPrev ? "Direkt weitergeben?"
+    : step && loan.turn === "me" ? step.label
+    : loan.waitingText ?? step?.label ?? null;
+  const eyebrow = myTurn ? "Du bist dran"
+    : loan.turn === "done" ? "Abgeschlossen"
+    : loan.turn === "system" ? "Am Zug: die Moderation"
+    : `Am Zug: ${loan.other?.first_name ?? "die andere Seite"}`;
+
+  if (!heading && !context && !main && secondary.length === 0) {
+    return null;
+  }
+
   return (
-    <section aria-label="Nächster Schritt" className="anim-rise">
-      {context && <p className="text-[17px] leading-relaxed max-w-2xl mb-5">{context}</p>}
-      {main}
-      {secondary.length > 0 && <div className="flex flex-wrap gap-x-6 gap-y-2 mt-6">{secondary}</div>}
+    <section aria-label="Nächster Schritt" className={cx(
+      "anim-rise rounded-[22px]",
+      myTurn ? "bg-paper-2 px-5 py-6 md:p-9" : "border border-line px-5 py-6 md:px-8 md:py-7",
+    )}>
+      <p className="eyebrow flex items-center gap-2">
+        <span aria-hidden className={cx("h-2 w-2 rounded-full", myTurn ? "bg-accent live-dot" : loan.turn === "done" ? "bg-done" : "bg-wait")} />
+        {eyebrow}
+      </p>
+      {heading && (
+        <h2 className={cx("mt-3", myTurn ? "display text-[40px] md:text-[56px]" : "font-serif text-[30px] md:text-[38px] leading-[1.02]")}>{heading}</h2>
+      )}
+      {context && <p className={cx("text-[16px] md:text-[17px] leading-relaxed text-ink-2 max-w-2xl", heading ? "mt-3" : "")}>{context}</p>}
+      {main && <div className="mt-7">{main}</div>}
+      {secondary.length > 0 && (
+        <div className={cx("flex flex-wrap items-center gap-x-6 gap-y-1 mt-7 pt-4 border-t", myTurn ? "border-line-strong/60" : "border-line")}>
+          <span className="text-[12.5px] text-muted mr-1">Weitere Möglichkeiten</span>
+          {secondary.map((b, i) => <span key={i} className="inline-flex min-h-11 items-center">{b}</span>)}
+        </div>
+      )}
 
       {panel === "report" && (
         <ReportHandover loan={loan} busy={busy} onReport={(dropoffPhotoKey) => act({ action: "report_handover", dropoffPhotoKey }, "Übergabe gemeldet")} />
@@ -239,28 +270,33 @@ function Portal({ children }: { children: React.ReactNode }) {
 
 // ---------------------------------------------------------------- Teilformulare
 
+const radioCard = "flex items-center gap-3 min-h-14 px-4 py-3 rounded-[12px] bg-paper border border-line cursor-pointer hover:border-line-strong has-[:checked]:border-ink has-[:checked]:ring-1 has-[:checked]:ring-ink transition-colors";
+
 function AcceptForm({ loan, busy, onAccept, onDecline }: { loan: LoanView; busy: boolean; onAccept: (b: Record<string, unknown>) => void; onDecline: () => void }) {
   const [spot, setSpot] = useState(loan.ownerSpots[0]?.id ?? "");
   const [when, setWhen] = useState("");
   const [swapCopy, setSwapCopy] = useState(loan.swapOffered[0]?.id ?? "");
   const place = loan.ownerSpots.find((s) => s.id === spot)?.label ?? loan.circle?.fixed_spot ?? null;
   return (
-    <div className="space-y-5 max-w-xl">
+    <div className="space-y-6 max-w-2xl">
       {loan.kind === "swap" && (
         <fieldset>
-          <legend className="text-sm font-medium mb-2">Angebotene Bücher</legend>
-          <div className="divide-y divide-line border-y border-line">
+          <legend className="text-[13px] font-semibold mb-2">Angebotene Bücher</legend>
+          <div className="grid sm:grid-cols-2 gap-2">
             {loan.swapOffered.map((o) => (
-              <label key={o.id} className="flex items-center gap-3 py-3 cursor-pointer">
-                <input type="radio" name="swap" checked={swapCopy === o.id} onChange={() => setSwapCopy(o.id)} className="accent-[var(--ink)]" />
-                <span className="font-serif text-lg">{o.title}</span>
-                <span className="text-sm text-muted">{o.authors[0]}</span>
+              <label key={o.id} className={radioCard}>
+                <input type="radio" name="swap" checked={swapCopy === o.id} onChange={() => setSwapCopy(o.id)} className="accent-[var(--ink)] h-4 w-4 flex-none" />
+                <span className="min-w-0">
+                  <span className="block font-serif text-[19px] leading-tight truncate">{o.title}</span>
+                  <span className="block text-[13px] text-muted truncate">{o.authors[0]}</span>
+                </span>
               </label>
             ))}
           </div>
-          <Link href={`/profil/${loan.other?.id}`} className="text-sm underline underline-offset-4 mt-2 inline-block">Ganzes Tauschregal ansehen</Link>
+          <Link href={`/profil/${loan.other?.id}`} className="text-sm font-medium link-grow mt-3 inline-block">Ganzes Tauschregal ansehen</Link>
         </fieldset>
       )}
+      <div className="grid md:grid-cols-2 gap-5 md:gap-4">
       {loan.ownerSpots.length > 0 ? (
         <Field label="Übergabeort" hint="Der genaue Ort wird erst nach der Annahme sichtbar.">
           <Select value={spot} onChange={(e) => setSpot(e.target.value)}>
@@ -268,14 +304,15 @@ function AcceptForm({ loan, busy, onAccept, onDecline }: { loan: LoanView; busy:
           </Select>
         </Field>
       ) : loan.circle?.fixed_spot ? (
-        <p className="text-[15px]">Übergabeort im Kreis: <strong className="font-medium">{loan.circle.fixed_spot}</strong></p>
+        <div className="text-[15px]"><span className="block text-[13px] font-semibold mb-2">Übergabeort im Kreis</span><span className="flex items-center h-12 px-4 rounded-[10px] bg-paper border border-line">{loan.circle.fixed_spot}</span></div>
       ) : (
-        <Notice>Du hast noch keinen Übergabeort. <Link href="/einstellungen#orte" className="underline underline-offset-4">Ort festlegen</Link> oder im Chat absprechen.</Notice>
+        <Notice className="self-end">Du hast noch keinen Übergabeort. <Link href="/einstellungen#orte" className="underline underline-offset-4">Ort festlegen</Link> oder im Chat absprechen.</Notice>
       )}
-      <Field label="Terminvorschlag (freiwillig)">
-        <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} className="max-w-xs" />
+      <Field label="Terminvorschlag (freiwillig)" hint="Erscheint als Karte im Chat.">
+        <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
       </Field>
-      <div className="flex flex-wrap items-center gap-4 pt-1">
+      </div>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3 pt-1">
         <Button variant="primary" size="lg" disabled={busy || (loan.kind === "swap" && !swapCopy)}
           onClick={() => onAccept({ pickupSpotId: spot || null, proposalAt: when ? new Date(when).toISOString() : null, proposalPlace: when ? place : null, swapCopyId: loan.kind === "swap" ? swapCopy : null })}>
           Annehmen
@@ -293,10 +330,10 @@ function PhotoPicker({ loanId, purpose, keys, setKeys, max = 6 }: { loanId: stri
     <div className="flex flex-wrap items-center gap-3">
       {keys.map((k) => (
         // eslint-disable-next-line @next/next/no-img-element
-        <img key={k} src={`/api/v1/images/${k}?w=480`} alt="Hochgeladenes Foto" className="h-20 w-20 object-cover rounded-xs outline outline-1 outline-black/10" />
+        <img key={k} src={`/api/v1/images/${k}?w=480`} alt="Hochgeladenes Foto" className="h-20 w-20 object-cover rounded-[10px] outline outline-1 -outline-offset-1 outline-black/10 anim-pop" />
       ))}
       {keys.length < max && (
-        <label className={cx("h-20 px-4 grid place-items-center border border-dashed border-line-strong rounded-xs text-sm cursor-pointer hover:border-ink", busy && "opacity-50")}>
+        <label className={cx("h-20 px-5 grid place-items-center border border-dashed border-line-strong rounded-[10px] bg-paper text-sm font-medium cursor-pointer hover:border-ink transition-colors", busy && "opacity-50")}>
           {busy ? "Lädt …" : "Foto hinzufügen"}
           <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={busy}
             onChange={async (e) => {
@@ -350,9 +387,9 @@ function ReportHandover({ loan, busy, onReport }: { loan: LoanView; busy: boolea
   return (
     <div className="mt-6 border-t border-line pt-5 space-y-4 max-w-xl anim-rise">
       {dropoff && (
-        <div className="flex gap-6 text-[15px]">
-          <label className="flex items-center gap-2"><input type="radio" checked={mode === "report"} onChange={() => setMode("report")} className="accent-[var(--ink)]" /> Persönlich übergeben</label>
-          <label className="flex items-center gap-2"><input type="radio" checked={mode === "dropoff"} onChange={() => setMode("dropoff")} className="accent-[var(--ink)]" /> In der Ablage hinterlegt</label>
+        <div className="grid sm:grid-cols-2 gap-2 text-[15px]">
+          <label className={radioCard}><input type="radio" checked={mode === "report"} onChange={() => setMode("report")} className="accent-[var(--ink)] h-4 w-4" /> Persönlich übergeben</label>
+          <label className={radioCard}><input type="radio" checked={mode === "dropoff"} onChange={() => setMode("dropoff")} className="accent-[var(--ink)] h-4 w-4" /> In der Ablage hinterlegt</label>
         </div>
       )}
       <p className="text-[15px] text-ink-2">{mode === "dropoff" ? "Lade ein Foto der Ablage hoch. Die andere Person bestätigt die Entnahme." : "Die andere Person wird um Bestätigung gebeten. Ohne Einspruch gilt die Meldung nach 48 Stunden."}</p>
@@ -376,9 +413,10 @@ function RateForm({ busy, onRate }: { busy: boolean; onRate: (v: "good" | "probl
   }
   return (
     <div className="space-y-4 max-w-xl anim-rise">
-      <div className="flex flex-wrap gap-x-6 gap-y-3">
+      <div className="flex flex-wrap gap-2">
         {Object.entries(ratingReasonLabel).map(([k, l]) => (
-          <Check key={k} label={l} checked={reasons.includes(k)} onChange={(v) => setReasons((r) => (v ? [...r, k] : r.filter((x) => x !== k)))} />
+          <Check key={k} label={l} checked={reasons.includes(k)} onChange={(v) => setReasons((r) => (v ? [...r, k] : r.filter((x) => x !== k)))}
+            className="min-h-11 pl-3 pr-4 rounded-full bg-paper border border-line has-[:checked]:border-ink transition-colors" />
         ))}
       </div>
       <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Was ist passiert? Geht nur an die Moderation." maxLength={500} />
@@ -401,10 +439,10 @@ function CaseResponse({ loan, onDone }: { loan: LoanView; onDone: () => void }) 
   const [busy, setBusy] = useState(false);
   return (
     <div className="space-y-4 max-w-xl">
-      <div className="divide-y divide-line border-y border-line">
+      <div className="grid gap-2">
         {options.map((o) => (
-          <label key={o} className="flex items-center gap-3 py-3 cursor-pointer text-[15px]">
-            <input type="radio" name="case" checked={choice === o} onChange={() => setChoice(o)} className="accent-[var(--ink)]" />
+          <label key={o} className={cx(radioCard, "text-[15px]")}>
+            <input type="radio" name="case" checked={choice === o} onChange={() => setChoice(o)} className="accent-[var(--ink)] h-4 w-4 flex-none" />
             {caseResponseLabel[o]}
           </label>
         ))}

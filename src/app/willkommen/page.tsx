@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth/session";
+import { AuthStage } from "@/components/auth/stage";
 import { Onboarding } from "./onboarding";
 import { env } from "@/lib/env";
 import { requirePhone } from "@/lib/trust";
@@ -13,8 +14,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
   const step = !u.onboarded_at ? "profile" : requirePhone() && !u.phone_verified_at ? "phone" : "done";
   if (step === "done") redirect(next && next.startsWith("/") ? next : "/");
   return (
-    <div className="max-w-lg md:ml-[8.33%] pt-4 md:pt-8">
+    <AuthStage
+      eyebrow="Konto einrichten"
+      title={<>Zwei Schritte, dann <em>leihst du.</em></>}
+      lead="Danach siehst du, was in den Regalen rund um dich steht, und kannst selbst verleihen. Das Einrichten dauert keine zwei Minuten."
+    >
       <Onboarding initialStep={step} next={next ?? "/"} firstName={u.first_name} devCodes={env.showCodes} />
-    </div>
+    </AuthStage>
   );
 }

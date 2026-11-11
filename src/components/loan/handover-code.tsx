@@ -67,26 +67,38 @@ export function HandoverCode({ loanId, label, onClose, onDone }: { loanId: strin
 
   const mm = Math.max(0, Math.floor(left / 60));
   const ss = String(Math.max(0, left % 60)).padStart(2, "0");
+  const pct = Math.max(0, Math.min(100, (left / 600) * 100));
 
   return (
-    <div role="dialog" aria-modal="true" aria-label={label} className="fixed inset-0 z-[60] bg-white text-black flex flex-col anim-sheet" style={{ colorScheme: "light" }}>
-      <div className="flex items-center justify-between px-5 h-16">
-        <span className="font-serif text-xl">{label}</span>
-        <button onClick={onClose} className="p-2 -mr-2" aria-label="Schliessen"><IconClose width={24} height={24} /></button>
+    <div role="dialog" aria-modal="true" aria-label={label} className="fixed inset-0 z-[60] bg-white text-black flex flex-col anim-sheet overflow-y-auto" style={{ colorScheme: "light" }}>
+      <div className="flex items-center justify-between px-5 md:px-8 h-16 flex-none">
+        <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-neutral-500 inline-flex items-center gap-2">
+          <span aria-hidden className="h-2 w-2 rounded-full bg-[#d23c1a] animate-pulse" /> Live
+        </span>
+        <button onClick={onClose} className="h-11 w-11 -mr-2 grid place-items-center rounded-full hover:bg-neutral-100 transition-colors" aria-label="Schliessen"><IconClose width={24} height={24} /></button>
       </div>
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-10">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-10 text-center">
+        <h2 className="font-serif text-[40px] md:text-[56px] leading-none tracking-[-0.03em]">{label}</h2>
+        <p className="mt-3 text-[15px] text-neutral-600 max-w-xs">Halte den Bildschirm der anderen Person hin. Sie scannt ihn mit der Kamera.</p>
         {error ? (
-          <p className="text-center max-w-sm text-[17px]">{error}</p>
+          <p className="mt-10 text-center max-w-sm text-[17px]" role="alert">{error}</p>
         ) : !token ? (
-          <div className="w-[min(78vw,360px)] aspect-square bg-neutral-100 animate-pulse" />
+          <div className="mt-8 w-[min(76vw,340px)] aspect-square rounded-[22px] bg-neutral-100 animate-pulse" />
         ) : (
           <>
-            <div className="w-[min(78vw,360px)] aspect-square [&_svg]:w-full [&_svg]:h-full" dangerouslySetInnerHTML={{ __html: svg }} />
-            <p className="mt-8 text-sm text-neutral-600">Oder die sechs Ziffern eingeben</p>
-            <p className="mt-2 font-sans text-5xl tracking-[0.18em] tnum font-medium" aria-label={`Code ${token.code.split("").join(" ")}`}>
-              {token.code.slice(0, 3)}<span className="inline-block w-4" />{token.code.slice(3)}
+            <div className="mt-8 p-4 rounded-[22px] border border-neutral-200 anim-pop">
+              <div className="w-[min(68vw,320px)] aspect-square [&_svg]:w-full [&_svg]:h-full" dangerouslySetInnerHTML={{ __html: svg }} />
+            </div>
+            <p className="mt-8 text-[13px] text-neutral-600">Oder die sechs Ziffern eingeben</p>
+            <p className="mt-3 flex items-center gap-2 md:gap-3" aria-label={`Code ${token.code.split("").join(" ")}`}>
+              {token.code.split("").map((d, i) => (
+                <span key={i} aria-hidden className={`h-14 w-11 md:h-16 md:w-12 grid place-items-center rounded-[10px] bg-neutral-100 font-sans text-[30px] md:text-[34px] font-semibold tnum ${i === 3 ? "ml-3 md:ml-4" : ""}`}>{d}</span>
+              ))}
             </p>
-            <p className="mt-6 text-sm text-neutral-600 tnum">Gültig noch {mm}:{ss} Min. Danach erscheint automatisch ein neuer Code.</p>
+            <div className="mt-8 w-[min(68vw,320px)]">
+              <div className="h-1 rounded-full bg-neutral-200 overflow-hidden"><div className="h-full bg-black rounded-full transition-[width] duration-1000 ease-linear" style={{ width: `${pct}%` }} /></div>
+              <p className="mt-2.5 text-[13px] text-neutral-600 tnum">Gültig noch {mm}:{ss} Min. Danach erscheint automatisch ein neuer Code.</p>
+            </div>
           </>
         )}
       </div>

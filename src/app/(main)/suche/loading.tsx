@@ -1,35 +1,31 @@
-/** Platzhalter in der Form der Suche: Feld, Trefferliste, Filterspalte */
+/** Platzhalter in der Form der Suche: Titel, Suchfeld als Pille, Filter-Chips, Kartenraster */
 export default function Loading() {
   return (
     <div aria-busy="true" aria-label="Suche lädt">
-      <div className="skeleton h-12 md:h-16 w-48 md:w-72 mb-6 md:mb-8" />
-      <div className="skeleton h-14 w-full" />
-      <div className="mt-8 lg:grid lg:grid-cols-[minmax(0,1fr)_232px] lg:gap-12">
-        <div>
-          <div className="border-b border-line pb-3 mb-1"><div className="skeleton h-4 w-56" /></div>
-          <ul className="divide-y divide-line">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <li key={i} className="grid grid-cols-[48px_1fr_auto] gap-4 items-center py-3.5">
-                <div className="skeleton w-12 h-[72px]" />
-                <div>
-                  <div className="skeleton h-5" style={{ width: `${50 + ((i * 23) % 40)}%` }} />
-                  <div className="skeleton h-3.5 w-1/3 mt-2" />
-                  <div className="skeleton h-3 w-2/5 mt-2.5" />
-                </div>
-                <div className="skeleton h-4 w-12 self-start mt-1" />
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="hidden lg:block space-y-5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i}>
-              <div className="skeleton h-3.5 w-20 mb-2" />
-              <div className="skeleton h-10 w-full" />
-            </div>
-          ))}
-        </div>
+      <div className="mb-8 md:mb-10">
+        <div className="skeleton h-3 w-40" />
+        <div className="skeleton h-[46px] md:h-[76px] w-[85%] md:w-[620px] mt-4" />
+        <div className="skeleton h-[46px] md:h-[76px] w-1/2 md:w-[360px] mt-2 md:hidden" />
       </div>
+      <div className="skeleton h-16 md:h-[72px] w-full rounded-full" />
+      <div className="mt-5 flex gap-2 overflow-hidden">
+        {[230, 104, 82, 96, 120, 104, 96, 104].map((w, i) => (
+          <div key={i} className="skeleton h-10 rounded-full flex-none" style={{ width: w }} />
+        ))}
+      </div>
+      <div className="skeleton h-5 w-64 mt-10 md:mt-12 mb-5" />
+      <ul className="grid md:grid-cols-2 gap-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <li key={i} className="panel flex gap-5 p-5">
+            <div className="skeleton w-[76px] h-[112px] flex-none" />
+            <div className="flex-1">
+              <div className="skeleton h-6" style={{ width: `${50 + ((i * 23) % 40)}%` }} />
+              <div className="skeleton h-3.5 w-1/3 mt-2.5" />
+              <div className="skeleton h-6 w-32 mt-8 rounded-full" />
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

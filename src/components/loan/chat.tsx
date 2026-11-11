@@ -4,7 +4,7 @@ import { api } from "@/lib/client";
 import { ago, fmtDayTime } from "@/lib/dates";
 import { Button, Input, cx } from "@/components/ui";
 import { useToast } from "@/components/toast";
-import { IconCalendar, IconFlag } from "@/components/icons";
+import { IconCalendar, IconCheck, IconFlag } from "@/components/icons";
 
 /**
  * Chat im Vorgang bzw. Übergabe-Chat (PRD 4.10, 7.4). Terminvorschläge sind antippbare Karten
@@ -101,85 +101,120 @@ export function Chat({
   const minDate = new Date(Date.now() + 15 * 60_000);
   const minLocal = new Date(minDate.getTime() - minDate.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 
+  // Aufeinanderfolgende Nachrichten derselben Person werden gruppiert; Tageswechsel als Trenner
+  const dayKey = (d: string) => new Date(d).toDateString();
+  const dayLabel = (d: string) => {
+    const k = dayKey(d);
+    if (k === new Date().toDateString()) return "Heute";
+    if (k === new Date(Date.now() - 86400_000).toDateString()) return "Gestern";
+    return new Intl.DateTimeFormat("de-CH", { weekday: "long", day: "numeric", month: "long" }).format(new Date(d));
+  };
+
   return (
-    <div>
+    <div className="flex flex-col">
       {msgs.length === 0 ? (
-        <p className="text-muted text-[15px] py-4">Noch keine Nachrichten. Schlag einen Termin vor, das geht am schnellsten.</p>
+        <div className="px-5 md:px-6 py-10 text-center">
+          <span aria-hidden className="mx-auto h-11 w-11 rounded-full bg-paper-2 grid place-items-center text-ink-2"><IconCalendar /></span>
+          <p className="text-ink-2 text-[15px] mt-3 max-w-xs mx-auto">Noch keine Nachrichten. Schlag einen Termin vor, das geht am schnellsten.</p>
+        </div>
       ) : (
-        <ol ref={list} className="space-y-4 max-h-[60vh] overflow-y-auto pr-1" aria-live="polite">
-          {msgs.map((m) => {
+        <ol ref={list} className="px-4 md:px-6 py-5 space-y-1 max-h-[62vh] overflow-y-auto overscroll-contain" aria-live="polite">
+          {msgs.map((m, i) => {
             const mine = m.sender_id === me;
+            const prev = msgs[i - 1];
+            const newDay = !prev || dayKey(prev.created_at) !== dayKey(m.created_at);
+            const firstOfGroup = newDay || !prev || prev.sender_id !== m.sender_id || !prev.sender_id;
+            const sep = newDay ? (
+              <li key={`d-${m.id}`} aria-hidden className="flex items-center gap-3 py-3 first:pt-0">
+                <span className="h-px flex-1 bg-line" />
+                <span className="text-[11.5px] font-semibold uppercase tracking-[0.1em] text-muted">{dayLabel(m.created_at)}</span>
+                <span className="h-px flex-1 bg-line" />
+              </li>
+            ) : null;
             if (!m.sender_id) {
-              return <li key={m.id} className="text-center text-sm text-muted py-1">{m.body}</li>;
+              return [sep, <li key={m.id} className="flex justify-center py-2"><span className="chip !h-auto py-1 text-center !whitespace-normal">{m.body}</span></li>];
             }
-            return (
-              <li key={m.id} className={cx("group flex flex-col max-w-[85%]", mine ? "ml-auto items-end" : "items-start", m.pending && "opacity-60")}>
-                <span className="text-xs text-muted mb-1">{mine ? "Du" : m.sender_name} · {ago(m.created_at)}</span>
+            return [sep, (
+              <li key={m.id} className={cx("group flex flex-col max-w-[85%] md:max-w-[75%] anim-rise", mine ? "ml-auto items-end" : "items-start", firstOfGroup && !newDay && "pt-3", m.pending && "opacity-60")}>
+                {firstOfGroup && <span className="text-[12px] text-muted mb-1 px-1">{mine ? "Du" : m.sender_name}</span>}
                 {m.proposal_at && (
-                  <div className={cx("border rounded-sm px-4 py-3 w-72 max-w-full", m.proposal_status === "accepted" ? "border-ok" : m.proposal_status === "countered" ? "border-line opacity-60" : "border-ink")}>
-                    <p className="eyebrow flex items-center gap-1.5"><IconCalendar width={14} height={14} /> Terminvorschlag</p>
-                    <p className="font-serif text-xl mt-1.5">{fmtDayTime(m.proposal_at)}</p>
-                    {m.proposal_place && <p className="text-[15px] text-ink-2">{m.proposal_place}</p>}
-                    <div className="mt-3 flex items-center gap-3 text-sm">
+                  <div className={cx(
+                    "rounded-[16px] w-72 max-w-full overflow-hidden border transition-colors",
+                    m.proposal_status === "accepted" ? "border-ok bg-paper" : m.proposal_status === "countered" ? "border-line bg-paper opacity-60" : "border-ink bg-paper",
+                  )}>
+                    <div className="px-4 pt-3.5 pb-3">
+                      <p className="eyebrow flex items-center gap-1.5"><IconCalendar width={14} height={14} /> Terminvorschlag</p>
+                      <p className={cx("font-serif text-[24px] leading-tight mt-2 tnum", m.proposal_status === "countered" && "line-through decoration-1")}>{fmtDayTime(m.proposal_at)}</p>
+                      {m.proposal_place && <p className="text-[14.5px] text-ink-2 mt-0.5">{m.proposal_place}</p>}
+                    </div>
+                    <div className={cx("px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13.5px] border-t", m.proposal_status === "accepted" ? "border-ok/40 bg-ok/[0.07]" : "border-line bg-paper-2")}>
                       {m.proposal_status === "accepted" && (
                         <>
-                          <span className="text-ok font-medium">Vereinbart</span>
-                          <a href={`/api/v1/messages/${m.id}/ics`} className="underline underline-offset-4">In den Kalender</a>
+                          <span className="text-ok font-semibold inline-flex items-center gap-1"><IconCheck width={15} height={15} /> Vereinbart</span>
+                          <a href={`/api/v1/messages/${m.id}/ics`} className="ml-auto font-medium underline underline-offset-4">In den Kalender</a>
                         </>
                       )}
                       {m.proposal_status === "countered" && <span className="text-muted">Ersetzt durch einen neuen Vorschlag</span>}
                       {m.proposal_status === "open" && !m.proposal_accepted_by.includes(me) && !readOnly && (
                         <>
                           <Button size="sm" variant="secondary" onClick={() => accept(m.id)}>Annehmen</Button>
-                          <button className="underline underline-offset-4" onClick={() => { setProposing(true); setPlace(m.proposal_place ?? ""); }}>Gegenvorschlag</button>
+                          <button className="font-medium underline underline-offset-4 min-h-9" onClick={() => { setProposing(true); setPlace(m.proposal_place ?? ""); }}>Gegenvorschlag</button>
                         </>
                       )}
                       {m.proposal_status === "open" && m.proposal_accepted_by.includes(me) && (
-                        <span className="text-muted">{memberCount > 2 ? `${m.proposal_accepted_by.length} von ${memberCount} haben angenommen` : "Wartet auf Antwort"}</span>
+                        <span className="text-muted inline-flex items-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait live-dot" />{memberCount > 2 ? `${m.proposal_accepted_by.length} von ${memberCount} haben angenommen` : "Wartet auf Antwort"}</span>
                       )}
                     </div>
                   </div>
                 )}
                 {m.body && (
-                  <p className={cx("px-3.5 py-2 rounded-sm text-[15px] whitespace-pre-wrap break-words", m.proposal_at && "mt-1.5", mine ? "bg-ink text-paper" : "bg-paper-3")}>{m.body}</p>
+                  <p className={cx(
+                    "px-4 py-2.5 rounded-[16px] text-[15px] leading-snug whitespace-pre-wrap break-words",
+                    m.proposal_at && "mt-1",
+                    mine ? "bg-ink text-paper rounded-br-[6px]" : "bg-paper-2 text-ink rounded-bl-[6px]",
+                  )}>{m.body}</p>
                 )}
-                {!mine && !m.pending && (
-                  <button onClick={() => report(m.id)} className="mt-1 text-xs text-muted opacity-0 group-hover:opacity-100 focus:opacity-100 inline-flex items-center gap-1">
-                    <IconFlag width={12} height={12} /> Melden
-                  </button>
-                )}
+                <span className="flex items-center gap-2 mt-1 px-1 text-[11.5px] text-muted">
+                  <time dateTime={m.created_at}>{m.pending ? "wird gesendet" : ago(m.created_at)}</time>
+                  {!mine && !m.pending && (
+                    <button onClick={() => report(m.id)} className="opacity-0 group-hover:opacity-100 focus:opacity-100 inline-flex items-center gap-1 hover:text-ink transition-opacity">
+                      <IconFlag width={12} height={12} /> Melden
+                    </button>
+                  )}
+                </span>
               </li>
-            );
+            )];
           })}
         </ol>
       )}
 
       {readOnly ? (
-        <p className="text-sm text-muted mt-6 border-t border-line pt-4">Dieser Chat ist geschlossen.</p>
+        <p className="text-sm text-muted border-t border-line px-5 md:px-6 py-4">Dieser Chat ist geschlossen.</p>
       ) : (
-        <form onSubmit={send} className="mt-6 border-t border-line pt-4">
+        <form onSubmit={send} className="border-t border-line px-3 md:px-4 pt-3 pb-3">
           {proposing && (
-            <div className="grid sm:grid-cols-2 gap-3 mb-3 anim-rise">
+            <div className="grid sm:grid-cols-2 gap-3 mb-3 p-3 rounded-[14px] bg-paper-2 anim-rise">
               <label className="block">
-                <span className="block text-sm font-medium mb-1.5">Datum und Zeit</span>
+                <span className="block text-[13px] font-semibold mb-1.5">Datum und Zeit</span>
                 <Input type="datetime-local" required min={minLocal} value={when} onChange={(e) => setWhen(e.target.value)} />
               </label>
               <label className="block">
-                <span className="block text-sm font-medium mb-1.5">Ort</span>
+                <span className="block text-[13px] font-semibold mb-1.5">Ort</span>
                 <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="z. B. Bahnhof, beim Kiosk" maxLength={120} />
               </label>
             </div>
           )}
-          <div className="flex gap-2">
+          <div className="flex items-center gap-1.5 rounded-full border border-line-strong bg-paper p-1 focus-within:border-ink focus-within:ring-[3px] focus-within:ring-ink/10 transition-[border-color,box-shadow]">
             <button type="button" onClick={() => setProposing((p) => !p)} aria-pressed={proposing}
-              className={cx("h-11 w-11 flex-none grid place-items-center rounded-sm border transition-colors", proposing ? "bg-ink text-paper border-ink" : "border-line-strong hover:border-ink")}
+              className={cx("h-10 w-10 flex-none grid place-items-center rounded-full transition-colors", proposing ? "bg-ink text-paper" : "text-ink-2 hover:bg-paper-2")}
               aria-label="Termin vorschlagen" title="Termin vorschlagen">
               <IconCalendar />
             </button>
-            <Input value={text} onChange={(e) => setText(e.target.value)} placeholder={proposing ? "Notiz zum Termin (freiwillig)" : "Nachricht"} maxLength={2000} aria-label="Nachricht" />
-            <Button type="submit" variant="secondary" className="h-11 flex-none">{proposing ? "Vorschlagen" : "Senden"}</Button>
+            <input value={text} onChange={(e) => setText(e.target.value)} placeholder={proposing ? "Notiz zum Termin (freiwillig)" : "Nachricht"} maxLength={2000} aria-label="Nachricht"
+              className="flex-1 min-w-0 h-10 bg-transparent px-1.5 text-[16px] placeholder:text-muted/70 focus:outline-none focus-visible:outline-none" />
+            <Button type="submit" variant="secondary" className="h-10 px-4 flex-none">{proposing ? "Vorschlagen" : "Senden"}</Button>
           </div>
-          <p className="text-xs text-muted mt-2">Treffpunkte an öffentlichen Orten sind die sicherste Wahl. Telefonnummer und Adresse teilst du nur, wenn du willst.</p>
+          <p className="text-[12px] text-muted mt-2 px-2">Treffpunkte an öffentlichen Orten sind die sicherste Wahl. Telefonnummer und Adresse teilst du nur, wenn du willst.</p>
         </form>
       )}
     </div>

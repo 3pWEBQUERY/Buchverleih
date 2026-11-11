@@ -7,17 +7,22 @@ import { useToast } from "@/components/toast";
 import { api } from "@/lib/client";
 
 /** «Auf die Wunschliste / Titelalarm» (PRD 4.6) */
-export function WishButton({ workId, loggedIn, onList, alarm, next, primary }: { workId: string; loggedIn: boolean; onList: boolean; alarm: boolean; next: string; primary: boolean }) {
+export function WishButton({ workId, loggedIn, onList, alarm, next, primary, onNight = false }: { workId: string; loggedIn: boolean; onList: boolean; alarm: boolean; next: string; primary: boolean; onNight?: boolean }) {
+  // Auf der dunklen Bühne ist der sekundäre Knopf hell gefüllt
+  const nightCls = onNight && !primary ? "!bg-night-ink !text-night hover:!opacity-90" : undefined;
   const router = useRouter();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
 
   if (!loggedIn) {
-    return <LinkButton href={`/anmelden?next=${encodeURIComponent(next)}`} variant={primary ? "primary" : "secondary"}>Auf die Wunschliste</LinkButton>;
+    return <LinkButton href={`/anmelden?next=${encodeURIComponent(next)}`} variant={primary ? "primary" : "secondary"} className={nightCls}>Auf die Wunschliste</LinkButton>;
   }
   if (onList) {
     return (
-      <Link href="/wunschliste" className="inline-flex h-10 items-center text-[15px] font-medium hover:underline underline-offset-4">
+      <Link href="/wunschliste" className={onNight
+        ? "inline-flex h-11 items-center gap-2 px-5 rounded-full border border-night-line text-[15px] font-semibold hover:bg-night-2 transition-colors"
+        : "inline-flex h-11 items-center gap-2 px-5 rounded-full border border-line-strong text-[15px] font-semibold hover:border-ink transition-colors"}>
+        <span aria-hidden className={alarm ? "h-2 w-2 rounded-full bg-[#8fd09a] live-dot" : "h-2 w-2 rounded-full bg-current opacity-50"} />
         {alarm ? "Auf der Wunschliste, Titelalarm an" : "Auf der Wunschliste"}
       </Link>
     );
@@ -43,7 +48,7 @@ export function WishButton({ workId, loggedIn, onList, alarm, next, primary }: {
   }
 
   return (
-    <Button variant={primary ? "primary" : "secondary"} onClick={add} disabled={busy}>
+    <Button variant={primary ? "primary" : "secondary"} className={nightCls} onClick={add} disabled={busy}>
       Auf die Wunschliste
     </Button>
   );

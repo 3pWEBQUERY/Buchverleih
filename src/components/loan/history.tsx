@@ -50,15 +50,21 @@ const ACTION: Record<string, string> = {
 
 export function History({ events }: { events: { id: number; action: string; to_status: string; actor_name: string | null; actor_id: string | null; created_at: Date }[] }) {
   return (
-    <ol className="border-l border-line ml-1 space-y-3">
-      {events.map((e) => {
+    <ol className="relative">
+      {events.map((e, i) => {
         const text = ACTION[e.action] ?? statusLabel[e.to_status as LoanStatus];
         const system = !e.actor_id;
+        const last = i === events.length - 1;
         return (
-          <li key={e.id} className="pl-4 relative text-[15px]">
-            <span aria-hidden className="absolute -left-[3px] top-2 h-[5px] w-[5px] rounded-full bg-line-strong" />
-            <span>{system || /^[A-ZÜÄÖ]/.test(text) ? text : `${e.actor_name} ${text}`}</span>
-            <span className="text-muted text-sm"> · {fmtDayTime(e.created_at)}</span>
+          <li key={e.id} className="relative grid grid-cols-[18px_minmax(0,1fr)] gap-3 pb-4 last:pb-0">
+            {!last && <span aria-hidden className="absolute left-[8px] top-4 bottom-0 w-px bg-line" />}
+            <span aria-hidden className={`mt-[7px] h-[9px] w-[9px] ml-[4px] rounded-full ${system ? "border border-line-strong bg-paper" : "bg-ink"}`} />
+            <div className="min-w-0">
+              <p className="text-[15px] leading-snug">
+                {system || /^[A-ZÜÄÖ]/.test(text) ? text : <><span className="font-semibold">{e.actor_name}</span> {text}</>}
+              </p>
+              <p className="text-[12.5px] text-muted tnum mt-0.5">{fmtDayTime(e.created_at)}{system ? " · automatisch" : ""}</p>
+            </div>
           </li>
         );
       })}

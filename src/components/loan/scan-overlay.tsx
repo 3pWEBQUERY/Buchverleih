@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/client";
 import { Scanner } from "@/components/scanner";
-import { Button, Input } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { IconClose } from "@/components/icons";
 
 /** Code der anderen Person scannen – oder die sechs Ziffern eintippen (PRD 4.3). */
@@ -31,26 +31,29 @@ export function ScanOverlay({ loanId, label, onClose, onDone }: { loanId: string
   }
 
   return (
-    <div role="dialog" aria-modal="true" aria-label={label} className="fixed inset-0 z-[60] bg-paper flex flex-col anim-sheet">
-      <div className="flex items-center justify-between px-5 h-16 border-b border-line">
-        <span className="font-serif text-xl">{label}</span>
-        <button onClick={onClose} className="p-2 -mr-2" aria-label="Schliessen"><IconClose width={24} height={24} /></button>
+    <div role="dialog" aria-modal="true" aria-label={label} className="fixed inset-0 z-[60] surface-night flex flex-col anim-sheet">
+      <div className="flex items-center justify-between px-5 md:px-8 h-16 flex-none">
+        <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-night-muted">Kamera</span>
+        <button onClick={onClose} className="h-11 w-11 -mr-2 grid place-items-center rounded-full hover:bg-night-2 transition-colors" aria-label="Schliessen"><IconClose width={24} height={24} /></button>
       </div>
-      <div className="flex-1 overflow-y-auto px-5 py-6 max-w-lg w-full mx-auto">
-        <Scanner mode="qr" paused={busy} fallbackHint="Gib die sechs Ziffern unter dem Code ein."
+      <div className="flex-1 overflow-y-auto px-5 pb-8 max-w-lg w-full mx-auto">
+        <h2 className="font-serif text-[40px] md:text-[52px] leading-none tracking-[-0.03em]">{label}</h2>
+        <p className="mt-3 text-[15px] text-night-muted">Richte die Kamera auf den Code auf dem anderen Bildschirm.</p>
+        <Scanner mode="qr" paused={busy} fallbackHint="Gib die sechs Ziffern unter dem Code ein." className="mt-6 !rounded-[18px] !border-night-line"
           onResult={(text) => {
             const token = text.includes("/h/") ? text.split("/h/")[1] : text;
             redeem(() => api("/handover/redeem", { body: { token } }));
           }} />
-        <form className="mt-8" onSubmit={(e) => { e.preventDefault(); redeem(() => api(`/loans/${loanId}/actions`, { body: { action: "enter_code", code: digits } })); }}>
-          <label className="block text-sm font-medium mb-2" htmlFor="digits">Sechs Ziffern unter dem Code</label>
-          <div className="flex gap-3">
-            <Input id="digits" inputMode="numeric" autoComplete="one-time-code" maxLength={7} value={digits}
-              onChange={(e) => setDigits(e.target.value.replace(/[^\d]/g, "").slice(0, 6))} className="text-2xl tracking-[0.25em] tnum h-14 w-48" />
+        <form className="mt-8 pt-6 border-t border-night-line" onSubmit={(e) => { e.preventDefault(); redeem(() => api(`/loans/${loanId}/actions`, { body: { action: "enter_code", code: digits } })); }}>
+          <label className="block text-[13px] font-semibold mb-2.5" htmlFor="digits">Oder die sechs Ziffern unter dem Code</label>
+          <div className="flex flex-wrap gap-3">
+            <input id="digits" inputMode="numeric" autoComplete="one-time-code" maxLength={7} value={digits} placeholder="000000"
+              onChange={(e) => setDigits(e.target.value.replace(/[^\d]/g, "").slice(0, 6))}
+              className="h-14 w-52 rounded-[12px] bg-night-2 border border-night-line px-4 text-[26px] font-semibold tracking-[0.3em] tnum text-night-ink placeholder:text-night-muted/40 focus:outline-none focus:border-night-ink transition-colors" />
             <Button type="submit" variant="primary" size="lg" className="h-14" disabled={digits.length !== 6 || busy}>Bestätigen</Button>
           </div>
         </form>
-        {error && <p className="text-late mt-4" role="alert">{error}</p>}
+        {error && <p className="mt-4 text-[15px] text-[#ff8aa3]" role="alert">{error}</p>}
       </div>
     </div>
   );
