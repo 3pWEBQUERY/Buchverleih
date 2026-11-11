@@ -1,4 +1,4 @@
-import { Wordmark } from "@/components/shell";
+import { StandaloneShell } from "@/components/auth/standalone";
 import { RetryButton } from "./retry";
 
 export const dynamic = "force-static";
@@ -7,15 +7,13 @@ export const metadata = { title: "Offline", robots: { index: false } };
 /** Offline-Hülle der PWA. Der Service Worker liefert sie, wenn eine Seite ohne Netz nicht lädt. */
 export default function Page() {
   return (
-    <div className="min-h-dvh flex flex-col px-4 md:px-10">
-      <header className="h-16 flex items-center border-b border-line -mx-4 px-4 md:-mx-10 md:px-10">
-        <Wordmark />
-      </header>
-      <main id="inhalt" className="flex-1 w-full max-w-xl mx-auto py-16 md:py-24">
-        <h1 className="display text-4xl md:text-6xl">Keine Verbindung</h1>
-        <p className="text-ink-2 text-[17px] mt-5 max-w-prose">Diese Seite braucht das Netz. Sobald du wieder verbunden bist, lädt sie mit einem Tipp neu.</p>
-        <div className="mt-8"><RetryButton /></div>
-      </main>
-    </div>
+    <StandaloneShell motif={{ label: "Ohne Netz" }}>
+      <p className="eyebrow anim-rise">Offline</p>
+      <h1 className="display text-[52px] md:text-[84px] mt-4 anim-rise" style={{ animationDelay: "40ms" }}>Keine <em>Verbindung.</em></h1>
+      <p className="text-ink-2 text-[17px] md:text-[19px] leading-relaxed mt-6 max-w-prose anim-rise" style={{ animationDelay: "80ms" }}>
+        Diese Seite braucht das Netz. Sobald du wieder verbunden bist, lädt sie von selbst neu – oder mit einem Tipp.
+      </p>
+      <div className="mt-9 anim-rise" style={{ animationDelay: "120ms" }}><RetryButton /></div>
+    </StandaloneShell>
   );
 }

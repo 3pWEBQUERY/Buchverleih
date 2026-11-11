@@ -256,7 +256,7 @@ function KpiTile({ k, i }: { k: Kpi; i: number }) {
   const fill = k.value === null ? 0 : Math.max(2, Math.min(100, (k.value / max) * 100));
   const mark = (k.goal / max) * 100;
   return (
-    <li className="panel rounded-[14px] p-5 flex flex-col min-h-[228px] anim-rise" style={{ animationDelay: `${i * 35}ms` }}>
+    <li className="panel rounded-[14px] p-5 flex flex-col sm:min-h-[228px] anim-rise" style={{ animationDelay: `${i * 35}ms` }}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="ui-title text-[15px]">{k.label}</p>

@@ -19,7 +19,7 @@ const NIGHT_DOT: Record<Tone, string> = {
 };
 
 export type BookRowItem = Pick<ShelfCopy, "id" | "title" | "authors" | "photo_key" | "photo_w" | "photo_h" | "cover_key" | "work_id"> &
-  Partial<Pick<ShelfCopy, "status" | "lent_until" | "next_start" | "open_requests">> & { href?: string; meta?: string };
+  Partial<Pick<ShelfCopy, "status" | "lent_until" | "next_start" | "open_requests">> & { href?: string; note?: { tone: Tone; text: string } };
 
 export function BookRow({ items, height = 168, hrefBase = "/regal/", label }: { items: BookRowItem[]; height?: number; hrefBase?: string; label?: string }) {
   return (
@@ -28,7 +28,7 @@ export function BookRow({ items, height = 168, hrefBase = "/regal/", label }: { 
         const cover = { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id };
         const cw = Math.round(height * coverRatio(cover));
         const w = Math.max(128, cw);
-        const st = c.status ? shelfStatusText({ status: c.status, lent_until: c.lent_until ?? null, next_start: c.next_start ?? null, open_requests: c.open_requests ?? 0 }) : null;
+        const st = c.note ?? (c.status ? shelfStatusText({ status: c.status, lent_until: c.lent_until ?? null, next_start: c.next_start ?? null, open_requests: c.open_requests ?? 0 }) : null);
         const last = i === items.length - 1;
         return (
           <li key={c.id} style={{ width: w + (last ? 0 : 22), animationDelay: `${Math.min(i, 10) * 30}ms` }} className="anim-rise relative">
@@ -45,8 +45,6 @@ export function BookRow({ items, height = 168, hrefBase = "/regal/", label }: { 
                     <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none", NIGHT_DOT[st.tone])} />
                     <span className="truncate">{st.text}</span>
                   </p>
-                ) : c.meta ? (
-                  <p className="text-[12px] text-night-muted mt-1 truncate">{c.meta}</p>
                 ) : null}
               </div>
             </Link>

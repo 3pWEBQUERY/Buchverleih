@@ -7,7 +7,7 @@ import { api } from "@/lib/client";
 import { offerLabel, visibilityLabel } from "@/lib/i18n/de-CH";
 import { Cover } from "@/components/cover";
 import Link from "next/link";
-import { BookRow } from "./book-row";
+import { BookRow } from "@/components/regal/book-row";
 import { useToast } from "@/components/toast";
 import { Button, LinkButton, PageTitle, Switch, cx } from "@/components/ui";
 import { IconCalendar, IconCheck, IconScan } from "@/components/icons";

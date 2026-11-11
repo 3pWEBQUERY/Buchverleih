@@ -238,7 +238,7 @@ function QuickStart() {
         </div>
         <p className="text-sm text-muted">Die Details stehen weiter unten.</p>
       </div>
-      <ol className="grid grid-flow-col auto-cols-[78%] sm:auto-cols-[46%] lg:grid-flow-row lg:grid-cols-4 gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 md:-mx-12 md:px-12 lg:mx-0 lg:px-0 pb-1" style={{ scrollbarWidth: "none" }}>
+      <ol className="grid grid-flow-col auto-cols-[78%] sm:auto-cols-[46%] lg:grid-flow-row lg:grid-cols-4 gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 scroll-px-4 sm:mx-0 sm:px-0 sm:scroll-px-0 pb-1" style={{ scrollbarWidth: "none" }}>
         {STEPS.map(([n, title, text, href, more], i) => (
           <li key={n} className="snap-start anim-rise" style={{ animationDelay: `${80 + i * 50}ms` }}>
             <Link href={href} className="group panel-quiet rounded-[18px] p-6 flex flex-col h-full min-h-[236px] hover:bg-paper-3 transition-colors duration-300">

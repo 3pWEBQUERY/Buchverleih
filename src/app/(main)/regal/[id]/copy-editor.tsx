@@ -171,7 +171,7 @@ export function CopyEditor({ copy, calendar, circles }: { copy: CopyDetail; cale
             </div>
           </Row>
           <Row label="Wer es sieht" hint={VIS_HINT[s.visibility]}>
-            <Segmented name="Sichtbarkeit" value={s.visibility} onChange={(v) => save({ visibility: v })}
+            <Segmented size="lg" name="Sichtbarkeit" value={s.visibility} onChange={(v) => save({ visibility: v })}
               options={(["all", "proven", "circles"] as const).map((v) => ({ value: v, label: visibilityLabel[v] }))} />
           </Row>
           <Row label="In meinen Kreisen" hint="Ausgewählte Kreise zeigen das Buch in ihrem gemeinsamen Regal.">
@@ -196,7 +196,7 @@ export function CopyEditor({ copy, calendar, circles }: { copy: CopyDetail; cale
           <Row label="Leihfrist" hint={circleDays.length > 0
             ? `In ${circleDays.length === 1 ? `«${circleDays[0].name}»` : "deinen Kreisen"} gilt die Leihfrist des Kreises${circleDays.length === 1 ? ` (${circleDays[0].loanDays} Tage)` : ""}.`
             : "So lange darf jemand das Buch behalten."}>
-            <Segmented name="Leihfrist" value={s.loanDays} onChange={(v) => save({ loanDays: v })}
+            <Segmented size="lg" name="Leihfrist" value={s.loanDays} onChange={(v) => save({ loanDays: v })}
               options={([14, 28, 42, 56] as const).map((d) => ({ value: d, label: `${d} Tage` }))} />
           </Row>
           <SwitchRow>
@@ -204,7 +204,7 @@ export function CopyEditor({ copy, calendar, circles }: { copy: CopyDetail; cale
               hint="Um 14 Tage, wenn der Kalender danach frei ist. Sonst fragt die Person bei dir an." />
           </SwitchRow>
           <Row label="Höchstens so oft verlängern">
-            <Segmented name="Höchstens so oft verlängern" value={s.maxExtensions} onChange={(v) => save({ maxExtensions: v })}
+            <Segmented size="lg" name="Höchstens so oft verlängern" value={s.maxExtensions} onChange={(v) => save({ maxExtensions: v })}
               options={[0, 1, 2].map((n) => ({ value: n, label: n === 0 ? "Nie" : `${n}×` }))} />
           </Row>
           <SwitchRow>
@@ -219,27 +219,27 @@ export function CopyEditor({ copy, calendar, circles }: { copy: CopyDetail; cale
             <BlockForm copyId={copy.id} calendar={calendar} />
           </div>
           <Row label="Buchbar im Voraus">
-            <Segmented name="Buchungshorizont" value={s.horizonDays} onChange={(v) => save({ horizonDays: v })}
+            <Segmented size="lg" name="Buchungshorizont" value={s.horizonDays} onChange={(v) => save({ horizonDays: v })}
               options={([30, 60, 90, 180] as const).map((d) => ({ value: d, label: `${d} Tage` }))} />
           </Row>
           <Row label="Puffer zwischen zwei Leihen" hint="In Tagen. Zeit für Rückgabe und nächste Übergabe.">
-            <Segmented name="Puffer in Tagen" value={s.bufferDays} onChange={(v) => save({ bufferDays: v })}
+            <Segmented size="lg" name="Puffer in Tagen" value={s.bufferDays} onChange={(v) => save({ bufferDays: v })}
               options={range(0, 7).map((n) => ({ value: n, label: String(n) }))} />
           </Row>
           <Row label="Künftige Buchungen höchstens">
-            <Segmented name="Künftige Buchungen" value={s.maxFutureBookings} onChange={(v) => save({ maxFutureBookings: v })}
+            <Segmented size="lg" name="Künftige Buchungen" value={s.maxFutureBookings} onChange={(v) => save({ maxFutureBookings: v })}
               options={range(1, 6).map((n) => ({ value: n, label: String(n) }))} />
           </Row>
         </Group>
 
         <Group title="Direkte Weitergabe" desc="Das Buch geht vom einen Leiher direkt zum nächsten, ohne Umweg über dich." i={4}>
           <Row label="Weitergabe" hint={s.passOn === "never" ? "Jede Leihe geht über dich." : s.passOn === "on_request" ? "Du wirst bei jeder Folgeleihe gefragt." : "Du stimmst jeder Weitergabe im Voraus zu. Die beiden Leihenden werden trotzdem gefragt."}>
-            <Segmented name="Direkte Weitergabe" value={s.passOn} onChange={(v) => save({ passOn: v })}
+            <Segmented size="lg" name="Direkte Weitergabe" value={s.passOn} onChange={(v) => save({ passOn: v })}
               options={(["never", "on_request", "always"] as const).map((v) => ({ value: v, label: passOnLabel[v] }))} />
           </Row>
           <div className={cx("transition-opacity", s.passOn === "never" && "opacity-45 pointer-events-none")} aria-disabled={s.passOn === "never"}>
             <Row label="Danach zurück zu mir" hint="Nach so vielen Weitergaben in Folge kommt das Buch zu dir zurück.">
-              <Segmented name="Kettenlänge" value={s.chainMax} onChange={(v) => save({ chainMax: v })}
+              <Segmented size="lg" name="Kettenlänge" value={s.chainMax} onChange={(v) => save({ chainMax: v })}
                 options={range(1, 4).map((n) => ({ value: n, label: String(n) }))} />
             </Row>
           </div>
