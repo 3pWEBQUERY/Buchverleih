@@ -102,7 +102,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         {copies.length === 0 ? (
           <div className="mt-6 mb-2 rounded-[8px] border border-night-line p-6 flex flex-wrap items-center justify-between gap-4">
             <p className="text-night-muted">Noch keine Bücher im Kreis. Wähle in deinem Regal, welche hier stehen.</p>
-            <Link href="/regal" className="h-11 px-5 rounded-[6px] bg-night-ink text-night font-semibold inline-flex items-center">Zum Regal</Link>
+            <Link href="/regal" className="h-11 px-5 rounded-[6px] bg-accent text-accent-ink font-semibold inline-flex items-center">Zum Regal</Link>
           </div>
         ) : (
           <BookRow

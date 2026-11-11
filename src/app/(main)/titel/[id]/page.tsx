@@ -133,7 +133,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
             <div className="flex items-center gap-2">
               <input id="titel-plz" name="plz" inputMode="numeric" pattern="\d{4}" maxLength={4} placeholder="8180"
                 className="w-28 h-11 bg-paper border border-line-strong rounded-[6px] px-5 text-[16px] tnum tracking-[0.08em] placeholder:text-muted/70 focus:outline-none focus:border-ink focus:ring-[3px] focus:ring-ink/10" />
-              <button type="submit" className="h-11 px-5 rounded-[6px] bg-ink text-paper font-semibold hover:bg-ink-2 transition-colors">Zeigen</button>
+              <button type="submit" className="h-11 px-5 rounded-[6px] bg-accent-soft text-accent-hover font-semibold hover:bg-accent hover:text-accent-ink transition-colors">Zeigen</button>
             </div>
           </form>
         )}

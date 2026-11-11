@@ -115,7 +115,7 @@ export function Erfassen({ initial }: { initial: Added[] }) {
             {TABS.map((t) => (
               <button key={t.id} role="tab" type="button" id={`tab-${t.id}`} aria-selected={tab === t.id} aria-controls={`panel-${t.id}`}
                 onClick={() => switchTab(t.id)}
-                className={cx("h-10 px-5 rounded-[6px] text-[14px] font-semibold whitespace-nowrap transition-[background-color,color] duration-200", tab === t.id ? "bg-ink text-paper" : "text-ink-2 hover:bg-paper-3")}>
+                className={cx("h-10 px-5 rounded-[6px] text-[14px] font-semibold whitespace-nowrap transition-[background-color,color] duration-200", tab === t.id ? "bg-accent-soft text-accent-hover" : "text-ink-2 hover:bg-paper-3")}>
                 {t.label}
               </button>
             ))}

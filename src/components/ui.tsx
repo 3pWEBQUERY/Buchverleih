@@ -14,7 +14,8 @@ const base =
 const variants: Record<Variant, string> = {
   // Die Akzentfarbe gehört allein dem nächsten Schritt
   primary: "bg-accent text-accent-ink hover:bg-accent-hover rounded-[6px]",
-  secondary: "bg-ink text-paper hover:bg-ink-2 rounded-[6px]",
+  // Zweitknopf: getönt in der Markenfarbe – nie Schwarz
+  secondary: "bg-accent-soft text-accent-hover hover:bg-accent hover:text-accent-ink rounded-[6px]",
   ghost: "text-ink border border-line-strong hover:border-ink rounded-[6px]",
   quiet: "text-muted font-medium hover:text-ink underline-offset-4 hover:underline",
   danger: "text-late font-medium hover:underline underline-offset-4",
@@ -99,7 +100,7 @@ export function Switch({ checked, onChange, label, hint, disabled }: { checked: 
         {hint && <span className="block text-sm text-muted mt-0.5">{hint}</span>}
       </span>
       <button type="button" role="switch" aria-checked={checked} onClick={() => onChange(!checked)}
-        className={cx("relative mt-0.5 h-7 w-12 flex-none rounded-full transition-colors duration-200", checked ? "bg-ink" : "bg-paper-3")}>
+        className={cx("relative mt-0.5 h-7 w-12 flex-none rounded-full transition-colors duration-200", checked ? "bg-accent" : "bg-paper-3")}>
         <span className={cx("absolute top-1 h-5 w-5 rounded-full bg-paper transition-[left] duration-300 ease-[var(--ease-spring)]", checked ? "left-6" : "left-1")} />
       </button>
     </label>
@@ -110,7 +111,7 @@ export function Check({ checked, onChange, label, className }: { checked: boolea
   return (
     <label className={cx("inline-flex items-center gap-2.5 cursor-pointer text-[15px]", className)}>
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}
-        className="appearance-none h-5 w-5 border-[1.5px] border-line-strong rounded-[5px] checked:bg-ink checked:border-ink grid place-content-center before:content-[''] before:w-2.5 before:h-1.5 before:border-l-2 before:border-b-2 before:border-paper before:-rotate-45 before:-translate-y-px before:scale-0 checked:before:scale-100 before:transition-transform" />
+        className="appearance-none h-5 w-5 border-[1.5px] border-line-strong rounded-[5px] checked:bg-accent checked:border-accent grid place-content-center before:content-[''] before:w-2.5 before:h-1.5 before:border-l-2 before:border-b-2 before:border-paper before:-rotate-45 before:-translate-y-px before:scale-0 checked:before:scale-100 before:transition-transform" />
       {label}
     </label>
   );

@@ -206,7 +206,7 @@ export function Chat({
           )}
           <div className="flex items-center gap-1.5 rounded-full border border-line-strong bg-paper p-1 focus-within:border-ink focus-within:ring-[3px] focus-within:ring-ink/10 transition-[border-color,box-shadow]">
             <button type="button" onClick={() => setProposing((p) => !p)} aria-pressed={proposing}
-              className={cx("h-10 w-10 flex-none grid place-items-center rounded-full transition-colors", proposing ? "bg-ink text-paper" : "text-ink-2 hover:bg-paper-2")}
+              className={cx("h-10 w-10 flex-none grid place-items-center rounded-full transition-colors", proposing ? "bg-accent text-accent-ink" : "text-ink-2 hover:bg-paper-2")}
               aria-label="Termin vorschlagen" title="Termin vorschlagen">
               <IconCalendar />
             </button>

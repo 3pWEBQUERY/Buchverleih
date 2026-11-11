@@ -70,7 +70,7 @@ export function PlzExplorer() {
               <form onSubmit={wait} className="mt-5 flex flex-wrap gap-2">
                 <input type="email" required placeholder="E-Mail-Adresse" value={email} onChange={(e) => setEmail(e.target.value)}
                   className="h-12 px-5 rounded-[6px] bg-night-2 border border-night-line focus:border-night-ink focus:outline-none w-72" />
-                <button className="h-12 px-6 rounded-[6px] bg-night-ink text-night font-semibold">Auf die Warteliste</button>
+                <button className="h-12 px-6 rounded-[6px] bg-accent text-accent-ink font-semibold">Auf die Warteliste</button>
               </form>
             )}
           </div>
@@ -78,7 +78,7 @@ export function PlzExplorer() {
         {!loading && res?.open && res.copies.length === 0 && (
           <div className="flex flex-wrap items-center gap-4 justify-between rounded-[8px] border border-night-line p-6 anim-rise">
             <p>Rund um {res.municipality} steht noch nichts im Regal. Stell das erste Buch hinein.</p>
-            <Link href="/anmelden?next=/regal/neu" className="h-11 px-5 rounded-[6px] bg-night-ink text-night font-semibold inline-flex items-center">Buch einstellen</Link>
+            <Link href="/anmelden?next=/regal/neu" className="h-11 px-5 rounded-[6px] bg-accent text-accent-ink font-semibold inline-flex items-center">Buch einstellen</Link>
           </div>
         )}
         {!loading && res?.open && res.copies.length > 0 && (

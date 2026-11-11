@@ -176,7 +176,7 @@ export async function Landing() {
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 py-16 md:py-24 grid md:grid-cols-[1fr_auto] gap-8 items-end">
           <h2 className="display text-[52px] md:text-[96px] max-w-[12ch]">Stell dein erstes Buch <em>ins Regal.</em></h2>
           <div className="flex flex-col sm:flex-row gap-3">
-            <Link href="/anmelden?next=/regal/neu" className="h-14 px-8 rounded-[6px] bg-night text-night-ink font-semibold inline-flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+            <Link href="/anmelden?next=/regal/neu" className="h-14 px-8 rounded-[6px] bg-paper text-accent-hover font-semibold inline-flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
               Jetzt beginnen <IconArrowRight width={18} height={18} />
             </Link>
             <Link href="/hilfe" className="h-14 px-8 rounded-[6px] border-2 border-accent-ink/40 font-semibold inline-flex items-center justify-center hover:border-accent-ink transition-colors">

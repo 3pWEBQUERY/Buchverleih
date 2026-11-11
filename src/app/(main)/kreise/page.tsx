@@ -31,7 +31,7 @@ export default async function Page() {
             <h2 className="display text-[44px] md:text-[64px] mt-3 max-w-[15ch]">Ein Regal für dein Haus, <em>deine Lesegruppe, dein Team.</em></h2>
             <p className="mt-5 text-[16px] text-accent-ink/85 max-w-md">Gründe einen Kreis und lade per Link ein.</p>
           </div>
-          <Link href="/kreise/neu" className="h-14 px-7 rounded-[6px] bg-night text-night-ink font-semibold inline-flex items-center gap-2 justify-center"><IconPlus width={20} height={20} /> Kreis gründen</Link>
+          <Link href="/kreise/neu" className="h-14 px-7 rounded-[6px] bg-paper text-accent-hover font-semibold inline-flex items-center gap-2 justify-center"><IconPlus width={20} height={20} /> Kreis gründen</Link>
         </section>
       ) : (
         <ul className="grid md:grid-cols-2 gap-3 md:gap-4">

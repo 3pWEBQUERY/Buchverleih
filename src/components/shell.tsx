@@ -89,7 +89,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
           <nav className="flex items-center gap-1 md:gap-2 text-[15px] font-medium">
             <Link href="/suche" className="hidden sm:inline-flex px-3 h-10 items-center rounded-[6px] hover:bg-paper-2">Bücher finden</Link>
             <Link href="/hilfe" className="hidden sm:inline-flex px-3 h-10 items-center rounded-[6px] hover:bg-paper-2">So funktioniert es</Link>
-            <Link href="/anmelden" className="ml-1 inline-flex px-5 h-10 items-center rounded-[6px] bg-ink text-paper hover:bg-ink-2 transition-colors">Anmelden</Link>
+            <Link href="/anmelden" className="ml-1 inline-flex px-5 h-10 items-center rounded-[6px] bg-accent-soft text-accent-hover hover:bg-accent hover:text-accent-ink transition-colors">Anmelden</Link>
           </nav>
         </div>
       </header>

@@ -44,7 +44,7 @@ const who = (loan: LoanListItem) => `${offerNoun[loan.kind]} · ${loan.role === 
 function Unread({ n, className }: { n: number; className?: string }) {
   if (n <= 0) return null;
   return (
-    <span className={cx("inline-flex items-center gap-1.5 h-6 px-2.5 rounded-[6px] bg-ink text-paper text-[12px] font-semibold tnum", className)}>
+    <span className={cx("inline-flex items-center gap-1.5 h-6 px-2.5 rounded-[6px] bg-accent text-accent-ink text-[12px] font-semibold tnum", className)}>
       {n} neu
     </span>
   );

@@ -23,7 +23,7 @@ export function ModTabs({ active, counts = {} }: { active: Tab; counts?: Partial
               <Link href={t.id === "warteschlange" ? "/moderation" : `/moderation?ansicht=${t.id}`} aria-current={on ? "page" : undefined}
                 className={cx(
                   "h-10 px-4 md:px-5 rounded-[6px] inline-flex items-center gap-2 text-[14px] font-semibold transition-colors duration-200",
-                  on ? "bg-ink text-paper" : "text-ink-2 hover:bg-paper-3",
+                  on ? "bg-accent-soft text-accent-hover" : "text-ink-2 hover:bg-paper-3",
                 )}>
                 {t.label}
                 {n !== undefined && n > 0 && (

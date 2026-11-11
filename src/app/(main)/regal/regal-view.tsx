@@ -143,7 +143,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
             <p className="eyebrow !text-accent-ink/75">Dein Regal ist noch leer</p>
             <h2 className="display text-[44px] md:text-[64px] mt-3 max-w-[14ch]">Ein Buch einstellen dauert <em>unter 20 Sekunden.</em></h2>
           </div>
-          <Link href="/regal/neu" className="h-14 px-7 rounded-[6px] bg-night text-night-ink font-semibold inline-flex items-center gap-2 justify-center"><IconScan width={20} height={20} /> Erstes Buch scannen</Link>
+          <Link href="/regal/neu" className="h-14 px-7 rounded-[6px] bg-paper text-accent-hover font-semibold inline-flex items-center gap-2 justify-center"><IconScan width={20} height={20} /> Erstes Buch scannen</Link>
         </section>
       </div>
     );
@@ -248,7 +248,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
             )}
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm tnum whitespace-nowrap flex items-center gap-2" aria-live="polite">
-                <span className="h-8 min-w-8 px-2 rounded-[6px] bg-ink text-paper grid place-items-center font-semibold">{sel.size}</span> <span className="text-muted hidden sm:inline">ausgewählt</span>
+                <span className="h-8 min-w-8 px-2 rounded-[6px] bg-accent-soft text-accent-hover grid place-items-center font-semibold">{sel.size}</span> <span className="text-muted hidden sm:inline">ausgewählt</span>
               </p>
               <div className="flex items-center gap-1 overflow-x-auto" role="toolbar" aria-label="Aktionen für die Auswahl">
                 {([

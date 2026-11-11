@@ -252,7 +252,7 @@ function FilterChips({ f, set, reset, n, hasOrigin }: { f: Filters; set: <K exte
             const on = f.radius === r;
             return (
               <button key={r} type="button" role="radio" aria-checked={on} onClick={() => set("radius", r)}
-                className={cx("h-8 min-w-8 px-2.5 rounded-[6px] text-[13.5px] font-semibold tnum transition-colors duration-200", on ? "bg-ink text-paper" : "text-ink-2 hover:bg-paper-3")}>
+                className={cx("h-8 min-w-8 px-2.5 rounded-[6px] text-[13.5px] font-semibold tnum transition-colors duration-200", on ? "bg-accent-soft text-accent-hover" : "text-ink-2 hover:bg-paper-3")}>
                 {r}{on && <span className="font-medium"> km</span>}
               </button>
             );

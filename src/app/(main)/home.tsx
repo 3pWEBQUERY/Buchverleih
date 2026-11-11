@@ -106,7 +106,7 @@ export async function Home({ user }: { user: SessionUser }) {
         {nearby.length === 0 ? (
           <div className="rounded-[8px] border border-night-line p-6 flex flex-wrap items-center justify-between gap-4">
             <p className="text-night-muted">Im Umkreis von 5 km ist in letzter Zeit nichts dazugekommen.</p>
-            <Link href="/suche" className="h-11 px-5 rounded-[6px] bg-night-ink text-night font-semibold inline-flex items-center">Weiter suchen</Link>
+            <Link href="/suche" className="h-11 px-5 rounded-[6px] bg-accent text-accent-ink font-semibold inline-flex items-center">Weiter suchen</Link>
           </div>
         ) : (
           <ul className="shelf" aria-label="Neu in deiner Nähe">
@@ -174,7 +174,7 @@ export async function Home({ user }: { user: SessionUser }) {
             <p className="eyebrow !text-accent-ink/75">Dein Regal ist leer</p>
             <h2 className="display text-[44px] md:text-[64px] mt-3 max-w-[14ch]">Ein Buch einstellen dauert <em>unter 20 Sekunden.</em></h2>
           </div>
-          <Link href="/regal/neu" className="h-14 px-7 rounded-[6px] bg-night text-night-ink font-semibold inline-flex items-center gap-2"><IconScan width={20} height={20} /> Erstes Buch scannen</Link>
+          <Link href="/regal/neu" className="h-14 px-7 rounded-[6px] bg-paper text-accent-hover font-semibold inline-flex items-center gap-2"><IconScan width={20} height={20} /> Erstes Buch scannen</Link>
         </section>
       )}
     </div>

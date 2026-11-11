@@ -146,7 +146,7 @@ export default async function ProfilPage({ params }: Params) {
             ) : (
               <>
                 <p className="text-night-muted">{p.first_name} bietet gerade keine Bücher an, die du sehen kannst.</p>
-                <Link href="/suche" className="h-11 px-5 rounded-[6px] bg-night-ink text-night font-semibold inline-flex items-center">Weiter suchen</Link>
+                <Link href="/suche" className="h-11 px-5 rounded-[6px] bg-accent text-accent-ink font-semibold inline-flex items-center">Weiter suchen</Link>
               </>
             )}
           </div>
