@@ -35,13 +35,13 @@ export function Onboarding({ initialStep, next, firstName, devCodes }: { initial
 
   return (
     <div>
-      <ol className="grid grid-cols-2 gap-2 mb-10" aria-label="Schritte">
+      <ol className="grid grid-cols-2 gap-2 mb-9" aria-label="Schritte">
         {steps.map((s, i) => (
           <li key={s} aria-current={i === idx ? "step" : undefined}>
-            <span className={cx("block h-1.5 rounded-full transition-colors duration-500", i < idx ? "bg-ink" : i === idx ? "bg-accent" : "bg-paper-3")} />
-            <span className={cx("mt-2.5 flex items-center gap-2 text-[13px]", i === idx ? "text-ink font-semibold" : "text-muted")}>
+            <span className={cx("block h-1.5 rounded-full transition-colors duration-500", i < idx ? "bg-ok" : i === idx ? "bg-accent" : "bg-paper-3")} />
+            <span className={cx("mt-2.5 flex items-center gap-2 text-[13px]", i === idx ? "text-ink font-medium" : "text-muted")}>
               <span className="tnum">{String(i + 1).padStart(2, "0")}</span> {s}
-              {i < idx && <IconCheck width={15} height={15} className="text-ink" />}
+              {i < idx && <IconCheck width={15} height={15} className="text-ok" />}
             </span>
           </li>
         ))}
@@ -49,7 +49,7 @@ export function Onboarding({ initialStep, next, firstName, devCodes }: { initial
 
       {step === "profile" && (
         <form className="anim-rise" onSubmit={(e) => { e.preventDefault(); run(async () => { await api("/me", { body: { firstName: name, plz, birthDate: birth } }); setStep("phone"); }); }}>
-          <AuthHead title={<>Willkommen.</>}>Andere sehen deinen Vornamen und deine Gemeinde. Nie deine Adresse.</AuthHead>
+          <AuthHead title={<>Willkommen. <em>Wer bist du?</em></>}>Andere sehen deinen Vornamen und deine Gemeinde. Nie deine Adresse.</AuthHead>
           <div className="space-y-6">
             <Field label="Vorname"><Input required autoComplete="given-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} /></Field>
             <div className="grid grid-cols-[112px_1fr] sm:grid-cols-[140px_1fr] gap-3 sm:gap-4">
@@ -60,12 +60,12 @@ export function Onboarding({ initialStep, next, firstName, devCodes }: { initial
                 <Input required type="date" value={birth} onChange={(e) => setBirth(e.target.value)} max={new Date().toISOString().slice(0, 10)} />
               </Field>
             </div>
-            <ul className="panel-quiet rounded-[8px] p-5 space-y-3 text-[14px] text-ink-2">
+            <ul className="rounded-[10px] bg-paper-2 p-4 space-y-3 text-[13.5px] text-ink-2 leading-snug [&_svg]:text-accent-hover">
               <li className="grid grid-cols-[20px_1fr] gap-3"><IconPin /><span>Die Postleitzahl findet Bücher in deiner Nähe. Dein Standort wird auf rund 100 m gerundet und zusätzlich verschoben angezeigt.</span></li>
               <li className="grid grid-cols-[20px_1fr] gap-3"><IconCalendar width={18} height={18} className="mt-0.5" /><span>Für ein eigenes Konto brauchst du mindestens 16 Jahre. Gespeichert wird nur, dass du alt genug bist.</span></li>
             </ul>
             {error && <p className="text-late" role="alert">{error}</p>}
-            {closed && <p className="text-sm"><a href="/" className="underline underline-offset-4 font-semibold">Zur Startseite und auf die Warteliste</a></p>}
+            {closed && <p className="text-sm"><a href="/" className="font-medium text-accent-hover hover:underline underline-offset-4">Zur Startseite und auf die Warteliste</a></p>}
             <Button type="submit" variant="primary" size="lg" className="w-full sm:w-auto" disabled={busy}>Weiter <IconArrowRight width={18} height={18} /></Button>
           </div>
         </form>
@@ -73,7 +73,7 @@ export function Onboarding({ initialStep, next, firstName, devCodes }: { initial
 
       {step === "phone" && (
         <div className="anim-rise">
-          <AuthHead title={<>Deine <em>Mobilnummer</em></>}>
+          <AuthHead title={<>Deine Mobilnummer. <em>Ein Konto pro Person.</em></>}>
             Eine Nummer, ein Konto. Das schützt alle vor Mehrfachkonten. Wir geben die Nummer nie weiter und schicken SMS nur zur Bestätigung und bei einem offenen Fall.
           </AuthHead>
           {!codeSent ? (
@@ -86,7 +86,7 @@ export function Onboarding({ initialStep, next, firstName, devCodes }: { initial
           ) : (
             <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); run(async () => { await api("/me/phone/verify", { body: { code } }); router.replace(next); router.refresh(); }); }}>
               <Field label="Code aus der SMS" error={error} hint={codeSent.devCode ? `Testumgebung ohne SMS-Versand: ${codeSent.devCode}` : "Sechs Ziffern, 10 Minuten gültig."}>
-                <Input required autoFocus inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className="max-w-[240px] text-[26px] tracking-[0.35em] tnum h-16 text-center font-semibold" placeholder="······" />
+                <Input required autoFocus inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className="max-w-[240px] text-[24px] tracking-[0.35em] tnum h-14 text-center font-medium" placeholder="······" />
               </Field>
               <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
                 <Button type="submit" variant="primary" size="lg" disabled={busy || code.length !== 6}>Bestätigen</Button>

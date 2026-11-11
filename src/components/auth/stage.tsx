@@ -46,7 +46,7 @@ async function stageData(): Promise<{ books: BookRowItem[]; copies: number; memb
   }
 }
 
-export async function AuthStage({ eyebrow, title, lead, children }: { eyebrow: string; title: ReactNode; lead: ReactNode; children: ReactNode }) {
+export async function AuthStage({ eyebrow, title, lead, steps = STEPS, children }: { eyebrow: string; title: ReactNode; lead: ReactNode; steps?: [string, string][]; children: ReactNode }) {
   const { books, copies, members } = await stageData();
 
   return (
@@ -61,7 +61,7 @@ export async function AuthStage({ eyebrow, title, lead, children }: { eyebrow: s
           <p className="mt-4 text-ink-2 text-[16px] leading-relaxed max-w-lg anim-rise" style={{ animationDelay: "100ms" }}>{lead}</p>
 
           <ol className="mt-8 grid sm:grid-cols-3 gap-2 anim-rise" style={{ animationDelay: "140ms" }}>
-            {STEPS.map(([t, d], i) => (
+            {steps.map(([t, d], i) => (
               <li key={t} className="rounded-[10px] bg-paper border border-line p-4">
                 <span className="text-[12px] tnum text-accent-hover font-medium">0{i + 1}</span>
                 <p className="font-medium text-[15px] mt-2">{t}</p>

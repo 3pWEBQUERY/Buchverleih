@@ -18,6 +18,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
       eyebrow="Konto einrichten"
       title={<>Zwei Schritte, dann <em>leihst du.</em></>}
       lead="Danach siehst du, was in den Regalen rund um dich steht, und kannst selbst verleihen. Das Einrichten dauert keine zwei Minuten."
+      steps={[
+        ["Profil", "Vorname, Postleitzahl und Bestätigung, dass du mindestens 16 bist."],
+        ["Mobilnummer", "Eine Nummer, ein Konto. Andere Mitglieder sehen sie nie."],
+        ["Loslegen", "Bücher in der Nähe anfragen oder das erste eigene Buch erfassen."],
+      ]}
     >
       <Onboarding initialStep={step} next={next ?? "/"} firstName={u.first_name} devCodes={env.showCodes} />
     </AuthStage>
