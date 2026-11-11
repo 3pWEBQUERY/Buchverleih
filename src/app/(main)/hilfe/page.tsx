@@ -234,18 +234,18 @@ function QuickStart() {
       <div className="flex flex-wrap items-end justify-between gap-4 mb-5 md:mb-6">
         <div>
           <p className="eyebrow">Schnellstart</p>
-          <h2 id="schnellstart" className="ui-title text-[22px] md:text-[26px] mt-2">In vier Schritten zum ersten Buch</h2>
+          <h2 id="schnellstart" className="text-[24px] md:text-[28px] font-[560] tracking-[-0.03em] mt-2">In vier Schritten zum ersten Buch</h2>
         </div>
         <p className="text-sm text-muted">Die Details stehen weiter unten.</p>
       </div>
       <ol className="grid grid-flow-col auto-cols-[78%] sm:auto-cols-[46%] lg:grid-flow-row lg:grid-cols-4 gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 scroll-px-4 sm:mx-0 sm:px-0 sm:scroll-px-0 pb-1" style={{ scrollbarWidth: "none" }}>
         {STEPS.map(([n, title, text, href, more], i) => (
           <li key={n} className="snap-start anim-rise" style={{ animationDelay: `${80 + i * 50}ms` }}>
-            <Link href={href} className="group panel-quiet rounded-[10px] p-6 flex flex-col h-full min-h-[236px] hover:bg-paper-3 transition-colors duration-300">
-              <span className="font-[520] tracking-[-0.035em] text-[44px] leading-none text-muted tnum transition-colors group-hover:text-ink">{n}</span>
-              <span className="ui-title text-[21px] mt-5">{title}</span>
-              <span className="text-ink-2 text-[15px] mt-2 leading-relaxed">{text}</span>
-              <span className="mt-auto pt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold">
+            <Link href={href} className="group rounded-[10px] border border-line p-5 flex flex-col h-full min-h-[210px] hover:border-accent transition-colors duration-150">
+              <span className="text-[13px] tnum text-accent-hover font-medium">{n}</span>
+              <span className="font-medium text-[17px] mt-3">{title}</span>
+              <span className="text-muted text-[14px] mt-1.5 leading-relaxed">{text}</span>
+              <span className="mt-auto pt-5 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-accent-hover">
                 {more} <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-1" />
               </span>
             </Link>

@@ -32,7 +32,7 @@ export function DocToc({ toc }: { toc: TocItem[] }) {
       </div>
       <div className="relative">
         <span aria-hidden className="absolute left-0 top-0 bottom-0 w-px bg-line" />
-        <span aria-hidden className="absolute left-0 top-0 w-px bg-ink transition-[height] duration-300 ease-[var(--ease-out-quart)]" style={{ height: `${Math.max(6, progress)}%` }} />
+        <span aria-hidden className="absolute left-0 top-0 w-[2px] -translate-x-[0.5px] bg-accent transition-[height] duration-300 ease-[var(--ease-out-quart)]" style={{ height: `${Math.max(6, progress)}%` }} />
         <ol className="flex flex-col">
           {toc.map(([id, label]) => {
             const on = id === active;
@@ -41,9 +41,9 @@ export function DocToc({ toc }: { toc: TocItem[] }) {
                 <a href={`#${id}`} aria-current={on ? "location" : undefined}
                   className={cx(
                     "relative block py-[7px] pl-5 text-[14px] leading-snug transition-colors duration-200",
-                    on ? "text-ink font-semibold" : "text-muted hover:text-ink",
+                    on ? "text-accent-hover font-medium" : "text-muted hover:text-ink",
                   )}>
-                  <span aria-hidden className={cx("absolute left-[-3px] top-1/2 -translate-y-1/2 h-[7px] w-[7px] rounded-full transition-[background-color,transform] duration-200", on ? "bg-ink scale-100" : "bg-transparent scale-0")} />
+                  <span aria-hidden className={cx("absolute left-[-3px] top-1/2 -translate-y-1/2 h-[7px] w-[7px] rounded-full transition-[background-color,transform] duration-200", on ? "bg-accent scale-100" : "bg-transparent scale-0")} />
                   {label}
                 </a>
               </li>
