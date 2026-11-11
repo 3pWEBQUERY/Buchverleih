@@ -24,7 +24,7 @@ const jobs = [
 for (const [name, source, size] of jobs) {
   await sharp(Buffer.from(source), { density: Math.ceil((72 * size) / 512) * 2 })
     .resize(size, size)
-    .flatten({ background: "#f6f2ea" })
+    .flatten({ background: "#141413" })
     .png({ compressionLevel: 9 })
     .toFile(path.join(dir, name));
   console.log(`${name} ${size}×${size}`);

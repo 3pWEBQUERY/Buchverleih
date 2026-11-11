@@ -92,8 +92,8 @@ export function Cover({
       {/* feine Kante und Rückenfalz */}
       <span aria-hidden className="absolute inset-0 rounded-xs" style={{ boxShadow: `inset 0 0 0 1px ${fg}22` }} />
       <span aria-hidden className="absolute inset-y-0 left-[6%] w-px" style={{ background: `${fg}26` }} />
-      {(variant === 0 || (variant === 1 && w < 80)) && <span aria-hidden className="block h-px w-8 mb-auto" style={{ background: fg, opacity: 0.7 }} />}
-      {variant === 1 && w >= 80 && <span aria-hidden className="block text-[9px] tracking-[0.2em] uppercase mb-auto opacity-70" style={{ fontSize: Math.max(7, w * 0.055) }}>Leihregal</span>}
+      {variant === 0 && <span aria-hidden className="block h-px w-8 mb-auto" style={{ background: fg, opacity: 0.7 }} />}
+      {variant === 1 && <span aria-hidden className="block mb-auto space-y-[3px]"><span className="block h-px w-full" style={{ background: fg, opacity: 0.6 }} /><span className="block h-px w-full" style={{ background: fg, opacity: 0.6 }} /></span>}
       <span
         className="font-serif leading-[1.04] break-words hyphens-auto"
         lang="de"

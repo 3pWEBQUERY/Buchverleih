@@ -3,26 +3,36 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { cx } from "./ui";
+import { IconSearch } from "./icons";
 
-export function NavLink({ href, icon, children, exact, tab, kbd }: { href: string; icon: ReactNode; children: ReactNode; exact?: boolean; tab?: boolean; kbd?: string }) {
+export function NavLink({ href, icon, children, exact, tab }: { href: string; icon: ReactNode; children: ReactNode; exact?: boolean; tab?: boolean }) {
   const path = usePathname();
   const active = exact ? path === href : path === href || path.startsWith(href + "/");
   if (tab) {
     return (
       <Link href={href} aria-current={active ? "page" : undefined}
         className={cx("flex flex-col items-center justify-center gap-1 transition-colors", active ? "text-ink" : "text-muted")}>
-        <span className={cx("transition-transform duration-200", active && "-translate-y-px")}>{icon}</span>
-        <span className={cx(active && "font-semibold")}>{children}</span>
+        <span className={cx("grid place-items-center h-8 w-12 rounded-full transition-colors duration-200", active && "bg-paper-3")}>{icon}</span>
+        <span className={cx("leading-none", active && "font-semibold")}>{children}</span>
       </Link>
     );
   }
   return (
     <Link href={href} aria-current={active ? "page" : undefined}
-      className={cx("relative flex items-center gap-3 px-2 h-9 rounded-sm transition-colors", active ? "text-ink font-medium" : "text-ink-2 hover:text-ink hover:bg-paper-3")}>
-      {active && <span aria-hidden className="absolute -left-5 top-2 bottom-2 w-[2px] bg-ink" />}
-      <span className={active ? "text-ink" : "text-muted"}>{icon}</span>
-      <span className="flex-1 flex items-center gap-2">{children}</span>
-      {kbd && <kbd className="text-xs text-muted border border-line rounded-xs px-1.5 font-sans">{kbd}</kbd>}
+      className={cx("relative flex items-center gap-3 px-3 h-10 rounded-full transition-colors duration-150", active ? "bg-ink text-paper font-semibold" : "text-ink-2 hover:text-ink hover:bg-paper-3")}>
+      <span className={active ? "text-paper" : "text-muted"}>{icon}</span>
+      <span className="flex-1 flex items-center justify-between gap-2">{children}</span>
+    </Link>
+  );
+}
+
+/** Suchfeld-Attrappe in der Seitenleiste: öffnet die Suche, Taste «/» */
+export function SearchTrigger() {
+  return (
+    <Link href="/suche?fokus=1" className="h-11 px-4 rounded-full border border-line-strong bg-paper flex items-center gap-2.5 text-muted hover:border-ink transition-colors text-[15px]">
+      <IconSearch width={18} height={18} />
+      <span className="flex-1">Titel, Autorin, ISBN</span>
+      <kbd className="font-sans text-[12px] border border-line-strong rounded-[4px] px-1.5 leading-5">/</kbd>
     </Link>
   );
 }
@@ -45,8 +55,8 @@ export function UnreadDot({ initial, compact }: { initial: number; compact?: boo
     return () => { alive = false; clearInterval(t); };
   }, [path]);
   if (!n) return null;
-  if (compact) return <span className="block h-2 w-2 rounded-full bg-accent" aria-label={`${n} ungelesen`} />;
-  return <span className="text-xs tnum text-accent font-semibold" aria-label={`${n} ungelesen`}>{n}</span>;
+  if (compact) return <span className="block h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-paper" aria-label={`${n} ungelesen`} />;
+  return <span className="min-w-6 h-6 px-1.5 rounded-full bg-accent text-accent-ink text-[12px] font-bold tnum grid place-items-center" aria-label={`${n} ungelesen`}>{n}</span>;
 }
 
 /** Tastaturkürzel auf dem Desktop */

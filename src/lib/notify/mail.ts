@@ -34,13 +34,13 @@ function renderHtml(subject: string, text: string, link?: { href: string; label:
     .map((p) => `<p style="margin:0 0 16px">${esc(p).replace(/\n/g, "<br>")}</p>`)
     .join("");
   const button = link
-    ? `<p style="margin:24px 0"><a href="${esc(link.href)}" style="display:inline-block;background:#b8381a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:4px;font-weight:600">${esc(link.label)}</a></p>`
+    ? `<p style="margin:24px 0"><a href="${esc(link.href)}" style="display:inline-block;background:#d23c1a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:600">${esc(link.label)}</a></p>`
     : "";
-  return `<!doctype html><html lang="de-CH"><body style="margin:0;background:#f5f1e8;color:#1b1a17;font:16px/1.55 -apple-system,Segoe UI,Helvetica,Arial,sans-serif">
+  return `<!doctype html><html lang="de-CH"><body style="margin:0;background:#faf8f4;color:#141413;font:16px/1.55 -apple-system,Segoe UI,Helvetica,Arial,sans-serif">
 <div style="max-width:520px;margin:0 auto;padding:32px 24px">
 <p style="font:600 20px/1 Georgia,serif;margin:0 0 32px">Leihregal</p>
 <h1 style="font:500 24px/1.25 Georgia,serif;margin:0 0 16px">${esc(subject)}</h1>
 ${paras}${button}
-<p style="margin:40px 0 0;padding-top:16px;border-top:1px solid #ddd5c4;color:#6a6458;font-size:13px">Benachrichtigungen ändern: <a href="${env.appUrl}/einstellungen" style="color:#6a6458">Einstellungen</a></p>
+<p style="margin:40px 0 0;padding-top:16px;border-top:1px solid #e3ddd2;color:#6c665c;font-size:13px">Benachrichtigungen ändern: <a href="${env.appUrl}/einstellungen" style="color:#6c665c">Einstellungen</a></p>
 </div></body></html>`;
 }

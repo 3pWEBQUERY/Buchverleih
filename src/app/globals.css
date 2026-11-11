@@ -1,78 +1,91 @@
 @import "tailwindcss";
 
 /*
- * Leihregal Designsystem – Tokens (PRD 8.1, 8.5)
- * Warmes Papierweiss und Tintenschwarz als Basis, eine einzige Akzentfarbe für den
- * jeweils nächsten Schritt. Statusfarben nur für Status. Flach: Weissraum und feine Linien.
- * Die iOS-App übernimmt dieselben Werte (siehe src/styles/tokens.json).
+ * Leihregal Designsystem v2 – Tokens (PRD 8.1, 8.5)
+ * Flach und kontrastreich: helles Papier, tiefe Tinte als zweite Fläche, eine einzige
+ * Akzentfarbe für den nächsten Schritt. Trennung durch Flächen, Weissraum und Haarlinien –
+ * keine Schatten, keine Verläufe. Die Buchcover und -rücken liefern die Farbe.
+ * Die iOS-App übernimmt dieselben Werte (src/styles/tokens.json).
  */
 :root {
-  --paper: #f6f2ea;
-  --paper-2: #efe9dd;
-  --paper-3: #e7dfd0;
-  --ink: #1b1a17;
-  --ink-2: #45413a;
-  --muted: #6b6558;
-  --line: #ddd5c5;
-  --line-strong: #b9af9b;
-  --accent: #b8381a;
-  --accent-hover: #9c2d13;
+  --paper: #faf8f4;
+  --paper-2: #f2eee6;
+  --paper-3: #e8e2d7;
+  --ink: #141413;
+  --ink-2: #3b3934;
+  --muted: #6c665c;
+  --line: #e3ddd2;
+  --line-strong: #c8c0b1;
+  --accent: #d23c1a;
+  --accent-hover: #b5310f;
   --accent-ink: #ffffff;
-  --accent-soft: #f3dcd3;
-  --st-ok: #33612f;
-  --st-lent: #7d5a0c;
-  --st-late: #9e1f3c;
-  --st-wait: #44556b;
-  --st-done: #6b6558;
-  --focus: #1b1a17;
-  --scrim: rgb(27 26 23 / 0.55);
+  --accent-soft: #fbe3da;
+  --night: #141413;          /* invertierte Flächen */
+  --night-2: #201f1c;
+  --night-ink: #f4f1ea;
+  --night-muted: #a39d91;
+  --night-line: #34322d;
+  --st-ok: #2f6b3a;
+  --st-lent: #8a5b00;
+  --st-late: #b0203f;
+  --st-wait: #3f5577;
+  --st-done: #6c665c;
+  --focus: #141413;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #13120e;
-    --paper-2: #1b1a15;
-    --paper-3: #24221c;
-    --ink: #eee8db;
-    --ink-2: #d1cab9;
-    --muted: #a19a88;
-    --line: #2e2b24;
-    --line-strong: #4b473c;
-    --accent: #f0663f;
-    --accent-hover: #ff7d58;
-    --accent-ink: #13120e;
-    --accent-soft: #3b1f16;
-    --st-ok: #93c58b;
-    --st-lent: #e3ba5c;
-    --st-late: #f3829c;
-    --st-wait: #a3b5cb;
-    --st-done: #a19a88;
-    --focus: #eee8db;
-    --scrim: rgb(0 0 0 / 0.7);
+    --paper: #0f0f0e;
+    --paper-2: #181816;
+    --paper-3: #24231f;
+    --ink: #f4f1ea;
+    --ink-2: #d6d1c6;
+    --muted: #a39d91;
+    --line: #2a2925;
+    --line-strong: #46433c;
+    --accent: #ff6a3d;
+    --accent-hover: #ff8660;
+    --accent-ink: #140a06;
+    --accent-soft: #3c1a10;
+    --night: #1c1b18;
+    --night-2: #262521;
+    --night-ink: #f4f1ea;
+    --night-muted: #a39d91;
+    --night-line: #3a3833;
+    --st-ok: #8fd09a;
+    --st-lent: #f0c060;
+    --st-late: #ff8aa3;
+    --st-wait: #a9bfe3;
+    --st-done: #a39d91;
+    --focus: #f4f1ea;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --paper: #13120e;
-  --paper-2: #1b1a15;
-  --paper-3: #24221c;
-  --ink: #eee8db;
-  --ink-2: #d1cab9;
-  --muted: #a19a88;
-  --line: #2e2b24;
-  --line-strong: #4b473c;
-  --accent: #f0663f;
-  --accent-hover: #ff7d58;
-  --accent-ink: #13120e;
-  --accent-soft: #3b1f16;
-  --st-ok: #93c58b;
-  --st-lent: #e3ba5c;
-  --st-late: #f3829c;
-  --st-wait: #a3b5cb;
-  --st-done: #a19a88;
-  --focus: #eee8db;
-  --scrim: rgb(0 0 0 / 0.7);
+  --paper: #0f0f0e;
+  --paper-2: #181816;
+  --paper-3: #24231f;
+  --ink: #f4f1ea;
+  --ink-2: #d6d1c6;
+  --muted: #a39d91;
+  --line: #2a2925;
+  --line-strong: #46433c;
+  --accent: #ff6a3d;
+  --accent-hover: #ff8660;
+  --accent-ink: #140a06;
+  --accent-soft: #3c1a10;
+  --night: #1c1b18;
+  --night-2: #262521;
+  --night-ink: #f4f1ea;
+  --night-muted: #a39d91;
+  --night-line: #3a3833;
+  --st-ok: #8fd09a;
+  --st-lent: #f0c060;
+  --st-late: #ff8aa3;
+  --st-wait: #a9bfe3;
+  --st-done: #a39d91;
+  --focus: #f4f1ea;
   color-scheme: dark;
 }
 
@@ -89,96 +102,133 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
+  --color-night: var(--night);
+  --color-night-2: var(--night-2);
+  --color-night-ink: var(--night-ink);
+  --color-night-muted: var(--night-muted);
+  --color-night-line: var(--night-line);
   --color-ok: var(--st-ok);
   --color-lent: var(--st-lent);
   --color-late: var(--st-late);
   --color-wait: var(--st-wait);
   --color-done: var(--st-done);
 
-  --font-serif: "Newsreader Variable", "Iowan Old Style", Georgia, serif;
-  --font-sans: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
 
-  --radius-xs: 2px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-
-  --text-2xs: 0.6875rem;
-  --text-2xs--line-height: 1rem;
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
 
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
-@layer base {
 /* ------------------------------------------------------------------ Basis */
-html {
-  background: var(--paper);
-  color: var(--ink);
-  -webkit-text-size-adjust: 100%;
-  text-rendering: optimizeLegibility;
-}
-body {
-  background: var(--paper);
-  font-family: var(--font-sans);
-  font-size: 15px;
-  line-height: 1.55;
-  font-feature-settings: "ss01", "cv11";
-  -webkit-font-smoothing: antialiased;
-  min-height: 100dvh;
-}
-@media (min-width: 768px) {
-  body { font-size: 16px; }
-}
-::selection { background: var(--accent-soft); color: var(--ink); }
+@layer base {
+  html {
+    background: var(--paper);
+    color: var(--ink);
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--paper);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.55;
+    letter-spacing: -0.003em;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+    overflow-x: clip; /* full-bleed-Flächen erzeugen keine waagrechte Scrollleiste */
+  }
+  @media (min-width: 768px) {
+    body { font-size: 16px; }
+  }
+  ::selection { background: var(--accent); color: var(--accent-ink); }
 
-h1, h2, h3, .serif {
-  font-family: var(--font-serif);
-  font-optical-sizing: auto;
-  font-weight: 450;
-  letter-spacing: -0.012em;
-  text-wrap: balance;
+  h1, h2, h3, .serif {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 1.05;
+    text-wrap: balance;
+  }
+  p { text-wrap: pretty; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+  a { text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+  input, textarea, select, button { font: inherit; color: inherit; letter-spacing: inherit; }
+  input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator { opacity: 0.6; }
 }
-.display { font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.028em; line-height: 0.98; }
-.tnum { font-variant-numeric: tabular-nums; }
-.eyebrow { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
-p { text-wrap: pretty; }
 
-:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
-a { text-underline-offset: 0.18em; text-decoration-thickness: 1px; }
+@layer components {
+  /* Grosse Titel: Instrument Serif, eng gesetzt */
+  .display { font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.03em; line-height: 0.92; }
+  .display em, .display i { font-style: italic; letter-spacing: -0.02em; }
+  /* Überschriften der Bedienung: Grotesk, kräftig */
+  .ui-title { font-family: var(--font-sans); font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+  .eyebrow { font-family: var(--font-sans); font-size: 0.72rem; letter-spacing: 0.11em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+  .tnum { font-variant-numeric: tabular-nums; }
+  .rule { border-top: 1px solid var(--line); }
 
-/* Haarlinie */
-.rule { border-top: 1px solid var(--line); }
+  /* Fläche mit Haarlinie – gruppiert ohne Schatten */
+  .panel { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-md); }
+  .panel-quiet { background: var(--paper-2); border-radius: var(--radius-md); }
+  .surface-night { background: var(--night); color: var(--night-ink); }
+  /* Volle Breite innerhalb eines zentrierten Inhalts */
+  .full-bleed { width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); }
 
+  /* Unterstreichung, die beim Hover wächst */
+  .link-grow { background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size 220ms var(--ease-out-quart); }
+  .link-grow:hover, .link-grow:focus-visible { background-size: 100% 1px; }
+
+  /* Status-Chip: Punkt + Text, nie nur Farbe */
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px 0 8px; border-radius: 999px; font-size: 12.5px; font-weight: 500; background: var(--paper-2); color: var(--ink-2); white-space: nowrap; }
 }
 
 /* -------------------------------------------------------------- Bewegung */
-@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-@keyframes cover-in { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes cover-in { from { opacity: 0; transform: translateY(14px) rotate(-1.2deg); } to { opacity: 1; transform: none; } }
 @keyframes flash { from { background-color: var(--accent-soft); } to { background-color: transparent; } }
-@keyframes pulse-line { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+@keyframes pulse-line { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
 @keyframes scan-line { from { transform: translateY(-40%); } to { transform: translateY(40%); } }
-@keyframes sheet-in { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes sheet-in { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 
-.anim-rise { animation: rise 220ms var(--ease-out-quart) both; }
-.anim-cover { animation: cover-in 240ms var(--ease-out-quart) both; }
+.anim-rise { animation: rise 420ms var(--ease-out-quart) both; }
+.anim-cover { animation: cover-in 520ms var(--ease-out-quart) both; }
 .anim-flash { animation: flash 900ms ease-out both; }
-.anim-sheet { animation: sheet-in 200ms var(--ease-out-quart) both; }
-.skeleton { background: var(--paper-3); animation: pulse-line 1.4s ease-in-out infinite; border-radius: 2px; }
+.anim-sheet { animation: sheet-in 240ms var(--ease-out-quart) both; }
+.anim-pop { animation: pop 260ms var(--ease-spring) both; }
+.live-dot { animation: blink 1.6s ease-in-out infinite; }
+.skeleton { background: var(--paper-3); animation: pulse-line 1.4s ease-in-out infinite; border-radius: 4px; }
+
+/* Endloses Band der Buchrücken */
+.marquee { display: flex; width: max-content; animation: marquee 60s linear infinite; }
+.marquee-wrap:hover .marquee { animation-play-state: paused; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  .marquee { animation: none; }
 }
 
 /* ----------------------------------------------------------- Bücherreihe */
-.shelf { display: flex; gap: 18px; align-items: flex-end; overflow-x: auto; scroll-snap-type: x proximity; padding: 4px 2px 0; scrollbar-width: none; overscroll-behavior-x: contain; }
+.shelf { display: flex; gap: 20px; align-items: flex-end; overflow-x: auto; scroll-snap-type: x proximity; padding: 12px 2px 0; scrollbar-width: none; overscroll-behavior-x: contain; }
 .shelf::-webkit-scrollbar { display: none; }
 .shelf > * { scroll-snap-align: start; flex: none; }
-.shelf-board { height: 1px; background: var(--ink); opacity: 0.85; }
+.shelf-board { height: 3px; background: var(--ink); border-radius: 1px; }
 
-.book { transition: transform 180ms var(--ease-out-quart); }
-.book:hover .book-face, .book:focus-visible .book-face { transform: translateY(-4px); }
-.book-face { transition: transform 180ms var(--ease-out-quart); }
+.book-face { transition: transform 260ms var(--ease-spring); transform-origin: bottom center; }
+.book:hover .book-face, .book:focus-visible .book-face { transform: translateY(-8px) rotate(-1.5deg); }
 
-@layer base {
-  input, textarea, select, button { font: inherit; color: inherit; }
-  input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.6; }
-}
+/* Buchrücken (Spine) */
+.spine { transition: transform 260ms var(--ease-spring); transform-origin: bottom center; }
+.spine:hover, .spine:focus-visible { transform: translateY(-10px); }
+
+/* Startseite: Kopf geht nahtlos in die dunkle Bühne über */
+body:has(.landing-stage) .public-header { background: color-mix(in srgb, var(--night) 92%, transparent); color: var(--night-ink); border-color: var(--night-line); }
+body:has(.landing-stage) .public-header a[href="/anmelden"] { background: var(--night-ink); color: var(--night); }
+body:has(.landing-stage) .public-header a:not([href="/anmelden"]):hover { background: var(--night-2); }

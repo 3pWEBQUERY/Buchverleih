@@ -1,3 +1,4 @@
+import { AuthHead, AuthStage } from "@/components/auth/stage";
 import { VerifyLink } from "./verify";
 
 export const metadata = { title: "Anmelden" };
@@ -6,9 +7,13 @@ export const metadata = { title: "Anmelden" };
 export default async function Page({ searchParams }: { searchParams: Promise<{ token?: string; next?: string }> }) {
   const { token, next } = await searchParams;
   return (
-    <div className="max-w-md md:ml-[8.33%] pt-10">
-      <h1 className="display text-5xl">Willkommen zurück.</h1>
+    <AuthStage
+      eyebrow="Anmeldelink"
+      title={<>Schön, dass du <em>da bist.</em></>}
+      lead="Der Link aus deiner E-Mail gilt 20 Minuten und nur einmal. Erst dein Tipp löst ihn ein – so verbraucht ihn keine Vorschau im Mailprogramm."
+    >
+      <AuthHead eyebrow="Fast geschafft" title={<>Willkommen <em>zurück.</em></>} />
       <VerifyLink token={token ?? ""} next={next ?? null} />
-    </div>
+    </AuthStage>
   );
 }

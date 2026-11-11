@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { Shelf, ShelfSkeleton } from "@/components/shelf";
-import { Button, Input } from "@/components/ui";
+import { Cover, coverRatio } from "@/components/cover";
 import { fmtDistance } from "@/lib/geo";
+import { IconArrowRight, IconSearch } from "@/components/icons";
 
-type Copy = { id: string; title: string; authors: string[]; photo_key: string | null; photo_w: number | null; photo_h: number | null; cover_key: string | null; dist: number; owner_name: string; work_id: string };
+type Copy = { id: string; title: string; authors: string[]; photo_key: string | null; photo_w: number | null; photo_h: number | null; cover_key: string | null; dist: number; owner_name: string; work_id: string; status: string };
 type Res = { known: boolean; open: boolean; municipality?: string; region?: string; copies: Copy[] };
 
+/** Postleitzahl eingeben und echten Bestand sehen (PRD 8.4) – auf der dunklen Bühne. */
 export function PlzExplorer() {
   const [plz, setPlz] = useState("");
   const [res, setRes] = useState<Res | null>(null);
@@ -34,58 +35,77 @@ export function PlzExplorer() {
   }
 
   return (
-    <section className="pt-10 md:pt-14">
-      <form onSubmit={look} className="flex flex-wrap items-end gap-3">
-        <label className="block">
-          <span className="eyebrow block mb-2">Was steht in deiner Nähe?</span>
-          <Input inputMode="numeric" autoComplete="postal-code" maxLength={4} placeholder="Postleitzahl, z. B. 8180" value={plz}
-            onChange={(e) => setPlz(e.target.value.replace(/\D/g, ""))} className="w-64 h-12 text-lg tnum" aria-label="Postleitzahl" />
-        </label>
-        <Button type="submit" variant="secondary" size="lg" disabled={plz.length !== 4}>Bestand ansehen</Button>
-      </form>
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-end">
+        <div className="min-w-0">
+          <p className="text-[13px] uppercase tracking-[0.12em] font-semibold text-night-muted">Was steht in deiner Nähe?</p>
+          <p className="font-serif text-[30px] md:text-[40px] leading-tight mt-2">Postleitzahl eingeben, Bestand sehen.</p>
+        </div>
+        <form onSubmit={look} className="min-w-0 flex items-center gap-2 p-1.5 pl-5 rounded-full bg-night-2 border border-night-line focus-within:border-night-ink transition-colors w-full md:w-[420px]">
+          <IconSearch width={20} height={20} className="text-night-muted flex-none" />
+          <input inputMode="numeric" autoComplete="postal-code" maxLength={4} size={6} placeholder="z. B. 8180" value={plz} aria-label="Postleitzahl"
+            onChange={(e) => setPlz(e.target.value.replace(/\D/g, ""))}
+            className="flex-1 min-w-0 bg-transparent h-12 text-[20px] tnum tracking-[0.06em] placeholder:text-night-muted/60 focus:outline-none" />
+          <button type="submit" disabled={plz.length !== 4}
+            className="h-12 px-6 flex-none rounded-full bg-accent text-accent-ink font-semibold disabled:opacity-40 hover:bg-accent-hover transition-colors active:scale-[0.97]">
+            Ansehen
+          </button>
+        </form>
+      </div>
 
-      <div className="mt-8 min-h-[260px]" aria-live="polite">
-        {loading && <ShelfSkeleton />}
-        {!loading && res && !res.known && <p className="text-ink-2 py-6">Diese Postleitzahl kennen wir nicht. Prüfe die vier Ziffern.</p>}
+      <div className="mt-10 min-h-[40px]" aria-live="polite">
+        {loading && (
+          <div className="flex gap-5 items-end" aria-hidden>
+            {Array.from({ length: 7 }).map((_, i) => <div key={i} className="w-[110px] rounded-[4px] bg-night-2 animate-pulse" style={{ height: 150 + (i % 3) * 14 }} />)}
+          </div>
+        )}
+        {!loading && res && !res.known && <p className="text-night-muted">Diese Postleitzahl kennen wir nicht. Prüfe die vier Ziffern.</p>}
         {!loading && res?.known && !res.open && (
-          <div className="py-6 max-w-xl">
-            <p className="font-serif text-2xl">{res.municipality} ist noch nicht offen.</p>
-            <p className="text-ink-2 mt-2">Wir öffnen Region für Region, sobald genug Bücher zusammenkommen. Trag dich ein, dann melden wir uns einmal.</p>
+          <div className="max-w-xl anim-rise">
+            <p className="font-serif text-[30px]">{res.municipality} ist noch nicht offen.</p>
+            <p className="text-night-muted mt-2">Wir öffnen Region für Region, sobald genug Bücher zusammenkommen. Trag dich ein, dann melden wir uns einmal.</p>
             {joined ? (
-              <p className="mt-4">Danke. Wir schreiben dir, wenn {res.municipality} startet.</p>
+              <p className="mt-5 font-medium">Danke. Wir schreiben dir, wenn {res.municipality} startet.</p>
             ) : (
-              <form onSubmit={wait} className="mt-4 flex flex-wrap gap-3">
-                <Input type="email" required placeholder="E-Mail-Adresse" value={email} onChange={(e) => setEmail(e.target.value)} className="w-72" />
-                <Button type="submit">Auf die Warteliste</Button>
+              <form onSubmit={wait} className="mt-5 flex flex-wrap gap-2">
+                <input type="email" required placeholder="E-Mail-Adresse" value={email} onChange={(e) => setEmail(e.target.value)}
+                  className="h-12 px-5 rounded-full bg-night-2 border border-night-line focus:border-night-ink focus:outline-none w-72" />
+                <button className="h-12 px-6 rounded-full bg-night-ink text-night font-semibold">Auf die Warteliste</button>
               </form>
             )}
           </div>
         )}
         {!loading && res?.open && res.copies.length === 0 && (
-          <div className="py-6 flex flex-wrap items-center gap-4 justify-between border-y border-line">
+          <div className="flex flex-wrap items-center gap-4 justify-between rounded-[14px] border border-night-line p-6 anim-rise">
             <p>Rund um {res.municipality} steht noch nichts im Regal. Stell das erste Buch hinein.</p>
-            <Link href="/anmelden?next=/regal/neu" className="font-medium underline underline-offset-4">Buch einstellen</Link>
+            <Link href="/anmelden?next=/regal/neu" className="h-11 px-5 rounded-full bg-night-ink text-night font-semibold inline-flex items-center">Buch einstellen</Link>
           </div>
         )}
         {!loading && res?.open && res.copies.length > 0 && (
           <div className="anim-rise">
-            <div className="flex items-baseline justify-between mb-4">
-              <p className="text-ink-2">Neu im Umkreis von 5 km um {res.municipality}</p>
-              <Link href={`/anmelden?next=/suche`} className="text-sm font-medium underline underline-offset-4">Anmelden und anfragen</Link>
+            <div className="flex items-baseline justify-between mb-5 gap-4">
+              <p className="text-night-muted">{res.copies.length} neu im Umkreis von 5 km um {res.municipality}</p>
+              <Link href="/anmelden?next=/suche" className="inline-flex items-center gap-1.5 font-semibold link-grow whitespace-nowrap">Anmelden und anfragen <IconArrowRight width={16} height={16} /></Link>
             </div>
-            <Shelf
-              label={`Bücher bei ${res.municipality}`}
-              items={res.copies.map((c) => ({
-                id: c.id,
-                href: `/titel/${c.work_id}`,
-                cover: { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id },
-                caption: c.title,
-                meta: <span className="text-xs text-muted">{c.owner_name} · {fmtDistance(c.dist)}</span>,
-              }))}
-            />
+            <ul className="shelf" aria-label={`Bücher bei ${res.municipality}`}>
+              {res.copies.map((c, i) => {
+                const cover = { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id };
+                const w = Math.max(100, Math.round(170 * coverRatio(cover)));
+                return (
+                  <li key={c.id} style={{ width: w, animationDelay: `${i * 35}ms` }} className="anim-rise">
+                    <Link href={`/titel/${c.work_id}`} className="book block group">
+                      <div className="flex items-end" style={{ height: 176 }}><div className="book-face"><Cover data={cover} height={150 + ((i * 7) % 4) * 6} /></div></div>
+                      <div className="h-[3px] bg-night-ink/90 rounded-full" />
+                      <p className="pt-2.5 text-[13.5px] font-medium leading-snug line-clamp-2 group-hover:underline">{c.title}</p>
+                      <p className="text-[12px] text-night-muted mt-0.5">{c.owner_name} · {fmtDistance(c.dist)}</p>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         )}
       </div>
-    </section>
+    </div>
   );
 }

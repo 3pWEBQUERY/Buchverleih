@@ -1,78 +1,285 @@
 import Link from "next/link";
 import { sql } from "@/lib/db";
+import { Spine } from "@/components/spine";
 import { PlzExplorer } from "./plz-explorer";
+import { IconArrowRight, IconCheck } from "@/components/icons";
 
 /**
- * Startseite abgemeldet (PRD 8.4): Echte Bücher aus der Region statt Werbetext,
- * Postleitzahl eingeben und Bestand sehen. Kein Hero mit Feature-Kacheln (PRD 8.2).
+ * Startseite abgemeldet (PRD 8.4): echte Bücher aus der Region statt Werbetext,
+ * Postleitzahl eingeben und Bestand sehen. Keine Fantasie-Testimonials, keine Icon-Kacheln.
  */
+
+// Zierband, solange die Region noch wenig Bestand hat (dekorativ, ohne Verfügbarkeitsangabe)
+const CLASSICS: [string, string][] = [
+  ["Homo faber", "Max Frisch"], ["Der Process", "Franz Kafka"], ["Effi Briest", "Theodor Fontane"], ["Die Physiker", "Friedrich Dürrenmatt"],
+  ["Siddhartha", "Hermann Hesse"], ["Momo", "Michael Ende"], ["Der grüne Heinrich", "Gottfried Keller"], ["Heidi", "Johanna Spyri"],
+  ["Schachnovelle", "Stefan Zweig"], ["Die Wand", "Marlen Haushofer"], ["Stiller", "Max Frisch"], ["Der Zauberberg", "Thomas Mann"],
+  ["Middlemarch", "George Eliot"], ["Le Petit Prince", "Antoine de Saint-Exupéry"], ["Woyzeck", "Georg Büchner"], ["Buddenbrooks", "Thomas Mann"],
+  ["Der Steppenwolf", "Hermann Hesse"], ["Wilhelm Tell", "Friedrich Schiller"], ["Frankenstein", "Mary Shelley"], ["Il Gattopardo", "Tomasi di Lampedusa"],
+];
+
 export async function Landing() {
-  const [stats] = await sql<{ copies: number; members: number; places: number }[]>`
-    select (select count(*)::int from copies c join users u on u.id = c.owner_id where c.removed_at is null and cardinality(c.offers) > 0 and c.visibility = 'all' and u.deleted_at is null) as copies,
-           (select count(*)::int from users where onboarded_at is not null and deleted_at is null) as members,
-           (select count(distinct municipality)::int from users where onboarded_at is not null and deleted_at is null) as places`;
+  const [[stats], titles] = await Promise.all([
+    sql<{ copies: number; members: number; places: number }[]>`
+      select (select count(*)::int from copies c join users u on u.id = c.owner_id where c.removed_at is null and cardinality(c.offers) > 0 and c.visibility = 'all' and u.deleted_at is null) as copies,
+             (select count(*)::int from users where onboarded_at is not null and deleted_at is null) as members,
+             (select count(distinct municipality)::int from users where onboarded_at is not null and deleted_at is null) as places`,
+    sql<{ title: string; author: string | null }[]>`
+      select w.title, w.authors[1] as author from works w
+       where exists (select 1 from editions e join copies c on c.edition_id = e.id where e.work_id = w.id and c.removed_at is null)
+       order by w.created_at desc limit 30`,
+  ]);
+  const spines = titles.length >= 14 ? titles.map((t) => [t.title, t.author ?? ""] as [string, string]) : CLASSICS;
+  const band = [...spines, ...spines];
+
   return (
-    <div>
-      <section className="grid md:grid-cols-12 gap-x-10 gap-y-8 items-end pb-10 md:pb-14 border-b border-line">
-        <h1 className="display md:col-span-8 text-[44px] leading-[0.95] sm:text-6xl md:text-7xl lg:text-[88px] anim-rise">
-          Das Buch, das du suchst, steht vielleicht <em className="italic">zwei Strassen weiter.</em>
-        </h1>
-        <div className="md:col-span-4 text-ink-2 text-[17px] leading-relaxed anim-rise" style={{ animationDelay: "60ms" }}>
-          <p>
-            Leihregal verbindet die Bücherregale einer Nachbarschaft. Du leihst, was andere schon gelesen haben, und verleihst, was bei dir nur steht.
-            Kostenlos, mit festen Fristen und einer Bestätigung bei jeder Übergabe.
-          </p>
+    <div className="-mt-10 md:-mt-16">
+      {/* ------------------------------------------------------------ Bühne */}
+      <section className="landing-stage full-bleed surface-night relative overflow-clip">
+        <div className="max-w-[1320px] mx-auto px-4 md:px-10 pt-12 md:pt-16 pb-10 grid lg:grid-cols-[1.25fr_1fr] gap-12 items-center">
+          <div>
+            <p className="inline-flex items-center gap-2 h-8 px-3.5 rounded-full border border-night-line text-[13px] font-medium text-night-muted anim-rise">
+              <span className="h-2 w-2 rounded-full bg-[var(--accent)] live-dot" /> Beta in Zürich und im Zürcher Unterland
+            </p>
+            <h1 className="display mt-7 text-[56px] sm:text-[84px] md:text-[104px] xl:text-[120px] anim-rise" style={{ animationDelay: "60ms" }}>
+              Leih dir das Buch <em className="text-[var(--accent)]">von nebenan.</em>
+            </h1>
+            <p className="mt-7 text-night-muted text-[17px] md:text-[19px] leading-relaxed max-w-xl anim-rise" style={{ animationDelay: "120ms" }}>
+              Leihregal verbindet die Bücherregale einer Nachbarschaft. Du leihst, was andere gelesen haben, und verleihst, was bei dir nur steht –
+              kostenlos, mit festen Fristen und einem Scan bei jeder Übergabe.
+            </p>
+            <dl className="mt-9 flex gap-9 md:gap-12 anim-rise" style={{ animationDelay: "160ms" }}>
+              {[[stats.copies, "Bücher"], [stats.members, "Mitglieder"], ["0", "CHF Gebühr"]].map(([n, l]) => (
+                <div key={String(l)}>
+                  <dt className="sr-only">{l}</dt>
+                  <dd className="font-serif text-[44px] md:text-[52px] leading-none tnum">{n}</dd>
+                  <dd className="text-[13px] text-night-muted mt-1.5">{l}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+          <HeroPreview />
+        </div>
+
+        {/* Endloses Regal aus Buchrücken */}
+        <div className="marquee-wrap relative mt-4" aria-hidden>
+          <div className="marquee gap-[6px] items-end px-2" style={{ height: 250 }}>
+            {band.map(([t, a], i) => <Spine key={i} title={t} author={a} height={240} />)}
+          </div>
+          <div className="h-[6px] bg-night-ink/90" />
+        </div>
+
+        <div className="max-w-[1320px] mx-auto px-4 md:px-10 py-12 md:py-16">
+          <PlzExplorer />
         </div>
       </section>
 
-      <PlzExplorer />
-
-      <section className="mt-16 md:mt-24 grid md:grid-cols-12 gap-10">
-        <div className="md:col-span-4">
-          <p className="eyebrow">So läuft eine Leihe</p>
-          <p className="mt-3 text-ink-2">Jeder Schritt hat eine Frist und eine Folge. Niemand muss nachfragen, wer gerade am Zug ist.</p>
+      {/* ------------------------------------------------------- Ablauf */}
+      <section className="pt-20 md:pt-32">
+        <div className="grid md:grid-cols-12 gap-8 items-end mb-10 md:mb-14">
+          <div className="md:col-span-7">
+            <p className="eyebrow">So läuft eine Leihe</p>
+            <h2 className="display text-[48px] md:text-[76px] mt-4">Vier Schritte. <em>Keine Absprachen</em> ausserhalb.</h2>
+          </div>
+          <p className="md:col-span-5 text-ink-2 text-[17px] leading-relaxed">
+            Jeder Schritt hat eine Frist und eine Folge. Niemand muss nachfragen, wer gerade am Zug ist – die Plattform weiss es und sagt es beiden.
+          </p>
         </div>
-        <ol className="md:col-span-8 divide-y divide-line border-y border-line">
-          {[
-            ["Anfragen", "Du wählst ein Exemplar und einen Zeitraum. Die Person, der das Buch gehört, hat 72 Stunden für eine Antwort."],
-            ["Übergeben", "Ihr trefft euch am vereinbarten Ort. Du scannst den Code auf dem anderen Handy, die Leihfrist beginnt."],
-            ["Lesen", "Standard sind 4 Wochen. Eine Verlängerung um 14 Tage geht mit einem Tipp, wenn danach niemand wartet."],
-            ["Zurückgeben", "Diesmal zeigst du den Code. Nach dem Scan ist das Buch wieder im Regal – und du in der Statistik pünktlich."],
-          ].map(([t, d], i) => (
-            <li key={t} className="grid grid-cols-[3rem_1fr] md:grid-cols-[4rem_10rem_1fr] gap-x-4 gap-y-1 py-5">
-              <span className="font-serif text-3xl leading-none text-muted tnum">{i + 1}</span>
-              <span className="font-serif text-xl">{t}</span>
-              <span className="col-start-2 md:col-start-3 text-ink-2">{d}</span>
-            </li>
-          ))}
+        <ol className="grid grid-flow-col auto-cols-[82%] sm:auto-cols-[48%] lg:grid-flow-row lg:grid-cols-4 gap-4 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 lg:mx-0 lg:px-0 pb-2" style={{ scrollbarWidth: "none" }}>
+          <Step n="01" title="Anfragen" text="Exemplar und Zeitraum wählen. Die Person, der es gehört, antwortet innert 72 Stunden.">
+            <MiniCalendar />
+          </Step>
+          <Step n="02" title="Übergeben" text="Am Kiosk, im Treppenhaus, im Milchkasten. Ein Scan auf dem anderen Handy startet die Leihfrist.">
+            <MiniQr />
+          </Step>
+          <Step n="03" title="Lesen" text="Standard sind vier Wochen. Verlängern geht mit einem Tipp, wenn danach niemand wartet.">
+            <div className="space-y-2">
+              <span className="chip !bg-paper"><span className="h-1.5 w-1.5 rounded-full bg-lent" /> Ausgeliehen</span>
+              <p className="font-serif text-[28px] leading-none">Bis Sa, 12. Dez.</p>
+              <p className="text-[13px] text-muted">noch 28 Tage</p>
+            </div>
+          </Step>
+          <Step n="04" title="Zurückgeben" text="Diesmal zeigst du den Code. Nach dem Scan steht das Buch wieder im Regal – pünktlich vermerkt.">
+            <div className="flex items-center gap-3">
+              <span className="h-12 w-12 rounded-full bg-ink text-paper grid place-items-center anim-pop"><IconCheck width={22} height={22} /></span>
+              <div className="leading-tight"><p className="font-semibold">Zurück</p><p className="text-[13px] text-muted">beide haben bestätigt</p></div>
+            </div>
+          </Step>
         </ol>
       </section>
 
-      <section className="mt-16 md:mt-24 grid grid-cols-3 gap-px bg-line border-y border-line">
-        {[
-          [stats.copies, "Bücher zum Leihen"],
-          [stats.members, "Mitglieder"],
-          [stats.places, "Gemeinden"],
-        ].map(([n, l]) => (
-          <div key={String(l)} className="bg-paper py-6 px-3 md:px-6 first:pl-0">
-            <div className="font-serif text-4xl md:text-5xl tnum">{n}</div>
-            <div className="text-muted mt-1 text-sm md:text-base">{l}</div>
-          </div>
-        ))}
-      </section>
-
-      <section className="mt-16 md:mt-24 grid md:grid-cols-12 gap-10 items-start">
-        <h2 className="md:col-span-5 text-3xl md:text-4xl">Für Lesekreise, Hausgemeinschaften und Büros.</h2>
-        <div className="md:col-span-7 text-ink-2 space-y-4">
-          <p>
-            Ein Kreis ist ein geschlossenes Regal für eine Gruppe. Die Bücher sind nur für Mitglieder sichtbar, Anfragen werden auf Wunsch automatisch angenommen,
-            und die Leihfrist legt ihr gemeinsam fest. Leihen im Kreis zählen nicht gegen die Grenzen für neue Mitglieder.
-          </p>
-          <Link href="/anmelden?next=/kreise/neu" className="inline-flex items-center gap-2 font-medium text-ink underline underline-offset-4">
-            Kreis gründen
-          </Link>
+      {/* -------------------------------------------------- Vertrauen (Bento) */}
+      <section className="pt-20 md:pt-32">
+        <p className="eyebrow">Gebaut für Vertrauen</p>
+        <h2 className="display text-[48px] md:text-[76px] mt-4 max-w-[14ch]">Damit das Buch <em>zurückkommt.</em></h2>
+        <div className="mt-10 md:mt-14 grid gap-4 md:grid-cols-6 md:auto-rows-[minmax(250px,auto)]">
+          <article className="surface-night rounded-[18px] p-7 md:p-9 md:col-span-4 flex flex-col">
+            <p className="eyebrow !text-night-muted">Verleihkalender</p>
+            <h3 className="font-serif text-[34px] md:text-[42px] mt-3 max-w-md">Ein Exemplar, ein Kalender.</h3>
+            <p className="text-night-muted mt-3 max-w-md">Buche im Voraus, auch wenn das Buch gerade weg ist. Zeiträume überschneiden sich nie – das erzwingt die Datenbank, nicht der gute Wille.</p>
+            <div className="mt-auto pt-8"><CalendarBars /></div>
+          </article>
+          <article className="rounded-[18px] p-7 md:p-9 md:col-span-2 bg-accent text-accent-ink flex flex-col justify-between">
+            <p className="eyebrow !text-accent-ink/75">Kein Geld im Ablauf</p>
+            <div>
+              <p className="font-serif text-[96px] md:text-[120px] leading-[0.85] tnum">0.–</p>
+              <p className="mt-3 text-[17px] font-medium">Leihen unter Privaten bleibt kostenlos. Ohne Kaution, ohne Gebühr pro Leihe.</p>
+            </div>
+          </article>
+          <article className="panel-quiet rounded-[18px] p-7 md:p-9 md:col-span-3">
+            <p className="eyebrow">Vertrauensstufen</p>
+            <h3 className="font-serif text-[32px] mt-3">Wer neu ist, leiht wenig. Wer verlässlich ist, mehr.</h3>
+            <div className="mt-7 space-y-3">
+              {[["Neu", 2, "E-Mail und Mobilnummer bestätigt"], ["Bewährt", 5, "3 Leihen, alle pünktlich"], ["Vertraut", 10, "10 Leihen, kein Verlust"]].map(([l, n, d], i) => (
+                <div key={String(l)} className="grid grid-cols-[88px_1fr_auto] items-center gap-3">
+                  <span className="font-semibold">{l}</span>
+                  <span className="h-3 rounded-full bg-paper-3 overflow-hidden"><span className="block h-full rounded-full bg-ink" style={{ width: `${(Number(n) / 10) * 100}%`, opacity: 0.55 + i * 0.22 }} /></span>
+                  <span className="text-[13px] text-muted tnum w-36 text-right hidden sm:block">{n} gleichzeitig · {d}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-[13px] text-muted mt-5">Keine Sterne, keine Punkte. Drei Zahlen auf dem Profil: verliehen, geliehen, pünktlich zurück.</p>
+          </article>
+          <article className="panel rounded-[18px] p-7 md:p-9 md:col-span-3 flex flex-col">
+            <p className="eyebrow">Kreise</p>
+            <h3 className="font-serif text-[32px] mt-3">Ein Regal nur für euch.</h3>
+            <p className="text-ink-2 mt-3 max-w-md">Lesekreis, Hausgemeinschaft, Büro: Bücher nur für Mitglieder sichtbar, Anfragen auf Wunsch automatisch angenommen, eigene Leihfrist.</p>
+            <div className="mt-auto pt-7 flex items-center justify-between">
+              <div className="flex -space-x-3">
+                {["L", "M", "J", "A", "S"].map((c, i) => (
+                  <span key={c} className="h-11 w-11 rounded-full ring-[3px] ring-paper grid place-items-center font-serif text-lg" style={{ background: ["#22324a", "#d23c1a", "#2e4a3b", "#b8902f", "#4b2e44"][i], color: "#fff" }}>{c}</span>
+                ))}
+              </div>
+              <Link href="/anmelden?next=/kreise/neu" className="inline-flex items-center gap-2 font-semibold link-grow">Kreis gründen <IconArrowRight width={18} height={18} /></Link>
+            </div>
+          </article>
+          <article className="panel rounded-[18px] p-7 md:p-9 md:col-span-6 grid md:grid-cols-[1fr_1.4fr] gap-8 items-center">
+            <div>
+              <p className="eyebrow">Wenn es hakt</p>
+              <h3 className="font-serif text-[32px] mt-3">Schweigen hat eine Folge.</h3>
+              <p className="text-ink-2 mt-3">Die Eskalation ist bewusst langsam – die meisten Verspätungen sind Vergesslichkeit. Aber nichts bleibt hängen.</p>
+            </div>
+            <ol className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-line rounded-[12px] overflow-hidden">
+              {[["−5 Tage", "Erinnerung mit Knopf «Verlängern»"], ["+3 Tage", "Kulanz vorbei, zählt als unpünktlich"], ["+7 Tage", "Keine neuen Anfragen bis zur Rückgabe"], ["+21 Tage", "Fall mit festen Schritten bis Tag 30"]].map(([d, t], i) => (
+                <li key={d} className="bg-paper p-4">
+                  <span className={`block font-serif text-[26px] leading-none tnum ${i === 3 ? "text-late" : ""}`}>{d}</span>
+                  <span className="block text-[13px] text-ink-2 mt-2 leading-snug">{t}</span>
+                </li>
+              ))}
+            </ol>
+          </article>
         </div>
       </section>
+
+      {/* ------------------------------------------------------- Abschluss */}
+      <section className="full-bleed bg-accent text-accent-ink mt-20 md:mt-32 -mb-10 md:-mb-16">
+        <div className="max-w-[1320px] mx-auto px-4 md:px-10 py-16 md:py-24 grid md:grid-cols-[1fr_auto] gap-8 items-end">
+          <h2 className="display text-[52px] md:text-[96px] max-w-[12ch]">Stell dein erstes Buch <em>ins Regal.</em></h2>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link href="/anmelden?next=/regal/neu" className="h-14 px-8 rounded-full bg-night text-night-ink font-semibold inline-flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+              Jetzt beginnen <IconArrowRight width={18} height={18} />
+            </Link>
+            <Link href="/hilfe" className="h-14 px-8 rounded-full border-2 border-accent-ink/40 font-semibold inline-flex items-center justify-center hover:border-accent-ink transition-colors">
+              So funktioniert es
+            </Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/** Produktvorschau aus echten UI-Bausteinen – flach, leicht versetzt */
+function HeroPreview() {
+  return (
+    <div className="relative hidden lg:block h-[480px]" aria-hidden>
+      <div className="absolute right-0 top-0 w-[350px] rounded-[18px] bg-paper text-ink p-6 rotate-[2deg] anim-cover" style={{ animationDelay: "200ms" }}>
+        <div className="flex gap-4">
+          <div className="w-[74px] h-[108px] rounded-[3px] flex-none p-2.5 flex flex-col" style={{ background: "#2e4a3b", color: "#eee4cc" }}>
+            <span className="block h-px w-6 bg-current opacity-70" />
+            <span className="font-serif text-[15px] leading-tight mt-auto">Homo faber</span>
+            <span className="text-[6.5px] uppercase tracking-[0.14em] mt-1.5 opacity-80">Max Frisch</span>
+          </div>
+          <div className="min-w-0">
+            <p className="eyebrow">Leihe · von Marc</p>
+            <p className="font-serif text-[28px] leading-[1.05] mt-1.5">Homo faber</p>
+            <span className="chip mt-3"><span className="h-1.5 w-1.5 rounded-full bg-wait" /> Angenommen</span>
+          </div>
+        </div>
+        <div className="mt-6 grid grid-cols-5 gap-1.5">
+          {["Angefragt", "Angenommen", "Übergeben", "Zurück", "Fertig"].map((l, i) => (
+            <div key={l}><span className={`block h-1.5 rounded-full ${i < 2 ? "bg-ink" : i === 2 ? "bg-accent" : "bg-paper-3"}`} /><span className="block text-[10px] text-muted mt-1.5 truncate">{l}</span></div>
+          ))}
+        </div>
+        <div className="mt-5 flex items-center justify-between rounded-[12px] bg-paper-2 px-4 py-3">
+          <div className="leading-tight"><p className="text-[12px] text-muted">Übergabe</p><p className="font-semibold text-[14.5px]">Sa, 14:00 · Bahnhof Bülach</p></div>
+          <span className="h-9 px-4 rounded-full bg-accent text-accent-ink text-[13px] font-semibold grid place-items-center whitespace-nowrap">Code scannen</span>
+        </div>
+      </div>
+      <div className="absolute left-0 bottom-0 w-[196px] rounded-[18px] bg-white text-black p-4 -rotate-[5deg] anim-cover" style={{ animationDelay: "320ms" }}>
+        <p className="font-serif text-[17px]">Übergabecode</p>
+        <div className="mt-3 grid grid-cols-9 gap-[2px]">
+          {"111011101011010010111101001110110100101110010110101111001011101110110100101111010011101".split("").map((c, i) => <span key={i} className={`aspect-square ${c === "1" ? "bg-black" : ""}`} />)}
+        </div>
+        <p className="mt-3 text-center font-sans font-semibold text-[20px] tracking-[0.16em] tnum">420 350</p>
+        <p className="text-center text-[11px] text-neutral-500">gültig noch 9:41 Min.</p>
+      </div>
+    </div>
+  );
+}
+
+function Step({ n, title, text, children }: { n: string; title: string; text: string; children: React.ReactNode }) {
+  return (
+    <li className="snap-start panel-quiet rounded-[18px] p-6 md:p-7 flex flex-col min-h-[340px] group hover:bg-paper-3 transition-colors duration-300">
+      <span className="font-serif text-[22px] text-muted tnum">{n}</span>
+      <h3 className="ui-title text-[24px] mt-1">{title}</h3>
+      <p className="text-ink-2 text-[15px] mt-2 leading-relaxed">{text}</p>
+      <div className="mt-auto pt-8 transition-transform duration-300 ease-[var(--ease-spring)] group-hover:-translate-y-1">{children}</div>
+    </li>
+  );
+}
+
+function MiniCalendar() {
+  return (
+    <div className="space-y-2" aria-hidden>
+      <div className="flex gap-1">
+        <span className="h-7 rounded-[5px] bg-lent" style={{ width: "34%" }} />
+        <span className="h-7 w-[7%] rounded-[5px]" style={{ backgroundImage: "repeating-linear-gradient(135deg, var(--line-strong) 0 1px, transparent 1px 5px)" }} />
+        <span className="h-7 flex-1 rounded-[5px] border-2 border-ink bg-ink/5 grid place-items-center text-[11px] font-semibold">deine Anfrage</span>
+      </div>
+      <div className="flex justify-between text-[11px] text-muted"><span>Nov</span><span>Dez</span><span>Jan</span></div>
+    </div>
+  );
+}
+
+function MiniQr() {
+  const cells = "1110111010110100101111010011101101001011100101101011110010111011";
+  return (
+    <div className="flex items-center gap-4" aria-hidden>
+      <div className="grid grid-cols-8 gap-[2px] p-2 bg-white rounded-[6px] w-[86px]">
+        {cells.split("").map((c, i) => <span key={i} className={`aspect-square ${c === "1" ? "bg-black" : ""}`} />)}
+      </div>
+      <div><p className="font-sans font-semibold text-[22px] tracking-[0.15em] tnum">420 350</p><p className="text-[12px] text-muted">oder Ziffern eingeben</p></div>
+    </div>
+  );
+}
+
+function CalendarBars() {
+  const rows = [
+    [["Lea", 0, 30, "bg-lent"], ["Jonas", 36, 28, "bg-wait"]],
+    [["gesperrt", 8, 18, "bg-night-2 border border-night-line text-night-muted"], ["Samira", 32, 40, "bg-wait"]],
+    [["Marc", 4, 26, "bg-lent"], ["frei", 36, 50, "border border-dashed border-night-line text-night-muted"]],
+  ] as const;
+  return (
+    <div className="space-y-2.5" aria-hidden>
+      {rows.map((r, i) => (
+        <div key={i} className="relative h-9">
+          {r.map(([l, x, w, c]) => (
+            <span key={l} className={`absolute top-0 h-full rounded-[6px] px-3 text-[12px] font-semibold text-white flex items-center ${c}`} style={{ left: `${x}%`, width: `${w}%` }}>{l}</span>
+          ))}
+        </div>
+      ))}
+      <div className="relative h-px bg-night-line mt-4"><span className="absolute left-[22%] -top-3 h-6 w-px bg-[var(--accent)]" /><span className="absolute left-[22%] top-3 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider text-[var(--accent)]">heute</span></div>
     </div>
   );
 }

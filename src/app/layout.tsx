@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource-variable/newsreader/opsz.css";
-import "@fontsource-variable/newsreader/opsz-italic.css";
-import "@fontsource-variable/schibsted-grotesk";
+import "@fontsource/instrument-serif/400.css";
+import "@fontsource/instrument-serif/400-italic.css";
+import "@fontsource-variable/instrument-sans/wght.css";
 import "./globals.css";
 import { ToastProvider } from "@/components/toast";
 import { RegisterSW } from "@/components/register-sw";
@@ -21,8 +21,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f2ea" },
-    { media: "(prefers-color-scheme: dark)", color: "#13120e" },
+    { media: "(prefers-color-scheme: light)", color: "#faf8f4" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f0f0e" },
   ],
 };
 
