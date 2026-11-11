@@ -2,28 +2,24 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button, LinkButton } from "@/components/ui";
+import { Button, LinkButton, cx } from "@/components/ui";
 import { useToast } from "@/components/toast";
 import { api } from "@/lib/client";
 
 /** «Auf die Wunschliste / Titelalarm» (PRD 4.6) */
-export function WishButton({ workId, loggedIn, onList, alarm, next, primary, onNight = false }: { workId: string; loggedIn: boolean; onList: boolean; alarm: boolean; next: string; primary: boolean; onNight?: boolean }) {
-  // Auf der dunklen Bühne ist der sekundäre Knopf hell gefüllt
-  const nightCls = onNight && !primary ? "!bg-night-ink !text-night hover:!opacity-90" : undefined;
+export function WishButton({ workId, loggedIn, onList, alarm, next, primary, className }: { workId: string; loggedIn: boolean; onList: boolean; alarm: boolean; next: string; primary: boolean; className?: string }) {
   const router = useRouter();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
 
   if (!loggedIn) {
-    return <LinkButton href={`/anmelden?next=${encodeURIComponent(next)}`} variant={primary ? "primary" : "secondary"} className={nightCls}>Auf die Wunschliste</LinkButton>;
+    return <LinkButton href={`/anmelden?next=${encodeURIComponent(next)}`} variant={primary ? "primary" : "secondary"} className={className}>Auf die Wunschliste</LinkButton>;
   }
   if (onList) {
     return (
-      <Link href="/wunschliste" className={onNight
-        ? "inline-flex h-11 items-center gap-2 px-5 rounded-full border border-night-line text-[15px] font-semibold hover:bg-night-2 transition-colors"
-        : "inline-flex h-11 items-center gap-2 px-5 rounded-full border border-line-strong text-[15px] font-semibold hover:border-ink transition-colors"}>
-        <span aria-hidden className={alarm ? "h-2 w-2 rounded-full bg-[#8fd09a] live-dot" : "h-2 w-2 rounded-full bg-current opacity-50"} />
-        {alarm ? "Auf der Wunschliste, Titelalarm an" : "Auf der Wunschliste"}
+      <Link href="/wunschliste" className={cx("inline-flex h-11 items-center justify-center gap-2 px-5 rounded-[6px] border border-line-strong text-[14.5px] font-medium hover:border-accent transition-colors", className)}>
+        <span aria-hidden className={alarm ? "h-2 w-2 rounded-full bg-ok live-dot" : "h-2 w-2 rounded-full bg-done"} />
+        {alarm ? "Auf der Wunschliste, Alarm an" : "Auf der Wunschliste"}
       </Link>
     );
   }
@@ -48,7 +44,7 @@ export function WishButton({ workId, loggedIn, onList, alarm, next, primary, onN
   }
 
   return (
-    <Button variant={primary ? "primary" : "secondary"} className={nightCls} onClick={add} disabled={busy}>
+    <Button variant={primary ? "primary" : "secondary"} className={className} onClick={add} disabled={busy}>
       Auf die Wunschliste
     </Button>
   );
@@ -62,7 +58,7 @@ export function ShippingSignal() {
   return (
     <p className="text-sm text-muted">
       Zu weit weg?{" "}
-      <button type="button" disabled={busy} className="underline underline-offset-4 hover:text-ink"
+      <button type="button" disabled={busy} className="font-medium text-accent-hover hover:underline underline-offset-4"
         onClick={async () => {
           setBusy(true);
           try {
