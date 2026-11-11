@@ -6,6 +6,7 @@ import { api } from "@/lib/client";
 import { trustLabel } from "@/lib/i18n/de-CH";
 import { useToast } from "@/components/toast";
 import { Button, SectionTitle, cx } from "@/components/ui";
+import { Avatar } from "@/components/kreise/faces";
 import { CircleFields, type CircleValues } from "../circle-form";
 
 type Member = { user_id: string; first_name: string; role: string; status: string; trust_level: number; municipality: string | null };
@@ -57,27 +58,25 @@ export function InviteBox({ circleId, url, admin, appUrl }: { circleId: string; 
   }
 
   return (
-    <section>
-      <SectionTitle>Einladen</SectionTitle>
+    <section className="panel-quiet !rounded-[18px] p-5 md:p-6">
+      <h2 className="ui-title text-[19px]">Einladen</h2>
       {link ? (
         <>
-          <p className="text-sm text-muted mb-3">Wer diesen Link öffnet, kann dem Kreis beitreten.</p>
-          <div className="flex items-stretch border border-line-strong rounded-sm overflow-hidden focus-within:border-ink">
+          <p className="text-[14px] text-muted mt-1 mb-4">Wer diesen Link öffnet, kann dem Kreis beitreten.</p>
+          <div className="flex items-center gap-1.5 bg-paper border border-line-strong rounded-full p-1 pl-4 focus-within:border-ink transition-colors">
             <input ref={input} readOnly value={link} aria-label="Einladungslink" onFocus={(e) => e.target.select()}
-              className="min-w-0 flex-1 bg-transparent px-3 h-11 text-sm text-ink-2 focus:outline-none" />
-            <button type="button" onClick={copy} className="px-4 text-sm font-medium border-l border-line-strong hover:bg-ink hover:text-paper transition-colors">
-              Kopieren
-            </button>
+              className="min-w-0 flex-1 bg-transparent h-10 text-[14px] text-ink-2 focus:outline-none focus-visible:outline-none" />
+            <Button type="button" size="sm" onClick={copy} className="h-10 flex-none">Kopieren</Button>
           </div>
           {admin && (
-            <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <p className="text-sm text-muted">Link in falschen Händen?</p>
-              <Button variant="quiet" className="text-sm" disabled={busy} onClick={renew}>Link erneuern</Button>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1">
+              <p className="text-[13px] text-muted">Link in falschen Händen?</p>
+              <Button variant="quiet" className="text-[13.5px] min-h-9" disabled={busy} onClick={renew}>Link erneuern</Button>
             </div>
           )}
         </>
       ) : (
-        <p className="text-[15px] text-ink-2">Neue Mitglieder lädt ein Admin ein. Frag im Kreis nach dem Link.</p>
+        <p className="text-[15px] text-ink-2 mt-2">Neue Mitglieder lädt ein Admin ein. Frag im Kreis nach dem Link.</p>
       )}
     </section>
   );
@@ -119,13 +118,13 @@ export function MemberList({ circleId, me, admin, members }: { circleId: string;
   }
 
   return (
-    <div className="space-y-14">
+    <div className="space-y-10">
       {admin && pending.length > 0 && (
         <section>
           <SectionTitle aside={<span className="tnum">{pending.length}</span>}>Beitrittsanfragen</SectionTitle>
-          <ul className="divide-y divide-line border-y border-line -mt-5">
+          <ul className="panel !rounded-[18px] divide-y divide-line overflow-hidden">
             {pending.map((m) => (
-              <li key={m.user_id} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 py-4">
+              <li key={m.user_id} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 md:px-5 py-4 anim-rise">
                 <Person m={m} />
                 <div className="flex items-center gap-4">
                   <Button variant="quiet" className="text-sm" onClick={() => remove(m, true)}>Ablehnen</Button>
@@ -139,12 +138,12 @@ export function MemberList({ circleId, me, admin, members }: { circleId: string;
 
       <section>
         <SectionTitle aside={<span className="tnum">{active.length}</span>}>Mitglieder</SectionTitle>
-        <ul className="divide-y divide-line border-y border-line -mt-5">
+        <ul className="panel !rounded-[18px] divide-y divide-line overflow-hidden">
           {active.map((m) => (
-            <li key={m.user_id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-x-6 gap-y-1.5 py-3.5">
+            <li key={m.user_id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-x-6 gap-y-2 px-4 md:px-5 py-3.5">
               <Person m={m} me={m.user_id === me} />
               {admin && m.user_id !== me && (
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 pl-[54px] sm:pl-0">
                   {m.role !== "admin" && (
                     <Button variant="quiet" className="text-sm" disabled={busy === m.user_id} onClick={() => act(m, "make_admin")}>Zum Admin machen</Button>
                   )}
@@ -161,13 +160,16 @@ export function MemberList({ circleId, me, admin, members }: { circleId: string;
 
 function Person({ m, me }: { m: Member; me?: boolean }) {
   return (
-    <div className="min-w-0">
-      <p className="text-[15px]">
-        <Link href={`/profil/${m.user_id}`} className="font-medium hover:underline">{m.first_name}</Link>
-        {me && <span className="text-muted"> (du)</span>}
-        {m.role === "admin" && <span className="text-muted"> · Admin</span>}
-      </p>
-      <p className="text-sm text-muted">{[trustLabel[m.trust_level] ?? "Neu", m.municipality].filter(Boolean).join(" · ")}</p>
+    <div className="min-w-0 flex items-center gap-3.5">
+      <Avatar name={m.first_name} size={40} />
+      <div className="min-w-0">
+        <p className="text-[15px] flex flex-wrap items-center gap-x-2 gap-y-1">
+          <Link href={`/profil/${m.user_id}`} className="font-semibold hover:underline underline-offset-4">{m.first_name}</Link>
+          {me && <span className="text-muted">(du)</span>}
+          {m.role === "admin" && <span className="chip !h-[22px] !text-[12px]">Admin</span>}
+        </p>
+        <p className="text-[13px] text-muted">{[trustLabel[m.trust_level] ?? "Neu", m.municipality].filter(Boolean).join(" · ")}</p>
+      </div>
     </div>
   );
 }
@@ -202,15 +204,15 @@ export function CircleSettings({ circleId, initial }: { circleId: string; initia
   }
 
   return (
-    <section>
-      <SectionTitle>Einstellungen</SectionTitle>
+    <section className="panel !rounded-[18px] p-5 md:p-6">
+      <h2 className="ui-title text-[19px]">Einstellungen</h2>
       {!open ? (
         <>
-          <p className="text-sm text-muted mb-3">Name, Leihfrist, Übergabeort und Beitritt. Als Admin kannst du alles ändern.</p>
-          <Button size="sm" onClick={() => { setV(initial); setOpen(true); }}>Einstellungen ändern</Button>
+          <p className="text-[14px] text-muted mt-1 mb-4">Name, Leihfrist, Übergabeort und Beitritt. Als Admin kannst du alles ändern.</p>
+          <Button size="sm" variant="ghost" onClick={() => { setV(initial); setOpen(true); }}>Einstellungen ändern</Button>
         </>
       ) : (
-        <div className="anim-rise">
+        <div className="anim-rise mt-5">
           <CircleFields v={v} set={(p) => { setV((c) => ({ ...c, ...p })); if (p.name !== undefined) setNameError(null); }} nameError={nameError} />
           <div className="flex items-center gap-4 mt-6">
             <Button disabled={busy} onClick={save}>{busy ? "Wird gespeichert …" : "Speichern"}</Button>
@@ -241,8 +243,8 @@ export function LeaveCircle({ circleId, me, name, lastAdmin }: { circleId: strin
   }
 
   return (
-    <section className="border-t border-line pt-5">
-      <p className="text-sm text-muted mb-2">
+    <section className="px-5 md:px-6 pt-2">
+      <p className="text-[13.5px] text-muted mb-1">
         {lastAdmin
           ? "Du bist der einzige Admin. Mach zuerst jemanden zum Admin, bevor du gehst."
           : "Deine Bücher verschwinden aus dem gemeinsamen Regal. Laufende Leihen gehen weiter."}
