@@ -1,0 +1,56 @@
+/** Zentrale Konfiguration. Alle Werte kommen aus Railway-Variablen pro Umgebung. */
+function bool(v: string | undefined, d = false) {
+  if (v == null || v === "") return d;
+  return ["1", "true", "yes", "on"].includes(v.toLowerCase());
+}
+
+export const env = {
+  get appUrl() {
+    const raw =
+      process.env.APP_URL ||
+      (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : "http://localhost:3000");
+    return raw.replace(/\/$/, "");
+  },
+  get production() {
+    return process.env.NODE_ENV === "production";
+  },
+  get showCodes() {
+    return bool(process.env.DEV_SHOW_CODES, false);
+  },
+  get smtpUrl() {
+    return process.env.SMTP_URL || "";
+  },
+  get mailFrom() {
+    return process.env.MAIL_FROM || "Leihregal <hallo@leihregal.ch>";
+  },
+  get smsProvider() {
+    return (process.env.SMS_PROVIDER || "console") as "console" | "webhook";
+  },
+  get coversOpenLibrary() {
+    return bool(process.env.COVERS_OPENLIBRARY, false);
+  },
+  s3: {
+    // Railway-Buckets liefern eigene Variablennamen; beide Schreibweisen werden akzeptiert.
+    get bucket() {
+      return process.env.S3_BUCKET || process.env.BUCKET || "";
+    },
+    get endpoint() {
+      return process.env.S3_ENDPOINT || process.env.ENDPOINT || "";
+    },
+    get region() {
+      return process.env.S3_REGION || process.env.REGION || "auto";
+    },
+    get accessKeyId() {
+      return process.env.S3_ACCESS_KEY_ID || process.env.ACCESS_KEY_ID || "";
+    },
+    get secretAccessKey() {
+      return process.env.S3_SECRET_ACCESS_KEY || process.env.SECRET_ACCESS_KEY || "";
+    },
+    get forcePathStyle() {
+      return bool(process.env.S3_FORCE_PATH_STYLE, false);
+    },
+    get configured() {
+      return Boolean(this.bucket && this.endpoint && this.accessKeyId && this.secretAccessKey);
+    },
+  },
+};

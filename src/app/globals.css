@@ -1,0 +1,184 @@
+@import "tailwindcss";
+
+/*
+ * Leihregal Designsystem – Tokens (PRD 8.1, 8.5)
+ * Warmes Papierweiss und Tintenschwarz als Basis, eine einzige Akzentfarbe für den
+ * jeweils nächsten Schritt. Statusfarben nur für Status. Flach: Weissraum und feine Linien.
+ * Die iOS-App übernimmt dieselben Werte (siehe src/styles/tokens.json).
+ */
+:root {
+  --paper: #f6f2ea;
+  --paper-2: #efe9dd;
+  --paper-3: #e7dfd0;
+  --ink: #1b1a17;
+  --ink-2: #45413a;
+  --muted: #6b6558;
+  --line: #ddd5c5;
+  --line-strong: #b9af9b;
+  --accent: #b8381a;
+  --accent-hover: #9c2d13;
+  --accent-ink: #ffffff;
+  --accent-soft: #f3dcd3;
+  --st-ok: #33612f;
+  --st-lent: #7d5a0c;
+  --st-late: #9e1f3c;
+  --st-wait: #44556b;
+  --st-done: #6b6558;
+  --focus: #1b1a17;
+  --scrim: rgb(27 26 23 / 0.55);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #13120e;
+    --paper-2: #1b1a15;
+    --paper-3: #24221c;
+    --ink: #eee8db;
+    --ink-2: #d1cab9;
+    --muted: #a19a88;
+    --line: #2e2b24;
+    --line-strong: #4b473c;
+    --accent: #f0663f;
+    --accent-hover: #ff7d58;
+    --accent-ink: #13120e;
+    --accent-soft: #3b1f16;
+    --st-ok: #93c58b;
+    --st-lent: #e3ba5c;
+    --st-late: #f3829c;
+    --st-wait: #a3b5cb;
+    --st-done: #a19a88;
+    --focus: #eee8db;
+    --scrim: rgb(0 0 0 / 0.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #13120e;
+  --paper-2: #1b1a15;
+  --paper-3: #24221c;
+  --ink: #eee8db;
+  --ink-2: #d1cab9;
+  --muted: #a19a88;
+  --line: #2e2b24;
+  --line-strong: #4b473c;
+  --accent: #f0663f;
+  --accent-hover: #ff7d58;
+  --accent-ink: #13120e;
+  --accent-soft: #3b1f16;
+  --st-ok: #93c58b;
+  --st-lent: #e3ba5c;
+  --st-late: #f3829c;
+  --st-wait: #a3b5cb;
+  --st-done: #a19a88;
+  --focus: #eee8db;
+  --scrim: rgb(0 0 0 / 0.7);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-paper-3: var(--paper-3);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-ok: var(--st-ok);
+  --color-lent: var(--st-lent);
+  --color-late: var(--st-late);
+  --color-wait: var(--st-wait);
+  --color-done: var(--st-done);
+
+  --font-serif: "Newsreader Variable", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@layer base {
+/* ------------------------------------------------------------------ Basis */
+html {
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+body {
+  background: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+@media (min-width: 768px) {
+  body { font-size: 16px; }
+}
+::selection { background: var(--accent-soft); color: var(--ink); }
+
+h1, h2, h3, .serif {
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-weight: 450;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+.display { font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.028em; line-height: 0.98; }
+.tnum { font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+p { text-wrap: pretty; }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
+a { text-underline-offset: 0.18em; text-decoration-thickness: 1px; }
+
+/* Haarlinie */
+.rule { border-top: 1px solid var(--line); }
+
+}
+
+/* -------------------------------------------------------------- Bewegung */
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes cover-in { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes flash { from { background-color: var(--accent-soft); } to { background-color: transparent; } }
+@keyframes pulse-line { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+@keyframes scan-line { from { transform: translateY(-40%); } to { transform: translateY(40%); } }
+@keyframes sheet-in { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.anim-rise { animation: rise 220ms var(--ease-out-quart) both; }
+.anim-cover { animation: cover-in 240ms var(--ease-out-quart) both; }
+.anim-flash { animation: flash 900ms ease-out both; }
+.anim-sheet { animation: sheet-in 200ms var(--ease-out-quart) both; }
+.skeleton { background: var(--paper-3); animation: pulse-line 1.4s ease-in-out infinite; border-radius: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* ----------------------------------------------------------- Bücherreihe */
+.shelf { display: flex; gap: 18px; align-items: flex-end; overflow-x: auto; scroll-snap-type: x proximity; padding: 4px 2px 0; scrollbar-width: none; overscroll-behavior-x: contain; }
+.shelf::-webkit-scrollbar { display: none; }
+.shelf > * { scroll-snap-align: start; flex: none; }
+.shelf-board { height: 1px; background: var(--ink); opacity: 0.85; }
+
+.book { transition: transform 180ms var(--ease-out-quart); }
+.book:hover .book-face, .book:focus-visible .book-face { transform: translateY(-4px); }
+.book-face { transition: transform 180ms var(--ease-out-quart); }
+
+@layer base {
+  input, textarea, select, button { font: inherit; color: inherit; }
+  input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.6; }
+}
