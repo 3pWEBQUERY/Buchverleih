@@ -100,6 +100,14 @@ export async function renewInvite(userId: string, circleId: string) {
 
 export async function setMember(userId: string, circleId: string, memberId: string, action: "approve" | "remove" | "make_admin") {
   if (action === "remove" && memberId === userId) {
+    const [a] = await sql<{ admins: number; me: string | null }[]>`
+      select count(*) filter (where role = 'admin' and status = 'active')::int as admins,
+             max(role) filter (where user_id = ${userId}) as me
+        from circle_members where circle_id = ${circleId}`;
+    if (a.me === "admin" && a.admins <= 1) {
+      const [m] = await sql<{ n: number }[]>`select count(*)::int as n from circle_members where circle_id = ${circleId} and status = 'active'`;
+      if (m.n > 1) throw err.conflict("last_admin", "Du bist die einzige Admin-Person. Mach zuerst jemand anderen zum Admin, dann kannst du austreten.");
+    }
     await sql`delete from circle_members where circle_id = ${circleId} and user_id = ${userId}`;
     await sql`delete from circle_copies cc using copies c where cc.circle_id = ${circleId} and c.id = cc.copy_id and c.owner_id = ${userId}`;
     return;

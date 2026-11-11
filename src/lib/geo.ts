@@ -19,7 +19,7 @@ export function fuzz(lat: number, lng: number, meters = 150) {
 export function fmtDistance(m: number | null | undefined) {
   if (m == null || Number.isNaN(m)) return null;
   if (m < 1000) return `ca. ${Math.max(100, Math.round(m / 100) * 100)} m`;
-  if (m < 10_000) return `${(m / 1000).toFixed(1).replace(".", ",")} km`;
+  if (m < 9_950) return `${(m / 1000).toFixed(1).replace(".", ",")} km`;
   return `${Math.round(m / 1000)} km`;
 }
 

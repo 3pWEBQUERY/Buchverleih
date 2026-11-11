@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Leihregal</title>
+  <rect width="512" height="512" fill="#f6f2ea"/>
+  <g id="mark" fill="#1b1a17">
+    <path transform="translate(-9 0)" d="M172 120H274V128Q248 128 244 150V340Q244 350 256 350H330Q346 346 350 296H358V360H172V352Q200 352 200 336V150Q200 128 172 128Z"/>
+    <rect x="128" y="384" width="256" height="8"/>
+  </g>
+</svg>

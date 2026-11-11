@@ -70,7 +70,7 @@ export async function deleteAccount(userId: string) {
     const [open] = await tx<{ n: number }[]>`
       select count(*)::int as n from loans where (owner_id = ${userId} or borrower_id = ${userId})
          and status in ('requested', 'accepted', 'active', 'return_reported', 'returned', 'disputed')`;
-    if (open.n) throw err.conflict("open_loans", `Du hast noch ${open.n} offene Vorgänge. Schliesse sie ab, dann kannst du dein Konto löschen.`);
+    if (open.n) throw err.conflict("open_loans", `Du hast noch ${open.n === 1 ? "einen offenen Vorgang" : `${open.n} offene Vorgänge`}. Schliesse ${open.n === 1 ? "ihn" : "sie"} ab, dann kannst du dein Konto löschen.`);
     await tx`update copies set removed_at = coalesce(removed_at, now()), removed_reason = coalesce(removed_reason, 'deleted') where owner_id = ${userId}`;
     await tx`delete from sessions where user_id = ${userId}`;
     await tx`delete from passkeys where user_id = ${userId}`;

@@ -47,6 +47,9 @@ export function errorResponse(e: unknown) {
       { status: 409 },
     );
   }
+  if (code === "22P02") {
+    return NextResponse.json({ error: { code: "not_found", message: "Nicht gefunden." } }, { status: 404 });
+  }
   if (code === PG.CHECK) {
     return NextResponse.json(
       { error: { code: "rule_violation", message: "Dieser Schritt verletzt eine Regel des Vorgangs. Lade die Seite neu." } },

@@ -35,6 +35,12 @@ export function fmtDayTime(d: DateLike) {
   return `${fmtDay(d)}, ${fmtTime(d)}`;
 }
 
+const monthYearFmt = new Intl.DateTimeFormat(LOCALE, { month: "long", year: "numeric", timeZone: TZ });
+/** «September 2026» */
+export function fmtMonthYear(d: DateLike) {
+  return monthYearFmt.format(toDate(d));
+}
+
 export function fmtMonth(d: DateLike) {
   return monthFmt.format(toDate(d));
 }

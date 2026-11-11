@@ -50,7 +50,11 @@ export async function loanDossier(mod: SessionUser, loanId: string) {
   if (Number(reason.n) > 0) {
     messages = await sql`select m.id, u.first_name as sender, m.body, m.proposal_place, m.proposal_at, m.flagged, m.created_at
                          from messages m left join users u on u.id = m.sender_id where m.loan_id = ${loanId} order by m.created_at`;
-    await log(mod.id, "read_chat", "loan", loanId, "Zugriff bei offenem Fall oder Meldung");
+    // Protokoll: höchstens ein Eintrag pro Stunde, Person und Vorgang
+    const [recent] = await sql<{ n: number }[]>`
+      select count(*)::int as n from moderation_log where moderator_id = ${mod.id} and action = 'read_chat'
+         and target_id = ${loanId} and created_at > now() - interval '1 hour'`;
+    if (!recent.n) await log(mod.id, "read_chat", "loan", loanId, "Zugriff bei offenem Fall oder Meldung");
   }
   return { loan, events, cases, messages, chatAccess: Number(reason.n) > 0 };
 }
