@@ -26,6 +26,10 @@ export const env = {
   get smsProvider() {
     return (process.env.SMS_PROVIDER || "console") as "console" | "webhook";
   },
+  /** Google Books API-Schlüssel (Railway-Variable, nie im Code). Ohne Schlüssel gilt das knappe anonyme Kontingent. */
+  get googleBooksKey() {
+    return process.env.GOOGLE_BOOKS_API_KEY || "";
+  },
   /** Original-Cover laden (Open Library, Google Books). Standard: an. */
   get covers() {
     return bool(process.env.COVERS, true);

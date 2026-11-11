@@ -51,11 +51,12 @@ export function imageUrl(key: string, small = true) {
 }
 
 export function Cover({
-  data, height, width, className, large = false, priority = false,
-}: { data: CoverData; height?: number; width?: number; className?: string; large?: boolean; priority?: boolean }) {
-  const ratio = coverRatio(data);
-  const h = height ?? (width ? Math.round(width / ratio) : 180);
-  const w = width ?? Math.round(h * ratio);
+  data, height, width, className, large = false, priority = false, uniform = false,
+}: { data: CoverData; height?: number; width?: number; className?: string; large?: boolean; priority?: boolean; uniform?: boolean }) {
+  // uniform: alle Bücher einer Reihe exakt gleich gross (Box im Buchformat 2:3)
+  const ratio = uniform ? 2 / 3 : coverRatio(data);
+  const h = uniform && width && height ? height : height ?? (width ? Math.round(width / ratio) : 180);
+  const w = uniform && width && height ? width : width ?? Math.round(h * ratio);
   const author = data.authors?.[0] ?? "";
   const alt = author ? `${data.title} von ${author}` : data.title;
   // Original-Cover zuerst, dann Foto des Mitglieds, sonst typografisch (PRD 7.2)
@@ -72,9 +73,9 @@ export function Cover({
         height={h}
         loading={priority ? "eager" : "lazy"}
         decoding="async"
-        className={cx("block bg-paper-3 object-contain outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10 rounded-xs", className)}
+        className={cx("block bg-paper-3", uniform ? "object-cover" : "object-contain", "outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10 rounded-xs", className)}
         // Original-Cover im echten Seitenverhältnis: eine Seite fix, die andere ergibt sich
-        style={natural ? (width && !height ? { width: w, height: "auto" } : { height: h, width: "auto", maxWidth: Math.round(h * 0.95) }) : { width: w, height: h, aspectRatio: `${w} / ${h}` }}
+        style={uniform ? { width: w, height: h } : natural ? (width && !height ? { width: w, height: "auto" } : { height: h, width: "auto", maxWidth: Math.round(h * 0.95) }) : { width: w, height: h, aspectRatio: `${w} / ${h}` }}
       />
     );
   }

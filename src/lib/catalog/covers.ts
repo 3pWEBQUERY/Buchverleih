@@ -4,6 +4,8 @@
  * Die Nutzungsbedingungen der Quellen sind vor dem öffentlichen Start zu prüfen (PRD 12);
  * abschalten mit COVERS=false.
  */
+import { env } from "@/lib/env";
+
 const UA = { "user-agent": "Leihregal/0.1 (Buchverleih unter Privatpersonen)" };
 
 export async function coverCandidates(isbn: string): Promise<string[]> {
@@ -14,7 +16,9 @@ export async function coverCandidates(isbn: string): Promise<string[]> {
     `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false`,
   ];
   try {
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`, { headers: UA, signal: AbortSignal.timeout(6000) });
+    const key = env.googleBooksKey ? `&key=${encodeURIComponent(env.googleBooksKey)}` : "";
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}${key}`, { headers: UA, signal: AbortSignal.timeout(6000) });
+    if (!res.ok) console.warn(`[covers] Google Books ${res.status}${res.status === 429 || res.status === 403 ? " – Kontingent oder Schlüssel prüfen (GOOGLE_BOOKS_API_KEY)" : ""}`);
     if (res.ok) {
       const j = await res.json();
       const links = j.items?.[0]?.volumeInfo?.imageLinks;

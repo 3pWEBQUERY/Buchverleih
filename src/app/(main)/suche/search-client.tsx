@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Cover, coverRatio } from "@/components/cover";
+import { Cover } from "@/components/cover";
 import { Spine } from "@/components/spine";
 import { useToast } from "@/components/toast";
 import { IconSearch, IconClose, IconArrowRight } from "@/components/icons";
@@ -323,12 +323,12 @@ function Stage({ hits, href, radius }: { hits: WorkHit[]; href: (h: WorkHit) => 
       <ul className="shelf" aria-label="Jetzt frei in deiner Nähe">
         {hits.map((h, i) => {
           const cover = coverOf(h);
-          const w = Math.max(104, Math.round(176 * coverRatio(cover)));
+          const w = 116;
           return (
             <li key={h.work_id} style={{ width: w, animationDelay: `${Math.min(i, 10) * 30}ms` }} className="anim-rise">
               <Link href={href(h)} className="book block group">
                 <div className="flex items-end" style={{ height: 196 }}>
-                  <div className="book-face"><Cover data={cover} height={156 + ((i * 7) % 4) * 8} /></div>
+                  <div className="book-face"><Cover data={cover} width={116} height={174} uniform /></div>
                 </div>
                 <div className="h-[3px] bg-night-ink/90 rounded-full" />
                 <p className="pt-2.5 text-[13.5px] font-medium leading-snug line-clamp-2 group-hover:underline">{h.title}</p>

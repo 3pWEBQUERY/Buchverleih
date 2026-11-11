@@ -4,7 +4,7 @@ import { sql } from "@/lib/db";
 import { newNearby } from "@/lib/copies";
 import { myLoans, type LoanListItem } from "@/lib/loans/queries";
 import { requirePhone } from "@/lib/trust";
-import { Cover, coverRatio } from "@/components/cover";
+import { Cover } from "@/components/cover";
 import { Notice, SectionTitle } from "@/components/ui";
 import { fmtDistance } from "@/lib/geo";
 import { offerNoun, statusLabel } from "@/lib/i18n/de-CH";
@@ -112,12 +112,12 @@ export async function Home({ user }: { user: SessionUser }) {
           <ul className="shelf" aria-label="Neu in deiner Nähe">
             {nearby.map((c, i) => {
               const cover = { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id };
-              const w = Math.max(104, Math.round(176 * coverRatio(cover)));
+              const w = 116;
               const free = c.status === "available";
               return (
                 <li key={c.id} style={{ width: w, animationDelay: `${Math.min(i, 10) * 30}ms` }} className="anim-rise">
                   <Link href={`/exemplar/${c.id}`} className="book block group">
-                    <div className="flex items-end" style={{ height: 190 }}><div className="book-face"><Cover data={cover} height={156 + ((i * 7) % 4) * 7} /></div></div>
+                    <div className="flex items-end" style={{ height: 190 }}><div className="book-face"><Cover data={cover} width={116} height={174} uniform /></div></div>
                     <div className="h-[3px] bg-night-ink/90 rounded-full" />
                     <p className="pt-2.5 text-[13.5px] font-medium leading-snug line-clamp-2 group-hover:underline">{c.title}</p>
                     <p className="text-[12px] text-night-muted mt-1 flex items-center gap-1.5">
@@ -138,11 +138,11 @@ export async function Home({ user }: { user: SessionUser }) {
           <ul className="shelf" aria-label="Aus deinen Kreisen">
             {circleCopies.map((c, i) => {
               const cover = { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id };
-              const w = Math.max(104, Math.round(168 * coverRatio(cover)));
+              const w = 112;
               return (
                 <li key={c.id} style={{ width: w }}>
                   <Link href={`/exemplar/${c.id}`} className="book block group">
-                    <div className="flex items-end" style={{ height: 180 }}><div className="book-face"><Cover data={cover} height={148 + ((i * 5) % 4) * 7} /></div></div>
+                    <div className="flex items-end" style={{ height: 180 }}><div className="book-face"><Cover data={cover} width={112} height={168} uniform /></div></div>
                     <div className="shelf-board" />
                     <p className="pt-2.5 text-[13.5px] font-medium leading-snug line-clamp-2 group-hover:underline">{c.title}</p>
                     <p className="text-[12px] text-muted mt-0.5 truncate">{c.owner_name} · {c.circle}</p>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ShelfCopy } from "@/lib/copies";
-import { Cover, coverRatio } from "@/components/cover";
+import { Cover } from "@/components/cover";
 import { shelfStatusText, type Tone } from "@/components/status";
 import { cx } from "@/components/ui";
 
@@ -26,8 +26,8 @@ export function BookRow({ items, height = 168, hrefBase = "/regal/", label }: { 
     <ul className="shelf !gap-0 !items-start mt-1" aria-label={label}>
       {items.map((c, i) => {
         const cover = { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id };
-        const cw = Math.round(height * coverRatio(cover));
-        const w = Math.max(128, cw);
+        const bw = Math.round(height * (2 / 3)); // gleiche Grösse für alle Bücher
+        const w = Math.max(128, bw);
         const st = c.note ?? (c.status ? shelfStatusText({ status: c.status, lent_until: c.lent_until ?? null, next_start: c.next_start ?? null, open_requests: c.open_requests ?? 0 }) : null);
         const last = i === items.length - 1;
         return (
@@ -36,7 +36,7 @@ export function BookRow({ items, height = 168, hrefBase = "/regal/", label }: { 
             <div aria-hidden className="absolute left-0 right-0 h-[3px] bg-night-ink/90" style={{ top: height }} />
             <Link href={c.href ?? `${hrefBase}${c.id}`} className="book group block" style={{ width: w }}>
               <div className="flex items-end" style={{ height }}>
-                <div className="book-face"><Cover data={cover} height={Math.round(height * (0.86 + ((i * 7) % 4) * 0.045))} /></div>
+                <div className="book-face"><Cover data={cover} width={bw} height={height} uniform /></div>
               </div>
               <div className="pt-[13px] pr-2">
                 <p className="text-[13.5px] font-medium leading-snug line-clamp-2 group-hover:underline underline-offset-2">{c.title}</p>

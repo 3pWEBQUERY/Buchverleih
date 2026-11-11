@@ -37,3 +37,12 @@ describe("Original-Cover", () => {
     expect(stored.sort()).toEqual(["covers/9783150093189-480.avif", "covers/9783150093189-480.webp", "covers/9783150093189.avif", "covers/9783150093189.webp"]);
   });
 });
+
+describe("DNB-Titel", () => {
+  it("entfernt den Originaltitel in eckigen Klammern", async () => {
+    const { splitDnbTitle } = await vi.importActual<typeof import("@/lib/catalog/lookup")>("@/lib/catalog/lookup");
+    expect(splitDnbTitle("[The Last Daughter] ; Die verschwiegene Tochter : Roman / Soraya Lane")).toEqual({ title: "Die verschwiegene Tochter", subtitle: "Roman" });
+    expect(splitDnbTitle("Shaolin Mind : die Suche nach wahrer Freiheit / Shi Heng Yi")).toEqual({ title: "Shaolin Mind", subtitle: "die Suche nach wahrer Freiheit" });
+    expect(splitDnbTitle("Der Process / Franz Kafka")).toEqual({ title: "Der Process", subtitle: null });
+  });
+});

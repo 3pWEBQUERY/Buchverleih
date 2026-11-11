@@ -4,6 +4,7 @@
  * werden nicht erneut abgefragt; auch Fehltreffer werden 30 Tage gemerkt.
  */
 import { sql } from "@/lib/db";
+import { env } from "@/lib/env";
 
 export type CatalogRecord = {
   isbn13: string;
@@ -56,9 +57,12 @@ export function personName(raw: string) {
 
 /** DNB-Titel «Der Process : Roman / Franz Kafka» → Titel und Untertitel */
 export function splitDnbTitle(raw: string) {
-  const main = raw.split(" / ")[0];
-  const [title, ...rest] = main.split(" : ");
-  return { title: title.trim(), subtitle: rest.join(" : ").trim() || null };
+  // «[The Last Daughter] ; Die verschwiegene Tochter : Roman / Soraya Lane»
+  // → Originaltitel in eckigen Klammern entfernen, erster Titel vor « ; » zählt
+  const main = raw.split(" / ")[0].replace(/^\s*\[[^\]]*\]\s*[;:.]?\s*/, "");
+  const first = main.split(" ; ")[0];
+  const [title, ...rest] = first.split(" : ");
+  return { title: title.replace(/[\[\]]/g, "").trim(), subtitle: rest.join(" : ").trim() || null };
 }
 
 async function fromDnb(isbn: string): Promise<CatalogRecord | null> {
@@ -107,7 +111,8 @@ async function fromOpenLibrary(isbn: string, withCover: boolean): Promise<Catalo
 }
 
 async function fromGoogle(isbn: string): Promise<CatalogRecord | null> {
-  const json = JSON.parse(await fetchText(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`));
+  const key = env.googleBooksKey ? `&key=${encodeURIComponent(env.googleBooksKey)}` : "";
+  const json = JSON.parse(await fetchText(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}${key}`));
   const v = json.items?.[0]?.volumeInfo;
   if (!v?.title) return null;
   return {

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { Cover, coverRatio } from "@/components/cover";
+import { Cover } from "@/components/cover";
 import { fmtDistance } from "@/lib/geo";
 import { IconArrowRight, IconSearch } from "@/components/icons";
 
@@ -90,11 +90,11 @@ export function PlzExplorer() {
             <ul className="shelf" aria-label={`Bücher bei ${res.municipality}`}>
               {res.copies.map((c, i) => {
                 const cover = { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id };
-                const w = Math.max(100, Math.round(170 * coverRatio(cover)));
+                const w = 110;
                 return (
                   <li key={c.id} style={{ width: w, animationDelay: `${i * 35}ms` }} className="anim-rise">
                     <Link href={`/titel/${c.work_id}`} className="book block group">
-                      <div className="flex items-end" style={{ height: 176 }}><div className="book-face"><Cover data={cover} height={150 + ((i * 7) % 4) * 6} /></div></div>
+                      <div className="flex items-end" style={{ height: 176 }}><div className="book-face"><Cover data={cover} width={110} height={165} uniform /></div></div>
                       <div className="h-[3px] bg-night-ink/90 rounded-full" />
                       <p className="pt-2.5 text-[13.5px] font-medium leading-snug line-clamp-2 group-hover:underline">{c.title}</p>
                       <p className="text-[12px] text-night-muted mt-0.5">{c.owner_name} · {fmtDistance(c.dist)}</p>

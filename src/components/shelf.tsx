@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Cover, coverRatio, type CoverData } from "./cover";
+import { Cover, type CoverData } from "./cover";
 import { cx } from "./ui";
 
 /**
@@ -20,13 +20,13 @@ export function Shelf({ items, height = 176, className, label }: { items: ShelfI
     <div className={cx("relative", className)}>
       <ul className="shelf" aria-label={label}>
         {items.map((it, i) => {
-          const w = Math.round(height * coverRatio(it.cover));
+          const w = Math.round(height * (2 / 3));
           return (
             <li key={it.id} style={{ width: Math.max(w, 96), animationDelay: `${Math.min(i, 10) * 24}ms` }} className="anim-rise">
               <Link href={it.href} className="book block group">
                 <div className="flex items-end" style={{ height }}>
                   <div className="book-face">
-                    <Cover data={it.cover} height={Math.round(height * (0.9 + ((i * 7) % 10) / 100))} />
+                    <Cover data={it.cover} width={w} height={height} uniform />
                   </div>
                 </div>
                 <div className="shelf-board" />
