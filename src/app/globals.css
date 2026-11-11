@@ -169,7 +169,7 @@
 
 @layer components {
   /* Grosse Titel: Grotesk, eng gesetzt, zweifarbig statt kursiv */
-  .display { font-family: var(--font-sans); font-weight: 560; letter-spacing: -0.045em; line-height: 0.94; }
+  .display { font-family: var(--font-sans); font-weight: 560; letter-spacing: -0.038em; line-height: 1.02; }
   .display em, .display i { font-style: normal; color: var(--muted); }
   .surface-night .display em, .surface-night .display i { color: var(--night-muted); }
   .bg-accent .display em { color: inherit; opacity: 0.6; }

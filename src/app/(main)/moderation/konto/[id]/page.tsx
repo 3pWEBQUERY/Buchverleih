@@ -53,7 +53,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <span className="h-20 w-20 md:h-24 md:w-24 flex-none rounded-full bg-ink text-paper grid place-items-center font-semibold text-[44px] md:text-[52px]">{initial}</span>
         <div className="min-w-0">
           <p className="eyebrow">{roleLabel[u.role] ?? u.role} · Stufe {trustLabel[u.trust_level] ?? u.trust_level}</p>
-          <h1 className="display text-[52px] md:text-[76px] mt-2">{u.first_name || "Ohne Namen"}</h1>
+          <h1 className="display text-[32px] md:text-[44px] mt-2">{u.first_name || "Ohne Namen"}</h1>
           <p className="text-ink-2 mt-3 break-words">
             {u.email}
             {u.phone_e164 && <> · <span className="tnum">{fmtPhone(u.phone_e164)}</span></>}

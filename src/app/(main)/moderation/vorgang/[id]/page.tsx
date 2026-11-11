@@ -71,7 +71,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <BackLink href="/moderation">Moderation</BackLink>
       <header className="mb-10 md:mb-14 anim-rise">
         <p className="eyebrow">Vorgang · {kindLabel[loan.kind] ?? loan.kind}</p>
-        <h1 className="display text-[48px] md:text-[76px] mt-3">{loan.title}</h1>
+        <h1 className="display text-[32px] md:text-[44px] mt-3">{loan.title}</h1>
         <div className="flex flex-wrap items-center gap-2 mt-5">
           <Chip tone={loan.status === "disputed" || loan.status === "lost" ? "late" : loan.status === "active" ? "lent" : "done"} strong={loan.status === "disputed" || loan.status === "lost"}>
             {statusLabel[loan.status as LoanStatus] ?? loan.status}

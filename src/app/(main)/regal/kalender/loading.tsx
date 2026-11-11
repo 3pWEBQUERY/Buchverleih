@@ -2,7 +2,7 @@ export default function Loading() {
   return (
     <div aria-busy aria-label="Kalender wird geladen">
       <div className="skeleton h-4 w-24 mb-6 md:mb-8" />
-      <div className="skeleton h-[52px] md:h-[84px] w-72 md:w-[34rem] rounded-[10px]" />
+      <div className="skeleton h-[34px] md:h-[46px] w-72 md:w-[34rem] rounded-[10px]" />
       <div className="skeleton h-4 w-64 mt-5 mb-10 md:mb-14" />
       <div className="flex gap-2 mb-5">{[0, 1, 2, 3].map((i) => <div key={i} className="skeleton h-6 w-24 rounded-full" />)}</div>
       <ul className="panel !rounded-[10px] divide-y divide-line">

@@ -22,7 +22,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
             <Spine title="Homo faber" author="Max Frisch" height={88} />
           </div>
           <p className="eyebrow mt-8">Einladung</p>
-          <h1 className="display text-[44px] md:text-[60px] mt-3">Dieser Link gilt <em>nicht mehr.</em></h1>
+          <h1 className="display text-[32px] md:text-[44px] mt-3">Dieser Link gilt <em>nicht mehr.</em></h1>
           <p className="text-ink-2 text-[16px] mt-5 max-w-sm mx-auto">Vielleicht wurde er erneuert. Frag die Person, die dich eingeladen hat, nach dem aktuellen Link.</p>
           <LinkButton href="/" className="mt-8">Zur Startseite</LinkButton>
         </div>
@@ -47,7 +47,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
           </div>
           <div aria-hidden className="h-[3px] bg-night-ink/90 rounded-full max-w-[420px] mx-auto" />
           <p className="text-[12px] font-medium text-night-muted mt-8">Einladung in einen Kreis</p>
-          <h1 className="display text-[48px] md:text-[72px] mt-3 break-words">{circle.name}</h1>
+          <h1 className="display text-[32px] md:text-[44px] mt-3 break-words">{circle.name}</h1>
           {circle.description && <p className="text-[17px] text-night-ink/85 mt-5 leading-relaxed max-w-md mx-auto">{circle.description}</p>}
           <div className="mt-6 flex flex-wrap justify-center gap-2 tnum">
             <span className="h-7 px-3 rounded-[6px] bg-night-2 text-[13px] font-medium inline-flex items-center">{circle.member_count} {circle.member_count === 1 ? "Mitglied" : "Mitglieder"}</span>

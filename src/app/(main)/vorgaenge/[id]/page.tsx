@@ -137,7 +137,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <div className="lg:col-start-2 lg:row-start-1 lg:row-span-2 min-w-0">
           <header className="anim-rise">
             <p className="eyebrow">{offerNoun[loan.kind]} · angefragt am {fmtDay(t.requested_at)}</p>
-            <h2 className="display text-[36px] md:text-[52px] mt-2">{headline(loan)} <em>{overdue ? "Überfällig." : `${statusLabel[loan.status]}.`}</em></h2>
+            <h2 className="display text-[28px] md:text-[38px] mt-2">{headline(loan)} <em>{overdue ? "Überfällig." : `${statusLabel[loan.status]}.`}</em></h2>
           </header>
 
           <div className="mt-8 rounded-[10px] border border-line p-5 md:p-6 anim-rise" style={{ animationDelay: "60ms" }}>

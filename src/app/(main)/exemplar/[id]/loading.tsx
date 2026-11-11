@@ -10,7 +10,7 @@ export default function Loading() {
       <div className="md:col-span-7 space-y-10">
         <div>
           <div className="skeleton h-3 w-16" />
-          <div className="skeleton h-12 md:h-[76px] w-3/4 mt-4" />
+          <div className="skeleton h-[34px] md:h-[46px] w-3/4 mt-4" />
           <div className="skeleton h-5 w-36 mt-5" />
           <div className="flex gap-2 mt-5">{[92, 52, 72].map((w) => <div key={w} className="skeleton h-6 rounded-full" style={{ width: w }} />)}</div>
         </div>

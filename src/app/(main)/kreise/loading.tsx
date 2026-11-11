@@ -2,7 +2,7 @@ export default function Loading() {
   return (
     <div aria-busy aria-label="Kreise werden geladen">
       <header className="mb-10 md:mb-14">
-        <div className="skeleton h-[52px] md:h-[84px] w-48 md:w-72 rounded-[10px]" />
+        <div className="skeleton h-[34px] md:h-[46px] w-48 md:w-72 rounded-[10px]" />
         <div className="skeleton h-4 w-full max-w-xl mt-5" />
       </header>
       <div className="grid md:grid-cols-2 gap-3 md:gap-4">

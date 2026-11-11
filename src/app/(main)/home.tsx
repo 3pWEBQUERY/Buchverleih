@@ -50,7 +50,7 @@ export async function Home({ user }: { user: SessionUser }) {
       <header className="grid lg:grid-cols-[1fr_auto] gap-8 items-end">
         <div className="anim-rise">
           <p className="eyebrow">{today} · {user.municipality}</p>
-          <h1 className="display text-[48px] md:text-[68px] mt-3">{greet}, <em>{user.first_name}.</em></h1>
+          <h1 className="display text-[32px] md:text-[44px] mt-3">{greet}, <em>{user.first_name}.</em></h1>
         </div>
         <dl className="grid grid-cols-3 gap-2 anim-rise" style={{ animationDelay: "80ms" }}>
           {[
@@ -99,7 +99,7 @@ export async function Home({ user }: { user: SessionUser }) {
         <div className="flex items-end justify-between gap-4 mb-6">
           <div>
             <p className="text-[12px] font-medium text-night-muted">Umkreis 5 km</p>
-            <h2 className="text-[36px] md:text-[48px] leading-none mt-2">Neu in deiner Nähe</h2>
+            <h2 className="text-[26px] md:text-[32px] font-[560] tracking-[-0.03em] leading-none mt-2">Neu in deiner Nähe</h2>
           </div>
           <Link href="/suche" className="hidden sm:inline-flex items-center gap-1.5 font-semibold link-grow">Alle durchsuchen <IconArrowRight width={16} height={16} /></Link>
         </div>
@@ -172,7 +172,7 @@ export async function Home({ user }: { user: SessionUser }) {
         <section className="rounded-[12px] bg-accent text-accent-ink p-8 md:p-12 grid md:grid-cols-[1fr_auto] gap-6 items-end">
           <div>
             <p className="eyebrow !text-accent-ink/75">Dein Regal ist leer</p>
-            <h2 className="display text-[44px] md:text-[64px] mt-3 max-w-[14ch]">Ein Buch einstellen dauert <em>unter 20 Sekunden.</em></h2>
+            <h2 className="display text-[28px] md:text-[38px] mt-3 max-w-[14ch]">Ein Buch einstellen dauert <em>unter 20 Sekunden.</em></h2>
           </div>
           <Link href="/regal/neu" className="h-14 px-7 rounded-[6px] bg-paper text-accent-hover font-semibold inline-flex items-center gap-2"><IconScan width={20} height={20} /> Erstes Buch scannen</Link>
         </section>

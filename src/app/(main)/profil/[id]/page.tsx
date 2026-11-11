@@ -47,7 +47,7 @@ export default async function ProfilPage({ params }: Params) {
   if (p.deleted) {
     return (
       <div className="space-y-8">
-        <h1 className="display text-[52px] md:text-[84px] anim-rise">Konto <em>gelöscht.</em></h1>
+        <h1 className="display text-[32px] md:text-[44px] anim-rise">Konto <em>gelöscht.</em></h1>
         <div className="panel-quiet px-6 py-8 md:px-8 flex flex-wrap items-center justify-between gap-5">
           <p className="text-ink-2 text-[16px]">Diese Person ist nicht mehr bei Leihregal.</p>
           <LinkButton href="/suche" variant="ghost">Bücher suchen</LinkButton>
@@ -76,7 +76,7 @@ export default async function ProfilPage({ params }: Params) {
         </div>
         <div className="min-w-0 anim-rise" style={{ animationDelay: "60ms" }}>
           <p className="eyebrow">{[p.municipality, `Mitglied seit ${sinceFmt.format(new Date(p.member_since))}`].filter(Boolean).join(" · ")}</p>
-          <h1 className="display text-[52px] md:text-[84px] mt-2 md:mt-3 break-words">{p.first_name}</h1>
+          <h1 className="display text-[32px] md:text-[44px] mt-2 md:mt-3 break-words">{p.first_name}</h1>
           <div className="mt-4 md:mt-5 flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="chip !h-8 !px-3.5 !text-[13.5px]">
               <span aria-hidden className={cx("h-2 w-2 rounded-full", p.trust_level >= 2 ? "bg-ok" : p.trust_level === 1 ? "bg-wait" : "bg-done")} />
@@ -109,7 +109,7 @@ export default async function ProfilPage({ params }: Params) {
               <dt className="text-[13px] md:text-[14px] text-muted mt-2 leading-snug">
                 {s.label}{s.note && <span className="block text-[12px] mt-0.5">{s.note}</span>}
               </dt>
-              <dd className="font-[520] tracking-[-0.035em] text-[40px] md:text-[72px] leading-[0.9] tnum whitespace-nowrap">{s.n}</dd>
+              <dd className="font-[520] tracking-[-0.035em] text-[32px] md:text-[44px] leading-[0.95] tnum whitespace-nowrap">{s.n}</dd>
             </div>
           ))}
         </dl>
@@ -132,7 +132,7 @@ export default async function ProfilPage({ params }: Params) {
             <p className="text-[12px] font-medium text-night-muted">
               {shelf.length === 1 ? "1 Buch" : `${shelf.length} Bücher`}{own && " · so sehen es andere"}
             </p>
-            <h2 id="regal" className="text-[36px] md:text-[48px] leading-none mt-2">{own ? "Dein Regal" : `Regal von ${p.first_name}`}</h2>
+            <h2 id="regal" className="text-[26px] md:text-[32px] font-[560] tracking-[-0.03em] leading-none mt-2">{own ? "Dein Regal" : `Regal von ${p.first_name}`}</h2>
           </div>
           {own && shelf.length > 0 && <Link href="/regal" className="hidden sm:inline-flex font-semibold link-grow">Verwalten</Link>}
         </div>

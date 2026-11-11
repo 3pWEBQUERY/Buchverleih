@@ -45,7 +45,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
       <header className="mb-8 md:mb-10 anim-rise">
         <p className="eyebrow">Übergabe-Chat</p>
-        <h1 className="display text-[44px] md:text-[72px] mt-3">{m.title}</h1>
+        <h1 className="display text-[32px] md:text-[44px] mt-3">{m.title}</h1>
         <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-3">
           {people.map(([n, t]) => (
             <li key={n + t} className="flex items-center gap-2.5">

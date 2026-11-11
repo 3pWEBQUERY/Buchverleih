@@ -28,7 +28,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
       <header className="mb-8 md:mb-10 flex flex-wrap items-end justify-between gap-6">
         <div className="min-w-0 anim-rise">
           <p className="eyebrow">Intern · {user.role === "admin" ? "Administration" : "Moderation"}</p>
-          <h1 className="display text-[52px] md:text-[84px] mt-3">Moderation</h1>
+          <h1 className="display text-[32px] md:text-[44px] mt-3">Moderation</h1>
           <p className="text-ink-2 text-[17px] mt-4 max-w-xl">Fälle, Meldungen, Konten und Betrieb. Jeder Eingriff steht im Protokoll.</p>
         </div>
         <dl className="grid grid-cols-2 gap-2 anim-rise" style={{ animationDelay: "60ms" }}>

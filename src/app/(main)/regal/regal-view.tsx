@@ -141,7 +141,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
         <section className="rounded-[12px] bg-accent text-accent-ink p-8 md:p-12 grid md:grid-cols-[1fr_auto] gap-8 items-end">
           <div>
             <p className="eyebrow !text-accent-ink/75">Dein Regal ist noch leer</p>
-            <h2 className="display text-[44px] md:text-[64px] mt-3 max-w-[14ch]">Ein Buch einstellen dauert <em>unter 20 Sekunden.</em></h2>
+            <h2 className="display text-[28px] md:text-[38px] mt-3 max-w-[14ch]">Ein Buch einstellen dauert <em>unter 20 Sekunden.</em></h2>
           </div>
           <Link href="/regal/neu" className="h-14 px-7 rounded-[6px] bg-paper text-accent-hover font-semibold inline-flex items-center gap-2 justify-center"><IconScan width={20} height={20} /> Erstes Buch scannen</Link>
         </section>
@@ -160,7 +160,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
       <header className="mb-10 md:mb-12 grid lg:grid-cols-[1fr_auto] gap-6 lg:gap-8 items-end">
         <div className="min-w-0 anim-rise">
           <p className="eyebrow">{summary}</p>
-          <h1 className="display text-[52px] md:text-[84px] mt-3">Mein <em>Regal</em></h1>
+          <h1 className="display text-[32px] md:text-[44px] mt-3">Mein <em>Regal</em></h1>
         </div>
         <dl className="grid grid-cols-3 gap-2 anim-rise" style={{ animationDelay: "80ms" }}>
           {tiles.map(([n, l], i) => (
@@ -197,7 +197,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
             {groups.map((g, gi) => (
               <section key={g.key} aria-labelledby={`g-${g.key}`} className={cx(gi > 0 && "mt-8 md:mt-10")}>
                 <div className="flex items-baseline justify-between gap-4">
-                  <h2 id={`g-${g.key}`} className="text-[28px] md:text-[36px] leading-none">{g.label}</h2>
+                  <h2 id={`g-${g.key}`} className="text-[24px] md:text-[30px] font-[560] tracking-[-0.03em] leading-none">{g.label}</h2>
                   <span className="text-[13px] text-night-muted tnum">{plural(g.items.length, "Buch", "Bücher")}</span>
                 </div>
                 <BookRow items={g.items} />

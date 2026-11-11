@@ -45,7 +45,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     return (
       <div className="max-w-2xl">
         <p className="eyebrow flex items-center gap-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait live-dot" /> Anfrage gesendet</p>
-        <h1 className="display text-[44px] md:text-[64px] mt-3">{mine.name}<em>.</em></h1>
+        <h1 className="display text-[32px] md:text-[44px] mt-3">{mine.name}<em>.</em></h1>
         <div className="rounded-[10px] bg-paper-2 mt-8 p-6 md:p-8">
           <p className="text-[17px] text-ink-2">Deine Beitrittsanfrage ist gesendet. Sobald ein Admin dich freigibt, siehst du hier das gemeinsame Regal.</p>
           <LinkButton href="/kreise" className="mt-6">Zu deinen Kreisen</LinkButton>
@@ -78,8 +78,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <header className="mb-10 md:mb-12 flex flex-wrap items-end justify-between gap-x-10 gap-y-8">
         <div className="min-w-0 anim-rise">
           <p className="eyebrow">Kreis{admin ? " · du bist Admin" : ""}</p>
-          <h1 className="display text-[44px] md:text-[64px] mt-2 break-words">{circle.name}<em>.</em></h1>
-          {circle.description && <p className="text-[16px] md:text-[17px] text-ink-2 mt-4 leading-relaxed max-w-2xl">{circle.description}</p>}
+          <h1 className="display text-[32px] md:text-[44px] mt-2 break-words">{circle.name}<em>.</em></h1>
+          {circle.description && <p className="text-[15.5px] md:text-[16px] text-ink-2 mt-3 leading-relaxed leading-relaxed max-w-2xl">{circle.description}</p>}
           <p className="sr-only">{settingsText(circle)}</p>
         </div>
         <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
@@ -94,7 +94,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-[12.5px] text-night-muted">{copies.length} {copies.length === 1 ? "Buch" : "Bücher"} von {active.length} {active.length === 1 ? "Person" : "Personen"}</p>
-            <h2 id="regal-t" className="text-[28px] md:text-[36px] font-[560] tracking-[-0.035em] leading-none mt-2">Gemeinsames Regal</h2>
+            <h2 id="regal-t" className="text-[26px] md:text-[32px] font-[560] tracking-[-0.03em] leading-none mt-2">Gemeinsames Regal</h2>
           </div>
           <Faces names={active.slice(0, 5).map((m) => m.first_name)} total={active.length} ring="ring-night" night />
         </div>

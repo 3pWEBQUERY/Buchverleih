@@ -89,7 +89,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
           <p className="text-[12px] font-medium text-night-muted anim-rise">
             {[work.genre, work.editions > 1 ? `${work.editions} Ausgaben` : null].filter(Boolean).join(" · ") || "Titel"}
           </p>
-          <h1 lang="de" className={cx("display mt-3 break-words hyphens-auto anim-rise", long ? "text-[44px] md:text-[60px] lg:text-[68px]" : "text-[52px] md:text-[72px] lg:text-[84px]")} style={{ animationDelay: "40ms" }}>
+          <h1 lang="de" className={cx("display mt-3 break-words hyphens-auto anim-rise", long ? "text-[30px] md:text-[38px]" : "text-[32px] md:text-[44px]")} style={{ animationDelay: "40ms" }}>
             {work.title}
           </h1>
           {work.subtitle && <p className="font-serif text-[21px] md:text-[26px] text-night-muted mt-3 leading-snug anim-rise" style={{ animationDelay: "60ms" }}>{work.subtitle}</p>}

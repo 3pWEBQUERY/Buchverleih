@@ -4,10 +4,10 @@ export default function Loading() {
     <div aria-busy="true" aria-label="Suche lädt">
       <div className="mb-8 md:mb-10">
         <div className="skeleton h-3 w-40" />
-        <div className="skeleton h-[46px] md:h-[76px] w-[85%] md:w-[620px] mt-4" />
-        <div className="skeleton h-[46px] md:h-[76px] w-1/2 md:w-[360px] mt-2 md:hidden" />
+        <div className="skeleton h-[34px] md:h-[46px] w-[85%] md:w-[620px] mt-4" />
+        <div className="skeleton h-[34px] md:h-[46px] w-1/2 md:w-[360px] mt-2 md:hidden" />
       </div>
-      <div className="skeleton h-16 md:h-[72px] w-full rounded-full" />
+      <div className="skeleton h-[34px] md:h-[46px] w-full rounded-full" />
       <div className="mt-5 flex gap-2 overflow-hidden">
         {[230, 104, 82, 96, 120, 104, 96, 104].map((w, i) => (
           <div key={i} className="skeleton h-10 rounded-full flex-none" style={{ width: w }} />

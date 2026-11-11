@@ -21,7 +21,7 @@ export function DocPage({ eyebrow, title, lead, draft, toc, updated, intro, chil
       <header className="grid gap-6 md:gap-8 xl:gap-10 xl:grid-cols-12 xl:items-end pb-10 md:pb-14 border-b border-line">
         <div className="xl:col-span-7 min-w-0 anim-rise">
           <p className="eyebrow">{eyebrow}</p>
-          <h1 lang="de-CH" className={cx("display mt-4 hyphens-auto break-words", long ? "text-[44px] sm:text-[60px] md:text-[72px] 2xl:text-[84px]" : "text-[52px] md:text-[84px]")}>{title}</h1>
+          <h1 lang="de-CH" className={cx("display mt-4 hyphens-auto break-words", long ? "text-[30px] md:text-[38px]" : "text-[32px] md:text-[44px]")}>{title}</h1>
         </div>
         <div className="xl:col-span-5 anim-rise" style={{ animationDelay: "60ms" }}>
           {lead && <p className="text-[17px] md:text-[19px] text-ink-2 leading-relaxed max-w-2xl">{lead}</p>}

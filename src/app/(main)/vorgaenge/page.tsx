@@ -33,8 +33,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
       <header className="flex flex-wrap items-end justify-between gap-x-10 gap-y-8">
         <div className="min-w-0 anim-rise">
           <p className="eyebrow">Leihen, Tauschen, Schenken</p>
-          <h1 className="display text-[44px] md:text-[64px] mt-2">Deine Vorgänge. <em>Was jetzt ansteht.</em></h1>
-          <p className="text-[16px] md:text-[17px] text-ink-2 mt-4 max-w-xl">Zuerst steht, was auf dich wartet. Danach, was gerade läuft, und am Schluss die letzten 60 Tage.</p>
+          <h1 className="display text-[32px] md:text-[44px] mt-2">Deine Vorgänge. <em>Was jetzt ansteht.</em></h1>
+          <p className="text-[15.5px] md:text-[16px] text-ink-2 mt-3 leading-relaxed max-w-xl">Zuerst steht, was auf dich wartet. Danach, was gerade läuft, und am Schluss die letzten 60 Tage.</p>
         </div>
         {all.length > 0 && (
           <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "60ms" }}>

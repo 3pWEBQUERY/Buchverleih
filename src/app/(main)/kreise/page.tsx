@@ -30,8 +30,8 @@ export default async function Page() {
       <header className="flex flex-wrap items-end justify-between gap-x-10 gap-y-8">
         <div className="min-w-0 anim-rise">
           <p className="eyebrow">Gemeinsame Regale</p>
-          <h1 className="display text-[44px] md:text-[64px] mt-2">Deine Kreise. <em>Bücher unter Bekannten.</em></h1>
-          <p className="text-[16px] md:text-[17px] text-ink-2 mt-4 max-w-xl">
+          <h1 className="display text-[32px] md:text-[44px] mt-2">Deine Kreise. <em>Bücher unter Bekannten.</em></h1>
+          <p className="text-[15.5px] md:text-[16px] text-ink-2 mt-3 leading-relaxed max-w-xl">
             Ein Kreis ist eine geschlossene Gruppe mit gemeinsamem Regal: Nachbarschaft, Lesegruppe, Team. Leihen im Kreis zählen nicht gegen deine Limite.
           </p>
         </div>

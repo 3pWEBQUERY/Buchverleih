@@ -42,7 +42,7 @@ export default async function Page() {
       <header className="mb-10 md:mb-14 flex flex-wrap items-end justify-between gap-6">
         <div className="min-w-0 anim-rise">
           <p className="eyebrow">Konto und Vorlieben</p>
-          <h1 className="display text-[52px] md:text-[84px] mt-3">Einstellungen</h1>
+          <h1 className="display text-[32px] md:text-[44px] mt-3">Einstellungen</h1>
         </div>
         <div className="panel-quiet flex items-center gap-3.5 pl-3 pr-5 py-3 rounded-[6px] anim-rise min-w-0 max-w-full" style={{ animationDelay: "60ms" }}>
           <span className="h-11 w-11 flex-none rounded-full bg-ink text-paper grid place-items-center font-semibold text-[22px]">{initial}</span>

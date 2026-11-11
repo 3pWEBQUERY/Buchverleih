@@ -19,7 +19,7 @@ export default async function Page() {
   return (
     <StandaloneShell motif={{ label: "Regal ausgeblendet", gap: 5 }}>
       <p className="eyebrow anim-rise">Konto</p>
-      <h1 className="display text-[52px] md:text-[84px] mt-4 anim-rise" style={{ animationDelay: "40ms" }}>Dein Konto ist <em>gesperrt.</em></h1>
+      <h1 className="display text-[32px] md:text-[44px] mt-4 anim-rise" style={{ animationDelay: "40ms" }}>Dein Konto ist <em>gesperrt.</em></h1>
       {reason && (
         <div className="mt-8 rounded-[8px] bg-late/[0.06] border-l-[3px] border-late px-5 py-4 anim-rise" style={{ animationDelay: "80ms" }}>
           <p className="eyebrow !text-late">Grund</p>

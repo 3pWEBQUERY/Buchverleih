@@ -135,8 +135,8 @@ export function Erfassen({ initial }: { initial: Added[] }) {
     <div>
       <header className="anim-rise">
         <p className="eyebrow">Mein Regal</p>
-        <h1 className="display text-[44px] md:text-[64px] mt-2">Buch erfassen. <em>Scannen, antippen, fertig.</em></h1>
-        <p className="text-[16px] md:text-[17px] text-ink-2 mt-4 max-w-2xl">
+        <h1 className="display text-[32px] md:text-[44px] mt-2">Buch erfassen. <em>Scannen, antippen, fertig.</em></h1>
+        <p className="text-[15.5px] md:text-[16px] text-ink-2 mt-3 leading-relaxed max-w-2xl">
           Alles Weitere hat Standardwerte: verleihbar für 28 Tage, sichtbar für alle in deiner Umgebung. Ändern kannst du das später bei jedem Buch.
         </p>
       </header>

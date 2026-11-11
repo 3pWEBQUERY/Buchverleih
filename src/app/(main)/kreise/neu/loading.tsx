@@ -2,7 +2,7 @@ export default function Loading() {
   return (
     <div className="max-w-2xl" aria-busy aria-label="Formular wird geladen">
       <div className="skeleton h-4 w-16 mb-6 md:mb-8" />
-      <div className="skeleton h-[52px] md:h-[84px] w-64 md:w-[28rem] rounded-[10px]" />
+      <div className="skeleton h-[34px] md:h-[46px] w-64 md:w-[28rem] rounded-[10px]" />
       <div className="skeleton h-4 w-full mt-5 mb-10 md:mb-14" />
       <div className="panel !rounded-[10px] p-5 md:p-8">
         {[0, 1, 2, 3].map((i) => (

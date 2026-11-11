@@ -3,6 +3,7 @@ import { pageUser } from "@/lib/page";
 import { listWishlist, mySwapMatches } from "@/lib/wishlist";
 import { coversForWorks } from "@/lib/title-queries";
 import { PageTitle } from "@/components/ui";
+import { StatTile } from "@/components/step-section";
 import { WishlistClient, type WishItem } from "./wishlist-client";
 
 export const metadata: Metadata = { title: "Wunschliste" };
@@ -17,11 +18,19 @@ export default async function WunschlistePage() {
     return { ...i, cover_key: c?.cover_key ?? null, cover_w: c?.cover_w ?? null, cover_h: c?.cover_h ?? null };
   });
 
+  const free = list.filter((i) => i.available_near > 0).length;
+  const alarms = list.filter((i) => i.alarm).length;
   return (
     <div>
-      <p className="eyebrow mb-3 anim-rise">Titelalarm</p>
-      <PageTitle sub="Titel, die du suchst. Mit dem Titelalarm melden wir uns, sobald ein Exemplar im gewählten Umkreis frei wird.">
-        Deine <em>Wunschliste.</em>
+      <PageTitle eyebrow="Titelalarm" sub="Titel, die du suchst. Mit dem Titelalarm melden wir uns, sobald ein Exemplar im gewählten Umkreis frei wird."
+        aside={list.length > 0 && (
+          <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
+            <StatTile n={list.length} label={list.length === 1 ? "Titel" : "Titel"} href="#titel" />
+            <StatTile n={free} label="jetzt frei" href="#titel" live={free > 0} />
+            <StatTile n={alarms} label="Alarme an" />
+          </dl>
+        )}>
+        Deine Wunschliste. <em>Wir melden uns.</em>
       </PageTitle>
       <WishlistClient
         items={list}

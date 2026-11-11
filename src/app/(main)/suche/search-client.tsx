@@ -162,7 +162,7 @@ export function SearchClient({
     <div>
       <header className="mb-8 md:mb-10 anim-rise">
         <p className="eyebrow">{place ? `Suche · rund um ${place}` : "Suche"}</p>
-        <h1 className="display text-[52px] md:text-[84px] mt-3">Was liest du <em>als Nächstes?</em></h1>
+        <h1 className="display text-[32px] md:text-[44px] mt-3">Was liest du <em>als Nächstes?</em></h1>
       </header>
 
       <form role="search" onSubmit={(e) => e.preventDefault()} className="relative anim-rise" style={{ animationDelay: "40ms" }}>
@@ -317,7 +317,7 @@ function Stage({ hits, href, radius }: { hits: WorkHit[]; href: (h: WorkHit) => 
       <div className="flex items-end justify-between gap-4 mb-2">
         <div>
           <p className="text-[12px] font-medium text-night-muted">Jetzt frei · bis {radius} km</p>
-          <h3 className="text-[36px] md:text-[48px] leading-none mt-2">Gleich um die Ecke</h3>
+          <h3 className="text-[26px] md:text-[32px] font-[560] tracking-[-0.03em] leading-none mt-2">Gleich um die Ecke</h3>
         </div>
       </div>
       <ul className="shelf" aria-label="Jetzt frei in deiner Nähe">

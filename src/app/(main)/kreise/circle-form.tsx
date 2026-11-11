@@ -98,8 +98,8 @@ export function CircleForm() {
       </Link>
       <header className="anim-rise">
         <p className="eyebrow">Kreise</p>
-        <h1 className="display text-[44px] md:text-[64px] mt-2">Kreis gründen. <em>Du wirst Admin.</em></h1>
-        <p className="text-[16px] md:text-[17px] text-ink-2 mt-4 max-w-xl">Danach erhältst du einen Einladungslink. Alles lässt sich später ändern.</p>
+        <h1 className="display text-[32px] md:text-[44px] mt-2">Kreis gründen. <em>Du wirst Admin.</em></h1>
+        <p className="text-[15.5px] md:text-[16px] text-ink-2 mt-3 leading-relaxed max-w-xl">Danach erhältst du einen Einladungslink. Alles lässt sich später ändern.</p>
       </header>
       <form onSubmit={submit} noValidate className="mt-10">
         <StepSection n={1} first title="Kreis einrichten" desc="Name, Leihfrist, Übergabe und Beitritt.">

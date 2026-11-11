@@ -5,7 +5,7 @@ export default function Loading() {
       <header className="mb-10 md:mb-12 grid lg:grid-cols-[1fr_auto] gap-8 items-end">
         <div>
           <div className="skeleton h-3 w-24" />
-          <div className="skeleton h-[52px] md:h-[84px] w-72 md:w-[30rem] mt-4 rounded-[10px]" />
+          <div className="skeleton h-[34px] md:h-[46px] w-72 md:w-[30rem] mt-4 rounded-[10px]" />
           <div className="flex gap-2 mt-5">{[0, 1, 2].map((i) => <div key={i} className="skeleton h-6 w-32 rounded-full" />)}</div>
         </div>
         <div className="grid grid-cols-2 gap-2">{[0, 1].map((i) => <div key={i} className="skeleton h-[92px] w-[124px] rounded-[10px]" />)}</div>

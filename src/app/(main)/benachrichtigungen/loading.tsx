@@ -4,7 +4,7 @@ export default function Loading() {
     <div aria-busy="true" aria-label="Benachrichtigungen lädt">
       <div className="mb-10 md:mb-14">
         <div className="skeleton h-3 w-48" />
-        <div className="skeleton h-11 md:h-[76px] w-full max-w-[38rem] mt-4" />
+        <div className="skeleton h-[34px] md:h-[46px] w-full max-w-[38rem] mt-4" />
       </div>
       <div className="skeleton h-7 w-20 mb-4" />
       <ul className="panel divide-y divide-line">

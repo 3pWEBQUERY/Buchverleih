@@ -4,7 +4,7 @@ export default function Loading() {
     <div aria-busy="true" aria-label="Wunschliste lädt">
       <div className="mb-10 md:mb-14">
         <div className="skeleton h-3 w-24" />
-        <div className="skeleton h-12 md:h-[76px] w-72 md:w-[34rem] max-w-full mt-4" />
+        <div className="skeleton h-[34px] md:h-[46px] w-72 md:w-[34rem] max-w-full mt-4" />
         <div className="skeleton h-4 w-full max-w-md mt-5" />
       </div>
       <div className="skeleton h-7 w-36 mb-6" />

@@ -183,7 +183,7 @@ export function CopyEditor({ copy, calendar, circles }: { copy: CopyDetail; cale
           <header className="flex flex-wrap items-end justify-between gap-4 anim-rise">
             <div>
               <p className="eyebrow">Buch bearbeiten</p>
-              <h2 className="display text-[40px] md:text-[56px] mt-2">So teilst du <em>dieses Buch.</em></h2>
+              <h2 className="display text-[28px] md:text-[38px] mt-2">So teilst du <em>dieses Buch.</em></h2>
             </div>
             <SaveState state={saving} />
           </header>

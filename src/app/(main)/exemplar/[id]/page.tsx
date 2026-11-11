@@ -134,7 +134,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <div className="min-w-0">
           <header className="anim-rise">
             <p className="eyebrow">{copy.offers.map((o) => offerLabel[o]).join(" · ") || "Nicht angeboten"}</p>
-            <h2 className="display text-[40px] md:text-[56px] mt-2">
+            <h2 className="display text-[28px] md:text-[38px] mt-2">
               {own ? <>Dein Exemplar. <em>So sehen es andere.</em></>
                 : copy.offers.includes("lend") ? <>Leih dir <em>dieses Buch.</em></>
                 : copy.offers.includes("swap") ? <>Tausch <em>dieses Buch.</em></>

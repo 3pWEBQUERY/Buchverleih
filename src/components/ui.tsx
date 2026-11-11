@@ -126,12 +126,14 @@ export function SectionTitle({ children, aside, className }: { children: ReactNo
   );
 }
 
-export function PageTitle({ children, sub, aside }: { children: ReactNode; sub?: ReactNode; aside?: ReactNode }) {
+/** Seitenkopf: kleine Bezeichnung, Titel in ruhiger Grösse, ein Satz darunter */
+export function PageTitle({ children, sub, aside, eyebrow }: { children: ReactNode; sub?: ReactNode; aside?: ReactNode; eyebrow?: ReactNode }) {
   return (
-    <header className="mb-10 md:mb-14 flex flex-wrap items-end justify-between gap-6">
+    <header className="mb-8 md:mb-10 flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
       <div className="min-w-0 anim-rise">
-        <h1 className="display text-[44px] md:text-[72px]">{children}</h1>
-        {sub && <p className="text-ink-2 text-[17px] mt-4 max-w-xl">{sub}</p>}
+        {eyebrow && <p className="eyebrow mb-2 flex items-center gap-2">{eyebrow}</p>}
+        <h1 className="display text-[32px] md:text-[44px]">{children}</h1>
+        {sub && <p className="text-ink-2 text-[15.5px] md:text-[16px] mt-3 max-w-xl leading-relaxed">{sub}</p>}
       </div>
       {aside}
     </header>
