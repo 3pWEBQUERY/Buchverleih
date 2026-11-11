@@ -8,24 +8,30 @@ import { origin } from "@/lib/page";
 import { publicProfile } from "@/lib/profile";
 import { requestBlocker } from "@/lib/trust";
 import { Cover, imageUrl } from "@/components/cover";
-import { LinkButton, cx } from "@/components/ui";
+import { cx } from "@/components/ui";
 import { shelfStatusText } from "@/components/status";
 import { Monogram } from "@/components/person/monogram";
 import { conditionHint, conditionLabel, languageLabel, offerLabel, trustLabel } from "@/lib/i18n/de-CH";
 import { fmtDistance } from "@/lib/geo";
+import { fmtMonthYear } from "@/lib/dates";
+import { IconArrowLeft, IconArrowRight } from "@/components/icons";
+import { CalendarView } from "@/components/calendar";
 import { RequestPanel } from "./request-panel";
 import { CorrectionForm } from "./correction";
-import { CalendarView } from "@/components/calendar";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [c] = await sql<{ title: string }[]>`select e.title from copies c join editions e on e.id = c.edition_id where c.id = ${id}`;
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { title: "Buch" };
+  const [c] = await sql<{ title: string }[]>`select w.title from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id where c.id = ${id}`;
   return { title: c?.title ?? "Buch" };
 }
 
 const toneDot = { ok: "bg-ok", lent: "bg-lent", late: "bg-late", wait: "bg-wait", done: "bg-done", accent: "bg-accent" } as const;
 
-/** Exemplar (PRD 8.4): Cover, Angaben, wer verleiht – und die Anfrage mit Verleihkalender. */
+/**
+ * Exemplar (PRD 8.4): links das Produktblatt (Cover, Angaben, wer verleiht),
+ * rechts die Anfrage in nummerierten Schritten mit Verleihkalender.
+ */
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await getUser();
@@ -50,124 +56,143 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const photo = copy.photos[0];
   const cover = { title: copy.title, authors: copy.authors, photoKey: photo?.key, photoW: photo?.width, photoH: photo?.height, coverKey: copy.cover_key, seed: copy.work_id };
   const dist = own ? null : fmtDistance(copy.dist);
-  const long = copy.title.length > 22;
+  const loanDays = circles[0]?.loan_days ?? copy.loan_days;
+  const extraPhotos = copy.cover_key ? copy.photos : copy.photos.slice(1);
 
   const facts: [string, React.ReactNode][] = [
-    ["Zustand", <>{conditionLabel[copy.condition]} <span className="text-muted">· {conditionHint[copy.condition]}</span></>],
-    ...(copy.condition_note ? [["Notiz", copy.condition_note] as [string, string]] : []),
+    ["Zustand", conditionLabel[copy.condition]],
     ["Ausgabe", [copy.publisher, copy.year, copy.binding === "hardcover" ? "gebunden" : copy.binding === "paperback" ? "Taschenbuch" : null].filter(Boolean).join(", ") || "–"],
     ["Sprache", copy.language ? languageLabel[copy.language] ?? copy.language : "–"],
-    ["Leihfrist", `${circles[0]?.loan_days ?? copy.loan_days} Tage${circles[0] ? ` (Kreis ${circles[0].name})` : ""}`],
+    ["Leihfrist", `${loanDays} Tage`],
+    ...(copy.isbn13 ? [["ISBN", copy.isbn13] as [string, string]] : []),
   ];
 
-  const numbers: [string, string][] = owner
-    ? [
-        [String(owner.lent), "verliehen"],
-        [String(owner.borrowed), "geliehen"],
-        [owner.punctual_pct == null ? "–" : `${owner.punctual_pct} %`, "pünktlich"],
-      ]
-    : [];
-
   return (
-    <div className="grid md:grid-cols-12 gap-x-10 lg:gap-x-14 gap-y-8">
-      {/* -------------------------------------------------- Cover, links fix */}
-      <aside className="md:col-span-5" aria-label="Cover und Fotos">
-        <div className="md:sticky md:top-10">
-          <div className="panel-quiet rounded-[12px] px-6 py-8 md:px-8 md:py-12 grid place-items-center">
-            <div className="md:hidden"><Cover large priority width={170} data={cover} className="anim-cover" /></div>
-            <div className="hidden md:block lg:hidden"><Cover large priority width={220} data={cover} className="anim-cover" /></div>
-            <div className="hidden lg:block"><Cover large priority width={280} data={cover} className="anim-cover" /></div>
+    <div>
+      <Link href={own ? "/regal" : "/suche"} className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
+        <IconArrowLeft width={16} height={16} /> {own ? "Mein Regal" : "Suche"}
+      </Link>
+
+      <div className="grid lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)] gap-10 xl:gap-16 items-start">
+        {/* ------------------------------------------------ Produktblatt */}
+        <aside className="lg:sticky lg:top-8 space-y-5">
+          <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-5 items-end lg:block lg:space-y-5">
+            <div className="lg:rounded-[12px] lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center anim-cover">
+              <span className="block lg:hidden"><Cover priority data={cover} width={104} height={156} uniform /></span>
+              <span className="hidden lg:block"><Cover priority large data={cover} width={220} height={330} uniform /></span>
+            </div>
+            <div className="anim-rise min-w-0">
+              <h1 lang="de" className="font-serif text-[24px] md:text-[32px] leading-[1.1] hyphens-auto break-words">{copy.title}</h1>
+              <p className="text-[14.5px] md:text-[15px] text-ink-2 mt-1.5">{copy.authors.join(", ")}</p>
+            </div>
           </div>
-          {copy.photos.length > 1 && (
-            <div className="flex gap-2 mt-3 overflow-x-auto [scrollbar-width:none]">
-              {copy.photos.slice(1).map((p) => (
-                <a key={p.id} href={imageUrl(p.key, false)} target="_blank" className="flex-none rounded-[8px] overflow-hidden border border-line hover:border-ink transition-colors">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={imageUrl(p.key)} alt={`Foto von ${copy.title}`} className="h-20 w-auto block" />
-                </a>
+
+          {extraPhotos.length > 0 && (
+            <ul className="grid grid-cols-4 gap-2" aria-label="Fotos des Exemplars">
+              {extraPhotos.slice(0, 4).map((p) => (
+                <li key={p.id} className="aspect-[3/4]">
+                  <a href={imageUrl(p.key, false)} target="_blank" className="block h-full rounded-[8px] overflow-hidden border border-line hover:border-ink-2 transition-colors">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={imageUrl(p.key)} alt={`Foto von ${copy.title}`} className="h-full w-full object-cover" />
+                  </a>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
-        </div>
-      </aside>
 
-      {/* ------------------------------------------------- Angaben, Anfrage */}
-      <div className="md:col-span-7 min-w-0 space-y-10">
-        <header>
-          <p className="eyebrow anim-rise">{copy.offers.map((o) => offerLabel[o]).join(" · ") || "Nicht angeboten"}</p>
-          <h1 lang="de" className={cx("display mt-3 break-words hyphens-auto anim-rise", long ? "text-[44px] md:text-[56px] lg:text-[68px]" : "text-[52px] md:text-[68px] lg:text-[84px]")} style={{ animationDelay: "40ms" }}>
-            {copy.title}
-          </h1>
-          <p className="text-[17px] md:text-[19px] font-medium mt-4 anim-rise" style={{ animationDelay: "60ms" }}>{copy.authors.join(", ")}</p>
-          <div className="mt-5 flex flex-wrap items-center gap-2 anim-rise" style={{ animationDelay: "80ms" }}>
-            <span className="chip"><span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", toneDot[st.tone])} />{st.text}</span>
-            <span className="chip">{conditionLabel[copy.condition]}</span>
-            {dist && <span className="chip tnum">{dist}</span>}
-            <Link href={`/titel/${copy.work_id}`} className="ml-1 text-[14px] font-medium text-muted hover:text-ink link-grow">Weitere Exemplare dieses Titels</Link>
-          </div>
-        </header>
-
-        <dl className="panel divide-y divide-line anim-rise" style={{ animationDelay: "100ms" }}>
-          {facts.map(([k, v]) => (
-            <div key={k} className="grid grid-cols-[96px_minmax(0,1fr)] sm:grid-cols-[120px_minmax(0,1fr)] gap-4 px-5 py-3.5 text-[15px]">
-              <dt className="text-muted">{k}</dt>
-              <dd>{v}</dd>
+          <div className="rounded-[10px] border border-line divide-y divide-line">
+            <div className="px-4 py-3.5 flex items-center justify-between gap-3">
+              <span className="inline-flex items-center gap-2 text-[14px] font-medium"><span aria-hidden className={cx("h-2 w-2 rounded-full", toneDot[st.tone])} />{st.text}</span>
+              {dist && <span className="text-[13px] text-muted tnum">{dist}</span>}
             </div>
-          ))}
-        </dl>
-
-        {/* Wer verleiht */}
-        <section aria-labelledby="verleiher" className="panel p-5 md:p-6 anim-rise" style={{ animationDelay: "120ms" }}>
-          <div className="flex items-center gap-4">
-            <Monogram name={copy.owner_name} seed={copy.owner_id} size={56} />
-            <div className="min-w-0 flex-1">
-              <p className="eyebrow">{own ? "Dein Exemplar" : "Verleiht"}</p>
-              <Link id="verleiher" href={`/profil/${copy.owner_id}`} className="font-serif text-[28px] leading-none mt-1 inline-block hover:underline underline-offset-4 decoration-1">{copy.owner_name}</Link>
-            </div>
-            {own && <LinkButton href={`/regal/${copy.id}`} variant="secondary">Bearbeiten</LinkButton>}
-          </div>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="chip"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ink" />{trustLabel[copy.owner_trust] ?? "Neu"}</span>
-            {copy.owner_municipality && <span className="text-[14px] text-muted">{copy.owner_municipality}{dist && ` · ${dist}`}</span>}
-          </div>
-          {numbers.length > 0 && (
-            <dl className="mt-5 pt-5 border-t border-line grid grid-cols-3">
-              {numbers.map(([n, l], i) => (
-                <div key={l} className={cx("flex flex-col-reverse", i > 0 && "border-l border-line pl-4 md:pl-6")}>
-                  <dt className="text-[13px] text-muted mt-1">{l}</dt>
-                  <dd className="font-[520] tracking-[-0.035em] text-[32px] md:text-[40px] leading-none tnum">{n}</dd>
-                </div>
+            <dl className="px-4 py-3 text-[13.5px] grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
+              {facts.map(([k, v]) => (
+                <div key={k} className="contents"><dt className="text-muted">{k}</dt><dd className="text-right tnum truncate">{v}</dd></div>
               ))}
             </dl>
-          )}
-        </section>
+            {(copy.condition_note || copy.condition) && (
+              <p className="px-4 py-3 text-[13.5px] text-muted leading-snug">
+                {conditionHint[copy.condition]}.{copy.condition_note && <> Notiz: <span className="text-ink">«{copy.condition_note}»</span></>}
+              </p>
+            )}
+          </div>
 
-        {!own && cal && (
-          <RequestPanel
-            copyId={copy.id}
-            offers={copy.offers}
-            calendar={cal}
-            loggedIn={Boolean(user)}
-            blocker={blocker}
-            paused={copy.owner_paused}
-            myOffers={myOffers}
-            loanDays={circles[0]?.loan_days ?? copy.loan_days}
-          />
-        )}
-        {own && cal && (
-          <section className="panel rounded-[10px] p-5 md:p-8" aria-labelledby="kalender">
-            <p className="eyebrow">Nur für dich mit Namen</p>
-            <h2 id="kalender" className="text-[34px] md:text-[44px] leading-none mt-2">Verleihkalender</h2>
-            <p className="text-[14px] text-muted mt-3 mb-6">Andere sehen hier nur frei und belegt, ohne Namen.</p>
-            <OwnCalendar cal={cal} />
+          <div className="flex flex-col gap-2">
+            {own && (
+              <Link href={`/regal/${copy.id}`} className="h-11 rounded-[6px] bg-accent-soft text-accent-hover font-medium text-[14.5px] inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-accent-ink transition-colors">
+                Bearbeiten <IconArrowRight width={16} height={16} />
+              </Link>
+            )}
+            <Link href={`/titel/${copy.work_id}`} className="h-11 rounded-[6px] border border-line-strong font-medium text-[14.5px] inline-flex items-center justify-center gap-2 hover:border-ink-2 transition-colors">
+              Weitere Exemplare dieses Titels
+            </Link>
+          </div>
+          <CorrectionForm editionId={copy.edition_id} loggedIn={Boolean(user)} />
+        </aside>
+
+        {/* ------------------------------------------------ Anfrage */}
+        <div className="min-w-0">
+          <header className="anim-rise">
+            <p className="eyebrow">{copy.offers.map((o) => offerLabel[o]).join(" · ") || "Nicht angeboten"}</p>
+            <h2 className="display text-[40px] md:text-[56px] mt-2">
+              {own ? <>Dein Exemplar. <em>So sehen es andere.</em></>
+                : copy.offers.includes("lend") ? <>Leih dir <em>dieses Buch.</em></>
+                : copy.offers.includes("swap") ? <>Tausch <em>dieses Buch.</em></>
+                : <>Ein Geschenk <em>für dich.</em></>}
+            </h2>
+          </header>
+
+          {/* Wer verleiht – vor der Anfrage sichtbar (PRD 6.1) */}
+          <section aria-labelledby="verleiher" className="mt-10 rounded-[10px] border border-line p-5 md:p-6 grid sm:grid-cols-[minmax(0,1fr)_auto] gap-6 items-center anim-rise" style={{ animationDelay: "60ms" }}>
+            <div className="flex items-center gap-4 min-w-0">
+              <Monogram name={copy.owner_name} seed={copy.owner_id} size={56} />
+              <div className="min-w-0">
+                <p className="text-[13px] text-muted">{own ? "Dein Exemplar" : "Verleiht"}</p>
+                <Link id="verleiher" href={`/profil/${copy.owner_id}`} className="text-[22px] font-[560] tracking-[-0.03em] leading-tight hover:underline underline-offset-4 decoration-1">{copy.owner_name}</Link>
+                <p className="text-[13.5px] text-muted mt-0.5">
+                  {trustLabel[copy.owner_trust] ?? "Neu"}{copy.owner_municipality && ` · ${copy.owner_municipality}`} · seit {fmtMonthYear(copy.owner_since)}
+                </p>
+              </div>
+            </div>
+            {owner && (
+              <dl className="grid grid-cols-3 gap-2">
+                {[[String(owner.lent), "verliehen"], [String(owner.borrowed), "geliehen"], [owner.punctual_pct == null ? "–" : `${owner.punctual_pct}%`, "pünktlich"]].map(([n, l]) => (
+                  <div key={l} className="rounded-[8px] bg-paper-2 px-4 py-3 min-w-[84px] flex flex-col-reverse">
+                    <dt className="text-[12px] text-muted mt-1">{l}</dt>
+                    <dd className="text-[24px] font-[560] tracking-[-0.04em] leading-none tnum">{n}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
           </section>
-        )}
-        <CorrectionForm editionId={copy.edition_id} loggedIn={Boolean(user)} />
+
+          {!own && cal && (
+            <RequestPanel
+              copyId={copy.id}
+              offers={copy.offers}
+              calendar={cal}
+              loggedIn={Boolean(user)}
+              blocker={blocker}
+              paused={copy.owner_paused}
+              myOffers={myOffers}
+              loanDays={loanDays}
+              title={copy.title}
+            />
+          )}
+          {own && cal && (
+            <section className="mt-12 pt-12 border-t border-line" aria-labelledby="kalender">
+              <div className="grid md:grid-cols-[56px_minmax(0,1fr)] gap-x-4 gap-y-1 mb-7">
+                <span className="text-[13px] tnum text-muted pt-1.5">01</span>
+                <div>
+                  <h2 id="kalender" className="text-[24px] md:text-[28px] font-[560] tracking-[-0.03em]">Verleihkalender</h2>
+                  <p className="text-[15px] text-muted mt-1.5">Du siehst Namen, andere nur frei und belegt.</p>
+                </div>
+              </div>
+              <div className="md:pl-[72px]"><div className="rounded-[10px] border border-line p-5 md:p-6"><CalendarView cal={cal} /></div></div>
+            </section>
+          )}
+        </div>
       </div>
     </div>
   );
-}
-
-function OwnCalendar({ cal }: { cal: NonNullable<Awaited<ReturnType<typeof getCalendar>>> }) {
-  return <CalendarView cal={cal} />;
 }
