@@ -124,7 +124,9 @@ const handlers: Record<string, (p: Record<string, unknown>) => Promise<void>> = 
       await putObject(`${key}-480.webp`, await small.clone().webp({ quality: 80 }).toBuffer(), "image/webp");
       await putObject(`${key}-480.avif`, await small.clone().avif({ quality: 55 }).toBuffer(), "image/avif");
       await sql`update editions set cover_key = ${key}, cover_w = ${out.info.width}, cover_h = ${out.info.height} where isbn13 = ${isbn}`;
+      console.log(`[covers] ${isbn} gespeichert (${new URL(url).hostname})`);
       return;
     }
+    console.log(`[covers] ${isbn} kein Cover gefunden (${urls.length} Quellen geprüft)`);
   },
 };

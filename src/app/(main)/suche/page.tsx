@@ -20,7 +20,7 @@ export default async function SuchePage({ searchParams }: { searchParams: Promis
   const condition = Number(pick(sp.condition));
   const offer = pick(sp.offer);
   const filters: Filters = {
-    radius: RADII.includes(radius) ? radius : 10,
+    radius: RADII.includes(radius) ? radius : 25,
     offer: offer === "lend" || offer === "swap" || offer === "gift" ? offer : "",
     available: pick(sp.available) === "1",
     language: pick(sp.language).slice(0, 5),

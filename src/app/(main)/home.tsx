@@ -17,7 +17,7 @@ export async function Home({ user }: { user: SessionUser }) {
   const origin = { lat: user.home_lat!, lng: user.home_lng! };
   const [loans, nearby, circleCopies, [counts], genres] = await Promise.all([
     myLoans(user.id),
-    newNearby(user.id, origin, 5, 18),
+    newNearby(user.id, origin, 10, 24),
     sql<{ id: string; work_id: string; title: string; authors: string[]; photo_key: string | null; photo_w: number | null; photo_h: number | null; cover_key: string | null; owner_name: string; circle: string }[]>`
       select distinct on (c.id) c.id, e.work_id, w.title, w.authors, e.cover_key, o.first_name as owner_name, ci.name as circle,
              ph.key as photo_key, ph.width as photo_w, ph.height as photo_h, c.created_at
@@ -46,7 +46,7 @@ export async function Home({ user }: { user: SessionUser }) {
   const summary = [
     mine.length ? `${mine.length === 1 ? "Ein Vorgang wartet" : `${mine.length} Vorgänge warten`} auf dich.` : "Gerade wartet nichts auf dich.",
     counts.lent ? `${counts.lent === 1 ? "Ein Buch ist" : `${counts.lent} Bücher sind`} verliehen.` : null,
-    nearby.length ? `${nearby.length} neue ${nearby.length === 1 ? "Buch" : "Bücher"} im Umkreis von 5 km.` : null,
+    nearby.length ? `${nearby.length} neue ${nearby.length === 1 ? "Buch" : "Bücher"} im Umkreis von 10 km.` : null,
   ].filter(Boolean).join(" ");
   let n = 0;
 
@@ -120,11 +120,11 @@ export async function Home({ user }: { user: SessionUser }) {
         )}
       </StepSection>
 
-      <StepSection id="naehe" n={++n} title="Neu in deiner Nähe" desc="Zuletzt eingestellt, im Umkreis von 5 km."
+      <StepSection id="naehe" n={++n} title="Neu in deiner Nähe" desc="Zuletzt eingestellt, im Umkreis von 10 km."
         aside={<Link href="/suche" className="inline-flex items-center gap-1 font-medium text-accent-hover hover:underline underline-offset-4">Alle durchsuchen <IconArrowRight width={14} height={14} /></Link>}>
         {nearby.length === 0 ? (
           <div className="rounded-[10px] border border-dashed border-line-strong p-6 flex flex-wrap items-center justify-between gap-4">
-            <p className="text-ink-2 text-[15px]">Im Umkreis von 5 km ist in letzter Zeit nichts dazugekommen.</p>
+            <p className="text-ink-2 text-[15px]">Im Umkreis von 10 km ist in letzter Zeit nichts dazugekommen.</p>
             <LinkButton href="/suche" variant="secondary">Weiter suchen</LinkButton>
           </div>
         ) : (

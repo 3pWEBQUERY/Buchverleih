@@ -22,7 +22,7 @@ export type Filters = {
   condition: number;
 };
 
-const DEFAULTS: Filters = { radius: 10, offer: "", available: false, language: "", genre: "", condition: 0 };
+const DEFAULTS: Filters = { radius: 25, offer: "", available: false, language: "", genre: "", condition: 0 };
 const RADII = [1, 2, 5, 10, 25];
 
 function paramsOf(q: string, f: Filters, plz: string) {

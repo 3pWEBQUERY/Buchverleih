@@ -43,7 +43,7 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
     : sql``;
   const lat = origin?.lat ?? null;
   const lng = origin?.lng ?? null;
-  const radiusM = (f.radiusKm ?? 10) * 1000;
+  const radiusM = (f.radiusKm ?? 25) * 1000;
 
   const rows = await sql<(Omit<WorkHit, "offers"> & { o_lend: boolean; o_swap: boolean; o_gift: boolean })[]>`
     with cand as (
@@ -81,7 +81,7 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
            count(*) filter (where free_now)::int as available_now,
            min(dist) as nearest_m,
            (array_agg(json_build_object('copy_id', copy_id, 'photo_key', photo_key, 'photo_w', photo_w, 'photo_h', photo_h, 'cover_key', cover_key)
-                      order by (photo_key is null), dist nulls last))[1] as cover,
+                      order by (photo_key is null and cover_key is null), (photo_key is null), dist nulls last))[1] as cover,
            bool_or('lend' = any(offers)) as o_lend,
            bool_or('swap' = any(offers)) as o_swap,
            bool_or('gift' = any(offers)) as o_gift
@@ -90,7 +90,7 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
        ${f.availableNow ? sql`and free_now` : sql``}
      group by work_id, title, authors, genre
      order by ${q ? sql`max(score) desc,` : sql``} min(dist) nulls last, min(median_response_seconds) nulls last, title
-     limit ${f.limit ?? 40}`;
+     limit ${f.limit ?? 150}`;
   return rows.map(({ o_lend, o_swap, o_gift, ...r }) => ({
     ...r,
     offers: [o_lend && "lend", o_swap && "swap", o_gift && "gift"].filter(Boolean) as OfferKind[],
