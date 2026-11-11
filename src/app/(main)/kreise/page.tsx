@@ -107,7 +107,7 @@ export default async function Page() {
                       {pending ? (
                         <p className="text-[13.5px] text-muted max-w-xs">Deine Beitrittsanfrage wartet auf die Freigabe durch die Admins.</p>
                       ) : (
-                        <Faces names={p.names.map((n) => n.name)} seeds={p.names.map((n) => n.id)} total={c.member_count} size={30} />
+                        <Faces names={p.names.map((n) => n.name)} seeds={p.names.map((n) => n.id)} photos={p.names.map((n) => n.photo)} total={c.member_count} size={30} />
                       )}
                       <dl className="flex gap-1.5 text-[13px]">
                         {([[c.copy_count, c.copy_count === 1 ? "Buch" : "Bücher"], [`${c.loan_days} Tage`, "Leihfrist"]] as [number | string, string][]).map(([n, l]) => (

@@ -166,3 +166,24 @@ export function SuspendSwitch({ userId, suspended }: { userId: string; suspended
   }
   return <Switch checked={on} onChange={(v) => set(v)} label="Leihsperre" hint="Keine neuen Anfragen für Leihen und Tausch. Eigenes Regal bleibt offen." />;
 }
+
+/** Unpassendes Profilbild entfernen (Regeln: Fotos). Wird protokolliert. */
+export function RemoveAvatar({ userId }: { userId: string }) {
+  const router = useRouter();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  return (
+    <Button variant="secondary" size="sm" disabled={busy} onClick={async () => {
+      setBusy(true);
+      try {
+        await mod({ action: "remove_avatar", userId });
+        toast.show({ text: "Profilbild entfernt." });
+        router.refresh();
+      } catch (e) {
+        toast.error(msg(e));
+      } finally {
+        setBusy(false);
+      }
+    }}>Profilbild entfernen</Button>
+  );
+}

@@ -27,8 +27,16 @@ export function monogramColors(seed: string) {
   return CLOTH[hash(seed) % CLOTH.length];
 }
 
-export function Monogram({ name, seed, size = 48, className }: { name: string; seed: string; size?: number; className?: string }) {
+/** Profilbild statt Initiale, wenn eines hochgeladen wurde (liegt im Bucket, ausgeliefert über /api/v1/images) */
+export function Monogram({ name, seed, size = 48, className, photo }: { name: string; seed: string; size?: number; className?: string; photo?: string | null }) {
   const [bg, fg] = monogramColors(seed);
+  if (photo) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={`/api/v1/images/${photo}${size <= 160 ? "?w=480" : ""}`} alt="" aria-hidden width={size} height={size} loading="lazy" decoding="async"
+        className={cx("rounded-full flex-none object-cover select-none", className)} style={{ width: size, height: size, background: bg }} />
+    );
+  }
   return (
     <span
       aria-hidden

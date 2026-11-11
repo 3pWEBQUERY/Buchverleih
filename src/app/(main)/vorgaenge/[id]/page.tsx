@@ -67,7 +67,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     <section aria-labelledby="person" className="rounded-[10px] border border-line p-5">
       <p className="text-[13px] text-muted">{owner ? "Leiht" : "Verleiht"}</p>
       <div className="mt-2.5 flex items-center gap-3.5 min-w-0">
-        <Monogram name={other.first_name} seed={other.id} size={48} />
+        <Monogram name={other.first_name} seed={other.id} size={48} photo={other.avatar_key} />
         <div className="min-w-0">
           <Link id="person" href={`/profil/${other.id}`} className="block text-[20px] font-[560] tracking-[-0.03em] leading-tight hover:underline underline-offset-4 decoration-1 truncate">{other.first_name}</Link>
           {/* Vor der Annahme zeigt der Vorgang das Profil der anderen Seite (PRD 6.1) */}

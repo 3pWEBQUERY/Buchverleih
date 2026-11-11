@@ -26,6 +26,7 @@ export const POST = route(async (req) => {
       z.object({ action: z.literal("report"), reportId: z.string().uuid(), status: z.enum(["actioned", "dismissed"]), note: z.string().max(1000).optional() }),
       z.object({ action: z.literal("ban"), userId: z.string().uuid(), banned: z.boolean(), reason: z.string().max(300).optional() }),
       z.object({ action: z.literal("suspend"), userId: z.string().uuid(), suspended: z.boolean() }),
+      z.object({ action: z.literal("remove_avatar"), userId: z.string().uuid(), note: z.string().max(300).optional() }),
       z.object({ action: z.literal("correction"), id: z.string().uuid(), apply: z.boolean() }),
       z.object({ action: z.literal("flag"), key: z.string().max(40), regionId: z.string().max(40), enabled: z.boolean() }),
     ]),
@@ -35,6 +36,7 @@ export const POST = route(async (req) => {
     case "report": await mod.handleReport(m, b.reportId, b.status, b.note); break;
     case "ban": await mod.setBan(m, b.userId, b.banned, b.reason); break;
     case "suspend": await mod.setSuspension(m, b.userId, b.suspended); break;
+    case "remove_avatar": await mod.removeAvatar(m, b.userId, b.note); break;
     case "correction": await mod.applyCorrection(m, b.id, b.apply); break;
     case "flag": await mod.setFlag(m, b.key, b.regionId, b.enabled); break;
   }

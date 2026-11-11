@@ -75,8 +75,8 @@ export default async function ProfilPage({ params }: Params) {
       <aside className="lg:sticky lg:top-8 space-y-5 min-w-0">
         <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-5 items-center lg:block lg:space-y-5">
           <div className="lg:rounded-[12px] lg:bg-paper-2 lg:border lg:border-line lg:py-10 flex justify-center anim-pop">
-            <span className="lg:hidden"><Monogram name={p.first_name} seed={p.id} size={88} /></span>
-            <span className="hidden lg:block"><Monogram name={p.first_name} seed={p.id} size={136} /></span>
+            <span className="lg:hidden"><Monogram name={p.first_name} seed={p.id} size={88} photo={p.avatar_key} /></span>
+            <span className="hidden lg:block"><Monogram name={p.first_name} seed={p.id} size={136} photo={p.avatar_key} /></span>
           </div>
           <div className="anim-rise min-w-0">
             <h1 className="text-[26px] md:text-[30px] font-[560] tracking-[-0.03em] leading-tight break-words">{p.first_name}</h1>
@@ -101,7 +101,7 @@ export default async function ProfilPage({ params }: Params) {
 
         {own ? (
           <div className="flex flex-col gap-2">
-            <Link href="/einstellungen#profil" className="h-11 rounded-[6px] bg-accent-soft text-accent-hover font-medium text-[14.5px] inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-accent-ink transition-colors">
+            <Link href="/einstellungen#profilbild" className="h-11 rounded-[6px] bg-accent-soft text-accent-hover font-medium text-[14.5px] inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-accent-ink transition-colors">
               Profil bearbeiten <IconArrowRight width={16} height={16} />
             </Link>
             <Link href="/regal" className="h-11 rounded-[6px] border border-line-strong font-medium text-[14.5px] inline-flex items-center justify-center hover:border-ink-2 transition-colors">Mein Regal verwalten</Link>

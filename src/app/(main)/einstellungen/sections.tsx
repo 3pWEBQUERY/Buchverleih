@@ -3,7 +3,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { browserSupportsWebAuthn, startRegistration } from "@simplewebauthn/browser";
-import { api, ApiError } from "@/lib/client";
+import { api, ApiError, uploadPhoto } from "@/lib/client";
+import { Monogram } from "@/components/person/monogram";
 import { useToast } from "@/components/toast";
 import { Button, Check, Field, Input, Notice, Switch, cx } from "@/components/ui";
 import { readTheme, saveTheme, type Theme } from "@/components/theme-sync";
@@ -14,6 +15,94 @@ const msg = (e: unknown) => (e instanceof Error ? e.message : "Etwas ist schiefg
 /** Eintrag einer Liste innerhalb einer Einstellungszeile */
 const itemCls = "rounded-[8px] bg-paper-2 flex items-center justify-between gap-4 pl-4 pr-2 py-2.5 min-h-[60px]";
 const listCls = "space-y-2 mb-5";
+
+/* ------------------------------------------------------------- Profilbild */
+/** Im Browser quadratisch zuschneiden und verkleinern (entfernt auch die Metadaten). Geht das nicht, wird das Original hochgeladen. */
+async function squareJpeg(file: File): Promise<File> {
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: "from-image" } as ImageBitmapOptions);
+    const side = Math.min(bmp.width, bmp.height);
+    const out = Math.min(800, side);
+    const c = document.createElement("canvas");
+    c.width = out;
+    c.height = out;
+    c.getContext("2d")!.drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, out, out);
+    const blob = await new Promise<Blob | null>((r) => c.toBlob(r, "image/jpeg", 0.88));
+    return blob && blob.size > 1000 ? new File([blob], "profilbild.jpg", { type: "image/jpeg" }) : file;
+  } catch {
+    return file;
+  }
+}
+
+export function AvatarEditor({ userId, name, avatarKey }: { userId: string; name: string; avatarKey: string | null }) {
+  const router = useRouter();
+  const toast = useToast();
+  const [preview, setPreview] = useState<string | null>(null);
+  const [busy, setBusy] = useState<"upload" | "remove" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+
+  async function pick(file: File | undefined) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return setError("Das ist kein Bild. Wähle ein Foto (JPEG, PNG, WebP oder HEIC).");
+    if (file.size > 12 * 1024 * 1024) return setError("Das Bild ist grösser als 12 MB. Wähle ein kleineres.");
+    setError(null);
+    setBusy("upload");
+    const square = await squareJpeg(file);
+    setPreview(URL.createObjectURL(square));
+    try {
+      const up = await uploadPhoto(square, "avatar");
+      await api("/me", { method: "PATCH", body: { avatarUploadId: up.id } });
+      toast.show({ text: "Profilbild gespeichert." });
+      router.refresh();
+    } catch (e) {
+      setPreview(null);
+      setError(msg(e));
+    } finally {
+      setBusy(null);
+      if (input.current) input.current.value = "";
+    }
+  }
+
+  async function remove() {
+    setBusy("remove");
+    setError(null);
+    try {
+      await api("/me", { method: "PATCH", body: { avatarUploadId: null } });
+      setPreview(null);
+      toast.show({ text: "Profilbild entfernt. Andere sehen wieder deine Initiale." });
+      router.refresh();
+    } catch (e) {
+      setError(msg(e));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const has = Boolean(preview || avatarKey);
+  return (
+    <div className="flex flex-wrap items-center gap-5">
+      <span className={cx("relative flex-none", busy === "upload" && "opacity-60")}>
+        {preview
+          // eslint-disable-next-line @next/next/no-img-element
+          ? <img src={preview} alt="" className="h-20 w-20 rounded-full object-cover" />
+          : <Monogram name={name || "?"} seed={userId} size={80} photo={avatarKey} />}
+      </span>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className={cx("inline-flex items-center justify-center h-10 px-4 rounded-[6px] bg-accent-soft text-accent-hover text-[14px] font-medium cursor-pointer hover:bg-accent hover:text-accent-ink transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--focus)]", busy && "pointer-events-none opacity-60")}>
+            {busy === "upload" ? "Wird hochgeladen …" : has ? "Anderes Bild" : "Bild hochladen"}
+            <input ref={input} type="file" accept="image/*" className="sr-only" onChange={(e) => pick(e.target.files?.[0])} disabled={Boolean(busy)} />
+          </label>
+          {has && <Button variant="quiet" className="h-10 text-[14px]" onClick={remove} disabled={Boolean(busy)}>{busy === "remove" ? "Entfernt …" : "Entfernen"}</Button>}
+        </div>
+        <p className="text-[12.5px] text-muted mt-2 max-w-sm leading-snug">Wird quadratisch zugeschnitten. Andere Mitglieder sehen es neben deinem Vornamen. Ohne Bild zeigen wir deine Initiale.</p>
+        {error && <p className="text-[13px] text-late mt-2" role="alert">{error}</p>}
+      </div>
+    </div>
+  );
+}
 
 /* ------------------------------------------------------------------ Profil */
 export function ProfileForm({ firstName, plz, municipality }: { firstName: string; plz: string; municipality: string | null }) {

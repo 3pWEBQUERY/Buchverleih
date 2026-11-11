@@ -45,7 +45,7 @@ export async function Landing() {
             <p className="inline-flex items-center gap-2 h-8 px-3.5 rounded-[6px] border border-night-line text-[13px] font-medium text-night-muted anim-rise">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" /> Beta in Zürich und im Zürcher Unterland
             </p>
-            <h1 className="display mt-7 text-[56px] sm:text-[84px] md:text-[104px] xl:text-[120px] anim-rise" style={{ animationDelay: "60ms" }}>
+            <h1 className="display mt-6 text-[40px] sm:text-[52px] md:text-[60px] xl:text-[68px] anim-rise" style={{ animationDelay: "60ms" }}>
               Leih dir das Buch <em>von nebenan.</em>
             </h1>
             <p className="mt-7 text-night-muted text-[17px] md:text-[19px] leading-relaxed max-w-xl anim-rise" style={{ animationDelay: "120ms" }}>
@@ -56,7 +56,7 @@ export async function Landing() {
               {[[stats.copies, "Bücher"], [stats.members, "Mitglieder"], ["0", "CHF Gebühr"]].map(([n, l]) => (
                 <div key={String(l)}>
                   <dt className="sr-only">{l}</dt>
-                  <dd className="font-[520] tracking-[-0.035em] text-[44px] md:text-[52px] leading-none tnum">{n}</dd>
+                  <dd className="font-[560] tracking-[-0.04em] text-[32px] md:text-[40px] leading-none tnum">{n}</dd>
                   <dd className="text-[13px] text-night-muted mt-1.5">{l}</dd>
                 </div>
               ))}
@@ -83,7 +83,7 @@ export async function Landing() {
         <div className="grid md:grid-cols-12 gap-8 items-end mb-10 md:mb-14">
           <div className="md:col-span-7">
             <p className="eyebrow">So läuft eine Leihe</p>
-            <h2 className="display text-[48px] md:text-[76px] mt-4">Vier Schritte. <em>Keine Absprachen</em> ausserhalb.</h2>
+            <h2 className="display text-[32px] md:text-[44px] mt-2">Vier Schritte. <em>Keine Absprachen</em> ausserhalb.</h2>
           </div>
           <p className="md:col-span-5 text-ink-2 text-[17px] leading-relaxed">
             Jeder Schritt hat eine Frist und eine Folge. Niemand muss nachfragen, wer gerade am Zug ist – die Plattform weiss es und sagt es beiden.
@@ -115,11 +115,11 @@ export async function Landing() {
       {/* -------------------------------------------------- Vertrauen (Bento) */}
       <section className="pt-20 md:pt-32">
         <p className="eyebrow">Gebaut für Vertrauen</p>
-        <h2 className="display text-[48px] md:text-[76px] mt-4 max-w-[14ch]">Damit das Buch <em>zurückkommt.</em></h2>
+        <h2 className="display text-[32px] md:text-[44px] mt-2 max-w-[20ch]">Damit das Buch <em>zurückkommt.</em></h2>
         <div className="mt-10 md:mt-14 grid gap-4 md:grid-cols-6 md:auto-rows-[minmax(250px,auto)]">
           <article className="surface-night rounded-[10px] p-7 md:p-9 md:col-span-4 flex flex-col">
             <p className="eyebrow !text-night-muted">Verleihkalender</p>
-            <h3 className="text-[34px] md:text-[42px] mt-3 max-w-md">Ein Exemplar, ein Kalender.</h3>
+            <h3 className="text-[26px] md:text-[32px] font-[560] tracking-[-0.03em] mt-2 max-w-md">Ein Exemplar, ein Kalender.</h3>
             <p className="text-night-muted mt-3 max-w-md">Buche im Voraus, auch wenn das Buch gerade weg ist. Zeiträume überschneiden sich nie – das erzwingt die Datenbank, nicht der gute Wille.</p>
             <div className="mt-auto pt-8">
               {/* Derselbe Verleihkalender wie in der App, mit Beispieldaten */}
@@ -131,18 +131,18 @@ export async function Landing() {
           <article className="rounded-[10px] p-7 md:p-9 md:col-span-2 bg-accent text-accent-ink flex flex-col justify-between">
             <p className="eyebrow !text-accent-ink/75">Kein Geld im Ablauf</p>
             <div>
-              <p className="font-[520] tracking-[-0.035em] text-[96px] md:text-[120px] leading-[0.85] tnum">0.–</p>
+              <p className="font-[560] tracking-[-0.04em] text-[64px] md:text-[80px] leading-[0.9] tnum">0.–</p>
               <p className="mt-3 text-[17px] font-medium">Leihen unter Privaten bleibt kostenlos. Ohne Kaution, ohne Gebühr pro Leihe.</p>
             </div>
           </article>
           <article className="panel-quiet rounded-[10px] p-7 md:p-9 md:col-span-3">
             <p className="eyebrow">Vertrauensstufen</p>
-            <h3 className="text-[32px] mt-3">Wer neu ist, leiht wenig. Wer verlässlich ist, mehr.</h3>
+            <h3 className="text-[24px] md:text-[28px] font-[560] tracking-[-0.03em] leading-tight mt-2">Wer neu ist, leiht wenig. Wer verlässlich ist, mehr.</h3>
             <div className="mt-7 space-y-3">
               {[["Neu", 2, "E-Mail und Mobilnummer bestätigt"], ["Bewährt", 5, "3 Leihen, alle pünktlich"], ["Vertraut", 10, "10 Leihen, kein Verlust"]].map(([l, n, d], i) => (
                 <div key={String(l)} className="grid grid-cols-[88px_1fr_auto] items-center gap-3">
                   <span className="font-semibold">{l}</span>
-                  <span className="h-3 rounded-full bg-paper-3 overflow-hidden"><span className="block h-full rounded-full bg-ink" style={{ width: `${(Number(n) / 10) * 100}%`, opacity: 0.55 + i * 0.22 }} /></span>
+                  <span className="h-3 rounded-full bg-paper-3 overflow-hidden"><span className="block h-full rounded-full bg-accent" style={{ width: `${(Number(n) / 10) * 100}%`, opacity: 0.55 + i * 0.22 }} /></span>
                   <span className="text-[13px] text-muted tnum w-36 text-right hidden sm:block">{n} gleichzeitig · {d}</span>
                 </div>
               ))}
@@ -151,7 +151,7 @@ export async function Landing() {
           </article>
           <article className="panel rounded-[10px] p-7 md:p-9 md:col-span-3 flex flex-col">
             <p className="eyebrow">Kreise</p>
-            <h3 className="text-[32px] mt-3">Ein Regal nur für euch.</h3>
+            <h3 className="text-[24px] md:text-[28px] font-[560] tracking-[-0.03em] leading-tight mt-2">Ein Regal nur für euch.</h3>
             <p className="text-ink-2 mt-3 max-w-md">Lesekreis, Hausgemeinschaft, Büro: Bücher nur für Mitglieder sichtbar, Anfragen auf Wunsch automatisch angenommen, eigene Leihfrist.</p>
             <div className="mt-auto pt-7 flex items-center justify-between">
               <div className="flex -space-x-3">
@@ -165,7 +165,7 @@ export async function Landing() {
           <article className="panel rounded-[10px] p-7 md:p-9 md:col-span-6 grid md:grid-cols-[1fr_1.4fr] gap-8 items-center">
             <div>
               <p className="eyebrow">Wenn es hakt</p>
-              <h3 className="text-[32px] mt-3">Schweigen hat eine Folge.</h3>
+              <h3 className="text-[24px] md:text-[28px] font-[560] tracking-[-0.03em] leading-tight mt-2">Schweigen hat eine Folge.</h3>
               <p className="text-ink-2 mt-3">Die Eskalation ist bewusst langsam – die meisten Verspätungen sind Vergesslichkeit. Aber nichts bleibt hängen.</p>
             </div>
             <ol className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-line rounded-[12px] overflow-hidden">
@@ -183,7 +183,7 @@ export async function Landing() {
       {/* ------------------------------------------------------- Abschluss */}
       <section className="full-bleed bg-accent text-accent-ink mt-20 md:mt-32 -mb-10 md:-mb-16">
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 py-16 md:py-24 grid md:grid-cols-[1fr_auto] gap-8 items-end">
-          <h2 className="display text-[52px] md:text-[96px] max-w-[12ch]">Stell dein erstes Buch <em>ins Regal.</em></h2>
+          <h2 className="display text-[36px] md:text-[52px] max-w-[16ch]">Stell dein erstes Buch <em>ins Regal.</em></h2>
           <div className="flex flex-col sm:flex-row gap-3">
             <Link href="/anmelden?next=/regal/neu" className="h-14 px-8 rounded-[6px] bg-paper text-accent-hover font-semibold inline-flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
               Jetzt beginnen <IconArrowRight width={18} height={18} />
@@ -217,7 +217,7 @@ function HeroPreview() {
         </div>
         <div className="mt-6 grid grid-cols-5 gap-1.5">
           {["Angefragt", "Angenommen", "Übergeben", "Zurück", "Fertig"].map((l, i) => (
-            <div key={l}><span className={`block h-1.5 rounded-full ${i < 2 ? "bg-ink" : i === 2 ? "bg-accent" : "bg-paper-3"}`} /><span className="block text-[10px] text-muted mt-1.5 truncate">{l}</span></div>
+            <div key={l}><span className={`block h-1.5 rounded-full ${i < 2 ? "bg-ink-2" : i === 2 ? "bg-accent" : "bg-paper-3"}`} /><span className="block text-[10px] text-muted mt-1.5 truncate">{l}</span></div>
           ))}
         </div>
         <div className="mt-5 flex items-center justify-between rounded-[12px] bg-paper-2 px-4 py-3">

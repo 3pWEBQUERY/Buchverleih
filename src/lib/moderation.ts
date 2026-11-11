@@ -90,8 +90,15 @@ export async function setSuspension(mod: SessionUser, userId: string, suspended:
   await log(mod.id, suspended ? "suspend" : "unsuspend", "user", userId);
 }
 
+/** Unpassendes Profilbild entfernen (Regeln: Fotos). Die Dateien werden aus dem Bucket gelöscht. */
+export async function removeAvatar(mod: SessionUser, userId: string, note?: string) {
+  const { setAvatar } = await import("@/lib/account");
+  await setAvatar(userId, null);
+  await log(mod.id, "avatar_removed", "user", userId, note);
+}
+
 export async function userDossier(userId: string) {
-  const [u] = await sql`select u.id, u.first_name, u.email, u.phone_e164, u.municipality, u.trust_level, u.role, u.created_at,
+  const [u] = await sql`select u.id, u.first_name, u.avatar_key, u.email, u.phone_e164, u.municipality, u.trust_level, u.role, u.created_at,
                                u.banned_at, u.ban_reason, u.lending_suspended_at, s.*
                           from users u join user_stats s on s.user_id = u.id where u.id = ${userId}`;
   if (!u) throw err.notFound();
@@ -104,8 +111,8 @@ export async function userDossier(userId: string) {
 
 export async function findUsers(q: string) {
   const s = `%${q.trim().toLowerCase()}%`;
-  return sql<{ id: string; first_name: string; email: string; municipality: string | null; banned_at: Date | null }[]>`
-    select id, first_name, email, municipality, banned_at from users
+  return sql<{ id: string; first_name: string; avatar_key: string | null; email: string; municipality: string | null; banned_at: Date | null }[]>`
+    select id, first_name, avatar_key, email, municipality, banned_at from users
      where deleted_at is null and (lower(email) like ${s} or lower(first_name) like ${s}) order by created_at desc limit 20`;
 }
 

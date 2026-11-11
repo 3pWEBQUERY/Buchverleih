@@ -58,6 +58,7 @@ export const actionLabel: Record<string, string> = {
   unban: "Konto entsperrt",
   suspend: "Leihsperre gesetzt",
   unsuspend: "Leihsperre aufgehoben",
+  avatar_removed: "Profilbild entfernt",
   correction_applied: "Korrektur übernommen",
   correction_rejected: "Korrektur abgelehnt",
   flag_on: "Schalter an",

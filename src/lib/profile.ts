@@ -4,6 +4,7 @@ import { sql } from "@/lib/db";
 export type PublicProfile = {
   id: string;
   first_name: string;
+  avatar_key: string | null;
   municipality: string | null;
   trust_level: number;
   member_since: Date;
@@ -21,7 +22,7 @@ export type PublicProfile = {
 
 export async function publicProfile(userId: string, viewerId: string | null): Promise<PublicProfile | null> {
   const [p] = await sql<PublicProfile[]>`
-    select u.id, u.first_name, u.municipality, u.trust_level, u.created_at as member_since,
+    select u.id, u.first_name, u.avatar_key, u.municipality, u.trust_level, u.created_at as member_since,
            s.lent_count::int as lent, s.borrowed_count::int as borrowed,
            case when s.rated_count > 0 then round(100.0 * s.punctual_count / s.rated_count)::int end as punctual_pct,
            s.visible_losses::int as visible_losses,

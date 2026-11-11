@@ -190,7 +190,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
                       </div>
 
                       <div className="min-w-0 flex items-center gap-3">
-                        <Monogram name={c.owner_name} seed={c.owner_id} size={38} />
+                        <Monogram name={c.owner_name} seed={c.owner_id} size={38} photo={c.owner_avatar} />
                         <div className="min-w-0 leading-tight">
                           <Link href={`/profil/${c.owner_id}`} className="font-medium hover:underline underline-offset-4">{c.owner_name}</Link>
                           <span className="text-[13px] text-muted"> · {trustLabel[c.owner_trust] ?? "Neu"}</span>

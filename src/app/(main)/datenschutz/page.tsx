@@ -91,7 +91,7 @@ export default function Page() {
           Für Titeldaten fragen wir Bibliothekskataloge und Buchverzeichnisse ab (Deutsche Nationalbibliothek, Open Library, Google Books).
           Dabei übermitteln wir nur die ISBN oder den Suchbegriff, keine Angaben zu dir.
         </p>
-        <p>Andere Mitglieder sehen deinen Vornamen, deine Gemeinde, dein Regal, deine Stufe und deine Zahlen. Mobilnummer und E-Mail-Adresse sehen sie nie.</p>
+        <p>Andere Mitglieder sehen deinen Vornamen, dein Profilbild (falls du eines hochlädst), deine Gemeinde, dein Regal, deine Stufe und deine Zahlen. Mobilnummer und E-Mail-Adresse sehen sie nie.</p>
       </DocSection>
 
       <DocSection id="aufbewahrung" title="Aufbewahrung">
@@ -99,6 +99,7 @@ export default function Page() {
           ["Chat-Inhalte", "12 Monate nach Abschluss des Vorgangs, dann gelöscht"],
           ["Vorgänge", "Solange das Konto besteht. Bei Löschung anonymisiert, weil die andere Seite sie für ihre Zahlen braucht"],
           ["Verlust aus einem Streitfall", "24 Monate sichtbar auf dem Profil, ausser er wird bereinigt"],
+          ["Profilbild", "Bis du es entfernst oder ersetzt oder dein Konto löschst. Dann wird es aus dem Speicher gelöscht"],
           ["Sitzungen", "60 Tage nach der Anmeldung im Browser, oder bis du dich abmeldest"],
           ["Codes für SMS und E-Mail-Link", "Wenige Minuten gültig, nur als Prüfsumme gespeichert"],
           ["Gesperrte Mobilnummern", "Solange die Sperre gilt"],

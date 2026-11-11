@@ -145,7 +145,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           {/* Wer verleiht – vor der Anfrage sichtbar (PRD 6.1) */}
           <section aria-labelledby="verleiher" className="mt-10 rounded-[10px] border border-line p-5 md:p-6 grid sm:grid-cols-[minmax(0,1fr)_auto] gap-6 items-center anim-rise" style={{ animationDelay: "60ms" }}>
             <div className="flex items-center gap-4 min-w-0">
-              <Monogram name={copy.owner_name} seed={copy.owner_id} size={56} />
+              <Monogram name={copy.owner_name} seed={copy.owner_id} size={56} photo={copy.owner_avatar} />
               <div className="min-w-0">
                 <p className="text-[13px] text-muted">{own ? "Dein Exemplar" : "Verleiht"}</p>
                 <Link id="verleiher" href={`/profil/${copy.owner_id}`} className="text-[22px] font-[560] tracking-[-0.03em] leading-tight hover:underline underline-offset-4 decoration-1">{copy.owner_name}</Link>

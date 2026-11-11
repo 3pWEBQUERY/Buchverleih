@@ -12,7 +12,7 @@ const TOC: TocItem[] = [
   ["puenktlich", "Pünktlich sein"],
   ["sorgfalt", "Sorgfalt mit Büchern"],
   ["respekt", "Respekt im Chat"],
-  ["fotos", "Fotos nur von Büchern"],
+  ["fotos", "Fotos und Profilbild"],
   ["konto", "Eine Person, ein Konto"],
   ["melden", "Melden und Blockieren"],
   ["folgen", "Wenn jemand die Regeln bricht"],
@@ -74,9 +74,13 @@ export default function Page() {
         </p>
       </DocSection>
 
-      <DocSection id="fotos" title="Fotos nur von Büchern">
+      <DocSection id="fotos" title="Fotos und Profilbild">
         <p>
           Fotos zeigen Bücher: das Cover, den Zustand, einen Mangel, die Ablage bei der Übergabe. Keine Personen, keine Werbung, nichts, was nicht zum Buch gehört.
+        </p>
+        <p>
+          Die einzige Ausnahme ist dein Profilbild. Es ist freiwillig und zeigt dich oder etwas, das für dich steht. Keine anderen Personen ohne deren Einverständnis,
+          keine Werbung, nichts Anstössiges. Unpassende Profilbilder entfernt die Moderation.
         </p>
       </DocSection>
 

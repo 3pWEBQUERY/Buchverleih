@@ -9,7 +9,7 @@ import { Button, cx } from "@/components/ui";
 import { Avatar } from "@/components/kreise/faces";
 import { CircleFields, type CircleValues } from "../circle-form";
 
-type Member = { user_id: string; first_name: string; role: string; status: string; trust_level: number; municipality: string | null };
+type Member = { user_id: string; first_name: string; avatar_key: string | null; role: string; status: string; trust_level: number; municipality: string | null };
 
 /** Sofort ausführen, aber erst nach der Rückgängig-Frist an die API senden (PRD 8.2). */
 function useLater() {
@@ -159,7 +159,7 @@ export function MemberList({ circleId, me, admin, members }: { circleId: string;
 function Person({ m, me }: { m: Member; me?: boolean }) {
   return (
     <div className="min-w-0 flex items-center gap-3.5">
-      <Avatar name={m.first_name} seed={m.user_id} size={40} />
+      <Avatar name={m.first_name} seed={m.user_id} size={40} photo={m.avatar_key} />
       <div className="min-w-0">
         <p className="text-[15px] flex flex-wrap items-center gap-x-2 gap-y-1">
           <Link href={`/profil/${m.user_id}`} className="font-medium hover:underline underline-offset-4">{m.first_name}</Link>

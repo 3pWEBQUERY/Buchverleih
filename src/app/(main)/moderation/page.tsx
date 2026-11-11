@@ -329,7 +329,7 @@ async function Accounts({ q }: { q: string }) {
           {users.map((u) => (
             <li key={u.id}>
               <Link href={`/moderation/konto/${u.id}`} className="group flex items-center gap-4 px-4 md:px-5 py-3.5 hover:bg-paper-2 transition-colors">
-                <Monogram name={u.first_name || "?"} seed={u.id} size={40} />
+                <Monogram name={u.first_name || "?"} seed={u.id} size={40} photo={u.avatar_key} />
                 <span className="min-w-0 flex-1">
                   <span className="block text-[15px] font-medium">{u.first_name || "Ohne Namen"}</span>
                   <span className="block text-sm text-muted truncate">{u.email}{u.municipality ? ` · ${u.municipality}` : ""}</span>

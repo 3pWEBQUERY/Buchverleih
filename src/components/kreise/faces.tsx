@@ -11,8 +11,12 @@ function hash(s: string) {
 }
 
 /** Initiale auf Buchleinen-Farbe wie das Monogramm – dieselbe Person sieht überall gleich aus */
-export function Avatar({ name, seed, size = 40, className, night }: { name: string; seed?: string; size?: number; className?: string; night?: boolean }) {
+export function Avatar({ name, seed, size = 40, className, night, photo }: { name: string; seed?: string; size?: number; className?: string; night?: boolean; photo?: string | null }) {
   const [bg, fg] = monogramColors(seed ?? name);
+  if (photo) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={`/api/v1/images/${photo}?w=480`} alt="" aria-hidden width={size} height={size} loading="lazy" className={cx("rounded-full flex-none object-cover", className)} style={{ width: size, height: size }} />;
+  }
   return (
     <span aria-hidden className={cx("grid place-items-center rounded-full font-semibold tracking-[-0.02em] leading-none flex-none select-none", night && NIGHT_TONES[hash(name) % NIGHT_TONES.length], className)}
       style={{ width: size, height: size, fontSize: Math.round(size * 0.46), ...(night ? {} : { background: bg, color: fg }) }}>
@@ -22,12 +26,12 @@ export function Avatar({ name, seed, size = 40, className, night }: { name: stri
 }
 
 /** Überlappende Initialen, dazu «+n», wenn es mehr Mitglieder gibt */
-export function Faces({ names, seeds, total, size = 34, ring = "ring-paper", night }: { names: string[]; seeds?: string[]; total: number; size?: number; ring?: string; night?: boolean }) {
+export function Faces({ names, seeds, photos, total, size = 34, ring = "ring-paper", night }: { names: string[]; seeds?: string[]; photos?: (string | null)[]; total: number; size?: number; ring?: string; night?: boolean }) {
   const more = total - names.length;
   return (
     <span className="flex items-center" aria-label={`${total} ${total === 1 ? "Mitglied" : "Mitglieder"}: ${names.join(", ")}${more > 0 ? " und weitere" : ""}`}>
       {names.map((n, i) => (
-        <Avatar key={`${n}-${i}`} name={n} seed={seeds?.[i]} size={size} night={night} className={cx("ring-[2.5px]", ring, i > 0 && "-ml-2.5")} />
+        <Avatar key={`${n}-${i}`} name={n} seed={seeds?.[i]} photo={photos?.[i]} size={size} night={night} className={cx("ring-[2.5px]", ring, i > 0 && "-ml-2.5")} />
       ))}
       {more > 0 && (
         <span aria-hidden className={cx("-ml-2.5 grid place-items-center rounded-full", night ? "bg-night-2 text-night-ink" : "bg-paper-2 text-ink-2", " text-[12px] font-semibold tnum ring-[2.5px]", ring)} style={{ width: size, height: size }}>

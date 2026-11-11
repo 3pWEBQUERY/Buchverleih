@@ -9,14 +9,14 @@ import { PageTitle, cx } from "@/components/ui";
 import { StepSection } from "@/components/step-section";
 import { Monogram } from "@/components/person/monogram";
 import {
-  BlockList, DeleteAccount, EmailPrefs, ExportData, Logout, PasskeyList, PhoneSection, ProfileForm, ShelfPause, SpotList, ThemeChoice,
+  AvatarEditor, BlockList, DeleteAccount, EmailPrefs, ExportData, Logout, PasskeyList, PhoneSection, ProfileForm, ShelfPause, SpotList, ThemeChoice,
 } from "./sections";
 import { SettingsNav, type NavGroup } from "./settings-nav";
 
 export const metadata = { title: "Einstellungen" };
 
 const NAV: NavGroup[] = [
-  { title: "Konto", items: [{ id: "profil", label: "Profil" }, { id: "mobilnummer", label: "Mobilnummer" }, { id: "passkeys", label: "Passkeys" }] },
+  { title: "Konto", items: [{ id: "profilbild", label: "Profilbild" }, { id: "profil", label: "Profil" }, { id: "mobilnummer", label: "Mobilnummer" }, { id: "passkeys", label: "Passkeys" }] },
   { title: "Leihen", items: [{ id: "uebergabeorte", label: "Übergabeorte" }, { id: "ferienmodus", label: "Ferienmodus" }, { id: "blockiert", label: "Blockiert" }] },
   { title: "Allgemein", items: [{ id: "benachrichtigungen", label: "E-Mail" }, { id: "darstellung", label: "Darstellung" }, { id: "daten", label: "Daten" }] },
   { title: "Gefahrenzone", danger: true, items: [{ id: "konto-loeschen", label: "Konto löschen" }] },
@@ -43,7 +43,7 @@ export default async function Page() {
       <PageTitle eyebrow="Konto und Vorlieben" sub="Profil, Anmeldung, Übergabeorte und Benachrichtigungen. Änderungen gelten sofort."
         aside={
           <div className="rounded-[10px] border border-line flex items-center gap-3.5 pl-3 pr-5 py-3 anim-rise min-w-0 max-w-full" style={{ animationDelay: "60ms" }}>
-            <Monogram name={user.first_name || "?"} seed={user.id} size={44} />
+            <Monogram name={user.first_name || "?"} seed={user.id} size={44} photo={user.avatar_key} />
             <span className="min-w-0 leading-tight">
               <span className="block font-medium truncate">{user.first_name} <span className="text-muted font-normal">· {trustLabel[user.trust_level]}</span></span>
               <span className="block text-[13px] text-muted truncate mt-0.5">{user.email}</span>
@@ -59,6 +59,9 @@ export default async function Page() {
         <div className="min-w-0">
           <StepSection n={1} first title="Konto" desc="Was andere von dir sehen und wie du dich anmeldest.">
             <Card>
+              <Row id="profilbild" label="Profilbild" text="Ein Bild von dir, freiwillig. Keine anderen Personen, keine Werbung.">
+                <AvatarEditor userId={user.id} name={user.first_name} avatarKey={user.avatar_key} />
+              </Row>
               <Row id="profil" label="Profil" text="Andere sehen deinen Vornamen und deine Gemeinde, nie deine Adresse.">
                 <ProfileForm firstName={user.first_name} plz={user.plz ?? ""} municipality={user.municipality} />
               </Row>

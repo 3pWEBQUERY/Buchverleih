@@ -241,6 +241,7 @@ export type CopyDetail = ShelfCopy & {
   binding: string | null;
   pages: number | null;
   owner_name: string;
+  owner_avatar: string | null;
   owner_trust: number;
   owner_municipality: string | null;
   owner_paused: boolean;
@@ -256,7 +257,7 @@ export async function copyDetail(copyId: string, viewerId: string | null, origin
            c.condition_note, c.loan_days, c.auto_extend, c.max_extensions, c.horizon_days, c.buffer_days,
            c.max_future_bookings, c.pass_on, c.chain_max, c.dropoff_allowed, c.precious, c.transfer_locked_until,
            e.isbn13, e.publisher, e.year, e.language, e.binding, e.pages,
-           o.first_name as owner_name, o.trust_level as owner_trust, o.municipality as owner_municipality,
+           o.first_name as owner_name, o.avatar_key as owner_avatar, o.trust_level as owner_trust, o.municipality as owner_municipality,
            o.shelf_paused as owner_paused, o.created_at as owner_since,
            coalesce((select json_agg(json_build_object('id', p.id, 'key', p.key, 'width', p.width, 'height', p.height) order by p.position)
                        from copy_photos p where p.copy_id = c.id), '[]') as photos,
@@ -271,8 +272,8 @@ export async function copyDetail(copyId: string, viewerId: string | null, origin
 
 /** Exemplare eines Werks in der Nähe (Titelseite, PRD 8.4) */
 export async function copiesOfWork(workId: string, viewerId: string | null, origin: { lat: number; lng: number } | null) {
-  return sql<(ShelfCopy & { dist: number | null; owner_name: string; owner_trust: number; year: number | null; publisher: string | null; binding: string | null; language: string | null; median_response_seconds: number | null; free_now: boolean })[]>`
-    select ${SHELF_SELECT}, o.first_name as owner_name, o.trust_level as owner_trust,
+  return sql<(ShelfCopy & { dist: number | null; owner_name: string; owner_avatar: string | null; owner_trust: number; year: number | null; publisher: string | null; binding: string | null; language: string | null; median_response_seconds: number | null; free_now: boolean })[]>`
+    select ${SHELF_SELECT}, o.first_name as owner_name, o.avatar_key as owner_avatar, o.trust_level as owner_trust,
            e.year, e.publisher, e.binding, e.language, st.median_response_seconds,
            (not o.shelf_paused and not exists (select 1 from copy_bookings b where b.copy_id = c.id
               and daterange(lower(b.period), upper(b.period) + b.buffer_days) @> today_ch())) as free_now,

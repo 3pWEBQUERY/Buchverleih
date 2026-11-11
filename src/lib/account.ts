@@ -44,6 +44,28 @@ export async function updateSettings(userId: string, s: { firstName?: string; sh
   }
 }
 
+/**
+ * Profilbild setzen oder entfernen. Das Bild kommt aus einem eigenen Upload mit Zweck «avatar»
+ * und liegt im Bucket unter u/<id>/avatar/<upload>. Das vorherige Bild wird aus dem Bucket gelöscht.
+ */
+export async function setAvatar(userId: string, uploadId: string | null) {
+  let key: string | null = null;
+  if (uploadId) {
+    const [u] = await sql<{ key: string; status: string }[]>`
+      select key, status from uploads where id = ${uploadId} and user_id = ${userId} and purpose = 'avatar'`;
+    if (!u || u.status === "pending" || u.status === "rejected") throw err.invalid("Dieses Bild können wir nicht verwenden. Lade es erneut hoch.");
+    key = u.key;
+  }
+  const [prev] = await sql<{ avatar_key: string | null }[]>`
+    update users n set avatar_key = ${key} from users o where n.id = o.id and n.id = ${userId} returning o.avatar_key`;
+  if (prev?.avatar_key && prev.avatar_key !== key) {
+    const old = prev.avatar_key;
+    const { deleteObject } = await import("@/lib/storage");
+    await Promise.allSettled(["", "-480"].flatMap((s) => ["avif", "webp"].map((x) => deleteObject(`${old}${s}.${x}`))));
+  }
+  return key;
+}
+
 export async function joinWaitlist(email: string, plz: string) {
   if (!/^\d{4}$/.test(plz)) throw err.invalid("Gib eine vierstellige Postleitzahl ein.");
   await sql`insert into plz_waitlist (email, plz) values (${email.trim().toLowerCase()}, ${plz}) on conflict do nothing`;
@@ -66,7 +88,8 @@ export async function exportData(userId: string) {
 
 /** Löschung ist erst möglich, wenn keine Leihe offen ist. Vorgangsdaten werden anonymisiert. */
 export async function deleteAccount(userId: string) {
-  return sql.begin(async (tx) => {
+  const [prev] = await sql<{ avatar_key: string | null }[]>`select avatar_key from users where id = ${userId}`;
+  const result = await sql.begin(async (tx) => {
     const [open] = await tx<{ n: number }[]>`
       select count(*)::int as n from loans where (owner_id = ${userId} or borrower_id = ${userId})
          and status in ('requested', 'accepted', 'active', 'return_reported', 'returned', 'disputed')`;
@@ -83,4 +106,11 @@ export async function deleteAccount(userId: string) {
                     home_lat = null, home_lng = null, display_lat = null, display_lng = null, avatar_key = null,
                     email_prefs = '{}', deleted_at = now() where id = ${userId}`;
   });
+  // Profilbild aus dem Bucket entfernen (nach erfolgreicher Löschung)
+  if (prev?.avatar_key) {
+    const old = prev.avatar_key;
+    const { deleteObject } = await import("@/lib/storage");
+    await Promise.allSettled(["", "-480"].flatMap((v) => ["avif", "webp"].map((x) => deleteObject(`${old}${v}.${x}`))));
+  }
+  return result;
 }

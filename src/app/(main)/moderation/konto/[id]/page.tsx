@@ -9,7 +9,7 @@ import { ago, fmtDay } from "@/lib/dates";
 import { reportReasonLabel, statusLabel, trustLabel } from "@/lib/i18n/de-CH";
 import { Notice, cx } from "@/components/ui";
 import { BackLink, Chip, ModHead, Quiet, StatTile } from "@/components/moderation/ui";
-import { BanControls, SuspendSwitch } from "@/components/moderation/actions";
+import { BanControls, RemoveAvatar, SuspendSwitch } from "@/components/moderation/actions";
 import { kindLabel } from "../../labels";
 
 export const metadata = { title: "Konto · Moderation" };
@@ -51,7 +51,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     <div>
       <BackLink href="/moderation?ansicht=konten">Konten</BackLink>
       <header className="mb-10 md:mb-12 flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-7 anim-rise">
-        <span className="md:hidden"><Monogram name={u.first_name || "?"} seed={u.id} size={64} /></span><span className="hidden md:block"><Monogram name={u.first_name || "?"} seed={u.id} size={80} /></span>
+        <span className="md:hidden"><Monogram name={u.first_name || "?"} seed={u.id} size={64} photo={u.avatar_key} /></span><span className="hidden md:block"><Monogram name={u.first_name || "?"} seed={u.id} size={80} photo={u.avatar_key} /></span>
         <div className="min-w-0">
           <p className="eyebrow">{roleLabel[u.role] ?? u.role} · Stufe {trustLabel[u.trust_level] ?? u.trust_level}</p>
           <h1 className="display text-[32px] md:text-[44px] mt-2">{u.first_name || "Ohne Namen"}</h1>
@@ -84,6 +84,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               <div className="px-5 md:px-6">
                 <SuspendSwitch userId={u.id} suspended={Boolean(u.lending_suspended_at)} />
               </div>
+              {u.avatar_key && (
+                <div className="px-5 md:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-[15px]">Profilbild</p>
+                    <p className="text-[13px] text-muted mt-0.5">Unpassende Bilder entfernen. Die Person sieht danach wieder ihre Initiale.</p>
+                  </div>
+                  <RemoveAvatar userId={u.id} />
+                </div>
+              )}
               <div className="p-5 md:p-6 rounded-b-[14px] bg-late/[0.04]">
                 <p className="eyebrow !text-late mb-1">Gefahrenzone</p>
                 <p className="font-medium text-[16px] mb-4">Kontosperre</p>

@@ -121,8 +121,8 @@ export async function loanView(loanId: string, userId: string) {
   const s = stepFor(r, userId);
   const otherId = isOwner ? r.borrower_id : r.owner_id;
 
-  const [other] = await sql<{ id: string; first_name: string; trust_level: number; member_since: Date; lent: number; borrowed: number; punctual_pct: number | null; visible_losses: number; shared_circles: string[] }[]>`
-    select u.id, u.first_name, u.trust_level, u.created_at as member_since, s.lent_count::int as lent, s.borrowed_count::int as borrowed,
+  const [other] = await sql<{ id: string; first_name: string; avatar_key: string | null; trust_level: number; member_since: Date; lent: number; borrowed: number; punctual_pct: number | null; visible_losses: number; shared_circles: string[] }[]>`
+    select u.id, u.first_name, u.avatar_key, u.trust_level, u.created_at as member_since, s.lent_count::int as lent, s.borrowed_count::int as borrowed,
            case when s.rated_count > 0 then round(100.0 * s.punctual_count / s.rated_count)::int end as punctual_pct,
            s.visible_losses::int as visible_losses,
            array(select c.name from circles c join circle_members a on a.circle_id = c.id and a.user_id = u.id and a.status = 'active'

@@ -16,7 +16,7 @@ export const metadata = { title: "Übergabe-Chat" };
 type Row = {
   route: string | null; agreed_place: string | null; agreed_at: Date | null; read_only_at: Date | null;
   prev_id: string; next_id: string; owner: string; prev_b: string; next_b: string; prev_end: string; next_start: string;
-  owner_id: string; prev_bid: string; next_bid: string; copy_id: string;
+  owner_id: string; prev_bid: string; next_bid: string; copy_id: string; owner_avatar: string | null; prev_avatar: string | null; next_avatar: string | null;
   title: string; authors: string[]; work_id: string; cover_key: string | null; photo_key: string | null; photo_w: number | null; photo_h: number | null;
 };
 
@@ -34,6 +34,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     select hc.route, hc.agreed_place, hc.agreed_at, hc.read_only_at, p.id as prev_id, n.id as next_id,
            o.first_name as owner, pb.first_name as prev_b, nb.first_name as next_b, n.owner_id, p.borrower_id as prev_bid, n.borrower_id as next_bid,
            (upper(p.wanted) - 1)::text as prev_end, lower(n.wanted)::text as next_start, n.copy_id,
+           o.avatar_key as owner_avatar, pb.avatar_key as prev_avatar, nb.avatar_key as next_avatar,
            w.title, w.authors, e.work_id, e.cover_key, ph.key as photo_key, ph.width as photo_w, ph.height as photo_h
       from handover_chats hc join loans p on p.id = hc.prev_loan_id join loans n on n.id = hc.next_loan_id
       join users o on o.id = n.owner_id join users pb on pb.id = p.borrower_id join users nb on nb.id = n.borrower_id
@@ -50,10 +51,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     ["Ort", h.agreed_place],
     ["Zeit", h.agreed_at ? fmtDayTime(h.agreed_at) : null],
   ];
-  const people: { id: string; name: string; role: string }[] = [
-    { id: h.prev_bid, name: h.prev_b, role: `hat das Buch bis ${fmtDay(dayToDate(h.prev_end))}` },
-    { id: h.next_bid, name: h.next_b, role: `liest ab ${fmtDay(dayToDate(h.next_start))}` },
-    { id: h.owner_id, name: h.owner, role: "verleiht das Buch" },
+  const people: { id: string; name: string; role: string; photo: string | null }[] = [
+    { id: h.prev_bid, name: h.prev_b, role: `hat das Buch bis ${fmtDay(dayToDate(h.prev_end))}`, photo: h.prev_avatar },
+    { id: h.next_bid, name: h.next_b, role: `liest ab ${fmtDay(dayToDate(h.next_start))}`, photo: h.next_avatar },
+    { id: h.owner_id, name: h.owner, role: "verleiht das Buch", photo: h.owner_avatar },
   ];
   const steps: { label: string; note: string; state: "done" | "current" | "open" }[] = [
     { label: h.prev_b, note: `bis ${fmtDay(dayToDate(h.prev_end))}`, state: "done" },
@@ -146,7 +147,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <ul className="space-y-3">
               {people.map((p) => (
                 <li key={p.id + p.role} className="flex items-center gap-3 min-w-0">
-                  <Monogram name={p.name} seed={p.id} size={36} />
+                  <Monogram name={p.name} seed={p.id} size={36} photo={p.photo} />
                   <span className="min-w-0 leading-tight">
                     <Link href={`/profil/${p.id}`} className="font-medium hover:underline underline-offset-4">{p.name}</Link>
                     {p.id === user.id && <span className="text-muted"> (du)</span>}

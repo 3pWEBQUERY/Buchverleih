@@ -22,7 +22,7 @@ const ops: Op[] = [
   { method: "post", path: "/auth/logout", tag: "Anmeldung", summary: "Abmelden" },
   { method: "get", path: "/me", tag: "Konto", summary: "Eigenes Konto, Zahlen und ob Anfragen möglich sind" },
   { method: "post", path: "/me", tag: "Konto", summary: "Profil vervollständigen", body: S({ firstName: str, plz: str, birthDate: day }, ["firstName", "plz", "birthDate"]) },
-  { method: "patch", path: "/me", tag: "Konto", summary: "Einstellungen (Ferienmodus, E-Mail-Typen, Ort)", body: S({ firstName: str, shelfPaused: bool, emailPrefs: { type: "object" }, plz: str }) },
+  { method: "patch", path: "/me", tag: "Konto", summary: "Einstellungen (Ferienmodus, E-Mail-Typen, Ort, Profilbild: avatarUploadId eines eigenen Uploads mit Zweck «avatar», null entfernt es)", body: S({ firstName: str, shelfPaused: bool, emailPrefs: { type: "object" }, plz: str, avatarUploadId: { type: ["string", "null"], format: "uuid" } }) },
   { method: "post", path: "/me/phone", tag: "Konto", summary: "SMS-Code anfordern", body: S({ phone: str }, ["phone"]) },
   { method: "post", path: "/me/phone/verify", tag: "Konto", summary: "SMS-Code bestätigen", body: S({ code: str }, ["code"]) },
   { method: "get", path: "/me/passkeys", tag: "Konto", summary: "Passkeys auflisten" },

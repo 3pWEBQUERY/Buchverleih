@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Monogram } from "@/components/person/monogram";
 import type { SessionUser } from "@/lib/auth/session";
 import { NavLink, SearchTrigger, Shortcuts, UnreadDot } from "./shell-client";
 import { Wordmark, LogoMark } from "./brand";
@@ -13,7 +14,6 @@ export { Wordmark } from "./brand";
  */
 export function AppShell({ user, unread, children }: { user: SessionUser; unread: number; children: React.ReactNode }) {
   const mod = user.role !== "member";
-  const initial = (user.first_name || "?").slice(0, 1).toUpperCase();
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[256px_1fr]">
       <Shortcuts />
@@ -37,9 +37,9 @@ export function AppShell({ user, unread, children }: { user: SessionUser; unread
 
         <div className="mt-auto">
           <Link href={`/profil/${user.id}`} className="flex items-center gap-3 rounded-[8px] p-2 hover:bg-paper-3 transition-colors">
-            <span className="h-10 w-10 rounded-full bg-ink text-paper grid place-items-center text-[17px] font-semibold">{initial}</span>
+            <Monogram name={user.first_name || "?"} seed={user.id} size={40} photo={user.avatar_key} />
             <span className="min-w-0 leading-tight">
-              <span className="block font-semibold truncate">{user.first_name || "Profil"}</span>
+              <span className="block font-medium truncate">{user.first_name || "Profil"}</span>
               <span className="block text-[13px] text-muted truncate">{trustLabel[user.trust_level]} · {user.municipality}</span>
             </span>
           </Link>
@@ -73,7 +73,7 @@ export function AppShell({ user, unread, children }: { user: SessionUser; unread
             </Link>
           </div>
           <NavLink href="/regal" icon={<IconShelf />} tab>Regal</NavLink>
-          <NavLink href={`/profil/${user.id}`} icon={<span className="h-6 w-6 rounded-full bg-ink text-paper grid place-items-center text-[11px] font-semibold">{initial}</span>} tab>Profil</NavLink>
+          <NavLink href={`/profil/${user.id}`} icon={<Monogram name={user.first_name || "?"} seed={user.id} size={24} photo={user.avatar_key} />} tab>Profil</NavLink>
         </div>
       </nav>
     </div>
