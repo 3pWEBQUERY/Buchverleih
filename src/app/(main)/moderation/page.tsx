@@ -256,14 +256,17 @@ function KpiTile({ k, i }: { k: Kpi; i: number }) {
   const fill = k.value === null ? 0 : Math.max(2, Math.min(100, (k.value / max) * 100));
   const mark = (k.goal / max) * 100;
   return (
-    <li className="panel rounded-[14px] p-5 flex flex-col min-h-[208px] anim-rise" style={{ animationDelay: `${i * 35}ms` }}>
+    <li className="panel rounded-[14px] p-5 flex flex-col min-h-[228px] anim-rise" style={{ animationDelay: `${i * 35}ms` }}>
       <div className="flex items-start justify-between gap-3">
-        <p className="ui-title text-[15px]">{k.label}</p>
+        <div className="min-w-0">
+          <p className="ui-title text-[15px]">{k.label}</p>
+          <p className="text-[12.5px] text-muted leading-snug mt-1 line-clamp-2">{k.def}</p>
+        </div>
         {k.value === null
           ? <Chip>Keine Daten</Chip>
           : <Chip tone={ok ? "ok" : "late"} strong>{ok ? "Erreicht" : "Unter Ziel"}</Chip>}
       </div>
-      <p className="font-serif text-[52px] leading-none tnum mt-4">
+      <p className="font-serif text-[52px] leading-none tnum mt-5">
         {k.value === null ? <span className="text-muted">–</span> : <>{fmt(k.value, k.digits)}<span className="text-[26px] text-muted">{k.unit}</span></>}
       </p>
       <div className="mt-auto pt-5">
@@ -272,7 +275,7 @@ function KpiTile({ k, i }: { k: Kpi; i: number }) {
           <span className="absolute -top-1 -bottom-1 w-[2px] rounded-full bg-ink" style={{ left: `calc(${mark}% - 1px)` }} />
         </div>
         <div className="flex items-baseline justify-between gap-3 mt-2.5 text-[12.5px]">
-          <span className="text-muted line-clamp-1" title={k.def}>{k.def}</span>
+          <span className="text-muted">{k.dir === "min" ? "höher ist besser" : "tiefer ist besser"}</span>
           <span className="font-semibold whitespace-nowrap tnum">Ziel {k.target}</span>
         </div>
       </div>

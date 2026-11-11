@@ -29,9 +29,9 @@ export function NightShelf({ items, label, offset = 0 }: { items: ShelfCopy[]; l
               </div>
               <div className="h-[3px] bg-night-ink/90 rounded-full" />
               <p className="pt-2.5 text-[13.5px] font-medium leading-snug line-clamp-2 min-h-[2.75em] group-hover:underline">{c.title}</p>
-              <p className="text-[12px] text-night-muted mt-1 flex items-center gap-1.5">
-                <span aria-hidden className="h-1.5 w-1.5 rounded-full flex-none" style={{ background: NIGHT_DOT[st.tone] }} />
-                <span className="truncate">{st.text}</span>
+              <p className="text-[12px] leading-snug text-night-muted mt-1 flex items-start gap-1.5">
+                <span aria-hidden className="h-1.5 w-1.5 mt-[5px] rounded-full flex-none" style={{ background: NIGHT_DOT[st.tone] }} />
+                <span className="line-clamp-2">{st.text}</span>
               </p>
             </Link>
           </li>

@@ -56,9 +56,9 @@ export function ProfileActions({ userId, name, blocked }: { userId: string; name
     <div className="w-full sm:w-auto">
       <div className="flex flex-wrap items-center md:justify-end gap-x-5 gap-y-2 text-sm">
         {reported ? (
-          <span className="text-muted">Gemeldet</span>
+          <span className="chip"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-done" />Gemeldet</span>
         ) : (
-          <Button variant="quiet" className="text-sm" aria-expanded={reporting} aria-controls="melden-gruende" onClick={() => setReporting((r) => !r)}>
+          <Button variant="ghost" size="sm" aria-expanded={reporting} aria-controls="melden-gruende" onClick={() => setReporting((r) => !r)}>
             Melden
           </Button>
         )}
@@ -71,11 +71,11 @@ export function ProfileActions({ userId, name, blocked }: { userId: string; name
         )}
       </div>
       {reporting && (
-        <div id="melden-gruende" className="anim-rise mt-3 sm:max-w-sm md:ml-auto">
-          <p className="text-sm text-ink-2 mb-2">Was ist das Problem?</p>
+        <div id="melden-gruende" className="anim-rise mt-3 panel-quiet p-4 sm:max-w-sm md:ml-auto">
+          <p className="text-[13px] font-semibold mb-2.5">Was ist das Problem?</p>
           <div className="flex flex-wrap md:justify-end gap-2">
             {REASONS.map((r) => (
-              <Button key={r} variant="secondary" size="sm" disabled={busy} onClick={() => report(r)}>
+              <Button key={r} variant="ghost" size="sm" className="bg-paper" disabled={busy} onClick={() => report(r)}>
                 {reportReasonLabel[r]}
               </Button>
             ))}

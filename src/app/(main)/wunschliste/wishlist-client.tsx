@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Cover } from "@/components/cover";
 import { useToast } from "@/components/toast";
-import { IconSearch } from "@/components/icons";
+import { IconSearch, IconSwap } from "@/components/icons";
 import { Button, LinkButton, Segmented, SectionTitle, Switch, cx } from "@/components/ui";
 import { api } from "@/lib/client";
 
@@ -82,18 +82,26 @@ export function WishlistClient({ items: initial, matches }: { items: WishItem[];
   }
 
   return (
-    <div className="space-y-14">
+    <div className="space-y-14 md:space-y-16">
       {matches.length > 0 && (
         <section aria-labelledby="tauschtreffer">
-          <SectionTitle><span id="tauschtreffer">Tauschtreffer</span></SectionTitle>
-          <ul className="divide-y divide-line border-b border-line">
-            {matches.map((m) => (
-              <li key={m.id} className="py-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-                <p className="max-w-2xl text-[16px] leading-relaxed">
-                  {m.other_name} hat <span className="font-serif text-lg">{m.their_title}</span> von deiner Wunschliste,
-                  und du hast <span className="font-serif text-lg">{m.my_title}</span> von {genitive(m.other_name)} Liste.
-                </p>
-                <LinkButton href={`/exemplar/${m.their_copy}`} variant="secondary" size="sm">Tausch ansehen</LinkButton>
+          <SectionTitle aside={<span className="tnum">{matches.length === 1 ? "1 Treffer" : `${matches.length} Treffer`}</span>}>
+            <span id="tauschtreffer">Tauschtreffer</span>
+          </SectionTitle>
+          <ul className="grid md:grid-cols-2 gap-3">
+            {matches.map((m, i) => (
+              <li key={m.id} className="anim-rise" style={{ animationDelay: `${i * 40}ms` }}>
+                <div className="panel p-5 md:p-6 h-full flex flex-col gap-5 hover:border-ink transition-colors">
+                  <div className="flex items-center gap-2.5">
+                    <span aria-hidden className="h-8 w-8 rounded-full bg-ink text-paper grid place-items-center"><IconSwap width={16} height={16} /></span>
+                    <p className="eyebrow">Tausch mit {m.other_name}</p>
+                  </div>
+                  <dl className="grid grid-cols-2 gap-4">
+                    <div><dt className="text-[13px] text-muted">Du bekommst</dt><dd className="font-serif text-[22px] leading-[1.05] mt-1">{m.their_title}</dd></div>
+                    <div><dt className="text-[13px] text-muted">{genitive(m.other_name)} Wunsch</dt><dd className="font-serif text-[22px] leading-[1.05] mt-1">{m.my_title}</dd></div>
+                  </dl>
+                  <div className="mt-auto"><LinkButton href={`/exemplar/${m.their_copy}`} variant="secondary" size="sm">Tausch ansehen</LinkButton></div>
+                </div>
               </li>
             ))}
           </ul>
@@ -108,38 +116,53 @@ export function WishlistClient({ items: initial, matches }: { items: WishItem[];
         <AddTitle onList={new Set(items.map((i) => i.work_id))} autoFocus={items.length === 0} />
 
         {items.length === 0 ? (
-          <p className="text-ink-2 py-8 border-b border-line">Deine Wunschliste ist leer. Such oben einen Titel, dann melden wir uns, sobald er in deiner Nähe frei wird.</p>
+          <div className="mt-6 panel-quiet rounded-[18px] p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6 anim-rise">
+            <div aria-hidden className="flex items-end gap-[3px] flex-none">
+              <span className="h-[62px] w-[34px] rounded-[3px] border border-dashed border-line-strong" />
+              <span className="h-[74px] w-[40px] rounded-[3px] border border-dashed border-line-strong" />
+              <span className="h-[56px] w-[30px] rounded-[3px] border border-dashed border-line-strong" />
+            </div>
+            <div className="flex-1 flex flex-wrap items-center justify-between gap-4">
+              <p className="text-[16px] text-ink-2 max-w-md">Noch leer. Such oben einen Titel, dann melden wir uns, sobald er in deiner Nähe frei wird.</p>
+              <LinkButton href="/suche" variant="ghost">Im Bestand stöbern</LinkButton>
+            </div>
+          </div>
         ) : (
-          <ul className="divide-y divide-line border-b border-line mt-6">
-            {items.map((it) => (
-              <li key={it.work_id} className="py-5 grid grid-cols-[56px_minmax(0,1fr)] gap-x-4 lg:grid-cols-[56px_minmax(0,1fr)_auto] lg:gap-x-8 items-start">
-                <Link href={`/titel/${it.work_id}`} tabIndex={-1} aria-hidden>
-                  <Cover data={{ title: it.title, authors: it.authors, coverKey: it.cover_key, seed: it.work_id }} width={56} />
-                </Link>
-                <div className="min-w-0">
-                  <Link href={`/titel/${it.work_id}`} className="font-serif text-xl leading-tight hover:underline line-clamp-2">{it.title}</Link>
-                  {it.authors.length > 0 && <div className="text-sm text-muted mt-0.5 truncate">{it.authors.join(", ")}</div>}
-                  <div className="mt-2 text-[15px]">
-                    {it.available_near > 0 ? (
-                      <Link href={`/titel/${it.work_id}`} className="text-ok font-medium hover:underline underline-offset-4">
-                        Jetzt verfügbar in der Nähe: <span className="tnum">{it.available_near}</span>
-                      </Link>
-                    ) : (
-                      <span className="text-muted">Im Umkreis von {it.radius_km} km gerade nichts frei</span>
-                    )}
+          <ul className="space-y-3 mt-6">
+            {items.map((it, i) => (
+              <li key={it.work_id} className="anim-rise" style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
+                <div className="panel p-5 md:p-6 h-full flex flex-col xl:flex-row xl:items-center gap-5 xl:gap-8 hover:border-line-strong transition-colors">
+                  <div className="flex gap-4 md:gap-5 flex-1 min-w-0">
+                    <Link href={`/titel/${it.work_id}`} tabIndex={-1} aria-hidden className="book flex-none self-start">
+                      <div className="book-face"><Cover data={{ title: it.title, authors: it.authors, coverKey: it.cover_key, seed: it.work_id }} width={68} /></div>
+                    </Link>
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/titel/${it.work_id}`} className="font-serif text-[23px] md:text-[26px] leading-[1.05] hover:underline underline-offset-4 decoration-1 line-clamp-2">{it.title}</Link>
+                      {it.authors.length > 0 && <p className="text-[14px] text-muted mt-1 truncate">{it.authors.join(", ")}</p>}
+                      <div className="mt-3">
+                        {it.available_near > 0 ? (
+                          <Link href={`/titel/${it.work_id}`} className="chip !bg-ok/10 !text-ok font-semibold hover:!bg-ok/15 transition-colors">
+                            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok" />
+                            <span className="tnum">{it.available_near}</span> jetzt frei in der Nähe
+                          </Link>
+                        ) : (
+                          <span className="chip"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-done" />Bis {it.radius_km} km gerade nichts frei</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="col-span-2 lg:col-span-1 mt-4 lg:mt-0 flex flex-wrap items-center gap-x-6 gap-y-1">
-                  <Segmented<number>
-                    name={`Umkreis für ${it.title}`}
-                    value={it.radius_km}
-                    onChange={(r) => setRadius(it, r)}
-                    options={RADII.map((r) => ({ value: r, label: <span className="tnum">{r} km</span> }))}
-                    className="w-full sm:w-64"
-                  />
-                  <div className="flex items-center gap-6 w-full sm:w-auto justify-between">
-                    <div className="w-36"><Switch checked={it.alarm} onChange={(v) => setAlarm(it, v)} label="Titelalarm" /></div>
-                    <Button variant="quiet" className="text-sm" onClick={() => remove(it)} aria-label={`«${it.title}» entfernen`}>Entfernen</Button>
+                  <div className="pt-4 xl:pt-0 border-t xl:border-t-0 border-line flex flex-wrap items-center gap-x-5 gap-y-1 xl:flex-none">
+                    <Segmented<number>
+                      name={`Umkreis für ${it.title}`}
+                      value={it.radius_km}
+                      onChange={(r) => setRadius(it, r)}
+                      options={RADII.map((r) => ({ value: r, label: <span className="tnum whitespace-nowrap">{r} km</span> }))}
+                      className="w-full sm:w-[280px]"
+                    />
+                    <div className="flex items-center gap-5 flex-1 xl:flex-none justify-between sm:justify-end">
+                      <div className="w-[136px]"><Switch checked={it.alarm} onChange={(v) => setAlarm(it, v)} label={<span className="block text-[14px] font-medium leading-[32px]">Titelalarm</span>} /></div>
+                      <Button variant="quiet" className="text-sm" onClick={() => remove(it)} aria-label={`«${it.title}» entfernen`}>Entfernen</Button>
+                    </div>
                   </div>
                 </div>
               </li>
@@ -202,31 +225,31 @@ function AddTitle({ onList, autoFocus }: { onList: Set<string>; autoFocus: boole
 
   return (
     <div>
-      <label htmlFor="wunsch-q" className="block text-sm font-medium mb-1.5">Titel hinzufügen</label>
+      <label htmlFor="wunsch-q" className="sr-only">Titel hinzufügen</label>
       <div className="relative">
-        <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"><IconSearch /></span>
+        <span aria-hidden className="absolute left-5 top-1/2 -translate-y-1/2 text-ink-2 pointer-events-none"><IconSearch /></span>
         <input id="wunsch-q" ref={ref} type="search" autoComplete="off" autoFocus={autoFocus} value={q} onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Escape") setQ(""); if (e.key === "Enter" && hits?.[0] && !onList.has(hits[0].work_id)) { e.preventDefault(); add(hits[0]); } }}
-          placeholder="Titel oder Autorin"
-          className="w-full h-11 bg-transparent border border-line-strong rounded-sm pl-10 pr-3 [&::-webkit-search-cancel-button]:appearance-none text-[16px] placeholder:text-muted/70 focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink" />
+          placeholder="Titel hinzufügen: Titel oder Autorin"
+          className="w-full h-14 bg-paper border border-line-strong rounded-full pl-13 pr-5 [&::-webkit-search-cancel-button]:appearance-none text-[17px] placeholder:text-muted/80 hover:border-ink-2 focus:outline-none focus:border-ink focus:ring-[4px] focus:ring-ink/10 transition-[border-color,box-shadow]" />
       </div>
       {hits && (
-        <div className="anim-rise" aria-live="polite">
+        <div className="anim-rise mt-2" aria-live="polite">
           {hits.length === 0 ? (
-            <p className="text-sm text-muted py-3">Im Katalog finden wir «{q.trim()}» nicht. Prüfe die Schreibweise.</p>
+            <p className="text-sm text-muted py-3 px-5">Im Katalog finden wir «{q.trim()}» nicht. Prüfe die Schreibweise.</p>
           ) : (
-            <ul className="divide-y divide-line border-b border-line">
+            <ul className="panel divide-y divide-line overflow-hidden">
               {hits.map((e) => {
                 const on = onList.has(e.work_id);
                 return (
-                  <li key={e.work_id} className="py-2.5 grid grid-cols-[32px_minmax(0,1fr)_auto] gap-3 items-center">
-                    <Cover data={{ title: e.title, authors: e.authors, coverKey: e.cover_key, seed: e.work_id }} width={32} />
+                  <li key={e.work_id} className="px-4 md:px-5 py-3 grid grid-cols-[36px_minmax(0,1fr)_auto] gap-4 items-center">
+                    <Cover data={{ title: e.title, authors: e.authors, coverKey: e.cover_key, seed: e.work_id }} width={36} />
                     <div className="min-w-0">
-                      <div className="font-serif text-[17px] leading-tight truncate">{e.title}</div>
+                      <div className="font-serif text-[19px] leading-tight truncate">{e.title}</div>
                       <div className="text-sm text-muted truncate">{e.authors.join(", ")}</div>
                     </div>
                     {on ? (
-                      <span className="text-sm text-muted">Schon auf der Liste</span>
+                      <span className="chip"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok" />Auf der Liste</span>
                     ) : (
                       <Button size="sm" variant="secondary" disabled={busy === e.work_id} onClick={() => add(e)}>Hinzufügen</Button>
                     )}
@@ -237,7 +260,7 @@ function AddTitle({ onList, autoFocus }: { onList: Set<string>; autoFocus: boole
           )}
         </div>
       )}
-      <p className={cx("text-xs text-muted mt-2", hits && "hidden")}>Neue Titel starten mit einem Umkreis von 5 km und eingeschaltetem Titelalarm.</p>
+      <p className={cx("text-[13px] text-muted mt-2.5 px-5", hits && "hidden")}>Neue Titel starten mit einem Umkreis von 5 km und eingeschaltetem Titelalarm.</p>
     </div>
   );
 }

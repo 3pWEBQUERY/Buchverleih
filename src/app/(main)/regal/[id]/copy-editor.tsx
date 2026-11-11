@@ -10,10 +10,10 @@ import { addDays, dayToDate, fmtDay, fmtRange, todayCH } from "@/lib/dates";
 import { conditionHint, conditionLabel, offerLabel, passOnLabel, visibilityLabel } from "@/lib/i18n/de-CH";
 import { CalendarView } from "@/components/calendar";
 import { Cover, imageUrl } from "@/components/cover";
-import { StatusText, shelfStatusText } from "@/components/status";
+import { shelfStatusText } from "@/components/status";
 import { useToast } from "@/components/toast";
 import { Button, Check, Field, Input, Notice, Segmented, Switch, Textarea, cx } from "@/components/ui";
-import { IconArrowLeft, IconCamera, IconClose } from "@/components/icons";
+import { IconArrowLeft, IconCamera, IconCheck, IconClose } from "@/components/icons";
 
 type Settings = {
   condition: number;
@@ -108,185 +108,191 @@ export function CopyEditor({ copy, calendar, circles }: { copy: CopyDetail; cale
   const locked = copy.transfer_locked_until && new Date(copy.transfer_locked_until) > new Date() ? copy.transfer_locked_until : null;
   const circleDays = circles.filter((c) => s.circleIds.includes(c.id));
 
+  const coverData = { title: copy.title, authors: copy.authors, photoKey: photo?.key, photoW: photo?.width, photoH: photo?.height, coverKey: copy.cover_key, seed: copy.work_id };
+  const dot = { ok: "bg-ok", lent: "bg-lent", late: "bg-late", wait: "bg-wait", done: "bg-done", accent: "bg-accent" }[st.tone];
+
   return (
     <div>
-      <Link href="/regal" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink mb-6 md:mb-8">
+      <Link href="/regal" className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
         <IconArrowLeft width={16} height={16} /> Mein Regal
       </Link>
 
-      <div className="grid md:grid-cols-12 gap-x-12 gap-y-8">
-        <aside className="md:col-span-4">
-          <div className="md:sticky md:top-12 flex md:block gap-5 items-end">
-            <div className="anim-cover flex-none">
-              <span className="md:hidden">
-                <Cover priority data={{ title: copy.title, authors: copy.authors, photoKey: photo?.key, photoW: photo?.width, photoH: photo?.height, coverKey: copy.cover_key, seed: copy.work_id }} height={150} />
-              </span>
-              <span className="hidden md:block">
-                <Cover large priority width={240} className="max-w-full" data={{ title: copy.title, authors: copy.authors, photoKey: photo?.key, photoW: photo?.width, photoH: photo?.height, coverKey: copy.cover_key, seed: copy.work_id }} />
-              </span>
-            </div>
-            <div className="min-w-0 md:hidden pb-1">
-              <StatusText tone={st.tone}>{st.text}</StatusText>
-              <Link href={`/exemplar/${copy.id}`} className="block text-sm text-muted hover:underline mt-2">So sehen es andere</Link>
-            </div>
-            <Photos copy={copy} className="hidden md:block mt-6" />
+      <header className="grid grid-cols-[auto_minmax(0,1fr)] gap-5 md:gap-10 items-end mb-10 md:mb-14">
+        <Link href={`/exemplar/${copy.id}`} className="book block anim-cover" aria-label="So sehen es andere">
+          <span className="book-face block md:hidden"><Cover priority data={coverData} height={140} /></span>
+          <span className="book-face hidden md:block"><Cover priority large data={coverData} height={232} /></span>
+        </Link>
+        <div className="min-w-0 anim-rise" style={{ animationDelay: "60ms" }}>
+          <p className="eyebrow">Buch bearbeiten</p>
+          <h1 lang="de" className="display text-[38px] md:text-[76px] mt-2.5 md:mt-3 break-words hyphens-auto">{copy.title}</h1>
+          <p className="text-[15px] md:text-[17px] text-ink-2 mt-2">{copy.authors.join(", ")}</p>
+          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span className="chip"><span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", dot)} />{st.text}</span>
+            <Link href={`/exemplar/${copy.id}`} className="text-[13.5px] font-medium text-muted hover:text-ink link-grow">So sehen es andere</Link>
           </div>
-        </aside>
+        </div>
+      </header>
 
-        <div className="md:col-span-8 min-w-0">
-          <header>
-            <h1 className="display text-4xl md:text-6xl">{copy.title}</h1>
-            <p className="text-lg text-ink-2 mt-3">{copy.authors.join(", ")}</p>
-            <div className="hidden md:flex flex-wrap gap-x-5 gap-y-2 items-center mt-4">
-              <StatusText tone={st.tone}>{st.text}</StatusText>
-              <Link href={`/exemplar/${copy.id}`} className="text-sm text-muted hover:underline">So sehen es andere</Link>
-            </div>
-            <p className="text-sm text-muted mt-4">Jede Änderung wird sofort gespeichert.</p>
-          </header>
+      <p className="text-[13.5px] text-muted mb-4 flex items-center gap-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok" /> Jede Änderung wird sofort gespeichert.</p>
 
-          <Part title="Zustand">
+      <div className="space-y-4 md:space-y-5">
+        <Group title="Zustand und Fotos" i={0}>
+          <Row label="Zustand" hint={conditionHint[s.condition]}>
             <Segmented name="Zustand" size="lg" value={s.condition} onChange={(v) => save({ condition: v })}
               options={[1, 2, 3, 4].map((c) => ({ value: c, label: conditionLabel[c], hint: conditionHint[c] }))} />
-            <p className="text-sm text-muted mt-2">{conditionHint[s.condition]}</p>
-            <Field label="Notiz" hint={`Zum Beispiel «Widmung auf Seite 1». ${200 - note.length} Zeichen frei.`} className="mt-6">
-              <Textarea rows={2} maxLength={200} value={note} onChange={(e) => setNote(e.target.value)}
-                onBlur={() => { const v = note.trim() || null; if (v !== (s.conditionNote ?? null)) save({ conditionNote: v }); }} />
-            </Field>
-          </Part>
+          </Row>
+          <Row label="Notiz" hint={<>Zum Beispiel «Widmung auf Seite 1». <span className="tnum">{200 - note.length}</span> Zeichen frei.</>}>
+            <Textarea rows={2} maxLength={200} value={note} onChange={(e) => setNote(e.target.value)} aria-label="Notiz zum Zustand"
+              onBlur={() => { const v = note.trim() || null; if (v !== (s.conditionNote ?? null)) save({ conditionNote: v }); }} />
+          </Row>
+          <Row label="Fotos" hint={copy.photos.length ? "Das erste Foto ersetzt das Cover." : "Zeig Zustand und Ausgabe. Ohne Foto erscheint das Cover."}>
+            <Photos copy={copy} />
+          </Row>
+        </Group>
 
-          <Part title="Angebot" hint="Mehrere möglich.">
-            <div role="group" aria-label="Angebotsarten" className="grid grid-cols-3 border border-line-strong rounded-sm overflow-hidden">
-              {OFFERS.map((o, i) => {
+        <Group title="Angebot und Sichtbarkeit" i={1}>
+          <Row label="Angebot" hint={<>
+            {s.offers.length === 0
+              ? "Nicht angeboten: Das Buch steht in deinem Regal, andere sehen es nicht."
+              : `Mehrere möglich. Andere können es ${s.offers.map((o) => ({ lend: "leihen", swap: "tauschen", gift: "geschenkt bekommen" })[o]).join(", ").replace(/, ([^,]*)$/, " oder $1")}.`}
+            {locked && <span className="block mt-1">Du hast es geschenkt bekommen. Tauschen und Verschenken geht ab {fmtDay(locked)}.</span>}
+          </>}>
+            <div role="group" aria-label="Angebotsarten" className="grid grid-cols-3 gap-1 p-1 bg-paper-2 rounded-full">
+              {OFFERS.map((o) => {
                 const on = s.offers.includes(o);
                 return (
                   <button key={o} type="button" aria-pressed={on}
                     onClick={() => save({ offers: OFFERS.filter((x) => (x === o ? !on : s.offers.includes(x))) })}
-                    className={cx("h-11 text-sm transition-colors duration-150", i > 0 && "border-l border-line-strong", on ? "bg-ink text-paper" : "hover:bg-paper-3")}>
-                    {offerLabel[o]}
+                    className={cx("h-10 rounded-full text-[13.5px] font-semibold inline-flex items-center justify-center gap-1.5 transition-[background-color,color] duration-200", on ? "bg-ink text-paper" : "text-ink-2 hover:bg-paper-3")}>
+                    {on && <IconCheck width={14} height={14} strokeWidth={2.2} className="anim-pop" />}{offerLabel[o]}
                   </button>
                 );
               })}
             </div>
-            <p className="text-sm text-muted mt-2">
-              {s.offers.length === 0
-                ? "Nicht angeboten: Das Buch steht in deinem Regal, andere sehen es nicht."
-                : `Andere können es ${s.offers.map((o) => ({ lend: "leihen", swap: "tauschen", gift: "geschenkt bekommen" })[o]).join(", ").replace(/, ([^,]*)$/, " oder $1")}.`}
-            </p>
-            {locked && (
-              <p className="text-sm text-muted mt-1">Du hast es geschenkt bekommen. Tauschen und Verschenken geht ab {fmtDay(locked)}.</p>
-            )}
-          </Part>
-
-          <Part title="Wer es sieht">
+          </Row>
+          <Row label="Wer es sieht" hint={VIS_HINT[s.visibility]}>
             <Segmented name="Sichtbarkeit" value={s.visibility} onChange={(v) => save({ visibility: v })}
               options={(["all", "proven", "circles"] as const).map((v) => ({ value: v, label: visibilityLabel[v] }))} />
-            <p className="text-sm text-muted mt-2">{VIS_HINT[s.visibility]}</p>
-
-            <div className="mt-6">
-              <p className="text-sm font-medium mb-1">In meinen Kreisen</p>
-              {circles.length === 0 ? (
-                <p className="text-sm text-muted">Du bist in keinem Kreis. <Link href="/kreise/neu" className="underline underline-offset-4 hover:text-ink">Kreis gründen</Link></p>
-              ) : (
-                <>
-                  <p className="text-sm text-muted mb-2">Ausgewählte Kreise zeigen das Buch in ihrem gemeinsamen Regal.</p>
-                  <ul className="divide-y divide-line border-y border-line">
-                    {circles.map((c) => (
-                      <li key={c.id} className="py-2.5">
-                        <Check checked={s.circleIds.includes(c.id)} label={c.name}
-                          onChange={(v) => save({ circleIds: v ? [...s.circleIds, c.id] : s.circleIds.filter((x) => x !== c.id) })} />
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-              {s.visibility === "circles" && s.circleIds.length === 0 && (
-                <Notice tone="late" className="mt-4">Kein Kreis ausgewählt. So sieht das Buch niemand. Wähle mindestens einen Kreis.</Notice>
-              )}
-            </div>
-          </Part>
-
-          <Part title="Leihe">
-            <Field label="Leihfrist">
-              <Segmented name="Leihfrist" value={s.loanDays} onChange={(v) => save({ loanDays: v })}
-                options={([14, 28, 42, 56] as const).map((d) => ({ value: d, label: `${d} Tage` }))} />
-            </Field>
-            {circleDays.length > 0 && (
-              <p className="text-sm text-muted mt-2">
-                In {circleDays.length === 1 ? `«${circleDays[0].name}»` : "deinen Kreisen"} gilt die Leihfrist des Kreises{circleDays.length === 1 ? ` (${circleDays[0].loanDays} Tage)` : ""}.
-              </p>
-            )}
-            <div className="mt-4 divide-y divide-line border-y border-line">
-              <Switch checked={s.autoExtend} onChange={(v) => save({ autoExtend: v })} label="Verlängerung automatisch gewähren"
-                hint="Um 14 Tage, wenn der Kalender danach frei ist. Sonst fragt die Person bei dir an." />
-              <div className="py-3">
-                <p className="text-[15px] mb-2">Höchstens so oft verlängern</p>
-                <Segmented name="Höchstens so oft verlängern" value={s.maxExtensions} onChange={(v) => save({ maxExtensions: v })}
-                  options={[0, 1, 2].map((n) => ({ value: n, label: n === 0 ? "Nie" : `${n}×` }))} className="max-w-xs" />
+          </Row>
+          <Row label="In meinen Kreisen" hint="Ausgewählte Kreise zeigen das Buch in ihrem gemeinsamen Regal.">
+            {circles.length === 0 ? (
+              <p className="text-[15px] text-ink-2">Du bist in keinem Kreis. <Link href="/kreise/neu" className="font-medium underline underline-offset-4 hover:text-ink">Kreis gründen</Link></p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {circles.map((c) => (
+                  <Check key={c.id} checked={s.circleIds.includes(c.id)} label={c.name}
+                    className="min-h-11 pl-3 pr-4 rounded-full border border-line has-[:checked]:border-ink transition-colors"
+                    onChange={(v) => save({ circleIds: v ? [...s.circleIds, c.id] : s.circleIds.filter((x) => x !== c.id) })} />
+                ))}
               </div>
-              <Switch checked={s.dropoffAllowed} onChange={(v) => save({ dropoffAllowed: v })} label="Ablage erlaubt"
-                hint="Übergabe über Milchkasten oder Briefkasten, mit Foto der Ablage." />
-            </div>
-          </Part>
+            )}
+            {s.visibility === "circles" && s.circleIds.length === 0 && (
+              <Notice tone="late" className="mt-4">Kein Kreis ausgewählt. So sieht das Buch niemand. Wähle mindestens einen Kreis.</Notice>
+            )}
+          </Row>
+        </Group>
 
-          <Part title="Verleihkalender">
+        <Group title="Leihe" i={2}>
+          <Row label="Leihfrist" hint={circleDays.length > 0
+            ? `In ${circleDays.length === 1 ? `«${circleDays[0].name}»` : "deinen Kreisen"} gilt die Leihfrist des Kreises${circleDays.length === 1 ? ` (${circleDays[0].loanDays} Tage)` : ""}.`
+            : "So lange darf jemand das Buch behalten."}>
+            <Segmented name="Leihfrist" value={s.loanDays} onChange={(v) => save({ loanDays: v })}
+              options={([14, 28, 42, 56] as const).map((d) => ({ value: d, label: `${d} Tage` }))} />
+          </Row>
+          <SwitchRow>
+            <Switch checked={s.autoExtend} onChange={(v) => save({ autoExtend: v })} label={<span className="font-semibold">Verlängerung automatisch gewähren</span>}
+              hint="Um 14 Tage, wenn der Kalender danach frei ist. Sonst fragt die Person bei dir an." />
+          </SwitchRow>
+          <Row label="Höchstens so oft verlängern">
+            <Segmented name="Höchstens so oft verlängern" value={s.maxExtensions} onChange={(v) => save({ maxExtensions: v })}
+              options={[0, 1, 2].map((n) => ({ value: n, label: n === 0 ? "Nie" : `${n}×` }))} />
+          </Row>
+          <SwitchRow>
+            <Switch checked={s.dropoffAllowed} onChange={(v) => save({ dropoffAllowed: v })} label={<span className="font-semibold">Ablage erlaubt</span>}
+              hint="Übergabe über Milchkasten oder Briefkasten, mit Foto der Ablage." />
+          </SwitchRow>
+        </Group>
+
+        <Group title="Verleihkalender" i={3}>
+          <div className="py-5 md:py-6">
             <CalendarView cal={calendar} />
             <BlockForm copyId={copy.id} calendar={calendar} />
+          </div>
+          <Row label="Buchbar im Voraus">
+            <Segmented name="Buchungshorizont" value={s.horizonDays} onChange={(v) => save({ horizonDays: v })}
+              options={([30, 60, 90, 180] as const).map((d) => ({ value: d, label: `${d} Tage` }))} />
+          </Row>
+          <Row label="Puffer zwischen zwei Leihen" hint="In Tagen. Zeit für Rückgabe und nächste Übergabe.">
+            <Segmented name="Puffer in Tagen" value={s.bufferDays} onChange={(v) => save({ bufferDays: v })}
+              options={range(0, 7).map((n) => ({ value: n, label: String(n) }))} />
+          </Row>
+          <Row label="Künftige Buchungen höchstens">
+            <Segmented name="Künftige Buchungen" value={s.maxFutureBookings} onChange={(v) => save({ maxFutureBookings: v })}
+              options={range(1, 6).map((n) => ({ value: n, label: String(n) }))} />
+          </Row>
+        </Group>
 
-            <div className="mt-8 grid gap-6">
-              <Field label="Buchbar im Voraus">
-                <Segmented name="Buchungshorizont" value={s.horizonDays} onChange={(v) => save({ horizonDays: v })}
-                  options={([30, 60, 90, 180] as const).map((d) => ({ value: d, label: `${d} Tage` }))} />
-              </Field>
-              <Field label="Puffer zwischen zwei Leihen" hint="Zeit für Rückgabe und nächste Übergabe.">
-                <Segmented name="Puffer in Tagen" value={s.bufferDays} onChange={(v) => save({ bufferDays: v })}
-                  options={range(0, 7).map((n) => ({ value: n, label: String(n) }))} />
-              </Field>
-              <Field label="Künftige Buchungen höchstens">
-                <Segmented name="Künftige Buchungen" value={s.maxFutureBookings} onChange={(v) => save({ maxFutureBookings: v })}
-                  options={range(1, 6).map((n) => ({ value: n, label: String(n) }))} />
-              </Field>
-            </div>
-          </Part>
-
-          <Part title="Direkte Weitergabe" hint="Das Buch geht vom einen Leiher direkt zum nächsten, ohne Umweg über dich.">
+        <Group title="Direkte Weitergabe" desc="Das Buch geht vom einen Leiher direkt zum nächsten, ohne Umweg über dich." i={4}>
+          <Row label="Weitergabe" hint={s.passOn === "never" ? "Jede Leihe geht über dich." : s.passOn === "on_request" ? "Du wirst bei jeder Folgeleihe gefragt." : "Du stimmst jeder Weitergabe im Voraus zu. Die beiden Leihenden werden trotzdem gefragt."}>
             <Segmented name="Direkte Weitergabe" value={s.passOn} onChange={(v) => save({ passOn: v })}
               options={(["never", "on_request", "always"] as const).map((v) => ({ value: v, label: passOnLabel[v] }))} />
-            <p className="text-sm text-muted mt-2">
-              {s.passOn === "never" ? "Jede Leihe geht über dich." : s.passOn === "on_request" ? "Du wirst bei jeder Folgeleihe gefragt." : "Du stimmst jeder Weitergabe im Voraus zu. Die beiden Leihenden werden trotzdem gefragt."}
-            </p>
-            <div className={cx("mt-6 transition-opacity", s.passOn === "never" && "opacity-45 pointer-events-none")} aria-disabled={s.passOn === "never"}>
-              <Field label="Danach zurück zu mir" hint="Nach so vielen Weitergaben in Folge kommt das Buch zu dir zurück.">
-                <Segmented name="Kettenlänge" value={s.chainMax} onChange={(v) => save({ chainMax: v })}
-                  options={range(1, 4).map((n) => ({ value: n, label: String(n) }))} className="max-w-sm" />
-              </Field>
-            </div>
-          </Part>
+          </Row>
+          <div className={cx("transition-opacity", s.passOn === "never" && "opacity-45 pointer-events-none")} aria-disabled={s.passOn === "never"}>
+            <Row label="Danach zurück zu mir" hint="Nach so vielen Weitergaben in Folge kommt das Buch zu dir zurück.">
+              <Segmented name="Kettenlänge" value={s.chainMax} onChange={(v) => save({ chainMax: v })}
+                options={range(1, 4).map((n) => ({ value: n, label: String(n) }))} />
+            </Row>
+          </div>
+        </Group>
 
-          <Photos copy={copy} className="md:hidden py-8 border-t border-line" heading />
-
-          <Part title="Aus dem Regal nehmen">
-            <p className="text-[15px] text-ink-2">Das Buch verschwindet aus deinem Regal und aus allen Kreisen. Offene Anfragen verfallen.</p>
-            <Button variant="danger" className="mt-4" disabled={removing} onClick={remove}>
+        <section className="panel-quiet !rounded-[18px] px-5 md:px-8 py-6 md:py-7 grid md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-x-10 gap-y-4 items-center" aria-label="Aus dem Regal nehmen">
+          <div>
+            <h2 className="ui-title text-[17px]">Aus dem Regal nehmen</h2>
+            <p className="text-[14px] text-muted mt-1">Das Buch verschwindet aus deinem Regal und aus allen Kreisen. Offene Anfragen verfallen.</p>
+          </div>
+          <div>
+            <Button variant="ghost" className="!text-late !border-late/40 hover:!border-late hover:!bg-late/[0.06]" disabled={removing} onClick={remove}>
               Aus dem Regal nehmen
             </Button>
-          </Part>
-        </div>
+          </div>
+        </section>
       </div>
     </div>
   );
 }
 
-function Part({ title, hint, children }: { title: string; hint?: ReactNode; children: ReactNode }) {
+/** Gruppe als Fläche mit Titel; darin Zeilen mit Haarlinien */
+function Group({ title, desc, children, i = 0 }: { title: string; desc?: ReactNode; children: ReactNode; i?: number }) {
+  const id = `grp-${title.toLowerCase().replace(/[^a-zäöü]+/g, "-")}`;
   return (
-    <section className="mt-10 pt-8 border-t border-line" aria-label={title}>
-      <h2 className="text-xl md:text-2xl">{title}</h2>
-      {hint && <p className="text-sm text-muted mt-1">{hint}</p>}
-      <div className="mt-5">{children}</div>
+    <section className="panel !rounded-[18px] px-5 md:px-8 anim-rise" style={{ animationDelay: `${i * 40}ms` }} aria-labelledby={id}>
+      <div className="pt-6 md:pt-7 pb-1">
+        <h2 id={id} className="ui-title text-[20px] md:text-[22px]">{title}</h2>
+        {desc && <p className="text-[14px] text-muted mt-1 max-w-xl">{desc}</p>}
+      </div>
+      <div className="divide-y divide-line">{children}</div>
     </section>
   );
 }
 
-function Photos({ copy, className, heading }: { copy: CopyDetail; className?: string; heading?: boolean }) {
+/** Desktop: Label und Erklärung links, Steuerung rechts. Mobil untereinander. */
+function Row({ label, hint, children }: { label: ReactNode; hint?: ReactNode; children: ReactNode }) {
+  return (
+    <div className="grid md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-x-10 gap-y-3 py-5 md:py-6">
+      <div>
+        <p className="text-[15px] font-semibold leading-snug">{label}</p>
+        {hint && <p className="text-[14px] text-muted mt-1 leading-snug">{hint}</p>}
+      </div>
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
+function SwitchRow({ children }: { children: ReactNode }) {
+  return <div className="py-2 md:py-3">{children}</div>;
+}
+
+function Photos({ copy, className }: { copy: CopyDetail; className?: string }) {
   const router = useRouter();
   const toast = useToast();
   const [hidden, setHidden] = useState<Set<string>>(new Set());
@@ -334,14 +340,12 @@ function Photos({ copy, className, heading }: { copy: CopyDetail; className?: st
 
   return (
     <div className={className}>
-      {heading ? <h2 className="text-xl mb-1">Fotos</h2> : <p className="text-sm font-medium mb-1">Fotos</p>}
-      <p className="text-sm text-muted mb-3">{photos.length ? "Das erste Foto ersetzt das Cover." : "Zeig Zustand und Ausgabe. Ohne Foto erscheint das Cover."}</p>
       {photos.length > 0 && (
         <ul className="flex flex-wrap gap-3 mb-3">
           {photos.map((p) => (
             <li key={p.id} className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={imageUrl(p.key)} alt={`Foto von ${copy.title}`} className="h-24 w-auto rounded-xs outline outline-1 -outline-offset-1 outline-black/10" />
+              <img src={imageUrl(p.key)} alt={`Foto von ${copy.title}`} className="h-24 w-auto rounded-[6px] outline outline-1 -outline-offset-1 outline-black/10" />
               <button type="button" onClick={() => remove(p.id)} aria-label="Foto entfernen"
                 className="absolute -top-2 -right-2 h-6 w-6 grid place-items-center rounded-full bg-paper border border-line-strong text-muted hover:text-ink hover:border-ink">
                 <IconClose width={13} height={13} />
@@ -350,7 +354,7 @@ function Photos({ copy, className, heading }: { copy: CopyDetail; className?: st
           ))}
         </ul>
       )}
-      <label className={cx("inline-flex items-center gap-2 h-9 px-3 border border-ink rounded-sm text-sm font-medium cursor-pointer hover:bg-ink hover:text-paper transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--focus)]", uploading && "opacity-45 pointer-events-none")}>
+      <label className={cx("inline-flex items-center gap-2 h-10 px-4 border border-line-strong rounded-full text-[14px] font-semibold cursor-pointer hover:border-ink hover:bg-paper-2 transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--focus)]", uploading && "opacity-45 pointer-events-none")}>
         <IconCamera width={16} height={16} /> {uploading ? "Wird hochgeladen …" : "Foto hinzufügen"}
         <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={uploading}
           onChange={(e) => { add(e.target.files?.[0]); e.target.value = ""; }} />
@@ -413,7 +417,7 @@ function BlockForm({ copyId, calendar }: { copyId: string; calendar: Calendar })
   return (
     <div className="mt-5">
       {blocks.length > 0 && (
-        <ul className="divide-y divide-line border-y border-line mb-4" aria-label="Sperrzeiten">
+        <ul className="panel-quiet divide-y divide-line px-4 mb-4" aria-label="Sperrzeiten">
           {blocks.map((b) => (
             <li key={b.id} className="flex items-center justify-between gap-4 py-2.5 text-[15px]">
               <span>
@@ -426,9 +430,9 @@ function BlockForm({ copyId, calendar }: { copyId: string; calendar: Calendar })
         </ul>
       )}
       {!open ? (
-        <Button variant="ghost" size="sm" className="-ml-3" onClick={() => setOpen(true)}>Sperrzeit eintragen</Button>
+        <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>Sperrzeit eintragen</Button>
       ) : (
-        <form onSubmit={submit} className="border-t border-line pt-5 anim-rise">
+        <form onSubmit={submit} className="panel-quiet !rounded-[14px] p-4 md:p-5 anim-rise">
           <p className="text-sm text-muted mb-4">Zeiten, in denen du das Buch selbst brauchst, zum Beispiel zum Lesen oder in den Ferien.</p>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Erster Tag">

@@ -19,8 +19,9 @@ export default async function WunschlistePage() {
 
   return (
     <div>
+      <p className="eyebrow mb-3 anim-rise">Titelalarm</p>
       <PageTitle sub="Titel, die du suchst. Mit dem Titelalarm melden wir uns, sobald ein Exemplar im gewählten Umkreis frei wird.">
-        Wunschliste
+        Deine <em>Wunschliste.</em>
       </PageTitle>
       <WishlistClient
         items={list}

@@ -7,14 +7,14 @@ import { useLater } from "@/components/use-later";
 import { Button, Field, Input, Switch, Textarea, cx } from "@/components/ui";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : "Etwas ist schiefgelaufen. Versuche es erneut.");
-const dangerCls = "inline-flex items-center justify-center font-medium rounded-sm border border-late text-late hover:bg-late hover:text-paper transition-colors duration-150 disabled:opacity-45 whitespace-nowrap";
+const dangerCls = "inline-flex items-center justify-center font-semibold rounded-full border border-late/60 text-late hover:bg-late hover:text-paper hover:border-late transition-colors duration-200 disabled:opacity-45 whitespace-nowrap active:scale-[0.97]";
 const mod = (body: Record<string, unknown>) => api("/mod", { body });
 
 /** Zeile der Warteschlange: wird beim Erledigen ausgegraut, bis der Aufschub abläuft. */
 function Pending({ pending, children, className }: { pending: string | null; children: ReactNode; className?: string }) {
   return (
     <div className={cx("transition-opacity duration-200", pending && "opacity-40 pointer-events-none", className)} aria-busy={pending ? true : undefined}>
-      {pending ? <p className="text-sm text-muted">{pending}</p> : children}
+      {pending ? <p className="text-sm text-muted h-9 flex items-center">{pending}</p> : children}
     </div>
   );
 }
@@ -28,9 +28,9 @@ export function ReportActions({ id }: { id: string }) {
     later(text, () => mod({ action: "report", reportId: id, status }), () => setPending(null));
   };
   return (
-    <Pending pending={pending} className="flex items-center gap-4">
+    <Pending pending={pending} className="flex items-center gap-2">
       <Button size="sm" onClick={() => act("actioned")}>Erledigt</Button>
-      <Button variant="quiet" className="text-sm" onClick={() => act("dismissed")}>Verwerfen</Button>
+      <Button variant="quiet" className="text-sm h-9 px-3" onClick={() => act("dismissed")}>Verwerfen</Button>
     </Pending>
   );
 }
@@ -44,9 +44,9 @@ export function CorrectionActions({ id }: { id: string }) {
     later(text, () => mod({ action: "correction", id, apply }), () => setPending(null));
   };
   return (
-    <Pending pending={pending} className="flex items-center gap-4">
+    <Pending pending={pending} className="flex items-center gap-2">
       <Button size="sm" onClick={() => act(true)}>Übernehmen</Button>
-      <Button variant="quiet" className="text-sm" onClick={() => act(false)}>Ablehnen</Button>
+      <Button variant="quiet" className="text-sm h-9 px-3" onClick={() => act(false)}>Ablehnen</Button>
     </Pending>
   );
 }
@@ -93,11 +93,11 @@ export function CaseDecision({ caseId, kind }: { caseId: string; kind: "damage" 
       <Field label="Notiz zum Entscheid" hint="Beide Seiten sehen den Entscheid. Die Notiz steht im Protokoll.">
         <Textarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={1000} rows={3} placeholder="Grundlage: Fotos vom 3. Nov. zeigen …" />
       </Field>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2">
         {options.map((d) => (
           d === "lost"
-            ? <button key={d} type="button" onClick={() => decide(d)} className={cx(dangerCls, "h-8 px-3 text-sm")}>{DECISIONS[d].label}</button>
-            : <Button key={d} size="sm" onClick={() => decide(d)}>{DECISIONS[d].label}</Button>
+            ? <button key={d} type="button" onClick={() => decide(d)} className={cx(dangerCls, "h-9 px-4 text-[13.5px]")}>{DECISIONS[d].label}</button>
+            : <Button key={d} size="sm" variant="ghost" onClick={() => decide(d)}>{DECISIONS[d].label}</Button>
         ))}
       </div>
     </Pending>
@@ -129,18 +129,18 @@ export function BanControls({ userId, banned, reason }: { userId: string; banned
   if (banned) {
     return (
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-[15px]">Gesperrt{reason ? <>: <span className="text-ink-2">{reason}</span></> : null}</p>
-        <Button size="sm" onClick={() => set(false)} disabled={busy}>Entsperren</Button>
+        <p className="text-[15px]"><span className="font-semibold text-late">Gesperrt</span>{reason ? <>: <span className="text-ink-2">{reason}</span></> : null}</p>
+        <Button size="sm" variant="ghost" onClick={() => set(false)} disabled={busy}>Entsperren</Button>
         {error && <p className="text-sm text-late w-full" role="alert">{error}</p>}
       </div>
     );
   }
   return (
     <form onSubmit={(e) => { e.preventDefault(); if (text.trim().length >= 3) set(true, text.trim()); else setError("Gib einen Grund an. Die Person sieht ihn."); }}>
-      <label htmlFor={`ban-${userId}`} className="block text-sm font-medium mb-1.5">Grund</label>
+      <label htmlFor={`ban-${userId}`} className="block text-[13px] font-semibold mb-2">Grund</label>
       <div className="flex flex-col gap-3 sm:flex-row">
         <Input id={`ban-${userId}`} value={text} onChange={(e) => setText(e.target.value)} maxLength={300} placeholder="Wiederholte Preisangaben im Chat" />
-        <button type="submit" disabled={busy} className={cx(dangerCls, "h-11 px-4 text-[15px] self-start sm:self-auto")}>Sperren</button>
+        <button type="submit" disabled={busy} className={cx(dangerCls, "h-12 px-6 text-[15px] self-start sm:self-auto")}>Sperren</button>
       </div>
       {error ? <p className="text-sm text-late mt-1.5" role="alert">{error}</p>
         : <p className="text-sm text-muted mt-1.5">Die Person sieht den Grund. Die Mobilnummer wird mitgesperrt.</p>}

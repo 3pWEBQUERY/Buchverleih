@@ -6,10 +6,10 @@ import type { OfferKind } from "@/lib/loans/machine";
 import { api } from "@/lib/client";
 import { offerLabel, visibilityLabel } from "@/lib/i18n/de-CH";
 import { Cover } from "@/components/cover";
-import { Shelf } from "@/components/shelf";
-import { StatusText, shelfStatusText } from "@/components/status";
+import Link from "next/link";
+import { BookRow } from "./book-row";
 import { useToast } from "@/components/toast";
-import { Button, Empty, LinkButton, PageTitle, SectionTitle, Switch, cx } from "@/components/ui";
+import { Button, LinkButton, PageTitle, Switch, cx } from "@/components/ui";
 import { IconCalendar, IconCheck, IconScan } from "@/components/icons";
 
 type Visibility = ShelfCopy["visibility"];
@@ -137,107 +137,91 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
   if (copies.length === 0) {
     return (
       <div>
-        <PageTitle>Mein Regal</PageTitle>
-        <Empty
-          text="Dein Regal ist noch leer. Ein Buch einzustellen dauert unter 20 Sekunden."
-          action={<LinkButton href="/regal/neu" variant="primary"><IconScan /> Erstes Buch scannen</LinkButton>}
-        />
+        <PageTitle sub="Alles, was du verleihst, tauschst oder verschenkst, steht hier.">Mein <em>Regal</em></PageTitle>
+        <section className="rounded-[22px] bg-accent text-accent-ink p-8 md:p-12 grid md:grid-cols-[1fr_auto] gap-8 items-end">
+          <div>
+            <p className="eyebrow !text-accent-ink/75">Dein Regal ist noch leer</p>
+            <h2 className="display text-[44px] md:text-[64px] mt-3 max-w-[14ch]">Ein Buch einstellen dauert <em>unter 20 Sekunden.</em></h2>
+          </div>
+          <Link href="/regal/neu" className="h-14 px-7 rounded-full bg-night text-night-ink font-semibold inline-flex items-center gap-2 justify-center"><IconScan width={20} height={20} /> Erstes Buch scannen</Link>
+        </section>
       </div>
     );
   }
 
-  return (
-    <div className={cx(selecting ? "pb-40" : "pb-16 md:pb-0")}>
-      <PageTitle
-        sub={summary}
-        aside={
-          <div className="flex items-center gap-1 md:gap-2 -ml-3 md:ml-0">
-            <LinkButton href="/regal/kalender" variant="ghost" size="sm" className="md:h-10 md:px-4"><IconCalendar width={18} height={18} /> Kalender</LinkButton>
-            <Button variant="ghost" size="sm" className="md:h-10 md:px-4" aria-pressed={selecting} onClick={() => (selecting ? stopSelecting() : setSelecting(true))}>
-              {selecting ? "Fertig" : "Auswählen"}
-            </Button>
-            <span className="hidden md:block ml-2">
-              <LinkButton href="/regal/neu" variant="primary" title="Tastenkürzel n">
-                <IconScan /> Buch scannen <kbd className="font-sans text-xs opacity-70 border border-current/40 rounded-xs px-1">n</kbd>
-              </LinkButton>
-            </span>
-          </div>
-        }
-      >
-        Mein Regal
-      </PageTitle>
+  const tiles: [number, string][] = [
+    [copies.length, copies.length === 1 ? "Buch" : "Bücher"],
+    [lent, "ausgeliehen"],
+    [requests, requests === 1 ? "Anfrage" : "Anfragen"],
+  ];
 
-      {paused && (
-        <div className="border-l-2 border-accent pl-4 -mt-2 mb-10 max-w-2xl">
-          <Switch
-            checked={paused}
-            onChange={togglePause}
-            label={<span className="font-medium">Ferienmodus ist an</span>}
-            hint="Dein Regal bleibt sichtbar, Anfragen sind gerade nicht möglich. Laufende Leihen gehen normal weiter."
-          />
+  return (
+    <div className={cx(selecting ? "pb-48" : "")}>
+      <header className="mb-10 md:mb-12 grid lg:grid-cols-[1fr_auto] gap-6 lg:gap-8 items-end">
+        <div className="min-w-0 anim-rise">
+          <p className="eyebrow">{summary}</p>
+          <h1 className="display text-[52px] md:text-[84px] mt-3">Mein <em>Regal</em></h1>
         </div>
-      )}
+        <dl className="grid grid-cols-3 gap-2 anim-rise" style={{ animationDelay: "80ms" }}>
+          {tiles.map(([n, l], i) => (
+            <div key={l} className="panel-quiet px-4 md:px-5 py-4 lg:min-w-[124px]">
+              <dd className="font-serif text-[40px] leading-none tnum flex items-center gap-2">
+                {n}
+                {i === 2 && n > 0 && <span aria-hidden className="h-2 w-2 rounded-full bg-accent live-dot" />}
+              </dd>
+              <dt className="text-[13px] text-muted mt-1.5">{l}</dt>
+            </div>
+          ))}
+        </dl>
+      </header>
+
+      <div className="flex flex-wrap items-center gap-2 mb-6 anim-rise" style={{ animationDelay: "120ms" }}>
+        <span className="hidden md:contents">
+          <LinkButton href="/regal/neu" variant="primary" title="Tastenkürzel n">
+            <IconScan /> Buch scannen <kbd className="font-sans text-xs opacity-75 border border-current/40 rounded-[4px] px-1">n</kbd>
+          </LinkButton>
+        </span>
+        <LinkButton href="/regal/kalender" variant="ghost"><IconCalendar width={18} height={18} /> Kalender</LinkButton>
+        <Button variant={selecting ? "secondary" : "ghost"} aria-pressed={selecting} onClick={() => (selecting ? stopSelecting() : setSelecting(true))}>
+          {selecting ? <><IconCheck width={18} height={18} /> Fertig</> : "Mehrere ändern"}
+        </Button>
+        {paused && <span className="chip ml-auto"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-done" />Ferienmodus</span>}
+      </div>
 
       {selecting ? (
         <SelectGrid copies={copies} sel={sel} toggle={toggle} setSel={setSel} />
       ) : (
-        <div className="space-y-12 md:space-y-14">
-          {groups.map((g) => (
-            <section key={g.key} aria-labelledby={`g-${g.key}`}>
-              <SectionTitle aside={<span className="tnum">{g.items.length}</span>}>
-                <span id={`g-${g.key}`}>{g.label}</span>
-              </SectionTitle>
-              <Shelf
-                label={g.label}
-                height={168}
-                items={g.items.map((c) => {
-                  const st = shelfStatusText(c);
-                  return {
-                    id: c.id,
-                    href: `/regal/${c.id}`,
-                    cover: { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id },
-                    caption: c.title,
-                    meta: <StatusText tone={st.tone} className="text-muted">{st.text}</StatusText>,
-                  };
-                })}
-              />
-            </section>
-          ))}
+        <>
+          {/* Das Büchergestell: eine dunkle Fläche, jede Gruppe ein Brett */}
+          <div className="surface-night rounded-[22px] px-5 md:px-9 pt-7 md:pt-9 pb-4 md:pb-6 -mx-1 md:mx-0">
+            {groups.map((g, gi) => (
+              <section key={g.key} aria-labelledby={`g-${g.key}`} className={cx(gi > 0 && "mt-8 md:mt-10")}>
+                <div className="flex items-baseline justify-between gap-4">
+                  <h2 id={`g-${g.key}`} className="font-serif text-[28px] md:text-[36px] leading-none">{g.label}</h2>
+                  <span className="text-[13px] text-night-muted tnum">{plural(g.items.length, "Buch", "Bücher")}</span>
+                </div>
+                <BookRow items={g.items} />
+              </section>
+            ))}
+          </div>
 
-          {!paused && (
-            <section className="max-w-2xl pt-2">
-              <div className="border-t border-line">
-                <Switch
-                  checked={paused}
-                  onChange={togglePause}
-                  label="Ferienmodus"
-                  hint="Dein Regal bleibt sichtbar, neue Anfragen sind nicht möglich. Laufende Leihen gehen weiter."
-                />
-              </div>
-            </section>
-          )}
-        </div>
-      )}
-
-      {/* Scan-Knopf auf dem Handy: fixiert unten rechts über der Navigation */}
-      {!selecting && (
-        <LinkButton
-          href="/regal/neu"
-          variant="primary"
-          size="lg"
-          className="md:hidden fixed z-30 right-4 bottom-[calc(80px+env(safe-area-inset-bottom))] h-14 px-5"
-          aria-label="Buch scannen"
-        >
-          <IconScan width={22} height={22} /> Scannen
-        </LinkButton>
+          <section className="mt-10 md:mt-12 panel px-5 md:px-8 py-3 md:py-4 grid md:grid-cols-[1fr_auto] gap-2 items-center">
+            <Switch
+              checked={paused}
+              onChange={togglePause}
+              label={<span className="font-semibold">{paused ? "Ferienmodus ist an" : "Ferienmodus"}</span>}
+              hint={paused ? "Dein Regal bleibt sichtbar, Anfragen sind gerade nicht möglich. Laufende Leihen gehen normal weiter." : "Dein Regal bleibt sichtbar, neue Anfragen sind nicht möglich. Laufende Leihen gehen weiter."}
+            />
+          </section>
+        </>
       )}
 
       {selecting && (
-        <div className="fixed z-30 inset-x-0 md:left-[232px] bottom-[calc(64px+env(safe-area-inset-bottom))] md:bottom-0 bg-paper border-t border-line-strong anim-sheet">
-          <div className="max-w-[1180px] px-4 md:px-10 lg:px-14 py-3">
+        <div className="fixed z-30 inset-x-0 md:left-[256px] bottom-[calc(68px+env(safe-area-inset-bottom))] md:bottom-0 bg-paper border-t border-line anim-sheet">
+          <div className="max-w-[1240px] px-4 md:px-12 lg:px-16 py-3">
             {panel && (
               <div className="pb-3 mb-3 border-b border-line">
-                <p className="text-sm text-muted mb-2">
+                <p className="text-[13px] font-semibold mb-2.5">
                   {panel === "offers" ? "Angebot für die Auswahl" : panel === "visibility" ? "Wer die Auswahl sehen darf" : "Leihfrist für die Auswahl"}
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -263,8 +247,8 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
               </div>
             )}
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm tnum whitespace-nowrap" aria-live="polite">
-                <span className="font-medium">{sel.size}</span> <span className="text-muted">ausgewählt</span>
+              <p className="text-sm tnum whitespace-nowrap flex items-center gap-2" aria-live="polite">
+                <span className="h-8 min-w-8 px-2 rounded-full bg-ink text-paper grid place-items-center font-semibold">{sel.size}</span> <span className="text-muted hidden sm:inline">ausgewählt</span>
               </p>
               <div className="flex items-center gap-1 overflow-x-auto" role="toolbar" aria-label="Aktionen für die Auswahl">
                 {([
@@ -290,8 +274,8 @@ function SelectGrid({ copies, sel, toggle, setSel }: { copies: ShelfCopy[]; sel:
   const all = sel.size === copies.length;
   return (
     <section aria-label="Bücher auswählen">
-      <div className="flex items-baseline justify-between gap-4 border-b border-line pb-2 mb-5">
-        <p className="text-sm text-muted">Tippe die Bücher an, die du gemeinsam ändern willst.</p>
+      <div className="flex items-center justify-between gap-4 panel-quiet px-5 py-3 mb-6">
+        <p className="text-[15px] text-ink-2">Tippe die Bücher an, die du gemeinsam ändern willst.</p>
         <Button variant="quiet" className="text-sm" onClick={() => setSel(all ? new Set() : new Set(copies.map((c) => c.id)))}>
           {all ? "Keine" : "Alle auswählen"}
         </Button>
@@ -314,7 +298,7 @@ function SelectGrid({ copies, sel, toggle, setSel }: { copies: ShelfCopy[]; sel:
                   <span
                     aria-hidden
                     className={cx(
-                      "absolute top-1 right-1 h-6 w-6 grid place-items-center rounded-xs border transition-colors duration-150",
+                      "absolute top-1 right-1 h-6 w-6 grid place-items-center rounded-full border transition-colors duration-150",
                       on ? "bg-ink border-ink text-paper" : "bg-paper/90 border-line-strong text-transparent group-hover:border-ink",
                     )}
                   >

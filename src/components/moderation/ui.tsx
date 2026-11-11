@@ -41,7 +41,7 @@ export function ModHead({ title, count, aside, id }: { title: ReactNode; count?:
           <span className={cx("inline-grid place-items-center h-7 min-w-7 px-2 rounded-full text-[13px] font-semibold tnum", count > 0 ? "bg-ink text-paper" : "bg-paper-2 text-muted")}>{count}</span>
         )}
       </h2>
-      {aside && <div className="text-sm text-muted">{aside}</div>}
+      {aside && <div className="hidden sm:block text-sm text-muted text-right">{aside}</div>}
     </div>
   );
 }

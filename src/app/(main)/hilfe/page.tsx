@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DocCompare, DocPage, DocSection, DocSub, DocTable, type TocItem } from "@/components/doc";
+import { IconArrowRight } from "@/components/icons";
 
 export const metadata = {
   title: "So funktioniert es",
@@ -23,7 +24,7 @@ const TOC: TocItem[] = [
 
 export default function Page() {
   return (
-    <DocPage eyebrow="Hilfe" title="So funktioniert es" toc={TOC}
+    <DocPage eyebrow="Hilfe" title={<>So funktioniert <em>es.</em></>} toc={TOC} intro={<QuickStart />}
       lead="Du leihst Bücher aus Regalen in deiner Nähe, kostenlos. Jede Leihe hat feste Schritte und Fristen. So weiss jederzeit jede Seite, wer am Zug ist.">
 
       <DocSection id="ablauf" title="Eine Leihe Schritt für Schritt">
@@ -216,5 +217,41 @@ export default function Page() {
         </p>
       </DocSection>
     </DocPage>
+  );
+}
+
+const STEPS: [n: string, title: string, text: string, href: string, more: string][] = [
+  ["01", "Finden", "Suche nach Titel, Autorin oder ISBN – oder stöbere in den Regalen im Umkreis von 5 km.", "/suche", "Bücher finden"],
+  ["02", "Anfragen", "Exemplar und Zeitraum wählen. Wer verleiht, antwortet innert 72 Stunden.", "#ablauf", "Der Ablauf"],
+  ["03", "Übergeben", "Ihr trefft euch, ein Scan des QR-Codes bestätigt die Übergabe. Ab jetzt läuft die Frist.", "#uebergabe", "Übergabe"],
+  ["04", "Zurückgeben", "Standard sind 28 Tage. Wir erinnern dich, verlängern geht mit einem Tipp.", "#fristen", "Fristen"],
+];
+
+/** Schnellstart: die vier Schritte einer Leihe als Karten */
+function QuickStart() {
+  return (
+    <section aria-labelledby="schnellstart">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-5 md:mb-6">
+        <div>
+          <p className="eyebrow">Schnellstart</p>
+          <h2 id="schnellstart" className="ui-title text-[22px] md:text-[26px] mt-2">In vier Schritten zum ersten Buch</h2>
+        </div>
+        <p className="text-sm text-muted">Die Details stehen weiter unten.</p>
+      </div>
+      <ol className="grid grid-flow-col auto-cols-[78%] sm:auto-cols-[46%] lg:grid-flow-row lg:grid-cols-4 gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 md:-mx-12 md:px-12 lg:mx-0 lg:px-0 pb-1" style={{ scrollbarWidth: "none" }}>
+        {STEPS.map(([n, title, text, href, more], i) => (
+          <li key={n} className="snap-start anim-rise" style={{ animationDelay: `${80 + i * 50}ms` }}>
+            <Link href={href} className="group panel-quiet rounded-[18px] p-6 flex flex-col h-full min-h-[236px] hover:bg-paper-3 transition-colors duration-300">
+              <span className="font-serif text-[44px] leading-none text-muted tnum transition-colors group-hover:text-ink">{n}</span>
+              <span className="ui-title text-[21px] mt-5">{title}</span>
+              <span className="text-ink-2 text-[15px] mt-2 leading-relaxed">{text}</span>
+              <span className="mt-auto pt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold">
+                {more} <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-1" />
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
