@@ -5,7 +5,9 @@ export type JobKind =
   | "send_sms"
   | "process_upload"
   | "cache_cover"
-  | "fetch_catalog";
+  | "fetch_catalog"
+  | "seed_demo"
+  | "remove_demo";
 
 /** Reiht eine Aufgabe ein – idealerweise in derselben Transaktion wie die auslösende Änderung. */
 export async function enqueue(tx: Tx, kind: JobKind, payload: Record<string, unknown>, runAt?: Date) {

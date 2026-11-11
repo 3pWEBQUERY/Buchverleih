@@ -270,7 +270,7 @@ function Portal({ children }: { children: React.ReactNode }) {
 
 // ---------------------------------------------------------------- Teilformulare
 
-const radioCard = "flex items-center gap-3 min-h-14 px-4 py-3 rounded-[12px] bg-paper border border-line cursor-pointer hover:border-line-strong has-[:checked]:border-ink has-[:checked]:ring-1 has-[:checked]:ring-ink transition-colors";
+const radioCard = "flex items-center gap-3 min-h-14 px-4 py-3 rounded-[10px] bg-paper border border-line cursor-pointer hover:border-ink-2 has-[:checked]:border-accent has-[:checked]:bg-accent-soft/35 transition-colors";
 
 function AcceptForm({ loan, busy, onAccept, onDecline }: { loan: LoanView; busy: boolean; onAccept: (b: Record<string, unknown>) => void; onDecline: () => void }) {
   const [spot, setSpot] = useState(loan.ownerSpots[0]?.id ?? "");
@@ -281,19 +281,19 @@ function AcceptForm({ loan, busy, onAccept, onDecline }: { loan: LoanView; busy:
     <div className="space-y-6 max-w-2xl">
       {loan.kind === "swap" && (
         <fieldset>
-          <legend className="text-[13px] font-semibold mb-2">Angebotene Bücher</legend>
+          <legend className="text-[13px] font-medium mb-2">Angebotene Bücher</legend>
           <div className="grid sm:grid-cols-2 gap-2">
             {loan.swapOffered.map((o) => (
               <label key={o.id} className={radioCard}>
-                <input type="radio" name="swap" checked={swapCopy === o.id} onChange={() => setSwapCopy(o.id)} className="accent-[var(--ink)] h-4 w-4 flex-none" />
+                <input type="radio" name="swap" checked={swapCopy === o.id} onChange={() => setSwapCopy(o.id)} className="accent-[var(--accent)] h-4 w-4 flex-none" />
                 <span className="min-w-0">
-                  <span className="block font-serif text-[19px] leading-tight truncate">{o.title}</span>
+                  <span className="block font-serif text-[17px] leading-tight truncate">{o.title}</span>
                   <span className="block text-[13px] text-muted truncate">{o.authors[0]}</span>
                 </span>
               </label>
             ))}
           </div>
-          <Link href={`/profil/${loan.other?.id}`} className="text-sm font-medium link-grow mt-3 inline-block">Ganzes Tauschregal ansehen</Link>
+          <Link href={`/profil/${loan.other?.id}`} className="text-sm font-medium text-accent-hover hover:underline underline-offset-4 mt-3 inline-block">Ganzes Tauschregal ansehen</Link>
         </fieldset>
       )}
       <div className="grid md:grid-cols-2 gap-5 md:gap-4">
@@ -304,9 +304,9 @@ function AcceptForm({ loan, busy, onAccept, onDecline }: { loan: LoanView; busy:
           </Select>
         </Field>
       ) : loan.circle?.fixed_spot ? (
-        <div className="text-[15px]"><span className="block text-[13px] font-semibold mb-2">Übergabeort im Kreis</span><span className="flex items-center h-12 px-4 rounded-[10px] bg-paper border border-line">{loan.circle.fixed_spot}</span></div>
+        <div className="text-[15px]"><span className="block text-[13px] font-medium mb-2">Übergabeort im Kreis</span><span className="flex items-center h-12 px-4 rounded-[8px] bg-paper-2 border border-line">{loan.circle.fixed_spot}</span></div>
       ) : (
-        <Notice className="self-end">Du hast noch keinen Übergabeort. <Link href="/einstellungen#orte" className="underline underline-offset-4">Ort festlegen</Link> oder im Chat absprechen.</Notice>
+        <Notice className="self-end">Du hast noch keinen Übergabeort. <Link href="/einstellungen#uebergabeorte" className="underline underline-offset-4">Ort festlegen</Link> oder im Chat absprechen.</Notice>
       )}
       <Field label="Terminvorschlag (freiwillig)" hint="Erscheint als Karte im Chat.">
         <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
@@ -333,7 +333,7 @@ function PhotoPicker({ loanId, purpose, keys, setKeys, max = 6 }: { loanId: stri
         <img key={k} src={`/api/v1/images/${k}?w=480`} alt="Hochgeladenes Foto" className="h-20 w-20 object-cover rounded-[10px] outline outline-1 -outline-offset-1 outline-black/10 anim-pop" />
       ))}
       {keys.length < max && (
-        <label className={cx("h-20 px-5 grid place-items-center border border-dashed border-line-strong rounded-[10px] bg-paper text-sm font-medium cursor-pointer hover:border-ink transition-colors", busy && "opacity-50")}>
+        <label className={cx("h-20 px-5 grid place-items-center border border-dashed border-line-strong rounded-[10px] bg-paper text-sm font-medium cursor-pointer hover:border-accent hover:text-accent-hover transition-colors", busy && "opacity-50")}>
           {busy ? "Lädt …" : "Foto hinzufügen"}
           <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={busy}
             onChange={async (e) => {
@@ -416,7 +416,7 @@ function RateForm({ busy, onRate }: { busy: boolean; onRate: (v: "good" | "probl
       <div className="flex flex-wrap gap-2">
         {Object.entries(ratingReasonLabel).map(([k, l]) => (
           <Check key={k} label={l} checked={reasons.includes(k)} onChange={(v) => setReasons((r) => (v ? [...r, k] : r.filter((x) => x !== k)))}
-            className="min-h-11 pl-3 pr-4 rounded-[6px] bg-paper border border-line has-[:checked]:border-ink transition-colors" />
+            className="min-h-11 pl-3 pr-4 rounded-[6px] bg-paper border border-line has-[:checked]:border-accent has-[:checked]:bg-accent-soft/35 transition-colors" />
         ))}
       </div>
       <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Was ist passiert? Geht nur an die Moderation." maxLength={500} />
@@ -442,7 +442,7 @@ function CaseResponse({ loan, onDone }: { loan: LoanView; onDone: () => void }) 
       <div className="grid gap-2">
         {options.map((o) => (
           <label key={o} className={cx(radioCard, "text-[15px]")}>
-            <input type="radio" name="case" checked={choice === o} onChange={() => setChoice(o)} className="accent-[var(--ink)] h-4 w-4 flex-none" />
+            <input type="radio" name="case" checked={choice === o} onChange={() => setChoice(o)} className="accent-[var(--accent)] h-4 w-4 flex-none" />
             {caseResponseLabel[o]}
           </label>
         ))}

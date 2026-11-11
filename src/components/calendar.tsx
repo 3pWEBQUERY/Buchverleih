@@ -185,7 +185,10 @@ export function CalendarView({
 
           {/* Heute */}
           <div className="absolute w-[2px] -translate-x-1/2 bg-accent pointer-events-none" style={{ left: `${pct(cal.today)}%`, top: top - 4, height: trackH + 8 }} aria-hidden>
-            {!bare && <span className="absolute -top-[15px] left-1/2 -translate-x-1/2 text-[10px] font-semibold uppercase tracking-[0.06em] bg-accent text-accent-ink rounded-[3px] px-1 leading-[14px]">Heute</span>}
+            {!bare && (
+              <span className={cx("absolute -top-[15px] text-[10px] font-semibold uppercase tracking-[0.06em] bg-accent text-accent-ink rounded-[3px] px-1 leading-[14px]",
+                pct(cal.today) < 6 ? "-left-px" : pct(cal.today) > 94 ? "-right-px" : "left-1/2 -translate-x-1/2")}>Heute</span>
+            )}
           </div>
         </div>
       </div>
@@ -238,7 +241,7 @@ export function CalendarAxis({ start, end, today }: { start: string; end: string
         <span key={w.day} className={cx("absolute top-[22px] text-[10.5px] text-muted tnum -translate-x-1/2", i % 2 === 1 && "hidden sm:inline")} style={{ left: `${w.left}%` }}>{Number(w.day.slice(8))}.</span>
       ))}
       <span className="absolute bottom-0 w-[2px] h-[14px] -translate-x-1/2 bg-accent" style={{ left: `${pct(today)}%` }} />
-      <span className="absolute bottom-[14px] -translate-x-1/2 text-[10px] font-semibold uppercase tracking-[0.06em] bg-accent text-accent-ink rounded-[3px] px-1 leading-[14px]" style={{ left: `${pct(today)}%` }}>Heute</span>
+      <span className={cx("absolute bottom-[14px] text-[10px] font-semibold uppercase tracking-[0.06em] bg-accent text-accent-ink rounded-[3px] px-1 leading-[14px]", pct(today) < 6 ? "" : "-translate-x-1/2")} style={{ left: `${pct(today)}%` }}>Heute</span>
     </div>
   );
 }

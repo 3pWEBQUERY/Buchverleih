@@ -72,13 +72,13 @@ export function HandoverCode({ loanId, label, onClose, onDone }: { loanId: strin
   return (
     <div role="dialog" aria-modal="true" aria-label={label} className="fixed inset-0 z-[60] bg-white text-black flex flex-col anim-sheet overflow-y-auto" style={{ colorScheme: "light" }}>
       <div className="flex items-center justify-between px-5 md:px-8 h-16 flex-none">
-        <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-neutral-500 inline-flex items-center gap-2">
+        <span className="text-[13px] font-medium text-neutral-500 inline-flex items-center gap-2">
           <span aria-hidden className="h-2 w-2 rounded-full bg-[#d23c1a] animate-pulse" /> Bildschirm bleibt an
         </span>
-        <button onClick={onClose} className="h-11 w-11 -mr-2 grid place-items-center rounded-full hover:bg-neutral-100 transition-colors" aria-label="Schliessen"><IconClose width={24} height={24} /></button>
+        <button onClick={onClose} className="h-11 w-11 -mr-2 grid place-items-center rounded-[8px] hover:bg-neutral-100 transition-colors" aria-label="Schliessen"><IconClose width={24} height={24} /></button>
       </div>
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-10 text-center">
-        <h2 className="text-[40px] md:text-[56px] leading-none tracking-[-0.03em]">{label}</h2>
+        <h2 className="text-[30px] md:text-[38px] font-[560] leading-tight tracking-[-0.03em]">{label}</h2>
         <p className="mt-3 text-[15px] text-neutral-600 max-w-xs">Halte den Bildschirm der anderen Person hin. Sie scannt ihn mit der Kamera.</p>
         {error ? (
           <p className="mt-10 text-center max-w-sm text-[17px]" role="alert">{error}</p>
@@ -96,7 +96,7 @@ export function HandoverCode({ loanId, label, onClose, onDone }: { loanId: strin
               ))}
             </p>
             <div className="mt-8 w-[min(68vw,320px)]">
-              <div className="h-1 rounded-full bg-neutral-200 overflow-hidden"><div className="h-full bg-black rounded-full transition-[width] duration-1000 ease-linear" style={{ width: `${pct}%` }} /></div>
+              <div className="h-1 rounded-full bg-neutral-200 overflow-hidden"><div className="h-full bg-[#d23c1a] rounded-full transition-[width] duration-1000 ease-linear" style={{ width: `${pct}%` }} /></div>
               <p className="mt-2.5 text-[13px] text-neutral-600 tnum">Gültig noch {mm}:{ss} Min. Danach erscheint automatisch ein neuer Code.</p>
             </div>
           </>

@@ -58,10 +58,10 @@ export function History({ events }: { events: { id: number; action: string; to_s
         return (
           <li key={e.id} className="relative grid grid-cols-[18px_minmax(0,1fr)] gap-3 pb-4 last:pb-0">
             {!last && <span aria-hidden className="absolute left-[8px] top-4 bottom-0 w-px bg-line" />}
-            <span aria-hidden className={`mt-[7px] h-[9px] w-[9px] ml-[4px] rounded-full ${system ? "border border-line-strong bg-paper" : "bg-ink"}`} />
+            <span aria-hidden className={`mt-[7px] h-[9px] w-[9px] ml-[4px] rounded-full ${system ? "border border-line-strong bg-paper" : "bg-accent"}`} />
             <div className="min-w-0">
               <p className="text-[15px] leading-snug">
-                {system || /^[A-ZÜÄÖ]/.test(text) ? text : <><span className="font-semibold">{e.actor_name}</span> {text}</>}
+                {system || /^[A-ZÜÄÖ]/.test(text) ? text : <><span className="font-medium">{e.actor_name}</span> {text}</>}
               </p>
               <p className="text-[12.5px] text-muted tnum mt-0.5">{fmtDayTime(e.created_at)}{system ? " · automatisch" : ""}</p>
             </div>

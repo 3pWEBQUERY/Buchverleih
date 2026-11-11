@@ -1,3 +1,5 @@
+"use client";
+import { useState } from "react";
 import { cx } from "@/components/ui";
 
 /**
@@ -30,11 +32,13 @@ export function monogramColors(seed: string) {
 /** Profilbild statt Initiale, wenn eines hochgeladen wurde (liegt im Bucket, ausgeliefert über /api/v1/images) */
 export function Monogram({ name, seed, size = 48, className, photo }: { name: string; seed: string; size?: number; className?: string; photo?: string | null }) {
   const [bg, fg] = monogramColors(seed);
-  if (photo) {
+  const [broken, setBroken] = useState(false);
+  if (photo && !broken) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img src={`/api/v1/images/${photo}${size <= 160 ? "?w=480" : ""}`} alt="" aria-hidden width={size} height={size} loading="lazy" decoding="async"
-        className={cx("rounded-full flex-none object-cover select-none", className)} style={{ width: size, height: size, background: bg }} />
+        className={cx("rounded-full flex-none object-cover select-none", className)} style={{ width: size, height: size, background: bg }}
+        onError={() => setBroken(true)} />
     );
   }
   return (

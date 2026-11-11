@@ -7,6 +7,7 @@ import { sendSms } from "@/lib/notify/sms";
 import { renderNotification, type NotificationType, type NotifyData } from "@/lib/notify";
 import { deleteObject, getObjectBytes, keys, putObject } from "@/lib/storage";
 import { coverCandidates, fetchImage } from "@/lib/catalog/covers";
+import { removeDemo, seedDemo } from "./seed-demo";
 
 type Job = { id: number; kind: string; payload: Record<string, unknown>; attempts: number };
 
@@ -36,6 +37,14 @@ export async function runJob(job: Job) {
 }
 
 const handlers: Record<string, (p: Record<string, unknown>) => Promise<void>> = {
+  /** Einmaliger Demo-Bestand für die Beta (siehe seed-demo.ts) */
+  async seed_demo() {
+    await seedDemo(sql);
+  },
+  async remove_demo() {
+    await removeDemo(sql);
+  },
+
   async send_email(p) {
     const [n] = await sql<{ id: string; type: NotificationType; payload: NotifyData; loan_id: string | null; email: string; sent_at: Date | null; deleted_at: Date | null }[]>`
       select n.id, n.type, n.payload, n.loan_id, u.email, n.sent_at, u.deleted_at
