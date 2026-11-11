@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { api } from "@/lib/client";
 import { trustLabel } from "@/lib/i18n/de-CH";
 import { useToast } from "@/components/toast";
-import { Button, SectionTitle, cx } from "@/components/ui";
+import { Button, cx } from "@/components/ui";
 import { Avatar } from "@/components/kreise/faces";
 import { CircleFields, type CircleValues } from "../circle-form";
 
@@ -58,25 +58,23 @@ export function InviteBox({ circleId, url, admin, appUrl }: { circleId: string; 
   }
 
   return (
-    <section className="panel-quiet !rounded-[10px] p-5 md:p-6">
-      <h2 className="ui-title text-[19px]">Einladen</h2>
+    <section aria-labelledby="einladen" className="rounded-[10px] border border-line p-5">
+      <h2 id="einladen" className="text-[19px] font-[560] tracking-[-0.025em]">Einladen</h2>
       {link ? (
         <>
-          <p className="text-[14px] text-muted mt-1 mb-4">Wer diesen Link öffnet, kann dem Kreis beitreten.</p>
-          <div className="flex items-center gap-1.5 bg-paper border border-line-strong rounded-[6px] p-1 pl-4 focus-within:border-ink transition-colors">
-            <input ref={input} readOnly value={link} aria-label="Einladungslink" onFocus={(e) => e.target.select()}
-              className="min-w-0 flex-1 bg-transparent h-10 text-[14px] text-ink-2 focus:outline-none focus-visible:outline-none" />
-            <Button type="button" size="sm" onClick={copy} className="h-10 flex-none">Kopieren</Button>
-          </div>
+          <p className="text-[13.5px] text-muted mt-1 mb-4">Wer diesen Link öffnet, kann dem Kreis beitreten. Schick ihn nur an Leute, die dazugehören.</p>
+          <input ref={input} readOnly value={link} aria-label="Einladungslink" onFocus={(e) => e.target.select()}
+            className="w-full h-11 px-3.5 rounded-[6px] bg-paper-2 border border-line text-[13.5px] text-ink-2 tnum truncate focus:outline-none focus:border-accent transition-colors" />
+          <Button type="button" variant="primary" onClick={copy} className="w-full mt-2">Link kopieren</Button>
           {admin && (
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1">
+            <div className="mt-4 pt-3 border-t border-line flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
               <p className="text-[13px] text-muted">Link in falschen Händen?</p>
               <Button variant="quiet" className="text-[13.5px] min-h-9" disabled={busy} onClick={renew}>Link erneuern</Button>
             </div>
           )}
         </>
       ) : (
-        <p className="text-[15px] text-ink-2 mt-2">Neue Mitglieder lädt ein Admin ein. Frag im Kreis nach dem Link.</p>
+        <p className="text-[14.5px] text-ink-2 mt-2">Neue Mitglieder lädt ein Admin ein. Frag im Kreis nach dem Link.</p>
       )}
     </section>
   );
@@ -118,15 +116,18 @@ export function MemberList({ circleId, me, admin, members }: { circleId: string;
   }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-4">
       {admin && pending.length > 0 && (
-        <section>
-          <SectionTitle aside={<span className="tnum">{pending.length}</span>}>Beitrittsanfragen</SectionTitle>
-          <ul className="panel !rounded-[10px] divide-y divide-line overflow-hidden">
+        <section aria-labelledby="anfragen" className="rounded-[10px] border border-accent/40 bg-accent-soft/20 overflow-hidden">
+          <h3 id="anfragen" className="px-4 md:px-5 pt-4 pb-2 text-[13.5px] font-medium text-accent-hover flex items-center gap-2">
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent live-dot" />
+            {pending.length === 1 ? "1 Beitrittsanfrage" : `${pending.length} Beitrittsanfragen`}
+          </h3>
+          <ul className="divide-y divide-accent/20">
             {pending.map((m) => (
-              <li key={m.user_id} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 md:px-5 py-4 anim-rise">
+              <li key={m.user_id} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 md:px-5 py-3.5 anim-rise">
                 <Person m={m} />
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
                   <Button variant="quiet" className="text-sm" onClick={() => remove(m, true)}>Ablehnen</Button>
                   <Button variant="primary" size="sm" disabled={busy === m.user_id} onClick={() => act(m, "approve")}>Freigeben</Button>
                 </div>
@@ -136,24 +137,21 @@ export function MemberList({ circleId, me, admin, members }: { circleId: string;
         </section>
       )}
 
-      <section>
-        <SectionTitle aside={<span className="tnum">{active.length}</span>}>Mitglieder</SectionTitle>
-        <ul className="panel !rounded-[10px] divide-y divide-line overflow-hidden">
-          {active.map((m) => (
-            <li key={m.user_id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-x-6 gap-y-2 px-4 md:px-5 py-3.5">
-              <Person m={m} me={m.user_id === me} />
-              {admin && m.user_id !== me && (
-                <div className="flex items-center gap-4 pl-[54px] sm:pl-0">
-                  {m.role !== "admin" && (
-                    <Button variant="quiet" className="text-sm" disabled={busy === m.user_id} onClick={() => act(m, "make_admin")}>Zum Admin machen</Button>
-                  )}
-                  <Button variant="danger" className="text-sm" onClick={() => remove(m)}>Entfernen</Button>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      </section>
+      <ul className="rounded-[10px] border border-line divide-y divide-line overflow-hidden" aria-label="Mitglieder">
+        {active.map((m) => (
+          <li key={m.user_id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-x-6 gap-y-2 px-4 md:px-5 py-3.5">
+            <Person m={m} me={m.user_id === me} />
+            {admin && m.user_id !== me && (
+              <div className="flex items-center gap-4 pl-[54px] sm:pl-0">
+                {m.role !== "admin" && (
+                  <Button variant="quiet" className="text-sm" disabled={busy === m.user_id} onClick={() => act(m, "make_admin")}>Zum Admin machen</Button>
+                )}
+                <Button variant="danger" className="text-sm" onClick={() => remove(m)}>Entfernen</Button>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -161,12 +159,12 @@ export function MemberList({ circleId, me, admin, members }: { circleId: string;
 function Person({ m, me }: { m: Member; me?: boolean }) {
   return (
     <div className="min-w-0 flex items-center gap-3.5">
-      <Avatar name={m.first_name} size={40} />
+      <Avatar name={m.first_name} seed={m.user_id} size={40} />
       <div className="min-w-0">
         <p className="text-[15px] flex flex-wrap items-center gap-x-2 gap-y-1">
-          <Link href={`/profil/${m.user_id}`} className="font-semibold hover:underline underline-offset-4">{m.first_name}</Link>
+          <Link href={`/profil/${m.user_id}`} className="font-medium hover:underline underline-offset-4">{m.first_name}</Link>
           {me && <span className="text-muted">(du)</span>}
-          {m.role === "admin" && <span className="chip !h-[22px] !text-[12px]">Admin</span>}
+          {m.role === "admin" && <span className="inline-flex items-center h-[22px] px-2 rounded-[4px] bg-accent-soft text-accent-hover text-[12px] font-medium">Admin</span>}
         </p>
         <p className="text-[13px] text-muted">{[trustLabel[m.trust_level] ?? "Neu", m.municipality].filter(Boolean).join(" · ")}</p>
       </div>
@@ -203,23 +201,20 @@ export function CircleSettings({ circleId, initial }: { circleId: string; initia
     }
   }
 
+  if (!open) {
+    return (
+      <div className="mt-4">
+        <Button variant="secondary" onClick={() => { setV(initial); setOpen(true); }}>Regeln und Namen ändern</Button>
+      </div>
+    );
+  }
   return (
-    <section className="panel !rounded-[10px] p-5 md:p-6">
-      <h2 className="ui-title text-[19px]">Einstellungen</h2>
-      {!open ? (
-        <>
-          <p className="text-[14px] text-muted mt-1 mb-4">Name, Leihfrist, Übergabeort und Beitritt. Als Admin kannst du alles ändern.</p>
-          <Button size="sm" variant="ghost" onClick={() => { setV(initial); setOpen(true); }}>Einstellungen ändern</Button>
-        </>
-      ) : (
-        <div className="anim-rise mt-5">
-          <CircleFields v={v} set={(p) => { setV((c) => ({ ...c, ...p })); if (p.name !== undefined) setNameError(null); }} nameError={nameError} />
-          <div className="flex items-center gap-4 mt-6">
-            <Button disabled={busy} onClick={save}>{busy ? "Wird gespeichert …" : "Speichern"}</Button>
-            <Button variant="quiet" onClick={() => setOpen(false)}>Abbrechen</Button>
-          </div>
-        </div>
-      )}
+    <section aria-label="Einstellungen" className="mt-4 rounded-[10px] border border-line p-5 md:p-6 anim-rise">
+      <CircleFields v={v} set={(p) => { setV((c) => ({ ...c, ...p })); if (p.name !== undefined) setNameError(null); }} nameError={nameError} />
+      <div className="flex items-center gap-3 mt-7 pt-5 border-t border-line">
+        <Button variant="primary" disabled={busy} onClick={save}>{busy ? "Wird gespeichert …" : "Speichern"}</Button>
+        <Button variant="quiet" onClick={() => setOpen(false)}>Abbrechen</Button>
+      </div>
     </section>
   );
 }
@@ -243,13 +238,13 @@ export function LeaveCircle({ circleId, me, name, lastAdmin }: { circleId: strin
   }
 
   return (
-    <section className="px-5 md:px-6 pt-2">
-      <p className="text-[13.5px] text-muted mb-1">
+    <section aria-label="Kreis verlassen" className="rounded-[10px] bg-paper-2 p-5">
+      <p className="text-[13.5px] text-muted">
         {lastAdmin
           ? "Du bist der einzige Admin. Mach zuerst jemanden zum Admin, bevor du gehst."
           : "Deine Bücher verschwinden aus dem gemeinsamen Regal. Laufende Leihen gehen weiter."}
       </p>
-      <Button variant="danger" className={cx("text-sm", leaving && "opacity-45")} disabled={lastAdmin || leaving} onClick={leave}>
+      <Button variant="danger" className={cx("text-sm mt-2 -ml-1", leaving && "opacity-45")} disabled={lastAdmin || leaving} onClick={leave}>
         Kreis verlassen
       </Button>
     </section>

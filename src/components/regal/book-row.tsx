@@ -6,7 +6,8 @@ import { cx } from "@/components/ui";
 
 /**
  * Ein Brett im Büchergestell auf dunkler Fläche: die Cover stehen auf einem durchgehenden
- * 3-px-Brett, darunter Titel und Status als Text. Auch für Kreisregale verwendet.
+ * 3-px-Brett, darunter Titel und Status als Text. Der Status steht
+ * immer auf derselben Linie ganz unten, egal wie lang der Titel ist. Auch für Kreisregale verwendet.
  */
 // Auf der dunklen Fläche gelten feste, helle Statusfarben (wie auf der Startseite)
 const NIGHT_DOT: Record<Tone, string> = {
@@ -23,7 +24,7 @@ export type BookRowItem = Pick<ShelfCopy, "id" | "title" | "authors" | "photo_ke
 
 export function BookRow({ items, height = 168, hrefBase = "/regal/", label }: { items: BookRowItem[]; height?: number; hrefBase?: string; label?: string }) {
   return (
-    <ul className="shelf !gap-0 !items-start mt-1" aria-label={label}>
+    <ul className="shelf !gap-0 !items-stretch mt-1 !pb-1" aria-label={label}>
       {items.map((c, i) => {
         const cover = { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id };
         const bw = Math.round(height * (2 / 3)); // gleiche Grösse für alle Bücher
@@ -34,14 +35,14 @@ export function BookRow({ items, height = 168, hrefBase = "/regal/", label }: { 
           <li key={c.id} style={{ width: w + (last ? 0 : 22), animationDelay: `${Math.min(i, 10) * 30}ms` }} className="anim-rise relative">
             {/* durchgehendes Brett: läuft unter dem Zwischenraum weiter */}
             <div aria-hidden className="absolute left-0 right-0 h-[3px] bg-night-ink/90" style={{ top: height }} />
-            <Link href={c.href ?? `${hrefBase}${c.id}`} className="book group block" style={{ width: w }}>
-              <div className="flex items-end" style={{ height }}>
+            <Link href={c.href ?? `${hrefBase}${c.id}`} className="book group flex flex-col h-full" style={{ width: w }}>
+              <div className="flex items-end flex-none" style={{ height }}>
                 <div className="book-face"><Cover data={cover} width={bw} height={height} uniform /></div>
               </div>
-              <div className="pt-[13px] pr-2">
+              <div className="pt-[13px] pr-2 flex-1 flex flex-col">
                 <p className="text-[13.5px] font-medium leading-snug line-clamp-2 group-hover:underline underline-offset-2">{c.title}</p>
                 {st ? (
-                  <p className="text-[12px] text-night-muted mt-1 flex items-center gap-1.5">
+                  <p className="text-[12px] text-night-muted mt-auto pt-1 flex items-center gap-1.5">
                     <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none", NIGHT_DOT[st.tone])} />
                     <span className="truncate">{st.text}</span>
                   </p>
