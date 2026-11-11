@@ -42,10 +42,10 @@ export function LoginForm({ next }: { next: string | null }) {
 
   if (sent) {
     return (
-      <div className="panel-quiet rounded-[10px] p-6 md:p-7 anim-rise" aria-live="polite">
-        <span className="h-12 w-12 rounded-full bg-ink text-paper grid place-items-center anim-pop"><IconCheck width={22} height={22} /></span>
-        <p className="text-[34px] font-[560] tracking-[-0.035em] leading-none mt-5">Schau in dein Postfach.</p>
-        <p className="text-ink-2 mt-3">Wir haben einen Link an <strong className="font-semibold text-ink break-all">{email}</strong> geschickt. Er gilt 20 Minuten.</p>
+      <div className="rounded-[10px] border border-line p-6 md:p-7 anim-rise" aria-live="polite">
+        <span className="h-11 w-11 rounded-full bg-accent-soft text-accent-hover grid place-items-center anim-pop"><IconCheck width={20} height={20} /></span>
+        <p className="text-[26px] font-[560] tracking-[-0.03em] leading-tight mt-5">Schau in dein Postfach.</p>
+        <p className="text-ink-2 mt-3">Wir haben einen Link an <strong className="font-medium text-ink break-all">{email}</strong> geschickt. Er gilt 20 Minuten.</p>
         {sent.devLink && (
           <Notice tone="accent" className="mt-6 text-sm">
             Testumgebung ohne Mailversand: <a className="underline underline-offset-4 font-semibold" href={sent.devLink}>Anmeldelink öffnen</a>
@@ -69,10 +69,15 @@ export function LoginForm({ next }: { next: string | null }) {
       <div className="flex items-center gap-4 my-7 text-[13px] text-muted">
         <span className="h-px flex-1 bg-line" /> oder <span className="h-px flex-1 bg-line" />
       </div>
-      <Button variant="ghost" size="lg" className="w-full" onClick={passkey}>
+      <Button variant="secondary" size="lg" className="w-full" onClick={passkey}>
         <IconKey /> Mit Passkey anmelden
       </Button>
-      <p className="text-[13px] text-muted mt-8 leading-relaxed">Mit der Anmeldung akzeptierst du die <a href="/nutzungsbedingungen" className="underline underline-offset-4 hover:text-ink">Nutzungsbedingungen</a> und die <a href="/regeln" className="underline underline-offset-4 hover:text-ink">Regeln</a>. Mindestalter 16 Jahre.</p>
+      <ul className="mt-8 flex flex-wrap gap-2 text-[12.5px] text-ink-2">
+        {["Kein Passwort", "Kostenlos", "Ohne Kaution"].map((t) => (
+          <li key={t} className="rounded-[6px] bg-paper-2 px-3 py-2 flex items-center gap-1.5 whitespace-nowrap"><IconCheck width={14} height={14} className="text-ok flex-none" />{t}</li>
+        ))}
+      </ul>
+      <p className="text-[13px] text-muted mt-5 leading-relaxed">Mit der Anmeldung akzeptierst du die <a href="/nutzungsbedingungen" className="text-accent-hover hover:underline underline-offset-4">Nutzungsbedingungen</a> und die <a href="/regeln" className="text-accent-hover hover:underline underline-offset-4">Regeln</a>. Mindestalter 16 Jahre.</p>
     </div>
   );
 }
