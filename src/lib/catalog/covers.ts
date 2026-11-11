@@ -1,5 +1,5 @@
 /**
- * Original-Cover (PRD 7.2): Open Library, dann Google Books. Gefundene Cover werden im
+ * Original-Cover (PRD 7.2): Deutsche Nationalbibliothek (Verlagscover), Open Library, Google Books. Gefundene Cover werden im
  * eigenen Bucket zwischengespeichert (covers/{isbn}) und nie direkt von der Quelle eingebunden.
  * Die Nutzungsbedingungen der Quellen sind vor dem öffentlichen Start zu prüfen (PRD 12);
  * abschalten mit COVERS=false.
@@ -7,7 +7,12 @@
 const UA = { "user-agent": "Leihregal/0.1 (Buchverleih unter Privatpersonen)" };
 
 export async function coverCandidates(isbn: string): Promise<string[]> {
-  const urls = [`https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false`];
+  const urls = [
+    // Verlagscover über die Deutsche Nationalbibliothek (VLB/MVB) – beste Abdeckung für deutschsprachige Titel
+    `https://portal.dnb.de/opac/mvb/cover?isbn=${isbn}&size=l`,
+    `https://portal.dnb.de/opac/mvb/cover?isbn=${isbn}`,
+    `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false`,
+  ];
   try {
     const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`, { headers: UA, signal: AbortSignal.timeout(6000) });
     if (res.ok) {
