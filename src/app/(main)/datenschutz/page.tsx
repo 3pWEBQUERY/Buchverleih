@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DocPage, DocSection, DocTable, type TocItem } from "@/components/doc";
+import { DocPage, DocSection, DocSummary, DocTable, type TocItem } from "@/components/doc";
 
 export const metadata = {
   title: "Datenschutz",
@@ -22,7 +22,13 @@ const TOC: TocItem[] = [
 
 export default function Page() {
   return (
-    <DocPage eyebrow="Rechtliches" title="Datenschutz" toc={TOC} draft updated="Entwurf, November 2026"
+    <DocPage eyebrow="Rechtliches" title={<>Datenschutz. <em>Nur was nötig ist.</em></>} toc={TOC} draft updated="Entwurf, November 2026"
+      intro={<DocSummary eyebrow="Das Wichtigste in Kürze" title="Vier Punkte vorab" note="Die Kurzfassung erleichtert das Lesen. Massgebend ist der vollständige Text." items={[
+        ["Nur die Postleitzahl", "Keine Adresse, kein Gerätestandort. Andere sehen dein Regal als Fläche von rund 300 m.", "#standort"],
+        ["Keine Werbung", "Kein Verkauf von Daten, keine Analyse- oder Werbe-Cookies, keine Tracker von Dritten.", "#cookies"],
+        ["Der Chat ist privat", "Die Moderation liest nur bei einer Meldung oder einem Fall. Jeder Zugriff wird protokolliert.", "#chat"],
+        ["Deine Kontrolle", "Alle Daten als Datei herunterladen, Konto löschen, E-Mails pro Art abschalten.", "#rechte"],
+      ]} />}
       lead="Wir bearbeiten nur, was es für Leihen, Tausch und Sicherheit braucht. Keine Werbung, kein Verkauf von Daten, keine Bewegungsdaten.">
 
       <DocSection id="verantwortlich" title="Verantwortlich">

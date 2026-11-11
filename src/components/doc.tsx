@@ -165,7 +165,7 @@ export function DocSummary({ eyebrow, title, items, note }: { eyebrow: string; t
       <ol className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {items.map(([t, text, href], i) => (
           <li key={t} className="anim-rise" style={{ animationDelay: `${80 + i * 50}ms` }}>
-            <a href={href} className="group rounded-[10px] border border-line p-5 flex flex-col h-full min-h-[176px] hover:border-accent transition-colors duration-150">
+            <a href={href} className="group rounded-[10px] border border-line p-5 flex flex-col h-full sm:min-h-[176px] hover:border-accent transition-colors duration-150">
               <span className="text-[13px] tnum text-accent-hover font-medium">{String(i + 1).padStart(2, "0")}</span>
               <span className="font-medium text-[17px] mt-3">{t}</span>
               <span className="text-muted text-[14px] mt-1.5 leading-relaxed">{text}</span>
