@@ -29,13 +29,13 @@ export default async function Page() {
         aside={loans.length > 0 && (
           <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "80ms" }}>
             {tiles.map(([n, l, href], i) => (
-              <Link key={l} href={href} className="panel-quiet px-4 md:px-5 py-4 sm:min-w-[118px] hover:bg-paper-3 transition-colors">
+              <Tile key={l} href={n > 0 ? href : null}>
                 <dd className="font-serif text-[40px] leading-none tnum flex items-center gap-2">
                   {n}
                   {i === 0 && n > 0 && <span aria-hidden className="h-2 w-2 rounded-full bg-accent live-dot" />}
                 </dd>
                 <dt className="text-[13px] text-muted mt-1.5">{l}</dt>
-              </Link>
+              </Tile>
             ))}
           </dl>
         )}
@@ -89,4 +89,9 @@ export default async function Page() {
       )}
     </div>
   );
+}
+
+function Tile({ href, children }: { href: string | null; children: React.ReactNode }) {
+  const cls = "panel-quiet px-4 md:px-5 py-4 sm:min-w-[118px] transition-colors";
+  return href ? <Link href={href} className={`${cls} hover:bg-paper-3`}>{children}</Link> : <div className={cls}>{children}</div>;
 }

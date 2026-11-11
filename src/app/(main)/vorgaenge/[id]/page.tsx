@@ -66,7 +66,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           {loan.authors[0] && <p className="text-[15px] md:text-[17px] text-ink-2 mt-2 truncate">{loan.authors.join(", ")}</p>}
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <span className={cx("chip", overdue && "!bg-late/10 !text-late")}>
-              <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", toneDot[tone])} />
+              <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", toneDot(tone))} />
               {overdue ? `Überfällig seit ${fmtDay(dayToDate(dueDay(t.due_at!)))}` : statusLabel[loan.status]}
             </span>
             {loan.kind === "lend" && loan.wanted && <span className="hidden sm:inline-flex text-[13px] text-muted tnum">{fmtRange(loan.wanted)}</span>}

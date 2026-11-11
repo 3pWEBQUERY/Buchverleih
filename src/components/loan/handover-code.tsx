@@ -73,7 +73,7 @@ export function HandoverCode({ loanId, label, onClose, onDone }: { loanId: strin
     <div role="dialog" aria-modal="true" aria-label={label} className="fixed inset-0 z-[60] bg-white text-black flex flex-col anim-sheet overflow-y-auto" style={{ colorScheme: "light" }}>
       <div className="flex items-center justify-between px-5 md:px-8 h-16 flex-none">
         <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-neutral-500 inline-flex items-center gap-2">
-          <span aria-hidden className="h-2 w-2 rounded-full bg-[#d23c1a] animate-pulse" /> Live
+          <span aria-hidden className="h-2 w-2 rounded-full bg-[#d23c1a] animate-pulse" /> Bildschirm bleibt an
         </span>
         <button onClick={onClose} className="h-11 w-11 -mr-2 grid place-items-center rounded-full hover:bg-neutral-100 transition-colors" aria-label="Schliessen"><IconClose width={24} height={24} /></button>
       </div>

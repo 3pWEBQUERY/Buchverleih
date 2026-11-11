@@ -189,7 +189,7 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
       secondary.push(<Button key="rc" variant="quiet" onClick={() => deferred("Zurückgerufen – Rückgabe innert 7 Tagen", { action: "recall" })}>Zurückrufen</Button>);
     if (t.due_at && new Date(t.due_at) < new Date(Date.now() - 3 * 86400_000))
       secondary.push(<Button key="oc" variant="quiet" onClick={() => act({ action: "open_case" }, "Fall eröffnet")}>Fall eröffnen</Button>);
-    secondary.push(<Button key="ro" variant="quiet" onClick={() => setOverlay({ kind: "scan", label: "Rückgabe scannen" })}>Rückgabe scannen</Button>);
+    if (step?.key !== "scan_return") secondary.push(<Button key="ro" variant="quiet" onClick={() => setOverlay({ kind: "scan", label: "Rückgabe scannen" })}>Rückgabe scannen</Button>);
   }
   if (loan.status === "accepted" && !owner && loan.kind === "lend" && loan.wanted && loan.wanted.start > new Date().toISOString().slice(0, 10)) {
     secondary.push(<Button key="rs" variant="quiet" onClick={() => setPanel(panel === "reschedule" ? null : "reschedule")}>Zeitraum ändern</Button>);

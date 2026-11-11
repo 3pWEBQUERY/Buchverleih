@@ -33,7 +33,10 @@ function whenText(loan: LoanListItem) {
   return { when, overdue: Boolean(overdue) };
 }
 
-export const toneDot: Record<Tone, string> = { ok: "bg-ok", lent: "bg-lent", late: "bg-late", wait: "bg-wait", done: "bg-done", accent: "bg-accent" };
+/** Punktfarbe zum Ton (feste Klassennamen, damit Tailwind sie findet) */
+export function toneDot(t: Tone) {
+  return ({ ok: "bg-ok", lent: "bg-lent", late: "bg-late", wait: "bg-wait", done: "bg-done", accent: "bg-accent" } as const)[t];
+}
 
 const coverOf = (loan: LoanListItem) => ({ title: loan.title, authors: loan.authors, photoKey: loan.photo_key, photoW: loan.photo_w, photoH: loan.photo_h, seed: loan.work_id });
 const who = (loan: LoanListItem) => `${offerNoun[loan.kind]} · ${loan.role === "owner" ? `an ${loan.other_name}` : `von ${loan.other_name}`}`;
@@ -96,7 +99,7 @@ export function LoanRow({ loan, variant, i = 0 }: { loan: LoanListItem; variant?
             ) : (
               <>
                 <span className="chip">
-                  <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", toneDot[loanTone(loan.status, loan.due_at)])} />
+                  <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", toneDot(loanTone(loan.status, loan.due_at)))} />
                   {loan.waitingText ?? statusLabel[loan.status]}
                 </span>
                 {when && <span className={cx("text-[13px] tnum", overdue ? "text-late font-medium" : "text-muted")}>{when}</span>}
