@@ -5,9 +5,11 @@ import * as moderation from "@/lib/moderation";
 import { correctionCurrent, targetLinks } from "@/lib/moderation-queries";
 import { ago, fmtDayTime } from "@/lib/dates";
 import { caseResponseLabel, reportReasonLabel } from "@/lib/i18n/de-CH";
-import { Button, Empty, Input, LinkButton, Notice, cx } from "@/components/ui";
+import { Button, Empty, Input, LinkButton, Notice, PageTitle, cx } from "@/components/ui";
+import { StatTile as StatTileNew, StepSection } from "@/components/step-section";
+import { Monogram } from "@/components/person/monogram";
 import { IconArrowRight, IconCheck, IconSearch } from "@/components/icons";
-import { Chip, ModHead, PriorityChip, Quiet, StatTile, type Priority } from "@/components/moderation/ui";
+import { Chip, PriorityChip, Quiet, StatTile, type Priority } from "@/components/moderation/ui";
 import { CorrectionActions, FlagSwitch, ReportActions } from "@/components/moderation/actions";
 import { ModTabs, TABS, type Tab } from "./tabs";
 import { actionLabel, caseKindLabel, caseStageLabel, fieldLabel, flagLabel, targetTypeLabel } from "./labels";
@@ -25,25 +27,22 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
 
   return (
     <div>
-      <header className="mb-8 md:mb-10 flex flex-wrap items-end justify-between gap-6">
-        <div className="min-w-0 anim-rise">
-          <p className="eyebrow">Intern · {user.role === "admin" ? "Administration" : "Moderation"}</p>
-          <h1 className="display text-[32px] md:text-[44px] mt-3">Moderation</h1>
-          <p className="text-ink-2 text-[17px] mt-4 max-w-xl">Fälle, Meldungen, Konten und Betrieb. Jeder Eingriff steht im Protokoll.</p>
-        </div>
-        <dl className="grid grid-cols-2 gap-2 anim-rise" style={{ animationDelay: "60ms" }}>
-          <Link href="/moderation" className="panel-quiet rounded-[8px] px-5 py-4 min-w-[124px] hover:bg-paper-3 transition-colors">
-            <dd className="font-[520] tracking-[-0.035em] text-[40px] leading-none tnum">{open}</dd>
-            <dt className="text-[13px] text-muted mt-1.5">offen</dt>
-          </Link>
-          <Link href="/moderation" className={cx("rounded-[8px] px-5 py-4 min-w-[124px] transition-colors", urgent > 0 ? "bg-late/10 text-late hover:bg-late/15" : "panel-quiet hover:bg-paper-3")}>
-            <dd className="font-[520] tracking-[-0.035em] text-[40px] leading-none tnum">{urgent}</dd>
-            <dt className={cx("text-[13px] mt-1.5", urgent > 0 ? "text-late" : "text-muted")}>dringend</dt>
-          </Link>
-        </dl>
-      </header>
+      <PageTitle
+        eyebrow={`Intern · ${user.role === "admin" ? "Administration" : "Moderation"}`}
+        sub="Fälle, Meldungen, Konten und Betrieb. Jeder Eingriff steht im Protokoll."
+        aside={
+          <dl className="grid grid-cols-2 gap-2 anim-rise" style={{ animationDelay: "60ms" }}>
+            <StatTileNew n={open} label="offen" href="/moderation" />
+            <div className={cx("relative rounded-[8px] px-4 py-3 min-w-[92px] flex flex-col-reverse justify-end", urgent > 0 ? "bg-late/10 text-late" : "bg-paper-2")}>
+              <dt className={cx("text-[12px] mt-1.5", urgent > 0 ? "text-late" : "text-muted")}>dringend</dt>
+              <dd className="text-[24px] md:text-[28px] font-[560] tracking-[-0.04em] leading-none tnum">{urgent}</dd>
+            </div>
+          </dl>
+        }>
+        Moderation. <em>Was ansteht.</em>
+      </PageTitle>
       <ModTabs active={tab} counts={{ warteschlange: open }} />
-      <div className="mt-8 md:mt-12">
+      <div className="mt-4">
         {tab === "warteschlange" && <Queue q={q} />}
         {tab === "kennzahlen" && <Kpis />}
         {tab === "schalter" && <Flags />}
@@ -66,34 +65,33 @@ async function Queue({ q }: { q: QueueData }) {
   const [links, current] = await Promise.all([targetLinks(q.reports), correctionCurrent(q.corrections.map((c) => c.id))]);
   if (!q.cases.length && !q.reports.length && !q.corrections.length) {
     return (
-      <div className="panel-quiet rounded-[10px] px-6 py-10 md:px-10 md:py-14 flex flex-wrap items-center justify-between gap-6">
+      <div className="rounded-[10px] border border-line px-6 py-8 md:px-8 md:py-10 flex flex-wrap items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-          <span className="h-14 w-14 rounded-full bg-ink text-paper grid place-items-center flex-none anim-pop"><IconCheck width={24} height={24} /></span>
+          <span className="h-12 w-12 rounded-full bg-accent-soft text-accent-hover grid place-items-center flex-none anim-pop"><IconCheck width={22} height={22} /></span>
           <div>
-            <p className="text-[32px] md:text-[40px] font-[560] tracking-[-0.035em] leading-none">Alles erledigt.</p>
+            <p className="text-[24px] md:text-[28px] font-[560] tracking-[-0.03em] leading-none">Alles erledigt.</p>
             <p className="text-ink-2 mt-2">Keine offenen Fälle, Meldungen oder Korrekturen.</p>
           </div>
         </div>
-        <LinkButton href="/moderation?ansicht=protokoll" variant="ghost">Protokoll ansehen</LinkButton>
+        <LinkButton href="/moderation?ansicht=protokoll" variant="secondary">Protokoll ansehen</LinkButton>
       </div>
     );
   }
   const reports = [...q.reports].sort((a, b) => (reportPriority(a) === "hoch" ? 0 : 1) - (reportPriority(b) === "hoch" ? 0 : 1));
   return (
-    <div className="space-y-12 md:space-y-14">
-      <section aria-labelledby="q-faelle">
-        <ModHead id="q-faelle" title="Fälle" count={q.cases.length} aside="Schaden und Nichtrückgabe" />
+    <div>
+      <StepSection id="q-faelle" n={1} first title="Fälle" aside={`${q.cases.length} offen`} desc="Schaden und Nichtrückgabe. Fälle, die eine Entscheidung brauchen, sind rot markiert.">
         {q.cases.length ? (
           <ul className="grid gap-3 md:grid-cols-2">
             {q.cases.map((c, i) => (
               <li key={c.id} className="anim-rise" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
                 <Link href={`/moderation/vorgang/${c.loan_id}`}
-                  className={cx("group panel rounded-[8px] p-5 md:p-6 flex flex-col h-full hover:border-ink transition-colors", c.needs_decision && "border-late/40")}>
+                  className={cx("group rounded-[10px] border p-5 flex flex-col h-full transition-colors", c.needs_decision ? "border-late/40 hover:border-late" : "border-line hover:border-accent")}>
                   <div className="flex items-center justify-between gap-3">
                     <PriorityChip p={c.needs_decision ? "hoch" : "normal"} />
                     <span className="text-[13px] text-muted">eröffnet {ago(c.opened_at)}</span>
                   </div>
-                  <p className="font-serif text-[26px] leading-[1.05] mt-4 group-hover:underline decoration-1 underline-offset-4">{c.title}</p>
+                  <p className="font-serif text-[20px] leading-[1.15] mt-3.5 group-hover:underline decoration-1 underline-offset-4">{c.title}</p>
                   <p className="text-[14px] text-ink-2 mt-2">
                     {caseKindLabel[c.kind] ?? c.kind} · {c.owner} verleiht an {c.borrower}
                   </p>
@@ -102,32 +100,31 @@ async function Queue({ q }: { q: QueueData }) {
                       {c.needs_decision ? "Braucht Entscheidung" : caseStageLabel(c.stage)}
                       {c.response && <> · Antwort: {caseResponseLabel[c.response as keyof typeof caseResponseLabel] ?? c.response}</>}
                     </span>
-                    <span className="inline-flex items-center gap-1.5 text-[13.5px] font-semibold transition-transform duration-200 group-hover:translate-x-0.5">Öffnen <IconArrowRight width={15} height={15} /></span>
+                    <span className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-accent-hover transition-transform duration-200 group-hover:translate-x-0.5">Öffnen <IconArrowRight width={15} height={15} /></span>
                   </div>
                 </Link>
               </li>
             ))}
           </ul>
         ) : <Quiet>Keine offenen Fälle.</Quiet>}
-      </section>
+      </StepSection>
 
-      <section aria-labelledby="q-meldungen">
-        <ModHead id="q-meldungen" title="Meldungen" count={q.reports.length} aside="Belästigung und Meldungen über 48 Std. zuerst" />
+      <StepSection id="q-meldungen" n={2} title="Meldungen" aside={`${q.reports.length} offen`} desc="Belästigung und Meldungen über 48 Stunden zuerst.">
         {reports.length ? (
           <ul className="grid gap-3 md:grid-cols-2">
             {reports.map((r, i) => {
               const href = links[`${r.target_type}:${r.target_id}`];
               const p = reportPriority(r);
               return (
-                <li key={r.id} className={cx("panel rounded-[8px] p-5 md:p-6 flex flex-col anim-rise", p === "hoch" && "border-late/40")} style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
+                <li key={r.id} className={cx("rounded-[10px] border p-5 flex flex-col anim-rise", p === "hoch" ? "border-late/40" : "border-line")} style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
                   <div className="flex items-center justify-between gap-3">
                     <PriorityChip p={p} />
                     <span className="text-[13px] text-muted">{ago(r.created_at)}</span>
                   </div>
-                  <p className="ui-title text-[19px] mt-4">{reportReasonLabel[r.reason as keyof typeof reportReasonLabel] ?? r.reason}</p>
+                  <p className="font-medium text-[17px] mt-3.5">{reportReasonLabel[r.reason as keyof typeof reportReasonLabel] ?? r.reason}</p>
                   <p className="text-[14px] text-ink-2 mt-1">
                     {targetTypeLabel[r.target_type] ?? r.target_type}
-                    {href && <> · <Link href={href} className="underline underline-offset-4 hover:text-ink">ansehen</Link></>}
+                    {href && <> · <Link href={href} className="font-medium text-accent-hover hover:underline underline-offset-4">ansehen</Link></>}
                     {" · "}{r.reporter ? `gemeldet von ${r.reporter}` : "automatisch markiert"}
                   </p>
                   {r.note && <p className="text-[15px] mt-3 border-l-2 border-line-strong pl-3 text-ink-2">«{r.note}»</p>}
@@ -137,12 +134,11 @@ async function Queue({ q }: { q: QueueData }) {
             })}
           </ul>
         ) : <Quiet>Keine offenen Meldungen.</Quiet>}
-      </section>
+      </StepSection>
 
-      <section aria-labelledby="q-korrekturen">
-        <ModHead id="q-korrekturen" title="Katalogkorrekturen" count={q.corrections.length} />
+      <StepSection id="q-korrekturen" n={3} title="Katalogkorrekturen" aside={`${q.corrections.length} offen`} desc="Vorschläge von Mitgliedern zu Titel, Autor und Ausgabe.">
         {q.corrections.length ? (
-          <ul className="panel rounded-[8px] divide-y divide-line">
+          <ul className="rounded-[10px] border border-line divide-y divide-line">
             {q.corrections.map((c) => (
               <li key={c.id} className="p-5 md:px-6 grid gap-x-6 gap-y-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
                 <div className="min-w-0">
@@ -150,11 +146,11 @@ async function Queue({ q }: { q: QueueData }) {
                     <PriorityChip p="niedrig" />
                     <span className="text-[13px] text-muted">{ago(c.created_at)}</span>
                   </div>
-                  <p className="font-serif text-[22px] leading-tight mt-3">{c.title}</p>
+                  <p className="font-serif text-[19px] leading-tight mt-3">{c.title}</p>
                   <p className="text-[14.5px] mt-1.5">
                     <span className="text-muted">{fieldLabel[c.field] ?? c.field}: </span>
                     {current[c.id] && <><span className="line-through text-muted">{current[c.id]}</span> <span className="text-muted">→</span> </>}
-                    <span className="font-semibold">{c.suggestion}</span>
+                    <span className="font-medium">{c.suggestion}</span>
                   </p>
                 </div>
                 <CorrectionActions id={c.id} />
@@ -162,7 +158,7 @@ async function Queue({ q }: { q: QueueData }) {
             ))}
           </ul>
         ) : <Quiet>Keine offenen Korrekturen.</Quiet>}
-      </section>
+      </StepSection>
     </div>
   );
 }
@@ -204,7 +200,7 @@ async function Kpis() {
   const known = rows.filter((r) => r.value !== null).length;
 
   return (
-    <div className="space-y-12 md:space-y-14">
+    <div className="space-y-10">
       {stale && (
         <Notice tone="late" className="max-w-2xl">
           <p className="font-semibold">Der Fristenlauf {lastRun ? `lief zuletzt ${ago(lastRun)} (${fmtDayTime(lastRun)})` : "ist noch nie gelaufen"}.</p>
@@ -212,38 +208,36 @@ async function Kpis() {
         </Notice>
       )}
 
-      <section className="surface-night rounded-[12px] p-7 md:p-10 grid gap-8 md:grid-cols-[1fr_auto] md:items-end anim-rise">
+      <section className="surface-night rounded-[12px] p-6 md:p-8 grid gap-8 md:grid-cols-[1fr_auto] md:items-end anim-rise">
         <div>
           <p className="eyebrow !text-night-muted">Leitkennzahl · letzte 7 Tage</p>
-          <p className="display text-[96px] md:text-[150px] tnum mt-4 leading-[0.8]">{fmt(num(k.completed_week) ?? 0, 0)}</p>
-          <p className="text-night-muted text-[16px] mt-5 max-w-md">Abgeschlossene Leihen. Zählt erst, wenn beide die Rückgabe bestätigt haben.</p>
+          <p className="display text-[64px] md:text-[88px] tnum mt-3 leading-[0.9]">{fmt(num(k.completed_week) ?? 0, 0)}</p>
+          <p className="text-night-muted text-[15px] mt-4 max-w-md">Abgeschlossene Leihen. Zählt erst, wenn beide die Rückgabe bestätigt haben.</p>
         </div>
         <dl className="grid grid-cols-2 gap-x-10 gap-y-1 md:text-right">
           <div>
-            <dd className="font-[520] tracking-[-0.035em] text-[44px] leading-none tnum">{hit}<span className="text-night-muted">/{rows.length}</span></dd>
+            <dd className="font-[520] tracking-[-0.035em] text-[32px] md:text-[36px] leading-none tnum">{hit}<span className="text-night-muted">/{rows.length}</span></dd>
             <dt className="text-[13px] text-night-muted mt-1.5">Ziele erreicht</dt>
           </div>
           <div>
-            <dd className="font-[520] tracking-[-0.035em] text-[44px] leading-none tnum">{rows.length - known}</dd>
+            <dd className="font-[520] tracking-[-0.035em] text-[32px] md:text-[36px] leading-none tnum">{rows.length - known}</dd>
             <dt className="text-[13px] text-night-muted mt-1.5">ohne Daten</dt>
           </div>
         </dl>
       </section>
 
-      <section aria-labelledby="kpi-t">
-        <ModHead id="kpi-t" title="Kennzahlen" aside="Ziel nach 6 Monaten Beta" />
-        <ul className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+      <StepSection id="kpi-t" n={1} title="Kennzahlen" aside="Ziel nach 6 Monaten Beta" desc="Grün erreicht, rot unter Ziel. Die Marke im Balken zeigt das Ziel.">
+        <ul className="grid gap-3 grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4">
           {rows.map((r, i) => <KpiTile key={r.label} k={r} i={i} />)}
         </ul>
         <p className="text-sm text-muted mt-4 max-w-prose">Die Zielwerte sind Startschätzungen ohne Vergleichsdaten. Sie werden nach den ersten 200 Leihen neu gesetzt.</p>
-      </section>
+      </StepSection>
 
-      <section aria-labelledby="stock-t">
-        <ModHead id="stock-t" title="Bestand und Nachfrage" aside={!stale && lastRun ? `Fristenlauf zuletzt ${ago(lastRun)}` : undefined} />
+      <StepSection id="stock-t" n={2} title="Bestand und Nachfrage" aside={!stale && lastRun ? `Fristenlauf zuletzt ${ago(lastRun)}` : undefined}>
         <dl className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {stock.map(([label, value]) => <StatTile key={label} label={label} value={value} />)}
         </dl>
-      </section>
+      </StepSection>
     </div>
   );
 }
@@ -256,27 +250,27 @@ function KpiTile({ k, i }: { k: Kpi; i: number }) {
   const fill = k.value === null ? 0 : Math.max(2, Math.min(100, (k.value / max) * 100));
   const mark = (k.goal / max) * 100;
   return (
-    <li className="panel rounded-[8px] p-5 flex flex-col sm:min-h-[228px] anim-rise" style={{ animationDelay: `${i * 35}ms` }}>
+    <li className="rounded-[10px] border border-line p-5 flex flex-col sm:min-h-[210px] anim-rise" style={{ animationDelay: `${i * 35}ms` }}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="ui-title text-[15px]">{k.label}</p>
+          <p className="font-medium text-[15px]">{k.label}</p>
           <p className="text-[12.5px] text-muted leading-snug mt-1 line-clamp-2">{k.def}</p>
         </div>
         {k.value === null
           ? <Chip>Keine Daten</Chip>
           : <Chip tone={ok ? "ok" : "late"} strong>{ok ? "Erreicht" : "Unter Ziel"}</Chip>}
       </div>
-      <p className="font-[520] tracking-[-0.035em] text-[52px] leading-none tnum mt-5">
-        {k.value === null ? <span className="text-muted">–</span> : <>{fmt(k.value, k.digits)}<span className="text-[26px] text-muted">{k.unit}</span></>}
+      <p className="font-[560] tracking-[-0.04em] text-[36px] md:text-[40px] leading-none tnum mt-5">
+        {k.value === null ? <span className="text-muted">–</span> : <>{fmt(k.value, k.digits)}<span className="text-[20px] text-muted">{k.unit}</span></>}
       </p>
       <div className="mt-auto pt-5">
         <div className="relative h-2 rounded-full bg-paper-3" aria-hidden>
           <span className={cx("absolute inset-y-0 left-0 rounded-full", k.value === null ? "" : ok ? "bg-ok" : "bg-late")} style={{ width: `${fill}%` }} />
-          <span className="absolute -top-1 -bottom-1 w-[2px] rounded-full bg-ink" style={{ left: `calc(${mark}% - 1px)` }} />
+          <span className="absolute -top-1 -bottom-1 w-[2px] rounded-full bg-ink-2" style={{ left: `calc(${mark}% - 1px)` }} />
         </div>
         <div className="flex items-baseline justify-between gap-3 mt-2.5 text-[12.5px]">
           <span className="text-muted">{k.dir === "min" ? "höher ist besser" : "tiefer ist besser"}</span>
-          <span className="font-semibold whitespace-nowrap tnum">Ziel {k.target}</span>
+          <span className="font-medium whitespace-nowrap tnum">Ziel {k.target}</span>
         </div>
       </div>
     </li>
@@ -289,18 +283,18 @@ async function Flags() {
   const regions = [...new Map(flags.map((f) => [f.region_id, { id: f.region_id, name: f.region_name, enabled: f.region_enabled }])).values()];
   if (!regions.length) return <Empty text="Es sind noch keine Regionen angelegt." />;
   return (
-    <div className="grid gap-4 lg:grid-cols-2 items-start">
+    <div className="grid gap-3 xl:grid-cols-2 items-start">
       {regions.map((r, i) => (
-        <section key={r.id} className="panel rounded-[8px] overflow-hidden anim-rise" style={{ animationDelay: `${i * 50}ms` }}>
+        <section key={r.id} className="rounded-[10px] border border-line overflow-hidden anim-rise" style={{ animationDelay: `${i * 50}ms` }}>
           <div className="flex items-center justify-between gap-4 px-5 md:px-6 pt-5 pb-4">
             <div>
               <p className="eyebrow">Region</p>
-              <h2 className="ui-title text-[22px] mt-1">{r.name}</h2>
+              <h2 className="text-[20px] font-[560] tracking-[-0.025em] mt-1">{r.name}</h2>
             </div>
             <Chip tone={r.enabled ? "ok" : "done"} strong={r.enabled}>{r.enabled ? "Offen" : "Geschlossen"}</Chip>
           </div>
           <div className="mx-5 md:mx-6 mb-2 px-4 rounded-[10px] bg-paper-2">
-            <FlagSwitch regionId={r.id} flagKey="__region" checked={r.enabled} label={<span className="font-semibold">Region offen</span>}
+            <FlagSwitch regionId={r.id} flagKey="__region" checked={r.enabled} label={<span className="font-medium">Region offen</span>}
               hint="Neue Mitglieder mit Postleitzahl aus dieser Region können beitreten." />
           </div>
           <div className="divide-y divide-line px-5 md:px-6 pb-2">
@@ -325,29 +319,29 @@ async function Accounts({ q }: { q: string }) {
         <label className="sr-only" htmlFor="mod-q">Vorname oder E-Mail</label>
         <div className="relative flex-1">
           <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-          <Input id="mod-q" name="q" defaultValue={q} placeholder="Vorname oder E-Mail" autoComplete="off" className="pl-11 rounded-[6px]" />
+          <Input id="mod-q" name="q" defaultValue={q} placeholder="Vorname oder E-Mail" autoComplete="off" className="pl-11" />
         </div>
-        <Button type="submit" className="h-12">Suchen</Button>
+        <Button type="submit" variant="primary" className="h-12">Suchen</Button>
       </form>
       <p className="eyebrow mt-8 mb-3">{q ? `${users.length} Treffer für «${q}»` : "Neueste Konten"}</p>
       {users.length ? (
-        <ul className="panel rounded-[8px] divide-y divide-line overflow-hidden">
+        <ul className="rounded-[10px] border border-line divide-y divide-line overflow-hidden">
           {users.map((u) => (
             <li key={u.id}>
               <Link href={`/moderation/konto/${u.id}`} className="group flex items-center gap-4 px-4 md:px-5 py-3.5 hover:bg-paper-2 transition-colors">
-                <span className="h-10 w-10 flex-none rounded-full bg-paper-3 grid place-items-center font-semibold text-[19px]">{(u.first_name || "?").slice(0, 1).toUpperCase()}</span>
+                <Monogram name={u.first_name || "?"} seed={u.id} size={40} />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-semibold">{u.first_name || "Ohne Namen"}</span>
+                  <span className="block text-[15px] font-medium">{u.first_name || "Ohne Namen"}</span>
                   <span className="block text-sm text-muted truncate">{u.email}{u.municipality ? ` · ${u.municipality}` : ""}</span>
                 </span>
                 {u.banned_at && <Chip tone="late" strong className="shrink-0">Gesperrt</Chip>}
-                <IconArrowRight width={16} height={16} className="text-muted shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-ink" />
+                <IconArrowRight width={16} height={16} className="text-muted shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-accent-hover" />
               </Link>
             </li>
           ))}
         </ul>
       ) : (
-        <Empty text={`Kein Konto passt zu «${q}».`} action={<LinkButton href="/moderation?ansicht=konten" variant="ghost" size="sm">Suche leeren</LinkButton>} />
+        <Empty text={`Kein Konto passt zu «${q}».`} action={<LinkButton href="/moderation?ansicht=konten" variant="secondary" size="sm">Suche leeren</LinkButton>} />
       )}
     </div>
   );
@@ -363,7 +357,7 @@ async function Log() {
   ]);
   const regionNames = Object.fromEntries(flagRows.map((f) => [f.region_id, f.region_name]));
   return (
-    <ol className="panel rounded-[8px] divide-y divide-line">
+    <ol className="rounded-[10px] border border-line divide-y divide-line">
       {log.map((e) => {
         const href = links[`${e.target_type}:${e.target_id}`];
         const target = e.target_type === "flag" ? flagTarget(String(e.target_id), regionNames) : targetTypeLabel[e.target_type as string] ?? e.target_type;
@@ -371,8 +365,8 @@ async function Log() {
           <li key={e.id as string} className="grid gap-x-6 gap-y-1 px-5 py-3.5 text-[15px] sm:grid-cols-[10.5rem_minmax(0,1fr)_auto] sm:items-baseline">
             <span className="text-[13px] text-muted tnum">{fmtDayTime(e.created_at as Date)}</span>
             <span className="min-w-0">
-              <span className="font-semibold">{actionLabel[e.action as string] ?? e.action}</span>
-              <span className="text-ink-2"> · {href ? <Link href={href} className="underline underline-offset-4 hover:text-ink">{target}</Link> : target}</span>
+              <span className="font-medium">{actionLabel[e.action as string] ?? e.action}</span>
+              <span className="text-ink-2"> · {href ? <Link href={href} className="text-accent-hover hover:underline underline-offset-4">{target}</Link> : target}</span>
               {e.note && <span className="block text-sm text-ink-2 mt-0.5">{e.note}</span>}
             </span>
             <span className="text-[13px] text-muted">{e.moderator}</span>

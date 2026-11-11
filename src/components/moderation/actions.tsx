@@ -7,7 +7,7 @@ import { useLater } from "@/components/use-later";
 import { Button, Field, Input, Switch, Textarea, cx } from "@/components/ui";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : "Etwas ist schiefgelaufen. Versuche es erneut.");
-const dangerCls = "inline-flex items-center justify-center font-semibold rounded-full border border-late/60 text-late hover:bg-late hover:text-paper hover:border-late transition-colors duration-200 disabled:opacity-45 whitespace-nowrap active:scale-[0.97]";
+const dangerCls = "inline-flex items-center justify-center font-medium rounded-[6px] border border-late/50 text-late hover:bg-late hover:text-paper hover:border-late transition-colors duration-200 disabled:opacity-45 whitespace-nowrap active:scale-[0.97]";
 const mod = (body: Record<string, unknown>) => api("/mod", { body });
 
 /** Zeile der Warteschlange: wird beim Erledigen ausgegraut, bis der Aufschub abläuft. */
@@ -137,7 +137,7 @@ export function BanControls({ userId, banned, reason }: { userId: string; banned
   }
   return (
     <form onSubmit={(e) => { e.preventDefault(); if (text.trim().length >= 3) set(true, text.trim()); else setError("Gib einen Grund an. Die Person sieht ihn."); }}>
-      <label htmlFor={`ban-${userId}`} className="block text-[13px] font-semibold mb-2">Grund</label>
+      <label htmlFor={`ban-${userId}`} className="block text-[13px] font-medium mb-2">Grund</label>
       <div className="flex flex-col gap-3 sm:flex-row">
         <Input id={`ban-${userId}`} value={text} onChange={(e) => setText(e.target.value)} maxLength={300} placeholder="Wiederholte Preisangaben im Chat" />
         <button type="submit" disabled={busy} className={cx(dangerCls, "h-12 px-6 text-[15px] self-start sm:self-auto")}>Sperren</button>

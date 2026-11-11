@@ -78,8 +78,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           </Chip>
           {openCases > 0 && <Chip tone="late" strong>{openCases === 1 ? "1 offener Fall" : `${openCases} offene Fälle`}</Chip>}
           <span className="text-[15px] text-ink-2 ml-1">
-            <Link href={`/moderation/konto/${loan.owner_id}`} className="font-semibold link-grow">{loan.owner_name}</Link> verleiht an{" "}
-            <Link href={`/moderation/konto/${loan.borrower_id}`} className="font-semibold link-grow">{loan.borrower_name}</Link>
+            <Link href={`/moderation/konto/${loan.owner_id}`} className="font-medium text-accent-hover hover:underline underline-offset-4">{loan.owner_name}</Link> verleiht an{" "}
+            <Link href={`/moderation/konto/${loan.borrower_id}`} className="font-medium text-accent-hover hover:underline underline-offset-4">{loan.borrower_name}</Link>
           </span>
         </div>
       </header>
@@ -95,14 +95,14 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                 const urgent = open && (c.response === "object" || c.stage >= 2);
                 const photos = (c.photo_keys as string[] | null) ?? [];
                 return (
-                  <article key={c.id} className={cx("panel rounded-[8px] p-5 md:p-7", urgent && "border-late/40", !open && "bg-paper-2 border-transparent")}>
+                  <article key={c.id} className={cx("rounded-[10px] border p-5 md:p-6", urgent ? "border-late/40" : "border-line", !open && "bg-paper-2 border-transparent")}>
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       {open
                         ? <PriorityChip p={urgent ? "hoch" : "normal"} />
                         : <Chip>Geschlossen: {caseOutcomeLabel[c.outcome] ?? c.outcome ?? "–"}</Chip>}
                       <span className="text-[13px] text-muted">{ago(c.opened_at)}</span>
                     </div>
-                    <h3 className="ui-title text-[22px] mt-4">{caseKindLabel[c.kind] ?? c.kind}</h3>
+                    <h3 className="text-[20px] font-[560] tracking-[-0.025em] mt-4">{caseKindLabel[c.kind] ?? c.kind}</h3>
                     <p className="text-sm text-muted mt-1">
                       {open ? (urgent ? "Braucht Entscheidung" : caseStageLabel(c.stage)) : "Abgeschlossen"} · eröffnet {fmtDayTime(c.opened_at)} {c.opened_by ? `von ${c.opened_by === loan.owner_id ? loan.owner_name : loan.borrower_name}` : "automatisch"}
                     </p>
@@ -141,15 +141,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               <>
                 <Notice className="mb-4">Zugriff wird protokolliert. Einsicht nur, weil ein Fall oder eine Meldung offen ist.</Notice>
                 {messages.length === 0 ? <Quiet>Keine Nachrichten.</Quiet> : (
-                  <ol className="panel rounded-[8px] p-4 md:p-5 space-y-3">
+                  <ol className="rounded-[10px] border border-line p-4 md:p-5 space-y-3">
                     {(messages as { id: string; sender: string | null; body: string | null; proposal_place: string | null; proposal_at: Date | null; flagged: boolean; created_at: Date }[]).map((m) => {
                       const mine = m.sender === loan.owner_name;
                       return (
                         <li key={m.id} className={cx("max-w-[85%]", mine ? "ml-auto" : "")}>
                           <p className={cx("text-[12.5px] text-muted mb-1", mine && "text-right")}>
-                            <span className="text-ink font-semibold">{m.sender ?? "System"}</span> · {fmtDayTime(m.created_at)}
+                            <span className="text-ink font-medium">{m.sender ?? "System"}</span> · {fmtDayTime(m.created_at)}
                           </p>
-                          <div className={cx("rounded-[8px] px-4 py-2.5 text-[15px]", m.flagged ? "bg-late/10 ring-1 ring-late/40" : mine ? "bg-ink text-paper" : "bg-paper-2")}>
+                          <div className={cx("rounded-[8px] px-4 py-2.5 text-[15px]", m.flagged ? "bg-late/10 ring-1 ring-late/40" : mine ? "bg-accent-soft text-ink" : "bg-paper-2")}>
                             {m.body && <p className="whitespace-pre-line">{m.body}</p>}
                             {m.proposal_at && <p>Terminvorschlag: {m.proposal_place ? `${m.proposal_place}, ` : ""}{fmtDayTime(m.proposal_at)}</p>}
                           </div>
@@ -167,8 +167,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </div>
 
         <aside className="lg:col-span-5 min-w-0 flex flex-col gap-12">
-          <section aria-labelledby="stamm" className="panel-quiet rounded-[8px] p-5 md:p-6">
-            <h2 id="stamm" className="ui-title text-[18px] mb-3">Stammdaten</h2>
+          <section aria-labelledby="stamm" className="rounded-[10px] border border-line p-5 md:p-6">
+            <h2 id="stamm" className="font-medium text-[16px] mb-3">Stammdaten</h2>
             <Dl items={facts} className="border-line-strong/60" />
             {loan.condition_note && <p className="text-sm mt-4"><span className="text-muted">Zustandsnotiz Leiher: </span>{loan.condition_note}</p>}
             {(conditionPhotos.length > 0 || loan.dropoff_photo_key) && (
@@ -194,9 +194,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <ol className="relative ml-[5px] border-l border-line-strong">
               {events.map((ev, i) => (
                 <li key={ev.id} className="relative pl-6 pb-6 last:pb-0">
-                  <span aria-hidden className={cx("absolute -left-[6px] top-[0.35em] h-[11px] w-[11px] rounded-full ring-[3px] ring-paper", i === events.length - 1 ? "bg-ink" : "bg-line-strong")} />
+                  <span aria-hidden className={cx("absolute -left-[6px] top-[0.35em] h-[11px] w-[11px] rounded-full ring-[3px] ring-paper", i === events.length - 1 ? "bg-accent" : "bg-line-strong")} />
                   <p className="text-[12.5px] text-muted tnum">{fmtDayTime(ev.created_at)}</p>
-                  <p className="text-[15px] font-semibold mt-0.5">
+                  <p className="text-[15px] font-medium mt-0.5">
                     {eventLabel(ev.action)}
                     <span className="font-normal text-muted"> · {ev.actor_name ?? (ev.actor_id ? "Ehemaliges Mitglied" : "System")}</span>
                   </p>
