@@ -23,8 +23,12 @@ import { CorrectionForm } from "./correction";
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return { title: "Buch" };
-  const [c] = await sql<{ title: string }[]>`select w.title from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id where c.id = ${id}`;
-  return { title: c?.title ?? "Buch" };
+  // Titel nur verraten, wenn das Exemplar für die betrachtende Person sichtbar ist (z. B. Kreis-Bücher)
+  const viewer = await getUser();
+  const [c] = await sql<{ title: string }[]>`
+    select w.title from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id
+     where c.id = ${id} and copy_visible_to(c.id, ${viewer?.id ?? null}::uuid)`;
+  return { title: c?.title ?? "Buch", robots: { index: false } };
 }
 
 const toneDot = { ok: "bg-ok", lent: "bg-lent", late: "bg-late", wait: "bg-wait", done: "bg-done", accent: "bg-accent" } as const;

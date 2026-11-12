@@ -16,12 +16,20 @@ export async function GET(req: Request, ctx: { params: Promise<{ key: string[] }
     const u = await getUser();
     if (!u) return new Response(null, { status: 401 });
     const ref = parts[1];
-    const [ok] = await sql<{ ok: boolean }[]>`
-      select (${u.role} <> 'member')
-          or exists (select 1 from loans where id::text = ${ref} and (owner_id = ${u.id} or borrower_id = ${u.id}))
+    // Beteiligte immer; Moderation nur bei offenem Fall oder Meldung zum Vorgang, und protokolliert (PRD 12)
+    const [ok] = await sql<{ party: boolean; mod: boolean }[]>`
+      select exists (select 1 from loans where id::text = ${ref} and (owner_id = ${u.id} or borrower_id = ${u.id}))
           or exists (select 1 from cases c join loans l on l.id = c.loan_id where c.id::text = ${ref} and (l.owner_id = ${u.id} or l.borrower_id = ${u.id}))
-          as ok`;
-    if (!ok?.ok) return new Response(null, { status: 404 });
+             as party,
+             ${u.role} <> 'member' and (
+               exists (select 1 from cases c where (c.loan_id::text = ${ref} or c.id::text = ${ref}))
+               or exists (select 1 from reports r where r.target_type = 'loan' and r.target_id = ${ref})
+             ) as mod`;
+    if (!ok?.party && !ok?.mod) return new Response(null, { status: 404 });
+    if (!ok.party && ok.mod) {
+      await sql`insert into moderation_log (moderator_id, action, target_type, target_id, note)
+                values (${u.id}, 'view_photo', 'loan', ${ref}, ${key})`.catch(() => {});
+    }
   }
 
   const [up] = await sql<{ status: string; raw_key: string; user_id: string }[]>`select status, raw_key, user_id from uploads where key = ${key}`;

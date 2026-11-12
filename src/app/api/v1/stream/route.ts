@@ -9,6 +9,7 @@ import { assertMember } from "@/lib/chat";
 export async function GET(req: Request) {
   const u = await getUser();
   if (!u) return new Response(null, { status: 401 });
+  if (u.banned_at) return new Response(null, { status: 403 });
   const url = new URL(req.url);
   const loan = url.searchParams.get("loan");
   const chat = url.searchParams.get("chat");

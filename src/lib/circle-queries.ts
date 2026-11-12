@@ -15,7 +15,7 @@ export type CircleShelfCopy = {
   lent_until: Date | null;
 };
 
-export async function circleShelf(circleId: string) {
+export async function circleShelf(circleId: string, viewerId?: string) {
   return sql<CircleShelfCopy[]>`
     select c.id, e.work_id, w.title, w.authors, e.cover_key, c.owner_id, o.first_name as owner_name,
            ph.key as photo_key, ph.width as photo_w, ph.height as photo_h,
@@ -27,5 +27,7 @@ export async function circleShelf(circleId: string) {
       join users o on o.id = c.owner_id
       left join lateral (select key, width, height from copy_photos p where p.copy_id = c.id order by position limit 1) ph on true
      where cc.circle_id = ${circleId}
+       and (${viewerId ?? null}::uuid is null or not exists (select 1 from blocks bl
+             where (bl.blocker_id = c.owner_id and bl.blocked_id = ${viewerId ?? null}::uuid) or (bl.blocker_id = ${viewerId ?? null}::uuid and bl.blocked_id = c.owner_id)))
      order by c.created_at desc`;
 }

@@ -11,6 +11,7 @@ import { renderNotification, type NotificationType, type NotifyData } from "@/li
 export async function GET(req: Request) {
   const u = await getUser();
   if (!u) return new Response(null, { status: 401 });
+  if (u.banned_at) return new Response(null, { status: 403 });
   const userId = u.id;
 
   const unread = async () => {

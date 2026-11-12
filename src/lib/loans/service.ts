@@ -392,6 +392,21 @@ async function transferOwnership(tx: Tx, copyId: string, newOwner: string, kind:
 // Einseitige Meldung und Ablage (4.3)
 // ---------------------------------------------------------------------------
 
+/**
+ * Foto-Schlüssel aus dem Client nur annehmen, wenn sie zu eigenen, verarbeiteten Uploads
+ * für genau diesen Vorgang gehören (sonst liessen sich fremde Bilder als Nachweis unterschieben).
+ */
+async function assertOwnPhotos(tx: Tx, userId: string, loanId: string, keysIn: string[], purpose: "dropoff" | "condition" | "case") {
+  const list = [...new Set(keysIn.filter(Boolean))];
+  if (!list.length) return list;
+  const prefix = purpose === "case" ? `cases/${loanId}/` : `loans/${loanId}/${purpose}/`;
+  if (list.some((k) => !k.startsWith(prefix))) throw err.invalid("Diese Fotos gehören nicht zu diesem Vorgang.");
+  const ok = await tx<{ key: string }[]>`
+    select key from uploads where user_id = ${userId} and purpose = ${purpose} and key in ${tx(list)} and status <> 'rejected'`;
+  if (ok.length !== list.length) throw err.invalid("Lade die Fotos neu hoch und versuche es nochmals.");
+  return list;
+}
+
 export async function reportHandover(user: SessionUser, loanId: string, input: { dropoffPhotoKey?: string | null }) {
   return sql.begin(async (tx) => {
     const { loan: current, role } = await loanFor(tx, loanId, user.id);
@@ -400,6 +415,7 @@ export async function reportHandover(user: SessionUser, loanId: string, input: {
     if (input.dropoffPhotoKey) {
       const [c] = await tx<{ dropoff_allowed: boolean }[]>`select dropoff_allowed from copies where id = ${current.copy_id}`;
       if (!c.dropoff_allowed) throw err.invalid("Für dieses Buch ist keine Ablage erlaubt.");
+      await assertOwnPhotos(tx, user.id, loanId, [input.dropoffPhotoKey], "dropoff");
       action = "dropoff";
     }
     const loan = await transition(tx, loanId, action, { role: role!, id: user.id }, {
@@ -438,12 +454,13 @@ export async function objectHandover(user: SessionUser, loanId: string) {
 // ---------------------------------------------------------------------------
 
 export async function addConditionNote(user: SessionUser, loanId: string, input: { note: string; photoKeys: string[] }) {
-  return sql.begin((tx) =>
-    transition(tx, loanId, "condition_note", { role: "borrower", id: user.id }, {
-      set: tx`condition_note = ${input.note.trim() || null}, condition_photo_keys = ${input.photoKeys}::text[]`,
+  return sql.begin(async (tx) => {
+    const photos = await assertOwnPhotos(tx, user.id, loanId, input.photoKeys, "condition");
+    return transition(tx, loanId, "condition_note", { role: "borrower", id: user.id }, {
+      set: tx`condition_note = ${input.note.trim() || null}, condition_photo_keys = ${photos}::text[]`,
       where: tx`l.condition_note_until > now()`,
-    }),
-  );
+    });
+  });
 }
 
 /** Neues Ende bei Verlängerung: +14 Tage, höchstens bis zum Puffer vor der nächsten Buchung. */
@@ -729,12 +746,13 @@ export async function cancelWithoutPenalty(user: SessionUser, loanId: string) {
 
 export async function reportDamage(user: SessionUser, loanId: string, input: { description: string; photoKeys: string[] }) {
   return sql.begin(async (tx) => {
+    const photos = await assertOwnPhotos(tx, user.id, loanId, input.photoKeys, "case");
     const loan = await transition(tx, loanId, "report_damage", { role: "owner", id: user.id }, {
       where: tx`l.inspection_until > now()`,
     });
     const [c] = await tx<{ id: string }[]>`
       insert into cases (loan_id, kind, opened_by, description, photo_keys)
-      values (${loanId}, 'damage', ${user.id}, ${input.description}, ${input.photoKeys}::text[]) returning id`;
+      values (${loanId}, 'damage', ${user.id}, ${input.description}, ${photos}::text[]) returning id`;
     const info = await loanInfo(tx, loanId);
     await notify(tx, { userId: loan.borrower_id, type: "damage_reported", loanId, data: { title: info.title } });
     return { loan, caseId: c.id };

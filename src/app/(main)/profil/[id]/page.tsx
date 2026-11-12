@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { id } = await params;
   if (!isUuid(id)) return { title: "Profil" };
   const p = await publicProfile(id, null);
-  return { title: p && !p.deleted ? p.first_name : "Profil" };
+  return { title: p && !p.deleted ? p.first_name : "Profil", robots: { index: false, follow: false } };
 }
 
 const LEVEL_HINT: Record<number, string> = {

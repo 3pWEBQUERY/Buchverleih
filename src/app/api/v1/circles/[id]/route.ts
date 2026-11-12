@@ -14,7 +14,9 @@ export const GET = route<{ id: string }>(async (_req, p) => {
            (select key from copy_photos ph where ph.copy_id = c.id order by position limit 1) as photo_key
       from circle_copies cc join copies c on c.id = cc.copy_id and c.removed_at is null
       join editions e on e.id = c.edition_id join works w on w.id = e.work_id join users o on o.id = c.owner_id
-     where cc.circle_id = ${p.id} order by c.created_at desc`;
+     where cc.circle_id = ${p.id}
+       and not exists (select 1 from blocks bl where (bl.blocker_id = c.owner_id and bl.blocked_id = ${u.id}) or (bl.blocker_id = ${u.id} and bl.blocked_id = c.owner_id))
+     order by c.created_at desc`;
   return { circle: circle.my_role === "admin" ? circle : { ...circle, invite_code: circle.join_mode === "link" ? circle.invite_code : null }, members, copies };
 });
 

@@ -56,7 +56,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     );
   }
 
-  const [members, copies] = await Promise.all([circleMembers(id), circleShelf(id)]);
+  const [members, copies] = await Promise.all([circleMembers(id), circleShelf(id, user.id)]);
   const admin = circle.my_role === "admin";
   const inviteUrl = admin || circle.join_mode === "link" ? `${env.appUrl}/k/${circle.invite_code}` : null;
   const admins = members.filter((m) => m.role === "admin" && m.status === "active").length;
