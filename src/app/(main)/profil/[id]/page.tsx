@@ -6,7 +6,11 @@ import { publicProfile } from "@/lib/profile";
 import { listVisibleShelf } from "@/lib/copies";
 import { isUuid } from "@/lib/title-queries";
 import { trustLabel } from "@/lib/i18n/de-CH";
-import { TZ } from "@/lib/dates";
+import { TZ, dayToDate, dueDay, fmtDay } from "@/lib/dates";
+import { sql } from "@/lib/db";
+import { offerNoun, statusLabel } from "@/lib/i18n/de-CH";
+import { Cover } from "@/components/cover";
+import type { ShelfCopy } from "@/lib/copies";
 import { Monogram } from "@/components/person/monogram";
 import { LinkButton, Notice, cx } from "@/components/ui";
 import { ProfileActions } from "./profile-actions";
@@ -53,7 +57,34 @@ export default async function ProfilPage({ params }: Params) {
   }
 
   const own = viewer?.id === p.id;
-  const shelf = await listVisibleShelf(p.id, viewer?.id ?? null);
+  const [shelf, genres, together] = await Promise.all([
+    listVisibleShelf(p.id, viewer?.id ?? null),
+    sql<{ genre: string; n: number }[]>`
+      select w.genre, count(*)::int as n from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id
+       where c.owner_id = ${p.id} and c.removed_at is null and w.genre is not null
+       group by w.genre order by n desc limit 4`,
+    viewer && viewer.id !== p.id
+      ? sql<{ id: string; kind: "lend" | "swap" | "gift"; status: keyof typeof statusLabel; title: string; authors: string[]; work_id: string; cover_key: string | null; mine: boolean; at: string }[]>`
+          select l.id, l.kind, l.status, w.title, w.authors, e.work_id, e.cover_key, l.owner_id = ${viewer.id} as mine,
+                 to_json(coalesce(l.closed_at, l.handed_over_at, l.requested_at)) #>> '{}' as at
+            from loans l join copies c on c.id = l.copy_id join editions e on e.id = c.edition_id join works w on w.id = e.work_id
+           where (l.owner_id = ${viewer.id} and l.borrower_id = ${p.id}) or (l.owner_id = ${p.id} and l.borrower_id = ${viewer.id})
+           order by l.requested_at desc limit 6`
+      : Promise.resolve([]),
+  ]);
+  const freeShelf = shelf.filter((c) => c.status === "available");
+  const busyShelf = shelf.filter((c) => c.status !== "available");
+  const noteFor = (c: ShelfCopy) =>
+    c.status === "available" ? { tone: "ok" as const, text: "frei" }
+      : c.status === "lent" && c.lent_until ? { tone: "lent" as const, text: `bis ${fmtDay(dayToDate(dueDay(c.lent_until)))}` }
+      : c.status === "reserved" ? { tone: "wait" as const, text: "gebucht" }
+      : c.status === "requested" ? { tone: "wait" as const, text: "angefragt" }
+      : c.status === "paused" ? { tone: "done" as const, text: "pausiert" }
+      : { tone: "done" as const, text: "nicht angeboten" };
+  const done = p.lent + p.borrowed;
+  const nextAt = [3, 10][p.trust_level] ?? null;
+  const toNext = nextAt != null ? Math.max(0, nextAt - done) : null;
+  const ratings = p.good_ratings + p.problem_ratings;
   const level = trustLabel[p.trust_level] ?? "Neu";
 
   const since = sinceFmt.format(new Date(p.member_since));
@@ -97,6 +128,20 @@ export default async function ProfilPage({ params }: Params) {
               <div key={k} className="contents"><dt className="text-muted">{k}</dt><dd className="text-right tnum truncate">{v}</dd></div>
             ))}
           </dl>
+          {genres.length > 0 && (
+            <div className="px-4 py-3.5">
+              <p className="text-[13px] text-muted">Im Regal vor allem</p>
+              <ul className="mt-2 flex flex-wrap gap-1.5">
+                {genres.map((g) => (
+                  <li key={g.genre}>
+                    <Link href={`/suche?genre=${encodeURIComponent(g.genre)}`} className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-1.5 rounded-[6px] bg-paper-2 text-[12.5px] font-medium text-ink-2 hover:bg-accent-soft hover:text-accent-hover transition-colors">
+                      {g.genre}<span className="text-muted tnum text-[11.5px]">{g.n}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {own ? (
@@ -150,23 +195,74 @@ export default async function ProfilPage({ params }: Params) {
             </div>
           ) : (
             <div className="surface-night rounded-[12px] px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5">
-              <BookRow items={shelf} height={150} hrefBase="/exemplar/" label={`Regal von ${p.first_name}`} wrap />
+              {[["Jetzt frei", freeShelf], ["Unterwegs oder gebucht", busyShelf]].filter(([, list]) => (list as ShelfCopy[]).length > 0).map(([label, list], gi) => (
+                <section key={label as string} className={cx(gi > 0 && "mt-8")} aria-label={label as string}>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <h3 className="text-[19px] md:text-[22px] font-[560] tracking-[-0.03em] leading-none">{label as string}</h3>
+                    <span className="text-[13px] text-night-muted tnum">{(list as ShelfCopy[]).length === 1 ? "1 Buch" : `${(list as ShelfCopy[]).length} Bücher`}</span>
+                  </div>
+                  <BookRow items={(list as ShelfCopy[]).map((c) => ({ ...c, note: noteFor(c) }))} height={150} hrefBase="/exemplar/" label={`${label as string}: Regal von ${p.first_name}`} />
+                </section>
+              ))}
             </div>
           )}
         </StepSection>
 
-        <StepSection id="vertrauen" n={2} title="Vertrauen" desc="Die Stufe ergibt sich allein aus abgeschlossenen Leihen. Keine Sterne, keine Punkte.">
+        <StepSection id="rueckmeldungen" n={2} title="Rückmeldungen" desc="Nach jeder Leihe sagen beide kurz, wie es lief. Sichtbar wird es erst, wenn beide geantwortet haben.">
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+            <div className="rounded-[10px] border border-line p-4 col-span-2">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="text-[13px] text-muted">Pünktlich zurückgegeben</p>
+                <p className="text-[22px] font-[560] tracking-[-0.04em] tnum leading-none">{p.punctual_pct == null ? "–" : `${p.punctual_pct}%`}</p>
+              </div>
+              <div className="mt-3 h-2 rounded-full bg-paper-3 overflow-hidden" aria-hidden>
+                <span className={cx("block h-full rounded-full", (p.punctual_pct ?? 0) >= 90 ? "bg-ok" : (p.punctual_pct ?? 0) >= 70 ? "bg-wait" : "bg-late")} style={{ width: `${p.punctual_pct ?? 0}%` }} />
+              </div>
+              <p className="text-[12.5px] text-muted mt-2">{p.punctual_pct == null ? "Noch keine abgeschlossene Leihe als Leserin oder Leser." : `Aus allen Leihen, bei denen ${own ? "du" : p.first_name} ein Buch hatte.`}</p>
+            </div>
+            <div className="rounded-[10px] border border-line p-4 flex flex-col">
+              <p className="text-[13px] text-muted">Gute Rückmeldungen</p>
+              <p className="text-[26px] font-[560] tracking-[-0.04em] tnum leading-none mt-auto pt-3 text-ok">{p.good_ratings}</p>
+              <p className="text-[12.5px] text-muted mt-1">{ratings ? `von ${ratings}` : "noch keine"}</p>
+            </div>
+            <div className="rounded-[10px] border border-line p-4 flex flex-col">
+              <p className="text-[13px] text-muted">Antwortet meist</p>
+              <p className="text-[20px] font-[560] tracking-[-0.03em] leading-tight mt-auto pt-3">{response ? `innert ${response}` : "–"}</p>
+              <p className="text-[12.5px] text-muted mt-1">auf Anfragen</p>
+            </div>
+          </div>
+          {p.problem_ratings > 0 && (
+            <p className="mt-3 text-[13.5px] text-ink-2 inline-flex items-center gap-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait" />{p.problem_ratings === 1 ? "1 Rückmeldung" : `${p.problem_ratings} Rückmeldungen`} mit kleinen Problemen</p>
+          )}
+        </StepSection>
+
+        <StepSection id="vertrauen" n={3} title="Vertrauen" desc="Die Stufe ergibt sich allein aus abgeschlossenen Leihen. Keine Sterne, keine Punkte."
+          aside={toNext != null ? (toNext > 0 ? `Noch ${toNext} ${toNext === 1 ? "Leihe" : "Leihen"} bis «${trustLabel[p.trust_level + 1]}»` : `Bald «${trustLabel[p.trust_level + 1]}»`) : "Höchste Stufe"}>
           <ol className="grid sm:grid-cols-3 gap-2">
             {levels.map((l) => {
               const on = l === p.trust_level;
               const reached = l <= p.trust_level;
+              const isNext = l === p.trust_level + 1 && nextAt != null;
+              const pct = isNext ? Math.min(100, Math.round((done / nextAt!) * 100)) : reached ? 100 : 0;
               return (
-                <li key={l} className={cx("rounded-[10px] border p-4", on ? "border-accent bg-accent-soft/30" : "border-line")} aria-current={on ? "step" : undefined}>
+                <li key={l} className={cx("rounded-[10px] border p-4 flex flex-col", on ? "border-accent bg-accent-soft/30" : "border-line")} aria-current={on ? "step" : undefined}>
                   <p className="flex items-center justify-between gap-2">
-                    <span className={cx("font-medium text-[15px]", !reached && "text-muted")}>{trustLabel[l]}</span>
-                    {reached && <IconCheck width={16} height={16} className={on ? "text-accent-hover" : "text-ok"} />}
+                    <span className="flex items-center gap-2.5">
+                      <span className={cx("h-6 w-6 rounded-full grid place-items-center text-[12px] font-semibold tnum",
+                        on ? "bg-accent text-accent-ink" : reached ? "bg-ink-2 text-paper" : "border-[1.5px] border-line-strong text-muted")}>
+                        {reached && !on ? <IconCheck width={13} height={13} /> : l + 1}
+                      </span>
+                      <span className={cx("font-medium text-[15px]", !reached && "text-muted")}>{trustLabel[l]}</span>
+                    </span>
+                    {on && <span className="text-[12px] font-semibold text-accent-hover">Aktuell</span>}
                   </p>
-                  <p className="text-[13px] text-muted mt-1 leading-snug">{LEVEL_HINT[l]}</p>
+                  <p className="text-[13px] text-muted mt-2 leading-snug">{LEVEL_HINT[l]}</p>
+                  <div className="mt-auto pt-3">
+                    <div className="h-1 rounded-full bg-paper-3 overflow-hidden" aria-hidden>
+                      <span className={cx("block h-full rounded-full", reached ? "bg-ink-2" : "bg-accent")} style={{ width: `${pct}%` }} />
+                    </div>
+                    {isNext && <p className="text-[12px] text-muted mt-1.5 tnum">{Math.min(done, nextAt!)} von {nextAt} Leihen</p>}
+                  </div>
                 </li>
               );
             })}
@@ -190,6 +286,25 @@ export default async function ProfilPage({ params }: Params) {
             </ul>
           )}
         </StepSection>
+
+        {together.length > 0 && (
+          <StepSection id="mit-dir" n={4} title={`Du und ${p.first_name}`} desc="Eure gemeinsamen Vorgänge, die neuesten zuerst." aside={together.length === 1 ? "1 Vorgang" : `${together.length} Vorgänge`}>
+            <ul className="rounded-[10px] border border-line divide-y divide-line overflow-hidden">
+              {together.map((t) => (
+                <li key={t.id}>
+                  <Link href={`/vorgaenge/${t.id}`} className="group grid grid-cols-[32px_minmax(0,1fr)_auto] gap-4 items-center px-4 md:px-5 py-3 hover:bg-paper-2 transition-colors">
+                    <Cover data={{ title: t.title, authors: t.authors, coverKey: t.cover_key, seed: t.work_id }} width={32} height={48} uniform />
+                    <div className="min-w-0">
+                      <p className="font-serif text-[16.5px] leading-tight truncate group-hover:underline underline-offset-4 decoration-1">{t.title}</p>
+                      <p className="text-[13px] text-muted mt-0.5 truncate">{offerNoun[t.kind]} · {t.mine ? `du an ${p.first_name}` : `${p.first_name} an dich`} · {fmtDay(t.at)}</p>
+                    </div>
+                    <span className="text-[13px] text-ink-2 whitespace-nowrap">{statusLabel[t.status] ?? t.status}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </StepSection>
+        )}
       </div>
     </div>
   );
