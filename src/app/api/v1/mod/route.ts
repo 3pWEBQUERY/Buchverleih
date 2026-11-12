@@ -2,17 +2,38 @@ import { z } from "zod";
 import { body, query, route } from "@/lib/api";
 import { requireModerator } from "@/lib/auth/session";
 import * as mod from "@/lib/moderation";
+import { correctionCurrent, targetLinks } from "@/lib/moderation-queries";
 
-/** GET /api/v1/mod?view=queue|kpis|flags|log|users&q= – interne Werkzeuge */
+/**
+ * GET /api/v1/mod?view=queue|kpis|flags|log|users|team&q= – interne Werkzeuge.
+ * Die Warteschlange enthält für Apps zusätzlich `href` (Ziel einer Meldung als Web-Pfad) und
+ * `current` (heutiger Wert bei Katalogkorrekturen) – dieselben Angaben, die das Web anzeigt.
+ */
 export const GET = route(async (req) => {
   await requireModerator();
-  const q = query(req, z.object({ view: z.enum(["queue", "kpis", "flags", "log", "users"]), q: z.string().max(100).optional() }));
+  const q = query(req, z.object({ view: z.enum(["queue", "kpis", "flags", "log", "users", "team"]), q: z.string().max(100).optional() }));
   switch (q.view) {
-    case "queue": return mod.queue();
+    case "queue": {
+      const r = await mod.queue();
+      const [links, current] = await Promise.all([
+        targetLinks(r.reports),
+        correctionCurrent(r.corrections.map((c) => c.id)),
+      ]);
+      return {
+        ...r,
+        reports: r.reports.map((x) => ({ ...x, href: links[`${x.target_type}:${x.target_id}`] ?? null })),
+        corrections: r.corrections.map((x) => ({ ...x, current: current[x.id] ?? null })),
+      };
+    }
     case "kpis": return mod.kpis();
     case "flags": return { flags: await mod.flags() };
-    case "log": return { log: await mod.moderationLog() };
+    case "log": {
+      const log = (await mod.moderationLog()) as unknown as { target_type: string; target_id: string }[];
+      const links = await targetLinks(log);
+      return { log: log.map((x) => ({ ...x, href: links[`${x.target_type}:${x.target_id}`] ?? null })) };
+    }
     case "users": return { users: await mod.findUsers(q.q ?? "") };
+    case "team": return { team: await mod.team() };
   }
 });
 

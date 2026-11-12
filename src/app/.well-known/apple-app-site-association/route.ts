@@ -4,6 +4,7 @@
  * Weiterleitung, als JSON. App-IDs: APPLE_APP_IDS (kommagetrennt, «TEAMID.bundle.id»).
  *
  * - /k/<code>: Kreis-Einladungen öffnen direkt die App
+ * - /h/<token>: Übergabe-QR-Codes, mit der Kamera gescannt, bestätigen die Übergabe in der App
  * - /anmelden/link?…&app=1: Anmeldelinks, die die App angefordert hat (Web-Links bleiben im Browser)
  * - webcredentials: Passwörter aus dem Web stehen in der App zur Verfügung und umgekehrt
  */
@@ -18,6 +19,7 @@ export function GET() {
           appIDs,
           components: [
             { "/": "/k/*", comment: "Kreis-Einladungen" },
+            { "/": "/h/*", comment: "Übergabe-QR-Codes (mit der Kamera gescannt)" },
             { "/": "/anmelden/link", "?": { app: "1" }, comment: "Anmeldelinks aus der App" },
           ],
         },

@@ -89,7 +89,7 @@ const ops: Op[] = [
   { method: "delete", path: "/blocks", tag: "Sicherheit", summary: "Blockierung aufheben (?user=)" },
   { method: "post", path: "/signals", tag: "Sonstiges", summary: "Nachfrage-Zähler (Versand gewünscht)", body: S({ key: { enum: ["shipping"] } }), auth: false },
   { method: "get", path: "/health", tag: "Betrieb", summary: "Healthcheck inkl. Fristenlauf", auth: false },
-  { method: "get", path: "/mod", tag: "Moderation", summary: "Warteschlange, Kennzahlen, Schalter, Protokoll" },
+  { method: "get", path: "/mod", tag: "Moderation", summary: "Warteschlange, Kennzahlen, Schalter, Protokoll, Konten, Team (?view=queue|kpis|flags|log|users|team)" },
   { method: "post", path: "/mod", tag: "Moderation", summary: "Entscheidungen der Moderation" },
   { method: "get", path: "/mod/loans/{id}", tag: "Moderation", summary: "Verlauf eines Vorgangs (Chat nur bei Fall oder Meldung, protokolliert)" },
   { method: "get", path: "/mod/users/{id}", tag: "Moderation", summary: "Konto-Dossier" },
