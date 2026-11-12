@@ -100,7 +100,9 @@ export function LiveNotifications({ initial, children }: { initial: number; chil
   return (
     <LiveCtx.Provider value={{ unread, bump }}>
       {children}
-      <div aria-live="polite" role="status"
+      {/* Ansage für Screenreader getrennt von den klickbaren Hinweisen */}
+      <p className="sr-only" role="status" aria-live="polite">{toasts[0] ? `Neue Benachrichtigung: ${toasts[0].title}` : ""}</p>
+      <div
         className="fixed z-50 inset-x-3 top-[64px] md:top-auto md:inset-x-auto md:bottom-6 md:right-6 flex flex-col gap-2 md:w-[380px] pointer-events-none">
         {toasts.map((t) => <Toast key={t.id} item={t} onClose={() => dismiss(t.id)} />)}
       </div>
@@ -159,10 +161,10 @@ export function UnreadBadge({ compact }: { compact?: boolean }) {
   const { unread, bump } = useUnread();
   if (!unread) return null;
   const label = `${unread} ungelesen`;
-  if (compact) return <span key={bump} className="block h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-paper anim-pop" aria-label={label} />;
+  if (compact) return <span key={bump} className="block h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-paper anim-pop"><span className="sr-only">, {label}</span></span>;
   return (
-    <span key={bump} className="min-w-6 h-6 px-1.5 rounded-[6px] bg-accent text-accent-ink text-[12px] font-bold tnum grid place-items-center anim-pop" aria-label={label}>
-      {unread > 99 ? "99+" : unread}
+    <span key={bump} className="min-w-6 h-6 px-1.5 rounded-[6px] bg-accent text-accent-ink text-[12px] font-bold tnum grid place-items-center anim-pop">
+      <span aria-hidden>{unread > 99 ? "99+" : unread}</span><span className="sr-only">{label}</span>
     </span>
   );
 }

@@ -27,11 +27,11 @@ const sizes: Record<Size, string> = {
 };
 
 export function Button({ variant = "secondary", size = "md", className, ...p }: ComponentProps<"button"> & { variant?: Variant; size?: Size }) {
-  return <button className={cx(base, variants[variant], variant !== "quiet" && variant !== "danger" && sizes[size], className)} {...p} />;
+  return <button className={cx(base, variants[variant], variant !== "quiet" && variant !== "danger" ? sizes[size] : "min-h-11", className)} {...p} />;
 }
 
 export function LinkButton({ variant = "secondary", size = "md", className, ...p }: ComponentProps<typeof Link> & { variant?: Variant; size?: Size }) {
-  return <Link className={cx(base, variants[variant], variant !== "quiet" && variant !== "danger" && sizes[size], className)} {...p} />;
+  return <Link className={cx(base, variants[variant], variant !== "quiet" && variant !== "danger" ? sizes[size] : "min-h-11", className)} {...p} />;
 }
 
 export function Field({ label, hint, error, children, className }: { label: ReactNode; hint?: ReactNode; error?: string | null; children: ReactNode; className?: string }) {

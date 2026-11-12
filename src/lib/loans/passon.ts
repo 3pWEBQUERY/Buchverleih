@@ -59,7 +59,7 @@ export async function afterAcceptConsecutive(tx: TxSql, next: LoanRow) {
     on conflict do nothing returning id`;
   if (chat) {
     await tx`insert into messages (handover_chat_id, sender_id, body)
-             values (${chat.id}, null, ${"Zwei Leihen folgen aufeinander. Hier sprecht ihr den Wechsel ab: direkt oder über den Verleiher."})`;
+             values (${chat.id}, null, ${"Zwei Leihen folgen aufeinander. Hier sprecht ihr den Wechsel ab: direkt oder über die verleihende Person."})`;
     for (const uid of [next.owner_id, prev.borrower_id, next.borrower_id]) {
       await notify(tx, { userId: uid, type: "handover_chat", loanId: next.id, data: { title: info.title } });
     }

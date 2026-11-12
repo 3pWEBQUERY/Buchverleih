@@ -68,7 +68,7 @@ export function PlzExplorer() {
               <p className="mt-5 font-medium">Danke. Wir schreiben dir, wenn {res.municipality} startet.</p>
             ) : (
               <form onSubmit={wait} className="mt-5 flex flex-wrap gap-2">
-                <input type="email" required placeholder="E-Mail-Adresse" value={email} onChange={(e) => setEmail(e.target.value)}
+                <input type="email" required aria-label="E-Mail-Adresse für die Warteliste" placeholder="E-Mail-Adresse" value={email} onChange={(e) => setEmail(e.target.value)}
                   className="h-12 px-5 rounded-[6px] bg-night-2 border border-night-line focus:border-night-ink focus:outline-none w-72" />
                 <button className="h-12 px-6 rounded-[6px] bg-accent text-accent-ink font-semibold">Auf die Warteliste</button>
               </form>

@@ -587,7 +587,7 @@ function ManualTab({ prefill, ask, onAsked, add }: {
         <div className="pt-4">
           <p className="font-medium text-[15px]">Würde es dich schmerzen, wenn dieses Buch nicht zurückkommt?</p>
           <p className="text-[13px] text-muted mt-0.5 mb-3">Bei Ja sehen es nur Mitglieder deiner Kreise.</p>
-          <div role="radiogroup" className="grid grid-cols-2 gap-2 sm:max-w-md">
+          <div role="radiogroup" aria-label="Auswahl" className="grid grid-cols-2 gap-2 sm:max-w-md">
             <OptionCard compact on={!precious} onClick={() => setPrecious(false)} title="Nein" desc="Sichtbar in der Umgebung" />
             <OptionCard compact on={precious} onClick={() => setPrecious(true)} title="Ja, nur Kreise" desc="Nur für Bekannte" />
           </div>

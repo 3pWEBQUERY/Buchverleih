@@ -1,4 +1,5 @@
 "use client";
+import { useDialogFocus } from "@/components/use-dialog-focus";
 import { useCallback, useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { api } from "@/lib/client";
@@ -69,8 +70,11 @@ export function HandoverCode({ loanId, label, onClose, onDone }: { loanId: strin
   const ss = String(Math.max(0, left % 60)).padStart(2, "0");
   const pct = Math.max(0, Math.min(100, (left / 600) * 100));
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef);
+
   return (
-    <div role="dialog" aria-modal="true" aria-label={label} className="fixed inset-0 z-[60] bg-white text-black flex flex-col anim-sheet overflow-y-auto" style={{ colorScheme: "light" }}>
+    <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={label} className="fixed inset-0 z-[60] bg-white text-black flex flex-col anim-sheet overflow-y-auto" style={{ colorScheme: "light" }}>
       <div className="flex items-center justify-between px-5 md:px-8 h-16 flex-none">
         <span className="text-[13px] font-medium text-neutral-500 inline-flex items-center gap-2">
           <span aria-hidden className="h-2 w-2 rounded-full bg-[#d23c1a] animate-pulse" /> Bildschirm bleibt an

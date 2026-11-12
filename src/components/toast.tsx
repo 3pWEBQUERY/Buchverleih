@@ -59,7 +59,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastCtx.Provider value={{ show, error, deferred }}>
       {children}
-      <div aria-live="polite" className="fixed z-50 inset-x-0 bottom-[calc(76px+env(safe-area-inset-bottom))] md:bottom-6 flex flex-col items-center gap-2 px-4 pointer-events-none">
+      <div aria-live="polite" className="fixed z-50 inset-x-0 bottom-[calc(76px+env(safe-area-inset-bottom))] md:bottom-6 in-data-sheet:bottom-[calc(196px+env(safe-area-inset-bottom))] md:in-data-sheet:bottom-28 flex flex-col items-center gap-2 px-4 pointer-events-none">
         {toasts.map((t) => (
           <div key={t.id} role={t.tone === "error" ? "alert" : "status"}
             className={`anim-sheet pointer-events-auto max-w-md w-full flex items-center justify-between gap-4 px-4 py-3 rounded-[10px] border text-[15px] ${t.tone === "error" ? "bg-paper border-late/50 text-late" : "bg-paper border-line-strong text-ink"}`}>

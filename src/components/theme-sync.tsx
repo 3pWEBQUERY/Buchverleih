@@ -9,7 +9,7 @@ import { useEffect } from "react";
 export type Theme = "light" | "dark" | "system";
 export const THEME_KEY = "lr-theme";
 
-const META_COLOR = { light: "#f6f2ea", dark: "#13120e" } as const;
+const META_COLOR = { light: "#faf8f4", dark: "#0f0f0e" } as const; // = --paper hell/dunkel
 
 export function readTheme(): Theme {
   try {

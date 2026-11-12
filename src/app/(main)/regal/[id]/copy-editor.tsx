@@ -248,7 +248,7 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
             {!offered && <Notice className="mt-4">Nicht angeboten: Das Buch steht in deinem Regal, andere sehen es nicht.</Notice>}
 
             <Label title="Wer es sieht" className="mt-10" />
-            <div className="grid sm:grid-cols-3 gap-3">
+            <div role="radiogroup" aria-label="Wer das Buch sieht" className="grid sm:grid-cols-3 gap-3">
               {([
                 ["all", "Alle", "Mitglieder in deiner Umgebung.", <IconUser key="i" />],
                 ["proven", "Ab Bewährt", "Mit mindestens drei pünktlichen Leihen.", <IconShield key="i" />],
@@ -343,7 +343,7 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
 
           {/* 04 Weitergabe */}
           <Section id="weitergabe" n={4} title="Direkte Weitergabe" desc="Folgen zwei Leihen aufeinander, kann das Buch direkt von Hand zu Hand gehen – ohne Umweg über dich.">
-            <div className="grid sm:grid-cols-3 gap-3">
+            <div role="radiogroup" aria-label="Direkte Weitergabe" className="grid sm:grid-cols-3 gap-3">
               {([
                 ["never", "Nie", "Jede Leihe geht über dich."],
                 ["on_request", "Auf Anfrage", "Du wirst bei jeder Folgeleihe gefragt."],
@@ -363,7 +363,7 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
 
           {/* 05 Zustand */}
           <Section id="zustand" n={5} title="Zustand und Fotos" desc="Bei einem Schaden wird mit diesen Angaben verglichen. Normale Lesespuren sind kein Schaden.">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div role="radiogroup" aria-label="Zustand" className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[1, 2, 3, 4].map((c) => (
                 <OptionCard key={c} on={s.condition === c} title={conditionLabel[c]} desc={conditionHint[c]} compact onClick={() => save({ condition: c })} />
               ))}

@@ -508,8 +508,8 @@ export function ThemeChoice() {
   useEffect(() => setTheme(readTheme()), []);
   const opts: { value: Theme; label: string; desc: string; swatch: string }[] = [
     { value: "light", label: "Hell", desc: "Papier und Tinte", swatch: "bg-[#faf8f4]" },
-    { value: "dark", label: "Dunkel", desc: "Für den Abend", swatch: "bg-[#171614]" },
-    { value: "system", label: "System", desc: "Wie dein Gerät", swatch: "bg-[linear-gradient(90deg,#faf8f4_50%,#171614_50%)]" },
+    { value: "dark", label: "Dunkel", desc: "Für den Abend", swatch: "bg-[#0f0f0e]" },
+    { value: "system", label: "System", desc: "Wie dein Gerät", swatch: "bg-[linear-gradient(90deg,#faf8f4_50%,#0f0f0e_50%)]" },
   ];
   return (
     <div role="radiogroup" aria-label="Darstellung" className="grid grid-cols-3 gap-2 max-w-[460px]">

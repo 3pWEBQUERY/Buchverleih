@@ -28,7 +28,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="de-CH">
+    <html lang="de-CH" suppressHydrationWarning>
+      <head>
+        {/* Gewähltes Design vor dem ersten Zeichnen setzen, sonst blitzt kurz das andere auf */}
+        <script dangerouslySetInnerHTML={{ __html: "try{var t=localStorage.getItem('lr-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}" }} />
+      </head>
       <body>
         <a href="#inhalt" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 bg-ink text-paper px-3 py-2 rounded-sm">
           Zum Inhalt

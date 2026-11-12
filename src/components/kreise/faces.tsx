@@ -29,7 +29,7 @@ export function Avatar({ name, seed, size = 40, className, night, photo }: { nam
 export function Faces({ names, seeds, photos, total, size = 34, ring = "ring-paper", night }: { names: string[]; seeds?: string[]; photos?: (string | null)[]; total: number; size?: number; ring?: string; night?: boolean }) {
   const more = total - names.length;
   return (
-    <span className="flex items-center" aria-label={`${total} ${total === 1 ? "Mitglied" : "Mitglieder"}: ${names.join(", ")}${more > 0 ? " und weitere" : ""}`}>
+    <span className="flex items-center" role="img" aria-label={`${total} ${total === 1 ? "Mitglied" : "Mitglieder"}: ${names.join(", ")}${more > 0 ? " und weitere" : ""}`}>
       {names.map((n, i) => (
         <Avatar key={`${n}-${i}`} name={n} seed={seeds?.[i]} photo={photos?.[i]} size={size} night={night} className={cx("ring-[2.5px]", ring, i > 0 && "-ml-2.5")} />
       ))}

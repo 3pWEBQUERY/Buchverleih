@@ -82,7 +82,7 @@ export const reportReasonLabel = {
 export const caseResponseLabel = {
   return_date: "Rückgabetermin nennen",
   replace_same: "Ersatz durch gleiches Exemplar",
-  replace_other: "Ersatz durch ein anderes Buch nach Wahl des Verleihers",
+  replace_other: "Ersatz durch ein anderes Buch nach Wahl der verleihenden Person",
   swap_offer: "Behalten und dafür ein eigenes Buch geben",
   object: "Widerspruch",
 } as const;

@@ -70,7 +70,7 @@ export function RequestPanel({
     <div className="mt-2" aria-label="Anfrage">
       {offers.length > 1 && (
         <Section n={step()} title="Was möchtest du?">
-          <div className="grid sm:grid-cols-3 gap-3">
+          <div role="radiogroup" aria-label="Was möchtest du?" className="grid sm:grid-cols-3 gap-3">
             {offers.map((o) => (
               <OptionCard key={o} on={kind === o} onClick={() => setKind(o)}
                 icon={o === "lend" ? <IconLoans /> : o === "swap" ? <IconSwap /> : <IconBookmark />}
@@ -134,7 +134,7 @@ export function RequestPanel({
       )}
 
       <Section n={step()} title="Nachricht" desc="Freiwillig. Kurz hallo sagen, oder wann und wo es dir passt.">
-        <Textarea maxLength={500} value={message} onChange={(e) => setMessage(e.target.value)} placeholder={`Hallo, ich würde «${title}» gerne lesen …`} />
+        <Textarea aria-label="Nachricht an die verleihende Person" maxLength={500} value={message} onChange={(e) => setMessage(e.target.value)} placeholder={`Hallo, ich würde «${title}» gerne lesen …`} />
       </Section>
 
       {/* Zusammenfassung mit dem einzigen Akzent-Knopf */}

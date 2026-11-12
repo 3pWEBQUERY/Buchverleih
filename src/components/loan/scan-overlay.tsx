@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useDialogFocus } from "@/components/use-dialog-focus";
+import { useEffect, useState, useRef } from "react";
 import { api } from "@/lib/client";
 import { Scanner } from "@/components/scanner";
 import { Button } from "@/components/ui";
@@ -30,8 +31,11 @@ export function ScanOverlay({ loanId, label, onClose, onDone }: { loanId: string
     }
   }
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef);
+
   return (
-    <div role="dialog" aria-modal="true" aria-label={label} className="fixed inset-0 z-[60] surface-night flex flex-col anim-sheet">
+    <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={label} className="fixed inset-0 z-[60] surface-night flex flex-col anim-sheet">
       <div className="flex items-center justify-between px-5 md:px-8 h-16 flex-none">
         <span className="text-[13px] font-medium text-night-muted">Kamera</span>
         <button onClick={onClose} className="h-11 w-11 -mr-2 grid place-items-center rounded-[8px] hover:bg-night-2 transition-colors" aria-label="Schliessen"><IconClose width={24} height={24} /></button>

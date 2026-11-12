@@ -65,7 +65,7 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
     main = (
       <div className="flex flex-wrap gap-3">
         <Button variant="primary" size="lg" disabled={busy} onClick={() => act({ action: "pass_on_consent", agree: true }, "Zugestimmt", loan.nextLoan!.id)}>Ja, direkt weitergeben</Button>
-        <Button variant="secondary" size="lg" disabled={busy} onClick={() => act({ action: "pass_on_consent", agree: false }, "Das Buch geht über den Verleiher", loan.nextLoan!.id)}>Lieber über den Verleiher</Button>
+        <Button variant="secondary" size="lg" disabled={busy} onClick={() => act({ action: "pass_on_consent", agree: false }, "Das Buch geht über die verleihende Person", loan.nextLoan!.id)}>Lieber über die verleihende Person</Button>
       </div>
     );
   } else if (step) {
@@ -159,7 +159,7 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
         main = (
           <div className="flex flex-wrap gap-3">
             <Button variant="primary" size="lg" disabled={busy} onClick={() => act({ action: "pass_on_consent", agree: true }, "Zugestimmt")}>Ja, direkt weitergeben</Button>
-            <Button variant="secondary" size="lg" disabled={busy} onClick={() => act({ action: "pass_on_consent", agree: false }, "Über den Verleiher")}>Nein</Button>
+            <Button variant="secondary" size="lg" disabled={busy} onClick={() => act({ action: "pass_on_consent", agree: false }, "Über die verleihende Person")}>Nein</Button>
             {p && <span className="text-sm text-muted self-center">Zustimmungen: {[p.owner, p.prev, p.next].filter(Boolean).length} von 3</span>}
           </div>
         );
@@ -356,7 +356,7 @@ function ConditionForm({ loanId, busy, onSubmit, onSkip, skipped }: { loanId: st
   if (skipped) return <p className="text-muted">Alles gut, du kannst das bis zum Ablauf der Frist noch nachholen.</p>;
   return (
     <div className="space-y-4 max-w-xl">
-      <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="z. B. Knick auf dem Umschlag, Bleistiftnotizen ab Seite 40" maxLength={500} />
+      <Textarea aria-label="Zustand beschreiben" value={note} onChange={(e) => setNote(e.target.value)} placeholder="z. B. Knick auf dem Umschlag, Bleistiftnotizen ab Seite 40" maxLength={500} />
       <PhotoPicker loanId={loanId} purpose="condition" keys={keys} setKeys={setKeys} />
       <div className="flex flex-wrap items-center gap-4">
         <Button variant="primary" size="lg" disabled={busy || (!note.trim() && !keys.length)} onClick={() => onSubmit(note, keys)}>Zustand festhalten</Button>
@@ -372,7 +372,7 @@ function DamageForm({ loan, busy, onSubmit }: { loan: LoanView; busy: boolean; o
   return (
     <div className="mt-6 border-t border-line pt-5 space-y-4 max-w-xl anim-rise">
       <p className="text-[15px] text-ink-2">Verglichen wird mit dem Zustand im Inserat{loan.conditionNote ? " und der Zustandsnotiz bei der Übergabe" : ""}. Normale Lesespuren sind kein Schaden. <Link href="/hilfe#schaden" className="underline underline-offset-4">Beispiele</Link></p>
-      <Textarea value={d} onChange={(e) => setD(e.target.value)} placeholder="Was ist beschädigt?" maxLength={1000} />
+      <Textarea aria-label="Schaden beschreiben" value={d} onChange={(e) => setD(e.target.value)} placeholder="Was ist beschädigt?" maxLength={1000} />
       <PhotoPicker loanId={loan.id} purpose="case" keys={keys} setKeys={setKeys} />
       <Button variant="secondary" disabled={busy || d.trim().length < 5 || keys.length === 0} onClick={() => onSubmit(d, keys)}>Schaden melden</Button>
       {keys.length === 0 && <p className="text-sm text-muted">Mindestens ein Foto ist nötig.</p>}
@@ -419,7 +419,7 @@ function RateForm({ busy, onRate }: { busy: boolean; onRate: (v: "good" | "probl
             className="min-h-11 pl-3 pr-4 rounded-[6px] bg-paper border border-line has-[:checked]:border-accent has-[:checked]:bg-accent-soft/35 transition-colors" />
         ))}
       </div>
-      <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Was ist passiert? Geht nur an die Moderation." maxLength={500} />
+      <Textarea aria-label="Meldung an die Moderation" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Was ist passiert? Geht nur an die Moderation." maxLength={500} />
       <div className="flex gap-4 items-center">
         <Button variant="primary" disabled={busy || reasons.length === 0} onClick={() => onRate("problems", reasons, note || undefined)}>Absenden</Button>
         <Button variant="quiet" onClick={() => setProblems(false)}>Zurück</Button>
@@ -455,7 +455,7 @@ function CaseResponse({ loan, onDone }: { loan: LoanView; onDone: () => void }) 
           </Select>
         </Field>
       )}
-      <Textarea value={detail} onChange={(e) => setDetail(e.target.value)} placeholder={choice === "object" ? "Warum ist das kein Schaden? Die Moderation entscheidet anhand der Fotos und des Verlaufs." : "Ergänzung (freiwillig)"} maxLength={500} />
+      <Textarea aria-label="Antwort im Fall" value={detail} onChange={(e) => setDetail(e.target.value)} placeholder={choice === "object" ? "Warum ist das kein Schaden? Die Moderation entscheidet anhand der Fotos und des Verlaufs." : "Ergänzung (freiwillig)"} maxLength={500} />
       <Button variant="primary" size="lg" disabled={busy || (choice === "swap_offer" && !swapCopy)} onClick={async () => {
         setBusy(true);
         try {

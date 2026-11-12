@@ -48,6 +48,12 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
   const [q, setQ] = useState("");
 
   useEffect(() => setPaused(initialPaused), [initialPaused]);
+  // Während der Mehrfachauswahl steht unten eine Leiste: Hinweise (Rückgängig) darüber setzen
+  useEffect(() => {
+    if (!selecting) return;
+    document.body.dataset.sheet = "1";
+    return () => { delete document.body.dataset.sheet; };
+  }, [selecting]);
   useEffect(() => {
     if (!selecting) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && stopSelecting();
@@ -249,11 +255,11 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
           <StepSection id="regal" n={++n} first={n === 1} title="Dein Regal" aside={plural(copies.length, "Buch", "Bücher")}
             desc="Nach Status sortiert. Ein Tippen öffnet ein Buch zum Bearbeiten." className={n === 1 ? "mt-8" : undefined}>
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-              <div role="tablist" aria-label="Nach Status filtern" className="flex flex-wrap gap-1.5">
+              <div role="group" aria-label="Nach Status filtern" className="flex flex-wrap gap-1.5">
                 {[{ key: "alle", label: "Alle", n: copies.length }, ...allGroups.map((g) => ({ key: g.key, label: g.label, n: g.items.length }))].map((f) => {
                   const on = filter === f.key;
                   return (
-                    <button key={f.key} type="button" role="tab" aria-selected={on} onClick={() => setFilter(f.key)}
+                    <button key={f.key} type="button" aria-pressed={on} onClick={() => setFilter(f.key)}
                       className={cx("h-9 pl-3 pr-1.5 rounded-[8px] border text-[13.5px] font-medium inline-flex items-center gap-2 transition-colors",
                         on ? "border-accent bg-accent-soft/40 text-accent-hover" : "border-line text-ink-2 hover:border-ink-2")}>
                       {f.label}

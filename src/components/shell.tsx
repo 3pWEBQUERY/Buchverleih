@@ -57,8 +57,8 @@ export function AppShell({ user, unread, children }: { user: SessionUser; unread
           <Wordmark />
           <div className="flex items-center">
             <Link href="/suche" className="h-11 w-11 grid place-items-center" aria-label="Suche"><IconSearch /></Link>
-            <Link href="/benachrichtigungen" className="relative h-11 w-11 grid place-items-center" aria-label="Benachrichtigungen">
-              <IconBell /> <span className="absolute top-2 right-2"><UnreadBadge compact /></span>
+            <Link href="/benachrichtigungen" className="relative h-11 w-11 grid place-items-center">
+              <IconBell aria-hidden /><span className="sr-only">Benachrichtigungen</span> <span className="absolute top-2 right-2"><UnreadBadge compact /></span>
             </Link>
             <MobileMore links={[
               { href: "/kreise", label: "Kreise" },

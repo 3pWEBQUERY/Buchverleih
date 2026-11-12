@@ -118,7 +118,7 @@ export function Chat({
           <p className="text-ink-2 text-[15px] mt-3 max-w-xs mx-auto">Noch keine Nachrichten. Schlag einen Termin vor, das geht am schnellsten.</p>
         </div>
       ) : (
-        <ol ref={list} className="px-4 md:px-6 py-5 space-y-1 max-h-[62vh] overflow-y-auto overscroll-contain" aria-live="polite">
+        <ol ref={list} className="px-4 md:px-6 py-5 space-y-1 max-h-[62vh] overflow-y-auto overscroll-contain" role="log" aria-live="polite" aria-label="Nachrichten">
           {msgs.map((m, i) => {
             const mine = m.sender_id === me;
             const prev = msgs[i - 1];
@@ -177,7 +177,7 @@ export function Chat({
                 <span className="flex items-center gap-2 mt-1 px-1 text-[11.5px] text-muted">
                   <time dateTime={m.created_at}>{m.pending ? "wird gesendet" : ago(m.created_at)}</time>
                   {!mine && !m.pending && (
-                    <button onClick={() => report(m.id)} className="opacity-0 group-hover:opacity-100 focus:opacity-100 inline-flex items-center gap-1 hover:text-ink transition-opacity">
+                    <button onClick={() => report(m.id)} className="opacity-0 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100 inline-flex items-center gap-1 min-h-8 hover:text-ink transition-opacity">
                       <IconFlag width={12} height={12} /> Melden
                     </button>
                   )}

@@ -49,7 +49,7 @@ export default function Page() {
         <p>Klappt kein Scan, gibt es drei Wege:</p>
         <DocTable head={["Weg", "Ablauf", "Absicherung"]} rows={[
           ["Einseitig melden", "Eine Seite tippt «Übergeben» oder «Zurückgegeben». Die andere wird um Bestätigung gebeten.", "48 Stunden Einspruchsfrist, danach gilt die Meldung. Erinnerung nach 24 Stunden."],
-          ["Ablage", "Milchkasten, Briefkasten oder Hausflur: Die abgebende Person hinterlegt das Buch und lädt ein Foto der Ablage hoch. Die andere bestätigt die Entnahme.", "Foto mit Zeitstempel, 48 Stunden Einspruchsfrist. Nur wenn der Verleiher die Ablage erlaubt."],
+          ["Ablage", "Milchkasten, Briefkasten oder Hausflur: Die abgebende Person hinterlegt das Buch und lädt ein Foto der Ablage hoch. Die andere bestätigt die Entnahme.", "Foto mit Zeitstempel, 48 Stunden Einspruchsfrist. Nur wenn die verleihende Person die Ablage erlaubt."],
           ["Kein Treffen", "Niemand meldet etwas, der Termin verstreicht.", "Der Vorgang bleibt offen und verfällt 7 Tage nach dem geplanten Beginn."],
         ]} />
         <p>
@@ -68,14 +68,14 @@ export default function Page() {
           ["1 Tag vorher", "Zweite Erinnerung."],
           ["Fälligkeit", "Status «überfällig». Hinweis an beide, Terminvorschlag im Chat."],
           ["+ 3 Tage", "Erinnerung per E-Mail. Die Kulanz endet, die Leihe zählt als unpünktlich."],
-          ["+ 7 Tage", "Keine neuen Anfragen mehr, bis das Buch zurück ist. Der Verleiher kann einen Fall eröffnen."],
+          ["+ 7 Tage", "Keine neuen Anfragen mehr, bis das Buch zurück ist. Die verleihende Person kann einen Fall eröffnen."],
           ["+ 21 Tage", "Der Fall wird automatisch eröffnet."],
         ]} />
         <p>Jede offene Handlung hat eine Frist und eine feste Folge. Nichts bleibt hängen.</p>
       </DocSection>
 
       <DocSection id="verlaengern" title="Verlängern und Zurückrufen">
-        <DocTable head={["Regel", "Standard", "Wählbar durch den Verleiher"]} rows={[
+        <DocTable head={["Regel", "Standard", "Wählbar durch die verleihende Person"]} rows={[
           ["Leihfrist", "28 Tage", "14, 28, 42 oder 56 Tage, pro Regal oder Buch"],
           ["Verlängerung", "1 × um 14 Tage, automatisch, wenn der Kalender danach frei ist", "Nur auf Anfrage, bis 2 Verlängerungen"],
           ["Mit Folgeleihe", "Höchstens bis zum Puffer vor der nächsten Leihe", "–"],
