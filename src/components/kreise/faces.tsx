@@ -1,5 +1,5 @@
 import { cx } from "@/components/ui";
-import { monogramColors } from "@/components/person/monogram";
+import { monogramColors } from "@/lib/monogram-colors";
 
 /** Auf dunkler Fläche: helle Töne, damit sich die Initialen abheben */
 const NIGHT_TONES = ["bg-night-ink text-night", "bg-night-muted text-night"];
