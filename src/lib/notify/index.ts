@@ -121,7 +121,8 @@ export async function notify(
       returning id, user_id
     )
     select ins.id, u.email, u.email_prefs, u.phone_e164,
-           exists (select 1 from push_subscriptions p where p.user_id = ins.user_id) as has_push
+           (exists (select 1 from push_subscriptions p where p.user_id = ins.user_id)
+             or exists (select 1 from apns_devices a where a.user_id = ins.user_id)) as has_push
       from ins join users u on u.id = ins.user_id`;
   if (!row) return;
 
