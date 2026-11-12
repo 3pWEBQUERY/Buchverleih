@@ -16,6 +16,11 @@ type Labels = {
   languageLabel: Record<string, string>;
   /** Anzeige der Genres; die gespeicherten Werte bleiben deutsch */
   genreLabel: Record<string, string>;
+  visibilityLabel: Record<keyof typeof de.visibilityLabel, string>;
+  passOnLabel: Record<keyof typeof de.passOnLabel, string>;
+  ratingReasonLabel: Record<keyof typeof de.ratingReasonLabel, string>;
+  reportReasonLabel: Record<keyof typeof de.reportReasonLabel, string>;
+  caseResponseLabel: Record<keyof typeof de.caseResponseLabel, string>;
 };
 
 const DE: Labels = {
@@ -27,6 +32,11 @@ const DE: Labels = {
   statusLabel: de.statusLabel,
   languageLabel: de.languageLabel,
   genreLabel: Object.fromEntries(de.genres.map((g) => [g, g])),
+  visibilityLabel: de.visibilityLabel,
+  passOnLabel: de.passOnLabel,
+  ratingReasonLabel: de.ratingReasonLabel,
+  reportReasonLabel: de.reportReasonLabel,
+  caseResponseLabel: de.caseResponseLabel,
 };
 
 const FR: Labels = {
@@ -60,6 +70,17 @@ const FR: Labels = {
     Lyrik: "Poésie", Biografie: "Biographie", Geschichte: "Histoire", Philosophie: "Philosophie", Wissenschaft: "Sciences",
     Kochen: "Cuisine", Reisen: "Voyage", Comic: "BD", Fantasy: "Fantasy", Ratgeber: "Guide pratique",
   },
+  visibilityLabel: { all: "Tout le monde", proven: "Dès « Confirmé »", circles: "Seulement mes cercles" },
+  passOnLabel: { never: "Jamais", on_request: "Sur demande", always: "Toujours" },
+  ratingReasonLabel: { late: "Pas ponctuel", condition: "État", communication: "Communication", no_show: "Absent au rendez-vous" },
+  reportReasonLabel: { harassment: "Harcèlement", commercial: "Vente ou usage commercial", inappropriate: "Contenu inapproprié", fake: "Fausses informations", price_pattern: "Prix mentionné dans le chat", other: "Autre" },
+  caseResponseLabel: {
+    return_date: "Indiquer une date de retour",
+    replace_same: "Remplacer par le même exemplaire",
+    replace_other: "Remplacer par un autre livre au choix de la personne qui prête",
+    swap_offer: "Garder le livre et donner un des miens en échange",
+    object: "Contester",
+  },
 };
 
 const IT: Labels = {
@@ -92,6 +113,17 @@ const IT: Labels = {
     Roman: "Romanzo", Krimi: "Giallo", Sachbuch: "Saggistica", Kinderbuch: "Libro per bambini", Jugendbuch: "Libro per ragazzi",
     Lyrik: "Poesia", Biografie: "Biografia", Geschichte: "Storia", Philosophie: "Filosofia", Wissenschaft: "Scienza",
     Kochen: "Cucina", Reisen: "Viaggi", Comic: "Fumetti", Fantasy: "Fantasy", Ratgeber: "Manuale pratico",
+  },
+  visibilityLabel: { all: "Tutti", proven: "Da «Affidabile»", circles: "Solo le mie cerchie" },
+  passOnLabel: { never: "Mai", on_request: "Su richiesta", always: "Sempre" },
+  ratingReasonLabel: { late: "Non puntuale", condition: "Stato", communication: "Comunicazione", no_show: "Non si è presentato" },
+  reportReasonLabel: { harassment: "Molestie", commercial: "Vendita o uso commerciale", inappropriate: "Contenuto inappropriato", fake: "Informazioni false", price_pattern: "Prezzo indicato nella chat", other: "Altro" },
+  caseResponseLabel: {
+    return_date: "Indicare una data di restituzione",
+    replace_same: "Sostituire con lo stesso esemplare",
+    replace_other: "Sostituire con un altro libro a scelta di chi presta",
+    swap_offer: "Tenere il libro e dare in cambio uno dei miei",
+    object: "Contestare",
   },
 };
 

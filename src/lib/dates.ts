@@ -135,7 +135,9 @@ export function parseRange(r: string | null | undefined): { start: string; end: 
   return { start: m[1], end: m[2] || null };
 }
 
-export function fmtRange(r: { start: string; end: string | null }) {
-  if (!r.end) return `ab ${fmtDay(dayToDate(r.start))}`;
-  return `${fmtDay(dayToDate(r.start))} – ${fmtDay(dayToDate(addDays(r.end, -1)))}`;
+const FROM: Record<Locale, string> = { de: "ab", fr: "dès le", it: "dal" };
+
+export function fmtRange(r: { start: string; end: string | null }, l: Locale = "de") {
+  if (!r.end) return `${FROM[l] ?? FROM.de} ${fmtDay(dayToDate(r.start), l)}`;
+  return `${fmtDay(dayToDate(r.start), l)} – ${fmtDay(dayToDate(addDays(r.end, -1)), l)}`;
 }
