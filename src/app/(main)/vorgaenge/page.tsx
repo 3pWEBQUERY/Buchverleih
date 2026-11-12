@@ -22,7 +22,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   const t = LOANS[l].list;
   const sp = await searchParams;
   const filter: Filter = FILTERS.some((f) => f.id === sp.seite) ? (sp.seite as Filter) : "alle";
-  const all = await myLoans(user.id);
+  const all = await myLoans(user.id, l);
   const loans = all.filter((x) => filter === "alle" || (filter === "verleihe" ? x.role === "owner" : x.role === "borrower"));
   const mine = loans.filter((x) => x.turn === "me" && x.step);
   const open = loans.filter((x) => !mine.includes(x) && ["requested", "accepted", "active", "return_reported", "returned", "disputed"].includes(x.status));

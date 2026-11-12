@@ -379,14 +379,15 @@ function PillSelect({ label, value, onChange, options }: { label: string; value:
 
 /** «Gleich um die Ecke»: dasselbe Brett wie im Regal, Status immer ganz unten */
 function Stage({ hits, href }: { hits: WorkHit[]; href: (h: WorkHit) => string }) {
-  const t = SEARCH[useLocale()];
+  const l = useLocale();
+  const t = SEARCH[l];
   return (
     <div className="surface-night rounded-[12px] px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5 -mx-1 md:mx-0 anim-rise">
       <BookRow label={t.stageLabel} height={165}
         items={hits.map((h) => ({
           id: h.work_id, work_id: h.work_id, title: h.title, authors: h.authors,
           photo_key: h.cover?.photo_key ?? null, photo_w: h.cover?.photo_w ?? null, photo_h: h.cover?.photo_h ?? null, cover_key: h.cover?.cover_key ?? null,
-          href: href(h), note: { tone: "ok" as const, text: `${t.free}${h.nearest_m != null ? ` · ${fmtDistance(h.nearest_m)}` : ""}` },
+          href: href(h), note: { tone: "ok" as const, text: `${t.free}${h.nearest_m != null ? ` · ${fmtDistance(h.nearest_m, l)}` : ""}` },
         }))} />
     </div>
   );
@@ -394,7 +395,7 @@ function Stage({ hits, href }: { hits: WorkHit[]; href: (h: WorkHit) => string }
 
 function ResultCard({ h, href, i }: { h: WorkHit; href: string; i: number }) {
   const l = useLocale();
-  const dist = fmtDistance(h.nearest_m);
+  const dist = fmtDistance(h.nearest_m, l);
   return (
     <li className="anim-rise min-w-0" style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
       <Link href={href} className="book group rounded-[10px] border border-line h-full grid grid-cols-[64px_minmax(0,1fr)] md:grid-cols-[72px_minmax(0,1fr)] gap-4 md:gap-5 p-4 md:p-5 hover:border-accent transition-colors duration-150">

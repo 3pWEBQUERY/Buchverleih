@@ -1,3 +1,4 @@
+import { getLocale } from "@/lib/i18n/server";
 import { z } from "zod";
 import { body, isoDay, route } from "@/lib/api";
 import { requireUser } from "@/lib/auth/session";
@@ -5,7 +6,7 @@ import { requestLoan } from "@/lib/loans/service";
 import { myLoans } from "@/lib/loans/queries";
 
 /** GET /api/v1/loans – meine Vorgänge, sortiert nach Handlungsbedarf */
-export const GET = route(async () => ({ loans: await myLoans((await requireUser()).id) }));
+export const GET = route(async () => ({ loans: await myLoans((await requireUser()).id, await getLocale()) }));
 
 /** POST /api/v1/loans – Anfrage stellen (Leihe für einen Zeitraum, Tausch oder Geschenk) */
 export const POST = route(async (req) => {

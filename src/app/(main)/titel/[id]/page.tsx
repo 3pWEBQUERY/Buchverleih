@@ -115,7 +115,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
               <span aria-hidden className={cx("h-2 w-2 rounded-full", freeCount ? "bg-ok" : others.length ? "bg-lent" : "bg-done")} />
               {freeCount ? t.freeCopies(freeCount) : others.length ? t.allTaken : t.noneNear}
             </span>
-            {nearest != null && <span className="text-[13px] text-muted tnum">{fmtDistance(nearest)}</span>}
+            {nearest != null && <span className="text-[13px] text-muted tnum">{fmtDistance(nearest, l)}</span>}
           </div>
           <dl className="px-4 py-3 text-[13.5px] grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
             {facts.map(([k, v]) => (
@@ -149,14 +149,14 @@ export default async function TitelPage({ params, searchParams }: Params) {
             {others.length > 0 && (
               <p className="text-[15.5px] text-ink-2 mt-3 max-w-xl leading-relaxed">
                 {others.length === 1 ? t.oneCopy : t.nCopies(others.length)} {place ? t.aroundLower(place) : t.nearLower}
-                {nextId ? t.nextFree(fmtDistance(others.find((c) => c.id === nextId)!.dist), others.find((c) => c.id === nextId)!.owner_name) : t.allOut}
+                {nextId ? t.nextFree(fmtDistance(others.find((c) => c.id === nextId)!.dist, l), others.find((c) => c.id === nextId)!.owner_name) : t.allOut}
               </p>
             )}
           </div>
           <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto">
             <StatTile n={others.length} label={t.copyWord(others.length)} />
             <StatTile n={freeCount} label={t.freeNow} live={freeCount > 0} />
-            <StatTile n={nearest != null ? (fmtDistance(nearest) ?? "–").replace(/^ca\. /, "") : "–"} label={t.nearest} />
+            <StatTile n={nearest != null ? (fmtDistance(nearest, l) ?? "–").replace(/^(ca\.|env\.|circa) /, "") : "–"} label={t.nearest} />
           </dl>
         </header>
 
@@ -195,13 +195,13 @@ export default async function TitelPage({ params, searchParams }: Params) {
                     <span className="absolute -left-2 -top-[5px] h-3 w-3 rounded-full bg-ink-2 ring-4 ring-paper-2" title={t.you} />
                     <span className="absolute -left-2 top-3 text-[11.5px] font-medium text-ink-2">{t.you}</span>
                     {withDist.map((c, i) => (
-                      <a key={c.id} href={`#ex-${c.id}`} title={`${c.owner_name}, ${fmtDistance(c.dist)}`}
+                      <a key={c.id} href={`#ex-${c.id}`} title={`${c.owner_name}, ${fmtDistance(c.dist, l)}`}
                         className={cx("absolute -top-[7px] h-4 w-4 -ml-2 rounded-full ring-[3px] ring-paper-2 hover:scale-125 transition-transform", c.free_now ? "bg-ok" : "bg-lent", c.id === nextId && "ring-accent/60")}
                         style={{ left: `${Math.max(3, (c.dist! / maxDist) * 100)}%`, zIndex: 10 - i }}>
-                        <span className="sr-only">{c.owner_name}, {fmtDistance(c.dist)}</span>
+                        <span className="sr-only">{c.owner_name}, {fmtDistance(c.dist, l)}</span>
                       </a>
                     ))}
-                    <span className="absolute right-0 top-3 text-[11.5px] text-muted tnum">{fmtDistance(maxDist)?.replace(/^ca\. /, "")}</span>
+                    <span className="absolute right-0 top-3 text-[11.5px] text-muted tnum">{fmtDistance(maxDist, l)?.replace(/^(ca\.|env\.|circa) /, "")}</span>
                   </div>
                 </div>
               )}
@@ -211,7 +211,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
                   const st = c.free_now ? { tone: "ok" as const, text: t.freeNowCap } : shelfStatusText(c, l);
                   const binding = c.binding === "hardcover" ? t.hardcover : c.binding === "paperback" ? t.paperback : null;
                   const edition = [c.year, c.publisher, binding, c.language ? L.languageLabel[c.language] ?? c.language : null].filter(Boolean).join(" · ");
-                  const dist = fmtDistance(c.dist);
+                  const dist = fmtDistance(c.dist, l);
                   const next = c.id === nextId;
                   const resp = responseHint(c.median_response_seconds, l);
                   const freeAgain = !c.free_now && c.lent_until ? t.lentUntil(fmtDay(dayToDate(dueDay(c.lent_until)), l)) : null;

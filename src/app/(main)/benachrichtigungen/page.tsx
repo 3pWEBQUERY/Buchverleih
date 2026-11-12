@@ -70,9 +70,9 @@ export default async function BenachrichtigungenPage({ searchParams }: { searchP
           from loans l join users o on o.id = l.owner_id join users b on b.id = l.borrower_id
          where l.id in ${sql(loanIds)} and (l.owner_id = ${user.id} or l.borrower_id = ${user.id})`
     : [];
-  const meters = new Map(loans.map((l) => {
-    const owner = l.owner_id === user.id;
-    return [l.id, timeMeter({ ...l, role: owner ? "owner" : "borrower", other_name: owner ? l.borrower_name : l.owner_name })] as const;
+  const meters = new Map(loans.map((x) => {
+    const owner = x.owner_id === user.id;
+    return [x.id, timeMeter({ ...x, role: owner ? "owner" : "borrower", other_name: owner ? x.borrower_name : x.owner_name }, l)] as const;
   }));
   const shown = new Set<string>();
   for (const i of all) {

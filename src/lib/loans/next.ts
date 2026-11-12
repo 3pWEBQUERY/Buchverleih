@@ -4,6 +4,67 @@
  * Es gibt keinen Zustand, in dem unklar ist, wer als Nächstes handelt.
  */
 import type { LoanStatus, OfferKind } from "./machine";
+import type { Locale } from "@/lib/i18n/locale";
+
+/** Beschriftungen und Wartetexte auf Französisch und Italienisch (Deutsch steht unten im Code) */
+const TR: Record<Exclude<Locale, "de">, Record<string, string>> = {
+  fr: {
+    "Anfrage beantworten": "Répondre à la demande",
+    "Wartet auf Antwort": "En attente de réponse",
+    "Weitergabe beantworten": "Répondre à la transmission",
+    "Übergabe bestätigen": "Confirmer la remise",
+    "Wartet auf Bestätigung der Übergabe": "En attente de confirmation de la remise",
+    "Code der anderen Seite scannen": "Scanner le code de l’autre partie",
+    "Tauschcode zeigen": "Montrer le code d’échange",
+    "Geht direkt weiter": "Transmis directement",
+    "Code scannen": "Scanner le code",
+    "Übergabecode zeigen": "Montrer le code de remise",
+    "Tauschangebot ansehen": "Voir l’offre d’échange",
+    "Verlängerung gewähren": "Accorder la prolongation",
+    "Rückgabe scannen": "Scanner le retour",
+    "Ausgeliehen": "Prêté",
+    "Zustand festhalten": "Noter l’état",
+    "Rückgabecode zeigen": "Montrer le code de retour",
+    "Rückgabe bestätigen": "Confirmer le retour",
+    "Wartet auf Bestätigung der Rückgabe": "En attente de confirmation du retour",
+    "Alles in Ordnung": "Tout est en ordre",
+    "Zurück, in Prüfung": "Rendu, en vérification",
+    "Im Fall antworten": "Répondre dans le litige",
+    "Ersatz bestätigen": "Confirmer le remplacement",
+    "Fall offen": "Litige ouvert",
+    "Die Moderation entscheidet": "La modération décide",
+    "Kurz bewerten": "Évaluer rapidement",
+    "Buch ist doch zurück": "Le livre est revenu",
+  },
+  it: {
+    "Anfrage beantworten": "Rispondi alla richiesta",
+    "Wartet auf Antwort": "In attesa di risposta",
+    "Weitergabe beantworten": "Rispondi al passaggio",
+    "Übergabe bestätigen": "Conferma la consegna",
+    "Wartet auf Bestätigung der Übergabe": "In attesa di conferma della consegna",
+    "Code der anderen Seite scannen": "Scansiona il codice dell’altra parte",
+    "Tauschcode zeigen": "Mostra il codice di scambio",
+    "Geht direkt weiter": "Passa direttamente",
+    "Code scannen": "Scansiona codice",
+    "Übergabecode zeigen": "Mostra il codice di consegna",
+    "Tauschangebot ansehen": "Vedi l’offerta di scambio",
+    "Verlängerung gewähren": "Concedi la proroga",
+    "Rückgabe scannen": "Scansiona la restituzione",
+    "Ausgeliehen": "In prestito",
+    "Zustand festhalten": "Annota lo stato",
+    "Rückgabecode zeigen": "Mostra il codice di restituzione",
+    "Rückgabe bestätigen": "Conferma la restituzione",
+    "Wartet auf Bestätigung der Rückgabe": "In attesa di conferma della restituzione",
+    "Alles in Ordnung": "Tutto in ordine",
+    "Zurück, in Prüfung": "Restituito, in verifica",
+    "Im Fall antworten": "Rispondi nel caso",
+    "Ersatz bestätigen": "Conferma la sostituzione",
+    "Fall offen": "Caso aperto",
+    "Die Moderation entscheidet": "Decide la moderazione",
+    "Kurz bewerten": "Valuta in breve",
+    "Buch ist doch zurück": "Il libro è tornato",
+  },
+};
 
 export type StepKey =
   | "respond"
@@ -46,7 +107,14 @@ export type NextInput = {
   pass_on_pending_mine: boolean;
 };
 
-export function nextStep(l: NextInput): { step: NextStep; turn: Turn; waitingText: string | null } {
+export function nextStep(input: NextInput, loc: Locale = "de"): { step: NextStep; turn: Turn; waitingText: string | null } {
+  const r = nextStepDe(input);
+  if (loc === "de") return r;
+  const t = (x: string) => TR[loc][x] ?? x;
+  return { ...r, step: r.step && { ...r.step, label: t(r.step.label) }, waitingText: r.waitingText && t(r.waitingText) };
+}
+
+function nextStepDe(l: NextInput): { step: NextStep; turn: Turn; waitingText: string | null } {
   const owner = l.role === "owner";
   switch (l.status) {
     case "requested":

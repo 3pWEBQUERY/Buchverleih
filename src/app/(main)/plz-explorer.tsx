@@ -12,7 +12,8 @@ type Res = { known: boolean; open: boolean; municipality?: string; region?: stri
 
 /** Postleitzahl eingeben und echten Bestand sehen (PRD 8.4) – auf der dunklen Bühne. */
 export function PlzExplorer() {
-  const t = PUBLIC[useLocale()].plz;
+  const l = useLocale();
+  const t = PUBLIC[l].plz;
   const [plz, setPlz] = useState("");
   const [res, setRes] = useState<Res | null>(null);
   const [loading, setLoading] = useState(false);
@@ -100,7 +101,7 @@ export function PlzExplorer() {
                       <div className="flex items-end" style={{ height: 176 }}><div className="book-face"><Cover data={cover} width={110} height={165} uniform /></div></div>
                       <div className="h-[3px] bg-night-ink/90 rounded-full" />
                       <p className="pt-2.5 text-[13.5px] font-medium leading-snug line-clamp-2 group-hover:underline">{c.title}</p>
-                      <p className="text-[12px] text-night-muted mt-0.5">{c.owner_name} · {fmtDistance(c.dist)}</p>
+                      <p className="text-[12px] text-night-muted mt-0.5">{c.owner_name} · {fmtDistance(c.dist, l)}</p>
                     </Link>
                   </li>
                 );

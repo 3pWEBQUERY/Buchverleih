@@ -46,7 +46,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const l = await getLocale();
   const d = LOANS[l].detail;
   const L = labels(l);
-  const loan = await loanView(id, user.id).catch(() => null);
+  const loan = await loanView(id, user.id, l).catch(() => null);
   if (!loan) notFound();
   const messages = await listMessages({ type: "loan", id });
   await sql`update notifications set read_at = now() where user_id = ${user.id} and loan_id = ${id} and read_at is null`;

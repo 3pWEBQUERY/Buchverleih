@@ -183,16 +183,16 @@ function WishCard({ it, i, onRadius, onAlarm, onRemove }: { it: WishItem; i: num
               )}
             </p>
             <p className="text-[14px] font-medium tnum text-right truncate pb-0.5">
-              {free ? <>{fmtDistance(it.free_dist)}{it.free_owner && <span className="text-muted font-normal"> · {it.free_owner}</span>}</>
+              {free ? <>{fmtDistance(it.free_dist, l)}{it.free_owner && <span className="text-muted font-normal"> · {it.free_owner}</span>}</>
                 : busy && it.next_free ? fmtDay(dayToDate(it.next_free), l)
-                : it.nearest_beyond != null ? fmtDistance(it.nearest_beyond) : ""}
+                : it.nearest_beyond != null ? fmtDistance(it.nearest_beyond, l) : ""}
             </p>
           </div>
           <p className="mt-2.5 text-[12.5px] text-muted leading-snug">
             {free
               ? it.total_near > it.available_near ? c.moreLent(it.total_near - it.available_near) : c.askNow
               : busy ? c.allLent(it.total_near, it.radius_km, it.alarm)
-              : it.nearest_beyond != null ? c.outside(fmtDistance(it.nearest_beyond) ?? "")
+              : it.nearest_beyond != null ? c.outside(fmtDistance(it.nearest_beyond, l) ?? "")
               : c.nobody(it.alarm)}
           </p>
           {(free || widen) && (

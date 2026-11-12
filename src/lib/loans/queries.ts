@@ -1,3 +1,4 @@
+import type { Locale } from "@/lib/i18n/locale";
 /** Lesende Sichten auf Vorgänge: Übersicht «Meine Vorgänge» und die Vorgangsseite. */
 import { sql } from "@/lib/db";
 import { err } from "@/lib/errors";
@@ -82,7 +83,7 @@ function passOnPendingFor(r: Joined, me: string) {
   return false;
 }
 
-function stepFor(r: Joined, me: string) {
+function stepFor(r: Joined, me: string, loc: Locale = "de") {
   const role = r.owner_id === me ? "owner" : "borrower";
   const input: NextInput = {
     ...r,
@@ -93,11 +94,11 @@ function stepFor(r: Joined, me: string) {
     rated_by_me: r.rated_by_me,
     pass_on_pending_mine: passOnPendingFor(r, me),
   };
-  return { role, ...nextStep(input) } as const;
+  return { role, ...nextStep(input, loc) } as const;
 }
 
 /** «Meine Vorgänge», nach Handlungsbedarf sortiert: zuerst, was auf mich wartet (PRD 7.4). */
-export async function myLoans(userId: string): Promise<LoanListItem[]> {
+export async function myLoans(userId: string, loc: Locale = "de"): Promise<LoanListItem[]> {
   const rows = await sql<Joined[]>`
     ${JOINED(userId)}
      where (l.owner_id = ${userId} or l.borrower_id = ${userId})
@@ -105,7 +106,7 @@ export async function myLoans(userId: string): Promise<LoanListItem[]> {
      order by l.requested_at desc
      limit 200`;
   const items = rows.map((r) => {
-    const s = stepFor(r, userId);
+    const s = stepFor(r, userId, loc);
     return {
       id: r.id, kind: r.kind, status: r.status, role: s.role, title: r.title, authors: r.authors, copy_id: r.copy_id, work_id: r.work_id,
       other_name: s.role === "owner" ? r.borrower_name : r.owner_name, other_id: s.role === "owner" ? r.borrower_id : r.owner_id,
@@ -122,13 +123,13 @@ export async function myLoans(userId: string): Promise<LoanListItem[]> {
 }
 
 /** Vorgangsseite: Zeitachse, nächster Schritt, Chat, Verlauf (PRD 8.4) */
-export async function loanView(loanId: string, userId: string) {
+export async function loanView(loanId: string, userId: string, loc: Locale = "de") {
   const [r] = await sql<Joined[]>`${JOINED(userId)} where l.id = ${loanId}`;
   if (!r) throw err.notFound("Diesen Vorgang gibt es nicht.");
   const isOwner = r.owner_id === userId;
   const isBorrower = r.borrower_id === userId;
   if (!isOwner && !isBorrower) throw err.notFound("Diesen Vorgang gibt es nicht.");
-  const s = stepFor(r, userId);
+  const s = stepFor(r, userId, loc);
   const otherId = isOwner ? r.borrower_id : r.owner_id;
 
   const [other] = await sql<{ id: string; first_name: string; avatar_key: string | null; trust_level: number; member_since: Date; lent: number; borrowed: number; punctual_pct: number | null; visible_losses: number; shared_circles: string[] }[]>`

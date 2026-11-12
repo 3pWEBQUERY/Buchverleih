@@ -21,7 +21,7 @@ export function MoreBooks({ related, ownerName, ownerId, workId, title, hasOrigi
   const where = hasOrigin ? t.inYourArea : t.near;
   const note = (c: RelatedCopy) => {
     const free = c.status === "available";
-    const d = c.dist != null ? fmtDistance(c.dist) : null;
+    const d = c.dist != null ? fmtDistance(c.dist, l) : null;
     return { tone: free ? ("ok" as const) : ("lent" as const), text: [free ? t.free : t.taken, c.owner_name, d].filter(Boolean).join(" · ") };
   };
   const shelves: { id: string; title: string; desc: string; items: RelatedCopy[]; link?: { href: string; label: string }; withNote: boolean }[] = [
