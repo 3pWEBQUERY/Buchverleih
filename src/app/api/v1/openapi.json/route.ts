@@ -17,6 +17,8 @@ const int = { type: "integer" };
 const ops: Op[] = [
   { method: "post", path: "/auth/email", tag: "Anmeldung", summary: "Anmeldelink per E-Mail anfordern (app=true: Link öffnet die iOS-App)", body: S({ email: str, next: str, app: bool }, ["email"]), auth: false },
   { method: "post", path: "/auth/email/verify", tag: "Anmeldung", summary: "Link einlösen. client=api liefert ein Bearer-Token", body: S({ token: str, client: { enum: ["web", "api"] } }, ["token"]), auth: false },
+  { method: "post", path: "/auth/register", tag: "Anmeldung", summary: "Konto mit E-Mail und Passwort anlegen. client=api liefert ein Bearer-Token", body: S({ email: str, password: str, client: { enum: ["web", "api"] } }, ["email", "password"]), auth: false },
+  { method: "post", path: "/auth/password", tag: "Anmeldung", summary: "Anmelden mit E-Mail und Passwort. client=api liefert ein Bearer-Token", body: S({ email: str, password: str, client: { enum: ["web", "api"] } }, ["email", "password"]), auth: false },
   { method: "post", path: "/auth/passkey/options", tag: "Anmeldung", summary: "Passkey-Anmeldung vorbereiten", auth: false },
   { method: "post", path: "/auth/passkey/verify", tag: "Anmeldung", summary: "Passkey-Anmeldung abschliessen", body: S({ challengeId: uuid, response: { type: "object" }, client: { enum: ["web", "api"] } }), auth: false },
   { method: "post", path: "/auth/logout", tag: "Anmeldung", summary: "Abmelden" },
@@ -25,6 +27,7 @@ const ops: Op[] = [
   { method: "patch", path: "/me", tag: "Konto", summary: "Einstellungen (Ferienmodus, E-Mail-Typen, Ort, Profilbild: avatarUploadId eines eigenen Uploads mit Zweck «avatar», null entfernt es)", body: S({ firstName: str, shelfPaused: bool, emailPrefs: { type: "object" }, plz: str, avatarUploadId: { type: ["string", "null"], format: "uuid" } }) },
   { method: "post", path: "/me/phone", tag: "Konto", summary: "SMS-Code anfordern", body: S({ phone: str }, ["phone"]) },
   { method: "post", path: "/me/phone/verify", tag: "Konto", summary: "SMS-Code bestätigen", body: S({ code: str }, ["code"]) },
+  { method: "post", path: "/me/password", tag: "Konto", summary: "Passwort setzen oder ändern", body: S({ password: str }, ["password"]) },
   { method: "get", path: "/me/passkeys", tag: "Konto", summary: "Passkeys auflisten" },
   { method: "post", path: "/me/passkeys", tag: "Konto", summary: "Passkey registrieren (step options, dann verify)", body: S({ step: { enum: ["options", "verify"] }, response: { type: "object" }, name: str }) },
   { method: "delete", path: "/me/passkeys", tag: "Konto", summary: "Passkey entfernen (?id=)" },

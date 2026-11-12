@@ -1,5 +1,5 @@
 /**
- * Anmeldung per E-Mail-Link oder Passkey, ohne Passwort (PRD 7.7).
+ * Anmeldung per E-Mail-Link, Passkey oder Passwort (PRD 7.7; Passwort, solange kein Mailversand läuft).
  * Mobilnummer per SMS-Code (PRD 6.1): eine Nummer, ein Konto.
  */
 import {
@@ -18,6 +18,7 @@ import { rateLimit } from "@/lib/ratelimit";
 import { sendMail } from "@/lib/notify/mail";
 import { sendSms } from "@/lib/notify/sms";
 import { normalizePhone, smsAllowed } from "./phone";
+import { hashPassword, verifyPassword, PASSWORD_MAX, PASSWORD_MIN } from "./password";
 import { safeNext } from "@/lib/safe-next";
 import type { SessionUser } from "./session";
 import type { Locale } from "@/lib/i18n/locale";
@@ -58,12 +59,57 @@ export async function verifyEmailLink(token: string, l: Locale = "de") {
     const [existing] = await tx<{ id: string; banned_at: Date | null }[]>`
       select id, banned_at from users where lower(email) = ${t.email} and deleted_at is null`;
     if (existing) {
-      await tx`update users set email_verified_at = coalesce(email_verified_at, now()) where id = ${existing.id}`;
+      // Erste Bestätigung der Adresse: Ein Passwort, das jemand ohne Nachweis gesetzt hat, gilt nicht mehr
+      await tx`update users set password_hash = case when email_verified_at is null then null else password_hash end,
+                                email_verified_at = coalesce(email_verified_at, now())
+                where id = ${existing.id}`;
       return { userId: existing.id, created: false };
     }
     const [u] = await tx<{ id: string }[]>`insert into users (email, email_verified_at, locale) values (${t.email}, now(), ${l}) returning id`;
     return { userId: u.id, created: true };
   });
+}
+
+// ---------------------------------------------------------------------------
+// Passwort (ohne Mail- oder SMS-Versand nutzbar)
+// ---------------------------------------------------------------------------
+
+function checkPassword(pw: string) {
+  if (pw.length < PASSWORD_MIN) throw err.invalid("Das Passwort braucht mindestens 8 Zeichen.");
+  if (pw.length > PASSWORD_MAX) throw err.invalid("Das Passwort ist zu lang.");
+}
+
+/** Konto mit E-Mail-Adresse und Passwort anlegen. Die Adresse gilt bis zum ersten Link als unbestätigt. */
+export async function registerWithPassword(rawEmail: string, password: string, l: Locale = "de") {
+  const email = rawEmail.trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) throw err.invalid("Diese E-Mail-Adresse sieht unvollständig aus.");
+  checkPassword(password);
+  await rateLimit(`register:${email}`, 5, 3600);
+  const hash = await hashPassword(password);
+  return sql.begin(async (tx) => {
+    const [existing] = await tx<{ id: string }[]>`select id from users where lower(email) = ${email} and deleted_at is null`;
+    if (existing) throw err.conflict("account_exists", "Zu dieser E-Mail-Adresse gibt es schon ein Konto. Melde dich an.");
+    const [u] = await tx<{ id: string }[]>`
+      insert into users (email, locale, password_hash) values (${email}, ${l}, ${hash}) returning id`;
+    return { userId: u.id, created: true };
+  });
+}
+
+/** Anmelden mit E-Mail-Adresse und Passwort. Gleiche Meldung für unbekannte Adresse und falsches Passwort. */
+export async function loginWithPassword(rawEmail: string, password: string) {
+  const email = rawEmail.trim().toLowerCase();
+  await rateLimit(`pwlogin:${email}`, 10, 900);
+  const [u] = await sql<{ id: string; password_hash: string | null }[]>`
+    select id, password_hash from users where lower(email) = ${email} and deleted_at is null`;
+  const ok = await verifyPassword(password.slice(0, PASSWORD_MAX), u?.password_hash ?? null);
+  if (!u || !ok) throw err.invalid("E-Mail-Adresse oder Passwort stimmt nicht.");
+  return { userId: u.id, created: false };
+}
+
+/** Passwort für ein bestehendes Konto setzen oder ändern (angemeldet) */
+export async function setPassword(userId: string, password: string) {
+  checkPassword(password);
+  await sql`update users set password_hash = ${await hashPassword(password)} where id = ${userId}`;
 }
 
 // ---------------------------------------------------------------------------

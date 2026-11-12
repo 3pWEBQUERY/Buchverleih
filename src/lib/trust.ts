@@ -33,10 +33,15 @@ export function requirePhone() {
   return process.env.REQUIRE_PHONE !== "false";
 }
 
+/** Bestätigte E-Mail-Adresse als Voraussetzung zum Anfragen; abschaltbar, solange kein Mailversand läuft */
+export function requireEmailVerified() {
+  return process.env.REQUIRE_EMAIL_VERIFIED !== "false";
+}
+
 /** Darf diese Person überhaupt anfragen? Liefert eine Meldung, die sagt, was zu tun ist. */
 export async function requestBlocker(tx: Tx, user: SessionUser): Promise<string | null> {
   if (!user.onboarded_at) return "Vervollständige zuerst dein Profil.";
-  if (!user.email_verified_at) return "Bestätige zuerst deine E-Mail-Adresse.";
+  if (requireEmailVerified() && !user.email_verified_at) return "Bestätige zuerst deine E-Mail-Adresse.";
   if (requirePhone() && !user.phone_verified_at)
     return "Bestätige zuerst deine Mobilnummer. Das dauert eine Minute und schützt alle vor Mehrfachkonten.";
   if (user.lending_suspended_at)

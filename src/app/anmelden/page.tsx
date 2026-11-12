@@ -6,6 +6,7 @@ import { LoginForm } from "./login-form";
 import { getLocale } from "@/lib/i18n/server";
 import { PUBLIC } from "@/lib/i18n/messages/public";
 import { SHELL } from "@/lib/i18n/messages/shell";
+import { env } from "@/lib/env";
 
 export async function generateMetadata() {
   return { title: SHELL[await getLocale()].publicNav.login };
@@ -24,7 +25,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
       <AuthHead eyebrow={a.headEyebrow} title={<>{a.headTitle[0]}<em>{a.headTitle[1]}</em></>}>
         {a.headText}
       </AuthHead>
-      <LoginForm next={next ?? null} />
+      <LoginForm next={next ?? null} mailEnabled={Boolean(env.smtpUrl) || env.showCodes} />
     </AuthStage>
   );
 }

@@ -4,18 +4,41 @@ import { safeNext } from "@/lib/safe-next";
 import { useRouter } from "next/navigation";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { api } from "@/lib/client";
-import { Button, Field, Input, Notice } from "@/components/ui";
+import { Button, Field, Input, Notice, Segmented } from "@/components/ui";
 import { IconArrowRight, IconCheck } from "@/components/icons";
 import { useLocale } from "@/components/locale-provider";
 import { PUBLIC } from "@/lib/i18n/messages/public";
 
-export function LoginForm({ next }: { next: string | null }) {
+/**
+ * Anmelden oder Konto anlegen mit E-Mail und Passwort (funktioniert ohne Mail- und SMS-Versand).
+ * Anmeldelink per E-Mail nur, wenn der Mailversand eingerichtet ist; Passkey immer.
+ */
+export function LoginForm({ next, mailEnabled }: { next: string | null; mailEnabled: boolean }) {
   const router = useRouter();
   const a = PUBLIC[useLocale()].auth;
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [useLink, setUseLink] = useState(false);
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState<null | { devLink?: string }>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  async function submitPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await api<{ created: boolean }>(mode === "register" ? "/auth/register" : "/auth/password", { body: { email, password } });
+      const target = safeNext(next);
+      router.replace(r.created ? `/willkommen${target ? `?next=${encodeURIComponent(target)}` : ""}` : target || "/");
+      router.refresh();
+    } catch (e) {
+      setError((e as Error).message);
+      setBusy(false);
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,14 +85,43 @@ export function LoginForm({ next }: { next: string | null }) {
 
   return (
     <div className="anim-rise" style={{ animationDelay: "60ms" }}>
-      <form onSubmit={submit} className="space-y-4">
-        <Field label={a.email} error={error}>
-          <Input type="email" required autoComplete="email webauthn" autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder={a.emailPlaceholder} />
-        </Field>
-        <Button type="submit" variant="primary" size="lg" className="w-full" disabled={busy}>
-          {busy ? a.sending : <>{a.send} <IconArrowRight width={18} height={18} /></>}
-        </Button>
-      </form>
+      {useLink && mailEnabled ? (
+        <form onSubmit={submit} className="space-y-4">
+          <Field label={a.email} error={error}>
+            <Input type="email" required autoComplete="email webauthn" autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder={a.emailPlaceholder} />
+          </Field>
+          <Button type="submit" variant="primary" size="lg" className="w-full" disabled={busy}>
+            {busy ? a.sending : <>{a.send} <IconArrowRight width={18} height={18} /></>}
+          </Button>
+          <Button type="button" variant="quiet" className="w-full text-sm" onClick={() => { setUseLink(false); setError(null); }}>{a.passwordInstead}</Button>
+        </form>
+      ) : (
+        <form onSubmit={submitPassword} className="space-y-4">
+          <Segmented name={a.modes.aria} value={mode} onChange={(m) => { setMode(m); setError(null); }}
+            options={[{ value: "login", label: a.modes.login }, { value: "register", label: a.modes.register }]} />
+          <Field label={a.email}>
+            <Input type="email" required autoComplete={mode === "login" ? "email webauthn" : "email"} autoFocus value={email}
+              onChange={(e) => setEmail(e.target.value)} placeholder={a.emailPlaceholder} />
+          </Field>
+          <Field label={mode === "register" ? a.passwordNew : a.password} hint={mode === "register" ? a.passwordHint : undefined} error={error}>
+            <div className="relative">
+              <Input type={showPw ? "text" : "password"} required minLength={mode === "register" ? 8 : 1} maxLength={200}
+                autoComplete={mode === "register" ? "new-password" : "current-password"} value={password}
+                onChange={(e) => setPassword(e.target.value)} className="pr-24" />
+              <button type="button" onClick={() => setShowPw((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-9 px-3 text-[13px] font-medium text-muted hover:text-ink rounded-[6px]">
+                {showPw ? a.hide : a.show}
+              </button>
+            </div>
+          </Field>
+          <Button type="submit" variant="primary" size="lg" className="w-full" disabled={busy}>
+            {busy ? a.busy : <>{mode === "register" ? a.submitRegister : a.submitLogin} <IconArrowRight width={18} height={18} /></>}
+          </Button>
+          {mailEnabled && (
+            <Button type="button" variant="quiet" className="w-full text-sm" onClick={() => { setUseLink(true); setError(null); }}>{a.linkInstead}</Button>
+          )}
+        </form>
+      )}
       <div className="flex items-center gap-4 my-7 text-[13px] text-muted">
         <span className="h-px flex-1 bg-line" /> {a.or} <span className="h-px flex-1 bg-line" />
       </div>

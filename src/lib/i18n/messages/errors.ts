@@ -33,6 +33,10 @@ export const ERRORS: Record<string, FrIt> = {
   "Nur Fotos (JPEG, PNG, WebP, HEIC)": ["Seulement des photos (JPEG, PNG, WebP, HEIC)", "Solo foto (JPEG, PNG, WebP, HEIC)"],
 
   // Anmeldung, Konto, Telefon
+  "Das Passwort braucht mindestens 8 Zeichen.": ["Le mot de passe doit comporter au moins 8 caractères.", "La password deve avere almeno 8 caratteri."],
+  "Das Passwort ist zu lang.": ["Le mot de passe est trop long.", "La password è troppo lunga."],
+  "Zu dieser E-Mail-Adresse gibt es schon ein Konto. Melde dich an.": ["Un compte existe déjà pour cette adresse e-mail. Connecte-toi.", "Esiste già un conto per questo indirizzo e-mail. Accedi."],
+  "E-Mail-Adresse oder Passwort stimmt nicht.": ["L’adresse e-mail ou le mot de passe est incorrect.", "L’indirizzo e-mail o la password non sono corretti."],
   "Diese E-Mail-Adresse sieht unvollständig aus.": ["Cette adresse e-mail semble incomplète.", "Questo indirizzo e-mail sembra incompleto."],
   "Dieser Link ist abgelaufen oder wurde schon verwendet. Fordere einen neuen an.": ["Ce lien a expiré ou a déjà été utilisé. Demandes-en un nouveau.", "Questo link è scaduto o è già stato usato. Richiedine uno nuovo."],
   "Die Anfrage ist abgelaufen. Versuche es erneut.": ["La demande a expiré. Réessaie.", "La richiesta è scaduta. Riprova."],
