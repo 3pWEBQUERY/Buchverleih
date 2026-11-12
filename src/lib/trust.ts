@@ -70,6 +70,24 @@ export async function assertWithinLimits(tx: Tx, user: SessionUser, inCircle: bo
   }
 }
 
+/**
+ * Bei der Annahme erneut prüfen (die Anfrage-Prüfung allein lässt sich mit mehreren
+ * gleichzeitigen Anfragen umgehen). Sperrt die Zeile der leihenden Person.
+ */
+export async function assertBorrowerCapacity(tx: Tx, borrowerId: string, inCircle: boolean) {
+  if (inCircle) return;
+  const [b] = await tx<{ id: string; plan_id: string; trust_level: number; first_name: string }[]>`
+    select id, plan_id, trust_level, first_name from users where id = ${borrowerId} for update`;
+  if (!b) return;
+  const lim = await limitsFor(tx, b as unknown as SessionUser);
+  const [c] = await tx<{ n: number }[]>`
+    select count(*)::int as n from loans
+     where borrower_id = ${borrowerId} and kind = 'lend' and circle_id is null
+       and status in ('accepted', 'active', 'return_reported', 'disputed')`;
+  if (c.n >= lim.concurrent)
+    throw err.conflict("limit_concurrent", `${b.first_name} hat gerade schon ${c.n} Leihen laufen oder gebucht, mehr sind mit der aktuellen Stufe nicht möglich. Die Anfrage kann erst später angenommen werden.`);
+}
+
 export async function isBlockedBetween(tx: Tx, a: string, b: string) {
   const [r] = await tx<{ n: number }[]>`
     select count(*)::int as n from blocks

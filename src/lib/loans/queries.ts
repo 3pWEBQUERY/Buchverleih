@@ -187,7 +187,8 @@ export async function loanView(loanId: string, userId: string) {
     : [];
 
   const [copySettings] = await sql<{ dropoff_allowed: boolean; auto_extend: boolean; max_extensions: number; loan_days: number }[]>`
-    select dropoff_allowed, auto_extend, max_extensions, loan_days from copies where id = ${r.copy_id}`;
+    select cp.dropoff_allowed, cp.auto_extend, cp.max_extensions, coalesce(ci.loan_days, cp.loan_days) as loan_days
+      from copies cp left join circles ci on ci.id = ${r.circle_id} where cp.id = ${r.copy_id}`;
 
   const prev = r.received_from_loan_id
     ? (await sql<LoanRow[]>`select * from loans where id = ${r.received_from_loan_id}`)[0] ?? null

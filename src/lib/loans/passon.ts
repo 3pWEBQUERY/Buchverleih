@@ -137,6 +137,10 @@ export async function passOnConsent(user: SessionUser, nextLoanId: string, agree
 
     const info = await loanInfo(tx, nextLoanId);
     if (!agree) {
+      if (next.received_from_loan_id) {
+        await releaseFollowers(tx, next.received_from_loan_id, "consent_withdrawn");
+        return { agreed: false };
+      }
       await tx`update loans set pass_on_candidate_id = null, pass_on_owner_ok = null, pass_on_prev_ok = null, pass_on_next_ok = null
                 where id = ${nextLoanId}`;
       await logEvent(tx, nextLoanId, user.id, "pass_on_declined", "accepted", "accepted");
@@ -227,4 +231,24 @@ export async function onPassOnBroken(tx: TxSql, next: LoanRow) {
   }
   await logEvent(tx, prevId, null, "pass_on_broken", "active", "active", { extendedDays: 3 });
   await tx`update handover_chats set route = 'via_owner' where prev_loan_id = ${prevId} and next_loan_id = ${next.id}`;
+}
+
+/**
+ * Die Vorgänger-Leihe endet ohne direkte Weitergabe (normal zurückgegeben, verfallen, storniert,
+ * Zustimmung zurückgezogen): Die Folge-Leihe geht wieder über die verleihende Person,
+ * bekommt eine neue Übergabefrist und hängt nicht mehr.
+ */
+export async function releaseFollowers(tx: TxSql, prevId: string, reason: string) {
+  const freed = await tx<{ id: string }[]>`
+    update loans set received_from_loan_id = null, pass_on_candidate_id = null,
+           pass_on_owner_ok = null, pass_on_prev_ok = null, pass_on_next_ok = null,
+           handover_by = greatest(coalesce(handover_by, now()), day_start_ch(today_ch() + 7))
+     where (received_from_loan_id = ${prevId} or pass_on_candidate_id = ${prevId}) and status = 'accepted'
+     returning id`;
+  for (const n of freed) {
+    await tx`update copy_bookings b set buffer_days = c.buffer_days from copies c where b.loan_id = ${prevId} and c.id = b.copy_id`;
+    await tx`update handover_chats set route = 'via_owner' where prev_loan_id = ${prevId} and next_loan_id = ${n.id}`;
+    await logEvent(tx, n.id, null, "pass_on_broken", "accepted", "accepted", { reason });
+  }
+  return freed.length;
 }

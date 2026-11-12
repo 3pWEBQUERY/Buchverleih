@@ -6,6 +6,7 @@
 import { sql, type Tx } from "@/lib/db";
 import { notify, type NotificationType } from "@/lib/notify";
 import { loanInfo, transition } from "@/lib/loans/core";
+import { releaseFollowers } from "@/lib/loans/passon";
 import { executeHandover, executeReturn, completeTx, openCaseTx, markLostTx, SYSTEM } from "@/lib/loans/service";
 
 type Result = Record<string, number>;
@@ -84,6 +85,7 @@ export async function runDeadlines(): Promise<Result> {
       sql.begin(async (tx) => {
         const l = await transition(tx, id, "expire_handover", SYSTEM, { set: tx`closed_at = now()` });
         await tx`delete from copy_bookings where loan_id = ${id}`;
+        await releaseFollowers(tx, id, "expired");
         if (l.swap_copy_id) await tx`delete from copy_bookings where copy_id = ${l.swap_copy_id} and note = ${"Tausch " + id}`;
         const info = await loanInfo(tx, id);
         for (const uid of [l.owner_id, l.borrower_id]) await notify(tx, { userId: uid, type: "handover_expired", loanId: id, data: { title: info.title } });
@@ -109,8 +111,8 @@ export async function runDeadlines(): Promise<Result> {
   );
 
   // Erinnerungen und Eskalation (4.5). due_at ist der Beginn des Tages nach dem letzten Leihtag.
-  const active = await sql<{ id: string; days_left: number; waiting: boolean; waiting_name: string | null; waiting_day: string | null; waiting_loan: string | null }[]>`
-    select l.id,
+  const active = await sql<{ id: string; due_key: string; days_left: number; waiting: boolean; waiting_name: string | null; waiting_day: string | null; waiting_loan: string | null }[]>`
+    select l.id, ((l.due_at at time zone 'Europe/Zurich')::date)::text as due_key,
            ((l.due_at at time zone 'Europe/Zurich')::date - 1) - today_ch() as days_left,
            n.id is not null as waiting, u.first_name as waiting_name, lower(b.period)::text as waiting_day, n.id as waiting_loan
       from loans l
@@ -123,11 +125,15 @@ export async function runDeadlines(): Promise<Result> {
      where l.status = 'active' and l.kind = 'lend'`;
   for (const a of active) {
     const overdueDays = -a.days_left; // Tage seit dem letzten Leihtag
-    if (a.days_left === 5) await remind(a.id, "due_5d", ["borrower"], "due_soon");
-    if (a.days_left === 1) await remind(a.id, "due_1d", ["borrower"], "due_tomorrow");
-    if (a.days_left < 0) await remind(a.id, "overdue", ["borrower", "owner"], "overdue");
-    if (overdueDays >= 3) await remind(a.id, "overdue_3d", ["borrower"], "overdue_late");
-    if (overdueDays >= 7) await remind(a.id, "overdue_7d", ["borrower", "owner"], "overdue_case_possible");
+    // Merker hängen an der Fälligkeit: nach einer Verlängerung oder einem Rückruf kommen die Erinnerungen neu.
+    // Bereiche statt genauer Tage: fällt der Worker einen Tag aus, wird nachgeholt.
+    const k = (m: string) => `${m}:${a.due_key}`;
+    if (a.days_left >= 2 && a.days_left <= 5) await remind(a.id, k("due_5d"), ["borrower"], "due_soon");
+    if (a.days_left >= 0 && a.days_left <= 1) await remind(a.id, k("due_1d"), ["borrower"], "due_tomorrow");
+    if (a.days_left < 0) await remind(a.id, k("overdue"), ["borrower", "owner"], "overdue");
+    // «unpünktlich» gilt ab due_at + 3 Tage (= 4. Tag nach dem letzten Leihtag), ein Fall ab due_at + 7 Tage
+    if (overdueDays >= 4) await remind(a.id, k("overdue_3d"), ["borrower"], "overdue_late");
+    if (overdueDays >= 8) await remind(a.id, k("overdue_7d"), ["borrower", "owner"], "overdue_case_possible");
     if (a.days_left < 0 && a.waiting) {
       await sql.begin(async (tx) => {
         if (!(await mark(tx, a.id, "someone_waiting"))) return;

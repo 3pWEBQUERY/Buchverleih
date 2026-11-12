@@ -9,12 +9,12 @@ import { err } from "@/lib/errors";
 import type { SessionUser } from "@/lib/auth/session";
 import { notify } from "@/lib/notify";
 import { addDays, diffDays, parseRange, todayCH } from "@/lib/dates";
-import { assertWithinLimits, isBlockedBetween, requestBlocker } from "@/lib/trust";
+import { assertBorrowerCapacity, assertWithinLimits, isBlockedBetween, requestBlocker } from "@/lib/trust";
 import { rateLimit } from "@/lib/ratelimit";
 import { getCalendar, fitsFree } from "./calendar";
 import { getLoan, loanFor, loanInfo, logEvent, transition, type ActorRef, type LoanRow } from "./core";
 import type { OfferKind } from "./machine";
-import { afterAcceptConsecutive, onPassOnBroken } from "./passon";
+import { afterAcceptConsecutive, onPassOnBroken, releaseFollowers } from "./passon";
 
 type TxSql = postgres.TransactionSql;
 const SYSTEM: ActorRef = { role: "system", id: null };
@@ -41,14 +41,17 @@ export async function requestLoan(user: SessionUser, input: RequestInput) {
     const [copy] = await tx<{
       id: string; owner_id: string; offers: OfferKind[]; loan_days: number; horizon_days: number;
       max_future_bookings: number; transfer_locked_until: Date | null; shelf_paused: boolean; visible: boolean;
-      owner_banned: Date | null;
+      owner_banned: Date | null; owner_demo: boolean;
     }[]>`
       select c.id, c.owner_id, c.offers, c.loan_days, c.horizon_days, c.max_future_bookings, c.transfer_locked_until,
-             o.shelf_paused, o.banned_at as owner_banned, copy_visible_to(c.id, ${user.id}) as visible
+             o.shelf_paused, o.banned_at as owner_banned, o.is_demo as owner_demo, copy_visible_to(c.id, ${user.id}) as visible
         from copies c join users o on o.id = c.owner_id
        where c.id = ${input.copyId} and c.removed_at is null`;
     if (!copy || !copy.visible) throw err.notFound("Dieses Buch ist nicht mehr verfügbar.");
     if (copy.owner_id === user.id) throw err.invalid("Das ist dein eigenes Buch.");
+    // Demo-Bestand: niemand antwortet, also gar nicht erst anfragen lassen
+    if (copy.owner_demo)
+      throw err.conflict("demo_copy", "Das ist ein Beispielbuch aus dem Demo-Bestand. Anfragen sind hier nicht möglich. Such dir ein Buch eines echten Mitglieds.");
     if (copy.shelf_paused) throw err.conflict("shelf_paused", "Dieses Regal ist gerade pausiert. Anfragen sind später wieder möglich.");
     if (!copy.offers.includes(input.kind)) throw err.invalid("Dieses Buch wird so nicht angeboten.");
     if (input.kind !== "lend" && copy.transfer_locked_until && copy.transfer_locked_until > new Date())
@@ -113,7 +116,10 @@ export async function requestLoan(user: SessionUser, input: RequestInput) {
       userId: copy.owner_id,
       type: "request_new",
       loanId: loan.id,
-      data: { title: info.title, name: info.borrower_name, kind: input.kind },
+      data: {
+        title: info.title, name: info.borrower_name, kind: input.kind,
+        ...(circle?.auto_accept && input.kind === "lend" ? { text: "Im Kreis automatisch angenommen. Sprecht Ort und Zeit im Vorgang ab." } : {}),
+      },
     });
 
     // Kreise: Anfragen werden automatisch angenommen (PRD 3, Szenario 4)
@@ -151,12 +157,26 @@ async function acceptTx(tx: TxSql, loanId: string, actor: ActorRef, input: Accep
     spotId = spot.id;
   }
 
+  // Das Exemplar muss noch der verleihenden Person gehören (z. B. nicht inzwischen verschenkt)
+  const [own] = await tx<{ id: string }[]>`
+    select id from copies where id = ${current.copy_id} and owner_id = ${current.owner_id} and removed_at is null for update`;
+  if (!own) throw err.conflict("copy_gone", "Dieses Buch ist nicht mehr in deinem Regal. Die Anfrage lässt sich nicht annehmen.");
+
   let swapCopy: string | null = null;
   if (current.kind === "swap") {
     swapCopy = input.swapCopyId ?? null;
     if (!swapCopy || !current.swap_offered_copy_ids.includes(swapCopy))
       throw err.invalid("Wähle eines der angebotenen Bücher.");
+    // Das Gegenstück muss noch der anderen Person gehören und tauschbar sein
+    const [ok] = await tx<{ id: string }[]>`
+      select id from copies
+       where id = ${swapCopy} and owner_id = ${current.borrower_id} and removed_at is null and 'swap' = any(offers)
+         and (transfer_locked_until is null or transfer_locked_until < now())
+       for update`;
+    if (!ok) throw err.conflict("swap_gone", "Dieses Tauschbuch ist nicht mehr verfügbar. Wähle ein anderes.");
   }
+
+  if (current.kind === "lend") await assertBorrowerCapacity(tx, current.borrower_id, Boolean(current.circle_id));
 
   // Künftige Buchungen pro Exemplar begrenzen (4.8)
   const range = parseRange(current.wanted)!;
@@ -233,6 +253,7 @@ export async function cancel(user: SessionUser, loanId: string) {
     });
     await releaseBookings(tx, loan);
     if (loan.received_from_loan_id) await onPassOnBroken(tx, loan);
+    await releaseFollowers(tx, loanId, "cancelled");
     const info = await loanInfo(tx, loanId);
     const other = role === "owner" ? loan.borrower_id : loan.owner_id;
     await notify(tx, {
@@ -319,9 +340,9 @@ export async function executeHandover(
   const loan = await transition(tx, loanId, action, actor, {
     set: tx`handed_over_at = ${handedAt}, handover_method = ${method}, closed_at = now(), rating_closes_at = now() + interval '14 days'`,
   });
-  await transferOwnership(tx, loan.copy_id, loan.borrower_id, loan.kind);
+  await transferOwnership(tx, loan.copy_id, loan.borrower_id, loan.kind, loan.owner_id);
   if (loan.kind === "swap" && loan.swap_copy_id) {
-    await transferOwnership(tx, loan.swap_copy_id, loan.owner_id, "swap");
+    await transferOwnership(tx, loan.swap_copy_id, loan.owner_id, "swap", loan.borrower_id);
   }
   // Andere offene Anfragen für dieses Exemplar verfallen
   const others = await tx<{ id: string }[]>`
@@ -350,13 +371,21 @@ async function tryMoveBooking(tx: TxSql, loanId: string, start: string, end: str
  * Besitzwechsel bei Tausch und Geschenk (5.1, 5.2). Das Exemplar erscheint im neuen Regal
  * als «nicht angeboten». Geschenke sind 30 Tage für Weitergabe gesperrt.
  */
-async function transferOwnership(tx: Tx, copyId: string, newOwner: string, kind: OfferKind) {
-  await tx`delete from copy_bookings where copy_id = ${copyId} and (loan_id is null or upper(period) is null)`;
-  await tx`delete from circle_copies where copy_id = ${copyId}`;
-  await tx`
+async function transferOwnership(tx: Tx, copyId: string, newOwner: string, kind: OfferKind, fromOwner: string) {
+  // Nur übertragen, was der bisherigen Person noch gehört – sonst würde einem Dritten das Buch entzogen
+  const moved = await tx<{ id: string }[]>`
     update copies set owner_id = ${newOwner}, offers = '{}', visibility = 'all', acquired_at = now(),
            transfer_locked_until = ${kind === "gift" ? tx`now() + interval '30 days'` : tx`null`}
-     where id = ${copyId}`;
+     where id = ${copyId} and owner_id = ${fromOwner} and removed_at is null
+     returning id`;
+  if (!moved.length) throw err.conflict("copy_gone", "Ein Buch dieses Tauschs gehört inzwischen jemand anderem. Der Vorgang lässt sich so nicht abschliessen.");
+  await tx`delete from copy_bookings where copy_id = ${copyId} and (loan_id is null or upper(period) is null)`;
+  await tx`delete from circle_copies where copy_id = ${copyId}`;
+  // Offene Anfragen auf dieses Exemplar beim bisherigen Besitzer verfallen
+  const stale = await tx<{ id: string }[]>`select id from loans where copy_id = ${copyId} and status = 'requested' and owner_id = ${fromOwner}`;
+  for (const o of stale) {
+    await transition(tx as TxSql, o.id, "expire_request", SYSTEM, { set: tx`closed_at = now()`, meta: { reason: "copy_transferred" } });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -421,6 +450,7 @@ export async function addConditionNote(user: SessionUser, loanId: string, input:
 async function extensionEnd(tx: Tx, loan: LoanRow): Promise<string | null> {
   const [b] = await tx<{ period: string; buffer_days: number }[]>`
     select period::text as period, buffer_days from copy_bookings where loan_id = ${loan.id}`;
+  if (!b) return null;
   const p = parseRange(b.period)!;
   const [next] = await tx<{ start: string }[]>`
     select lower(period)::text as start from copy_bookings
@@ -441,6 +471,9 @@ export async function extend(user: SessionUser, loanId: string) {
     const [copy] = await tx<{ auto_extend: boolean; max_extensions: number }[]>`
       select auto_extend, max_extensions from copies where id = ${loan.copy_id}`;
     if (loan.recalled_at) throw err.conflict("recalled", "Das Buch wurde zurückgerufen. Eine Verlängerung ist nicht mehr möglich.");
+    // Nach Ablauf der Frist ist eine Verlängerung keine mehr: sonst würde eine verspätete Rückgabe nachträglich pünktlich
+    if (loan.due_at && new Date(loan.due_at) < new Date())
+      throw err.conflict("overdue", "Die Leihfrist ist abgelaufen. Bring das Buch zurück oder sprich dich im Chat ab.");
     if (loan.extensions_used >= copy.max_extensions)
       throw err.conflict("no_extensions", "Für diese Leihe sind keine weiteren Verlängerungen möglich.");
     const end = await extensionEnd(tx, loan);
@@ -461,6 +494,10 @@ export async function grantExtension(user: SessionUser, loanId: string) {
   return sql.begin(async (tx) => {
     const { loan } = await loanFor(tx, loanId, user.id);
     if (!loan.extension_requested_at) throw err.conflict("nothing_requested", "Es liegt keine Anfrage für eine Verlängerung vor.");
+    if (loan.recalled_at) throw err.conflict("recalled", "Du hast das Buch zurückgerufen. Eine Verlängerung passt nicht dazu.");
+    const [copy] = await tx<{ max_extensions: number }[]>`select max_extensions from copies where id = ${loan.copy_id}`;
+    if (copy && loan.extensions_used >= copy.max_extensions)
+      throw err.conflict("no_extensions", "Für diese Leihe sind keine weiteren Verlängerungen möglich.");
     const end = await extensionEnd(tx, loan);
     if (!end) throw err.conflict("calendar_next", "Direkt danach ist das Buch gebucht.");
     return applyExtension(tx, loan, end, "grant_extension", { role: "owner", id: user.id });
@@ -472,6 +509,7 @@ async function applyExtension(tx: TxSql, loan: LoanRow, end: string, action: "ex
   const l = await transition(tx, loan.id, action, actor, {
     set: tx`due_at = day_start_ch(${end}::date), extensions_used = l.extensions_used + 1, extension_requested_at = null,
             wanted = daterange(lower(l.wanted), ${end}::date)`,
+    where: tx`l.extensions_used = ${loan.extensions_used}`,
     meta: { until: end },
   });
   const info = await loanInfo(tx, loan.id);
@@ -532,6 +570,8 @@ export async function executeReturn(
     await resumePausedBookings(tx, loan.copy_id);
     await liftSuspensionIfClear(tx, loan.borrower_id);
   }
+  // Kam das Buch zur verleihenden Person zurück, geht eine vereinbarte Weitergabe nicht mehr direkt
+  await releaseFollowers(tx, loanId, "returned_to_owner");
   const info = await loanInfo(tx, loanId);
   await notify(tx, { userId: loan.borrower_id, type: "returned", loanId, data: { title: info.title } });
   await offerEarlierStart(tx, loan.copy_id);
@@ -647,10 +687,16 @@ export async function reschedule(user: SessionUser, loanId: string, start: strin
     const { loan } = await loanFor(tx, loanId, user.id);
     if (loan.borrower_id !== user.id || loan.status !== "accepted") throw err.stale();
     if (start < todayCH() || end <= start) throw err.invalid("Wähle einen gültigen Zeitraum.");
-    const [c] = await tx<{ loan_days: number }[]>`select loan_days from copies where id = ${loan.copy_id}`;
+    // Im Kreis gilt dessen Leihfrist, sonst die des Exemplars; dazu der Buchungshorizont
+    const [c] = await tx<{ loan_days: number; horizon_days: number }[]>`
+      select coalesce(ci.loan_days, cp.loan_days) as loan_days, cp.horizon_days
+        from copies cp left join circles ci on ci.id = ${loan.circle_id}
+       where cp.id = ${loan.copy_id}`;
     if (diffDays(start, end) > c.loan_days) throw err.invalid(`Die Leihfrist beträgt höchstens ${c.loan_days} Tage.`);
+    if (diffDays(todayCH(), start) > c.horizon_days) throw err.invalid(`Dieses Buch lässt sich höchstens ${c.horizon_days} Tage im Voraus buchen.`);
     if (!(await tryMoveBooking(tx, loanId, start, end))) throw err.conflict("calendar_conflict", "Dieser Zeitraum ist nicht frei.");
-    await tx`update loans set wanted = daterange(${start}::date, ${end}::date), handover_by = day_start_ch(${start}::date + 8) where id = ${loanId}`;
+    await tx`update loans set wanted = daterange(${start}::date, ${end}::date), handover_by = day_start_ch(${start}::date + 8)
+              where id = ${loanId} and status = 'accepted'`;
     await logEvent(tx, loanId, user.id, "reschedule", "accepted", "accepted", { start, end });
     return getLoan(tx, loanId);
   });
@@ -780,7 +826,7 @@ export async function respondToCase(
     const info = await loanInfo(tx, c.loan_id);
     await tx`insert into messages (loan_id, sender_id, body) values (${c.loan_id}, null,
              ${`Antwort im Fall: ${input.response === "return_date" ? "Rückgabe geplant" : input.response === "object" ? "Widerspruch, die Moderation entscheidet" : "Ersatz angeboten"}${input.detail ? ` – ${input.detail}` : ""}`})`;
-    await notify(tx, { userId: info.owner_id, type: "case_resolved", loanId: c.loan_id, data: { title: info.title, text: "Die andere Seite hat im Fall geantwortet." } });
+    await notify(tx, { userId: info.owner_id, type: "case_response", loanId: c.loan_id, data: { title: info.title, text: input.response === "return_date" ? "Ein Rückgabetermin ist genannt." : input.response === "object" ? "Widerspruch eingelegt, die Moderation entscheidet." : "Ein Ersatz ist angeboten." } });
   });
 }
 
@@ -795,7 +841,9 @@ export async function resolveCaseTx(
   const [c] = await tx<{ loan_id: string; kind: string }[]>`select loan_id, kind from cases where id = ${caseId} and closed_at is null`;
   if (!c) throw err.notFound("Dieser Fall ist bereits geschlossen.");
   const loan = await transition(tx, c.loan_id, "resolve_case", actor, {
-    set: tx`closed_at = now(), rating_closes_at = now() + interval '14 days', returned_at = coalesce(l.returned_at, now())`,
+    // Ersatz statt Rückgabe oder eine Rückgabe nach Ablauf gilt nicht als pünktlich
+    set: tx`closed_at = now(), rating_closes_at = now() + interval '14 days', returned_at = coalesce(l.returned_at, now()),
+            late = l.late or ${outcome === "replaced"} or (l.due_at is not null and coalesce(l.returned_at, now()) > l.due_at + interval '3 days')`,
     meta: { outcome },
   });
   await tx`update cases set outcome = ${outcome}, closed_at = now(), moderator_id = ${actor.role === "moderator" ? actor.id : null},
@@ -850,7 +898,7 @@ export async function markLostTx(tx: TxSql, caseId: string, actor: ActorRef) {
 
 /** Ein geschlossener Verlust kann nachträglich durch Rückgabe oder Ersatz bereinigt werden. */
 export async function clearLossTx(tx: TxSql, loanId: string, actor: ActorRef) {
-  const loan = await transition(tx, loanId, "clear_loss", actor, { set: tx`returned_at = now()` });
+  const loan = await transition(tx, loanId, "clear_loss", actor, { set: tx`returned_at = now(), late = true` });
   await tx`update cases set cleared_at = now() where loan_id = ${loanId} and outcome = 'lost'`;
   await tx`update copies set removed_at = null, removed_reason = null where id = ${loan.copy_id} and removed_reason = 'lost'`;
   await tx`delete from banned_phones where reason = ${"Verlust " + loanId}`;
@@ -907,9 +955,12 @@ export async function acceptSwapOffer(user: SessionUser, loanId: string) {
       await notify(tx, { userId: l2.borrower_id, type: "cancelled", loanId: f.id, data: { title: i2.title, name: i2.owner_name } });
     }
     await tx`delete from copy_bookings where loan_id = ${loanId}`;
-    await transferOwnership(tx, loan.copy_id, loan.borrower_id, "swap");
-    await transferOwnership(tx, loan.swap_offer_copy_id!, loan.owner_id, "swap");
+    await transferOwnership(tx, loan.copy_id, loan.borrower_id, "swap", loan.owner_id);
+    await transferOwnership(tx, loan.swap_offer_copy_id!, loan.owner_id, "swap", loan.borrower_id);
     await liftSuspensionIfClear(tx, loan.borrower_id);
+    const info = await loanInfo(tx, loanId);
+    await notify(tx, { userId: loan.borrower_id, type: "completed", loanId, data: { title: info.title } });
+    await tx`select recompute_trust(${loan.borrower_id})`;
     await resumePausedBookings(tx, loan.copy_id);
     return loan;
   });

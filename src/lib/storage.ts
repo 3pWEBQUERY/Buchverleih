@@ -5,7 +5,7 @@
  * 3. Der Worker entfernt Metadaten und erzeugt AVIF- und WebP-Varianten.
  * 4. Ausgeliefert wird über kurzlebige vorsignierte URLs.
  */
-import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, PutBucketCorsCommand } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, ListObjectsV2Command, PutBucketCorsCommand } from "@aws-sdk/client-s3";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "@/lib/env";
@@ -59,6 +59,23 @@ export async function putObject(key: string, body: Buffer, contentType: string) 
 
 export async function deleteObject(key: string) {
   await s3().send(new DeleteObjectCommand({ Bucket: env.s3.bucket, Key: key }));
+}
+
+/** Alle Objekte unter einem Präfix löschen (z. B. «u/<id>/» bei der Kontolöschung) */
+export async function deletePrefix(prefix: string) {
+  if (!prefix.endsWith("/") || prefix.length < 4) throw new Error("Unsicheres Präfix");
+  let token: string | undefined;
+  let n = 0;
+  do {
+    const list = await s3().send(new ListObjectsV2Command({ Bucket: env.s3.bucket, Prefix: prefix, ContinuationToken: token }));
+    const keys = (list.Contents ?? []).map((o) => ({ Key: o.Key! }));
+    if (keys.length) {
+      await s3().send(new DeleteObjectsCommand({ Bucket: env.s3.bucket, Delete: { Objects: keys, Quiet: true } }));
+      n += keys.length;
+    }
+    token = list.IsTruncated ? list.NextContinuationToken : undefined;
+  } while (token);
+  return n;
 }
 
 /** Direkte Browser-Uploads brauchen CORS. Versucht es einmal beim Start des Workers. */

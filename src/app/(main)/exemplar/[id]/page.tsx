@@ -231,7 +231,13 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             </section>
           )}
 
-          {!own && cal && (
+          {!own && copy.owner_demo && (
+            <div className="mt-8 rounded-[10px] border border-dashed border-line-strong p-5 text-[14.5px] text-ink-2">
+              <p className="font-medium text-ink">Beispielbuch aus dem Demo-Bestand</p>
+              <p className="mt-1">Dieses Exemplar zeigt, wie Leihregal funktioniert. Anfragen sind hier nicht möglich – such dir ein Buch eines echten Mitglieds.</p>
+            </div>
+          )}
+          {!own && cal && !copy.owner_demo && (
             <RequestPanel
               copyId={copy.id}
               offers={copy.offers}

@@ -84,46 +84,70 @@ export async function joinWaitlist(email: string, plz: string) {
   await sql`insert into plz_waitlist (email, plz) values (${email.trim().toLowerCase()}, ${plz}) on conflict do nothing`;
 }
 
-/** Datenexport: alles, was zur Person gespeichert ist */
+/** Datenexport: alles, was zur Person gespeichert ist (DSG/DSGVO Auskunft) */
 export async function exportData(userId: string) {
-  const [user] = await sql`select id, email, first_name, plz, municipality, phone_e164, trust_level, created_at, email_prefs, shelf_paused from users where id = ${userId}`;
+  const [user] = await sql`select id, email, first_name, plz, municipality, phone_e164, trust_level, role, created_at, onboarded_at,
+                                  age_confirmed_at, email_prefs, shelf_paused, avatar_key, home_lat, home_lng, display_lat, display_lng
+                             from users where id = ${userId}`;
   const copies = await sql`select c.*, e.title, e.isbn13 from copies c join editions e on e.id = c.edition_id where c.owner_id = ${userId}`;
+  const copyPhotos = await sql`select p.* from copy_photos p join copies c on c.id = p.copy_id where c.owner_id = ${userId}`;
   const loans = await sql`select * from loans where owner_id = ${userId} or borrower_id = ${userId}`;
   const events = await sql`select ev.* from loan_events ev join loans l on l.id = ev.loan_id where l.owner_id = ${userId} or l.borrower_id = ${userId}`;
   const messages = await sql`select id, loan_id, handover_chat_id, body, proposal_place, proposal_at, created_at from messages where sender_id = ${userId}`;
+  const messagesReceived = await sql`
+    select m.id, m.loan_id, m.body, m.proposal_place, m.proposal_at, m.created_at from messages m join loans l on l.id = m.loan_id
+     where (l.owner_id = ${userId} or l.borrower_id = ${userId}) and m.sender_id <> ${userId}`;
   const ratingsGiven = await sql`select loan_id, verdict, reasons, note, created_at from ratings where from_user = ${userId}`;
+  const ratingsReceived = await sql`select loan_id, verdict, reasons, created_at from ratings where for_user = ${userId} and visible_from <= now()`;
+  const cases = await sql`select cs.* from cases cs join loans l on l.id = cs.loan_id where l.owner_id = ${userId} or l.borrower_id = ${userId}`;
   const circles = await sql`select c.name, m.role, m.joined_at from circle_members m join circles c on c.id = m.circle_id where m.user_id = ${userId}`;
   const wishlist = await sql`select w.title, wi.radius_km, wi.created_at from wishlist_items wi join works w on w.id = wi.work_id where wi.user_id = ${userId}`;
   const spots = await sql`select label, detail, dropoff from pickup_spots where user_id = ${userId}`;
   const notifications = await sql`select type, channel, payload, created_at, read_at from notifications where user_id = ${userId} order by created_at desc limit 1000`;
-  return { exportedAt: new Date().toISOString(), user, copies, loans, events, messages, ratingsGiven, circles, wishlist, spots, notifications };
+  const reports = await sql`select target_type, target_id, reason, note, status, created_at from reports where reporter_id = ${userId}`;
+  const blocks = await sql`select blocked_id, created_at from blocks where blocker_id = ${userId}`;
+  const uploads = await sql`select id, purpose, key, content_type, status, created_at from uploads where user_id = ${userId}`;
+  const passkeys = await sql`select name, created_at, last_used_at from passkeys where user_id = ${userId}`;
+  const sessions = await sql`select kind, user_agent, created_at, last_seen_at, expires_at from sessions where user_id = ${userId}`;
+  const searches = await sql`select q, created_at from search_log where user_id = ${userId} order by created_at desc limit 1000`;
+  return {
+    exportedAt: new Date().toISOString(), user, copies, copyPhotos, loans, events, messages, messagesReceived, ratingsGiven, ratingsReceived,
+    cases, circles, wishlist, spots, notifications, reports, blocks, uploads, passkeys, sessions, searches,
+  };
 }
 
-/** Löschung ist erst möglich, wenn keine Leihe offen ist. Vorgangsdaten werden anonymisiert. */
+/** Löschung ist erst möglich, wenn keine Leihe offen ist. Vorgangsdaten werden anonymisiert, eigene Dateien gelöscht. */
 export async function deleteAccount(userId: string) {
-  const [prev] = await sql<{ avatar_key: string | null }[]>`select avatar_key from users where id = ${userId}`;
   const result = await sql.begin(async (tx) => {
     const [open] = await tx<{ n: number }[]>`
       select count(*)::int as n from loans where (owner_id = ${userId} or borrower_id = ${userId})
          and status in ('requested', 'accepted', 'active', 'return_reported', 'returned', 'disputed')`;
     if (open.n) throw err.conflict("open_loans", `Du hast noch ${open.n === 1 ? "einen offenen Vorgang" : `${open.n} offene Vorgänge`}. Schliesse ${open.n === 1 ? "ihn" : "sie"} ab, dann kannst du dein Konto löschen.`);
+    const [me] = await tx<{ email: string }[]>`select email from users where id = ${userId}`;
     await tx`update copies set removed_at = coalesce(removed_at, now()), removed_reason = coalesce(removed_reason, 'deleted') where owner_id = ${userId}`;
+    await tx`delete from copy_photos p using copies c where c.id = p.copy_id and c.owner_id = ${userId}`;
+    await tx`delete from circle_copies cc using copies c where c.id = cc.copy_id and c.owner_id = ${userId}`;
     await tx`delete from sessions where user_id = ${userId}`;
     await tx`delete from passkeys where user_id = ${userId}`;
+    await tx`update loans set pickup_spot_id = null where pickup_spot_id in (select id from pickup_spots where user_id = ${userId})`;
     await tx`delete from pickup_spots where user_id = ${userId}`;
     await tx`delete from wishlist_items where user_id = ${userId}`;
     await tx`delete from circle_members where user_id = ${userId}`;
+    await tx`delete from notifications where user_id = ${userId}`;
+    await tx`delete from blocks where blocker_id = ${userId} or blocked_id = ${userId}`;
+    await tx`delete from search_log where user_id = ${userId}`;
+    await tx`delete from uploads where user_id = ${userId}`;
+    await tx`update loans set message = null where borrower_id = ${userId}`;
     await tx`update messages set body = null, proposal_place = null where sender_id = ${userId} and body is not null and proposal_at is not null`;
     await tx`delete from messages where sender_id = ${userId} and proposal_at is null`;
+    if (me?.email) await tx`delete from plz_waitlist where lower(email) = lower(${me.email})`;
     await tx`update users set email = ${"geloescht-" + userId + "@invalid"}, first_name = 'Ehemaliges Mitglied', phone_e164 = null,
+                    plz = null, municipality = null,
                     home_lat = null, home_lng = null, display_lat = null, display_lng = null, avatar_key = null,
                     email_prefs = '{}', deleted_at = now() where id = ${userId}`;
   });
-  // Profilbild aus dem Bucket entfernen (nach erfolgreicher Löschung)
-  if (prev?.avatar_key) {
-    const old = prev.avatar_key;
-    const { deleteObject } = await import("@/lib/storage");
-    await Promise.allSettled(["", "-480"].flatMap((v) => ["avif", "webp"].map((x) => deleteObject(`${old}${v}.${x}`))));
-  }
+  // Eigene Dateien aus dem Bucket entfernen (Profilbild, Exemplarfotos, Rohdaten). Fotos in Vorgängen bleiben als Nachweis.
+  const { deletePrefix } = await import("@/lib/storage");
+  await Promise.allSettled([deletePrefix(`u/${userId}/`), deletePrefix(`raw/${userId}/`)]);
   return result;
 }

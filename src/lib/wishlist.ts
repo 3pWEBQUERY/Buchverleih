@@ -93,7 +93,7 @@ export async function runTitleAlarms() {
       join users me on me.id = wi.user_id and me.deleted_at is null and me.home_lat is not null
       join editions e on e.work_id = wi.work_id
       join copies c on c.edition_id = e.id and c.removed_at is null and cardinality(c.offers) > 0 and c.owner_id <> wi.user_id
-      join users o on o.id = c.owner_id and not o.shelf_paused
+      join users o on o.id = c.owner_id and not o.shelf_paused and not o.is_demo
      where wi.alarm
        and (wi.last_alerted_at is null or wi.last_alerted_at < now() - interval '7 days')
        and copy_visible_to(c.id, wi.user_id)
@@ -121,7 +121,7 @@ export async function runSwapMatches() {
     with offers as (
       select c.id as copy_id, c.owner_id, e.work_id, w.title, o.display_lat, o.display_lng
         from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id join users o on o.id = c.owner_id
-       where c.removed_at is null and 'swap' = any(c.offers) and not o.shelf_paused and o.deleted_at is null
+       where c.removed_at is null and 'swap' = any(c.offers) and not o.shelf_paused and o.deleted_at is null and not o.is_demo
          and (c.transfer_locked_until is null or c.transfer_locked_until < now())
     )
     select distinct on (wa.user_id, ob.owner_id)

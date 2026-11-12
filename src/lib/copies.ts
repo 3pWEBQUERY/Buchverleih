@@ -102,12 +102,14 @@ export async function removeCopy(userId: string, copyId: string) {
     const r = await tx`update copies set removed_at = now(), removed_reason = 'deleted'
                         where id = ${copyId} and owner_id = ${userId} and removed_at is null returning id`;
     if (!r.length) throw err.notFound();
-    // Offene Anfragen verfallen
+    // Offene Anfragen verfallen über den Zustandsautomaten, die anfragende Person wird informiert
+    const { transition, loanInfo } = await import("@/lib/loans/core");
+    const { notify } = await import("@/lib/notify");
     const reqs = await tx<{ id: string }[]>`select id from loans where copy_id = ${copyId} and status = 'requested'`;
     for (const q of reqs) {
-      await tx`update loans set status = 'withdrawn', closed_at = now() where id = ${q.id}`;
-      await tx`insert into loan_events (loan_id, actor_id, action, from_status, to_status, meta)
-               values (${q.id}, ${userId}, 'copy_removed', 'requested', 'withdrawn', null)`;
+      const l = await transition(tx, q.id, "expire_request", { role: "system", id: null }, { set: tx`closed_at = now()`, meta: { reason: "copy_removed" } });
+      const info = await loanInfo(tx, q.id);
+      await notify(tx, { userId: l.borrower_id, type: "cancelled", loanId: q.id, data: { title: info.title, name: info.owner_name } });
     }
   });
 }
@@ -134,7 +136,13 @@ export async function addPhoto(userId: string, copyId: string, uploadId: string)
 }
 
 export async function removePhoto(userId: string, photoId: string) {
-  await sql`delete from copy_photos p using copies c where p.id = ${photoId} and c.id = p.copy_id and c.owner_id = ${userId}`;
+  const [gone] = await sql<{ key: string }[]>`
+    delete from copy_photos p using copies c where p.id = ${photoId} and c.id = p.copy_id and c.owner_id = ${userId} returning p.key`;
+  // Auch die Dateien entfernen, sonst bleiben sie über /api/v1/images abrufbar
+  if (gone?.key && gone.key.startsWith(`u/${userId}/`)) {
+    const { deleteObject } = await import("@/lib/storage");
+    await Promise.allSettled(["", "-480"].flatMap((v) => ["avif", "webp"].map((x) => deleteObject(`${gone.key}${v}.${x}`))));
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -250,6 +258,7 @@ export type CopyDetail = ShelfCopy & {
   owner_municipality: string | null;
   owner_paused: boolean;
   owner_since: Date;
+  owner_demo: boolean;
   photos: { id: string; key: string; width: number | null; height: number | null }[];
   circle_ids: string[];
   dist: number | null;
@@ -264,7 +273,7 @@ export async function copyDetail(copyId: string, viewerId: string | null, origin
            c.max_future_bookings, c.pass_on, c.chain_max, c.dropoff_allowed, c.precious, c.transfer_locked_until,
            e.isbn13, e.publisher, e.year, e.language, e.binding, e.pages,
            o.first_name as owner_name, o.avatar_key as owner_avatar, o.trust_level as owner_trust, o.municipality as owner_municipality,
-           o.shelf_paused as owner_paused, o.created_at as owner_since,
+           o.shelf_paused as owner_paused, o.created_at as owner_since, o.is_demo as owner_demo,
            coalesce((select json_agg(json_build_object('id', p.id, 'key', p.key, 'width', p.width, 'height', p.height) order by p.position)
                        from copy_photos p where p.copy_id = c.id), '[]') as photos,
            array(select circle_id from circle_copies where copy_id = c.id) as circle_ids,

@@ -35,6 +35,7 @@ export type NotificationType =
   | "case_suspended"
   | "case_lost"
   | "case_resolved"
+  | "case_response"
   | "pass_on_ask"
   | "pass_on_agreed"
   | "handover_chat"
@@ -51,6 +52,7 @@ export type NotificationType =
 /** Kategorien für die E-Mail-Einstellungen */
 export const EMAIL_CATEGORY: Partial<Record<NotificationType, "requests" | "accepts" | "deadlines" | "cases" | "matches">> = {
   request_new: "requests",
+  case_response: "cases",
   request_accepted: "accepts",
   request_declined: "accepts",
   request_expired: "requests",
@@ -141,7 +143,7 @@ export function renderNotification(type: NotificationType, d: NotifyData): { tit
   const due = d.due ? deadline(dueDay(d.due)) : "";
   switch (type) {
     case "request_new":
-      return { title: `${d.name} möchte ${t} ${noun(d.kind)}`, body: "Du hast 72 Stunden Zeit für eine Antwort. Danach verfällt die Anfrage." };
+      return { title: `${d.name} möchte ${t} ${noun(d.kind)}`, body: d.text ?? "Du hast 72 Stunden Zeit für eine Antwort. Danach verfällt die Anfrage." };
     case "request_accepted":
       return { title: `${d.name} hat angenommen`, body: `${t}: Übergabeort und Termin stehen im Vorgang.` };
     case "request_auto_accepted":
@@ -190,6 +192,8 @@ export function renderNotification(type: NotificationType, d: NotifyData): { tit
       return { title: "Leihen und Tauschen gesperrt", body: `Der Fall zu ${t} ist weiter offen. Die Moderation prüft ihn.` };
     case "case_lost":
       return { title: `${t} gilt als verloren`, body: "Eine spätere Rückgabe oder ein Ersatz bereinigt den Eintrag." };
+    case "case_response":
+      return { title: `Antwort im Fall zu ${t}`, body: d.text ?? "Die andere Seite hat geantwortet. Details stehen im Vorgang." };
     case "case_resolved":
       return { title: `Fall zu ${t} gelöst`, body: d.text ?? "Der Vorgang ist abgeschlossen." };
     case "pass_on_ask":
