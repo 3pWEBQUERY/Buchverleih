@@ -8,11 +8,12 @@ import { LinkButton, PageTitle, cx } from "@/components/ui";
 import { StatTile, StepSection } from "@/components/step-section";
 import { IconArrowRight, IconBell, IconBookmark, IconCalendar, IconChat, IconCheck, IconFlag, IconLoans, IconSwap } from "@/components/icons";
 import { MarkAllRead } from "./mark-read";
+import { timeMeter, TimeMeterInline, type MeterInput } from "@/components/loan/loan-row";
 
 export const metadata: Metadata = { title: "Benachrichtigungen" };
 
 type Row = { id: string; type: NotificationType; payload: NotifyData; loan_id: string | null; read_at: Date | null; created_at: Date };
-type Item = Row & { title: string; body: string; href: string | null };
+type Item = Row & { title: string; body: string; href: string | null; meter?: ReturnType<typeof timeMeter> };
 type Group = "anfragen" | "fristen" | "alarme" | "weiteres";
 
 /** Symbol, Tonlage und Gruppe je Art – das Symbol ordnet ein, der Text sagt, was los ist */
@@ -58,6 +59,26 @@ export default async function BenachrichtigungenPage({ searchParams }: { searchP
     select id, type, payload, loan_id, read_at, created_at from notifications
      where user_id = ${user.id} and channel = 'app' order by created_at desc limit 60`;
   const all: Item[] = rows.map((r) => ({ ...r, ...renderNotification(r.type, r.payload ?? {}), href: r.loan_id ? `/vorgaenge/${r.loan_id}` : r.payload?.href ?? null }));
+  // Restzeit der zugehörigen Vorgänge, so wie sie jetzt steht – einmal pro Vorgang, bei der neuesten Benachrichtigung
+  const loanIds = [...new Set(rows.map((r) => r.loan_id).filter((x): x is string => Boolean(x)))];
+  const loans = loanIds.length
+    ? await sql<(Omit<MeterInput, "role" | "other_name"> & { id: string; owner_id: string; owner_name: string; borrower_name: string })[]>`
+        select l.id, l.status, l.kind, l.owner_id, l.wanted::text as wanted, l.due_at, l.respond_by, l.requested_at, l.handed_over_at,
+               l.handover_by, l.returned_at, l.inspection_until, o.first_name as owner_name, b.first_name as borrower_name
+          from loans l join users o on o.id = l.owner_id join users b on b.id = l.borrower_id
+         where l.id in ${sql(loanIds)} and (l.owner_id = ${user.id} or l.borrower_id = ${user.id})`
+    : [];
+  const meters = new Map(loans.map((l) => {
+    const owner = l.owner_id === user.id;
+    return [l.id, timeMeter({ ...l, role: owner ? "owner" : "borrower", other_name: owner ? l.borrower_name : l.owner_name })] as const;
+  }));
+  const shown = new Set<string>();
+  for (const i of all) {
+    if (i.loan_id && !shown.has(i.loan_id) && meters.get(i.loan_id)) {
+      i.meter = meters.get(i.loan_id);
+      shown.add(i.loan_id);
+    }
+  }
   const items = all.filter((i) => filter === "alle" || kindOf(i.type).group === filter);
   const unreadAll = all.filter((i) => !i.read_at).length;
   const unread = items.filter((i) => !i.read_at);
@@ -147,6 +168,7 @@ function List({ items, unread }: { items: Item[]; unread?: boolean }) {
                 {unread && <span className="sr-only">Neu: </span>}{n.title}
               </span>
               {n.body && <span className="block text-[13.5px] text-muted mt-0.5 leading-snug">{n.body}</span>}
+              {n.meter && <TimeMeterInline m={n.meter} className="mt-2.5" />}
             </span>
             <span className="flex flex-col items-end gap-2 pt-0.5">
               <time dateTime={new Date(n.created_at).toISOString()} title={fmtDayTime(n.created_at)} className="text-[12.5px] text-muted whitespace-nowrap tnum flex items-center gap-1.5">

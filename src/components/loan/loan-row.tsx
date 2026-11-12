@@ -281,3 +281,24 @@ export function LoanRow({ loan, variant, i = 0 }: { loan: LoanListItem; variant?
     </li>
   );
 }
+
+/** Restzeit in einer Zeile, z. B. in der Benachrichtigungsliste: Marke, Frist und kurzer Balken */
+export function TimeMeterInline({ m, className }: { m: Meter; className?: string }) {
+  const late = m.tone === "late";
+  const joined = /\b(in|seit|noch)$/.test(m.eyebrow) ? `${m.eyebrow} ${m.value}${m.unit ? ` ${m.unit}` : ""}` : `${m.eyebrow}: ${m.value}${m.unit ? ` ${m.unit}` : ""}`;
+  return (
+    <span className={cx("flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12.5px] tnum", className)}>
+      <span className={cx("inline-flex items-center gap-1.5 h-6 px-2 rounded-[6px] font-semibold",
+        late ? "bg-late/10 text-late" : m.tone === "accent" ? "bg-accent-soft text-accent-hover" : "bg-paper-2 text-ink-2")}>
+        <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", late ? "bg-late live-dot" : m.tone === "accent" ? "bg-accent live-dot" : "bg-ink-2")} />
+        {joined}
+      </span>
+      <span className="text-muted">{m.sideLabel} {m.side}</span>
+      {m.pct != null && (
+        <span aria-hidden className="relative h-1 w-20 rounded-full bg-paper-3 overflow-hidden">
+          <span className={cx("absolute inset-y-0 left-0 rounded-full", late ? "bg-late" : m.tone === "accent" ? "bg-accent" : "bg-ink-2")} style={{ width: `${Math.max(4, Math.round(m.pct * 100))}%` }} />
+        </span>
+      )}
+    </span>
+  );
+}
