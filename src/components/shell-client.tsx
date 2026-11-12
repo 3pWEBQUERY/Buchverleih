@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { cx } from "./ui";
 import { IconSearch } from "./icons";
 
@@ -35,28 +35,6 @@ export function SearchTrigger() {
       <kbd className="font-sans text-[12px] border border-line-strong rounded-[4px] px-1.5 leading-5">/</kbd>
     </Link>
   );
-}
-
-/** Ungelesene Benachrichtigungen; aktualisiert sich alle 60 Sekunden. */
-export function UnreadDot({ initial, compact }: { initial: number; compact?: boolean }) {
-  const [n, setN] = useState(initial);
-  const path = usePathname();
-  useEffect(() => setN(initial), [initial]);
-  useEffect(() => {
-    let alive = true;
-    const tick = async () => {
-      try {
-        const r = await fetch("/api/v1/notifications");
-        if (r.ok && alive) setN((await r.json()).unread ?? 0);
-      } catch {}
-    };
-    const t = setInterval(tick, 60_000);
-    if (path === "/benachrichtigungen") setN(0);
-    return () => { alive = false; clearInterval(t); };
-  }, [path]);
-  if (!n) return null;
-  if (compact) return <span className="block h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-paper" aria-label={`${n} ungelesen`} />;
-  return <span className="min-w-6 h-6 px-1.5 rounded-[6px] bg-accent text-accent-ink text-[12px] font-bold tnum grid place-items-center" aria-label={`${n} ungelesen`}>{n}</span>;
 }
 
 /** Tastaturkürzel auf dem Desktop */

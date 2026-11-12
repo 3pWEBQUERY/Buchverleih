@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Monogram } from "@/components/person/monogram";
 import type { SessionUser } from "@/lib/auth/session";
-import { NavLink, SearchTrigger, Shortcuts, UnreadDot } from "./shell-client";
+import { NavLink, SearchTrigger, Shortcuts } from "./shell-client";
+import { LiveBell, LiveNotifications, UnreadBadge } from "./live-notifications";
 import { Wordmark, LogoMark } from "./brand";
 import { IconBell, IconBookmark, IconCircles, IconHome, IconLoans, IconScan, IconSearch, IconSettings, IconShelf, IconShield } from "./icons";
 import { trustLabel } from "@/lib/i18n/de-CH";
@@ -15,6 +16,7 @@ export { Wordmark } from "./brand";
 export function AppShell({ user, unread, children }: { user: SessionUser; unread: number; children: React.ReactNode }) {
   const mod = user.role !== "member";
   return (
+    <LiveNotifications initial={unread}>
     <div className="min-h-dvh md:grid md:grid-cols-[256px_1fr]">
       <Shortcuts />
       <aside className="hidden md:flex flex-col sticky top-0 h-dvh border-r border-line bg-paper-2/60 px-4 py-6">
@@ -29,8 +31,8 @@ export function AppShell({ user, unread, children }: { user: SessionUser; unread
           <NavLink href="/regal" icon={<IconShelf />}>Mein Regal</NavLink>
           <NavLink href="/kreise" icon={<IconCircles />}>Kreise</NavLink>
           <NavLink href="/wunschliste" icon={<IconBookmark />}>Wunschliste</NavLink>
-          <NavLink href="/benachrichtigungen" icon={<IconBell />}>
-            Benachrichtigungen <UnreadDot initial={unread} />
+          <NavLink href="/benachrichtigungen" icon={<LiveBell />}>
+            Benachrichtigungen <UnreadBadge />
           </NavLink>
           {mod && <NavLink href="/moderation" icon={<IconShield />}>Moderation</NavLink>}
         </nav>
@@ -56,7 +58,7 @@ export function AppShell({ user, unread, children }: { user: SessionUser; unread
           <div className="flex items-center">
             <Link href="/suche" className="p-2.5" aria-label="Suche"><IconSearch /></Link>
             <Link href="/benachrichtigungen" className="relative p-2.5" aria-label="Benachrichtigungen">
-              <IconBell /> <span className="absolute top-2 right-2"><UnreadDot initial={unread} compact /></span>
+              <IconBell /> <span className="absolute top-2 right-2"><UnreadBadge compact /></span>
             </Link>
           </div>
         </header>
@@ -77,6 +79,7 @@ export function AppShell({ user, unread, children }: { user: SessionUser; unread
         </div>
       </nav>
     </div>
+    </LiveNotifications>
   );
 }
 
