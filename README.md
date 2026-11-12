@@ -57,6 +57,7 @@ SMS_PROVIDER=webhook     # plus SMS_WEBHOOK_URL / SMS_WEBHOOK_TOKEN
 DEV_SHOW_CODES=false     # in Produktion zwingend aus
 GOOGLE_BOOKS_API_KEY=…   # nur auf «web»; «worker» referenziert ${{web.GOOGLE_BOOKS_API_KEY}}
 COVERS=true              # Original-Cover (DNB, Open Library, Google Books)
+ADMIN_EMAILS=…           # kommagetrennt; diese Konten werden beim nächsten Seitenaufruf Admin
 ```
 
 Vor dem Start: Point-in-Time Recovery für Postgres aktivieren und eine Wiederherstellung üben (PRD 10.4).

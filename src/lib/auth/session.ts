@@ -85,8 +85,21 @@ export const getUser = cache(async (): Promise<SessionUser | null> => {
            u.plan_id, u.avatar_key, u.email_prefs, s.id as session_id
       from s join users u on u.id = s.user_id
      where u.deleted_at is null`;
-  return rows[0] ?? null;
+  return rows[0] ? applyAdminEmails(rows[0]) : null;
 });
+
+/** Admins kommen aus der Variable ADMIN_EMAILS (kommagetrennt); nur mit bestätigter Adresse */
+export async function applyAdminEmails<T extends Pick<SessionUser, "id" | "email" | "role" | "email_verified_at">>(u: T): Promise<T> {
+  if (u.role !== "admin" && u.email_verified_at && adminEmails().has(u.email.toLowerCase())) {
+    await sql`update users set role = 'admin' where id = ${u.id}`;
+    u.role = "admin";
+  }
+  return u;
+}
+
+function adminEmails() {
+  return new Set((process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean));
+}
 
 export async function requireUser(): Promise<SessionUser> {
   const u = await getUser();

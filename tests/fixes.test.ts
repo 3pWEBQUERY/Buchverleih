@@ -149,3 +149,21 @@ describe("Rollen", () => {
     expect(r2.role).toBe("member");
   });
 });
+
+describe("Admin per Variable", () => {
+  it("ADMIN_EMAILS macht bestätigte Konten zu Admins", async () => {
+    const { applyAdminEmails } = await import("@/lib/auth/session");
+    const lea = await makeUser("Lea");
+    const jonas = await makeUser("Jonas");
+    process.env.ADMIN_EMAILS = ` ${lea.email.toUpperCase()} , andere@test.ch`;
+    try {
+      expect((await applyAdminEmails({ ...lea })).role).toBe("admin");
+      expect((await applyAdminEmails({ ...jonas })).role).toBe("member");
+      expect((await applyAdminEmails({ ...lea, role: "member", email_verified_at: null })).role).toBe("member");
+      const [r] = await sql<{ role: string }[]>`select role::text as role from users where id = ${lea.id}`;
+      expect(r.role).toBe("admin");
+    } finally {
+      delete process.env.ADMIN_EMAILS;
+    }
+  });
+});
