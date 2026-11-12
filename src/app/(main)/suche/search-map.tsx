@@ -2,7 +2,7 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Cover } from "@/components/cover";
 import { IconClose } from "@/components/icons";
 import { cx } from "@/components/ui";
@@ -105,8 +105,13 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
   const map = useRef<L.Map | null>(null);
   const layer = useRef<L.LayerGroup | null>(null);
   const ring = useRef<L.LayerGroup | null>(null);
+  /** Aktuelle Punkte mit ihren Gebieten, damit die Auswahl ohne Neuaufbau (und ohne Fokusverlust) aktualisiert werden kann */
+  const markers = useRef<{ marker: L.Marker; cluster: Cluster }[]>([]);
+  const panelHead = useRef<HTMLParagraphElement>(null);
+  const lastPicked = useRef<string[] | null>(null);
   const spots = useMemo(() => spotsOf(hits), [hits]);
   const [zoom, setZoom] = useState(0);
+  const [built, setBuilt] = useState(0);
   const [selected, setSelected] = useState<string[] | null>(null);
   const selCells = selected ? spots.filter((s) => selected.includes(s.key)) : [];
   const sel = selCells.length ? { items: mergeItems(selCells) } : null;
@@ -156,43 +161,94 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
     }).addTo(ring.current);
     m.fitBounds(c.getBounds(), { padding: [16, 16] });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [center?.lat, center?.lng, radiusKm]);
+  }, [center?.lat, center?.lng, radiusKm, center ? null : spots]);
 
   // Auswahl verwerfen, wenn die Gebiete nach einer neuen Suche nicht mehr da sind
   useEffect(() => {
     setSelected((k) => (k && k.some((x) => spots.some((s) => s.key === x)) ? k.filter((x) => spots.some((s) => s.key === x)) : null));
   }, [spots]);
 
-  // Punkte (bei jeder Zoomstufe neu zusammengefasst)
+  // Punkte (bei jeder Zoomstufe neu zusammengefasst). Die Auswahl ändert nur Symbole, siehe unten.
   useEffect(() => {
     const m = map.current;
     const g = layer.current;
     if (!m || !g) return;
+    // Hatte ein Punkt den Fokus, bekommt ihn nach dem Neuaufbau der Punkt mit denselben Gebieten
+    const focused = markers.current.find((x) => x.marker.getElement() === document.activeElement)?.cluster.cells.map((c) => c.key);
     g.clearLayers();
+    markers.current = [];
     for (const c of clusterSpots(m, spots)) {
-      const on = !!selected && c.cells.some((x) => selected.includes(x.key));
       const title = t.pin(c.titles, c.free);
-      L.marker([c.lat, c.lng], { icon: pinIcon(c, on), title, alt: title, riseOnHover: true, zIndexOffset: on ? 1000 : c.free ? 100 : 0 })
+      const activate = () => {
+        // Mehrere Gebiete unter einem Punkt: erst hineinzoomen, bis sie sich trennen
+        if (c.cells.length > 1 && m.getZoom() < m.getMaxZoom() - 1) {
+          const b = L.latLngBounds(c.cells.map((x) => [x.lat, x.lng]));
+          const next = Math.min(m.getBoundsZoom(b.pad(0.6)), m.getMaxZoom());
+          if (next > m.getZoom()) return void m.flyTo(b.getCenter(), next, { duration: 0.4 });
+        }
+        const keys = c.cells.map((x) => x.key);
+        lastPicked.current = keys;
+        setSelected((k) => (k && k.join("|") === keys.join("|") ? null : keys));
+      };
+      const marker = L.marker([c.lat, c.lng], { icon: pinIcon(c, false), title, alt: title, riseOnHover: true, zIndexOffset: c.free ? 100 : 0 })
         .on("click", (e) => {
           L.DomEvent.stopPropagation(e);
-          // Mehrere Gebiete unter einem Punkt: erst hineinzoomen, bis sie sich trennen
-          if (c.cells.length > 1 && m.getZoom() < m.getMaxZoom() - 1) {
-            const b = L.latLngBounds(c.cells.map((x) => [x.lat, x.lng]));
-            const next = Math.min(m.getBoundsZoom(b.pad(0.6)), m.getMaxZoom());
-            if (next > m.getZoom()) return m.flyTo(b.getCenter(), next, { duration: 0.4 });
-          }
-          setSelected((k) => (k && k.join("|") === c.cells.map((x) => x.key).join("|") ? null : c.cells.map((x) => x.key)));
+          activate();
         })
         .addTo(g);
+      const el = marker.getElement();
+      if (el) {
+        el.setAttribute("aria-label", title);
+        el.setAttribute("aria-expanded", "false");
+        // Tastatur: Enter und Leertaste wie ein Klick
+        el.addEventListener("keydown", (e) => {
+          if (e.key !== "Enter" && e.key !== " ") return;
+          e.preventDefault();
+          e.stopPropagation();
+          activate();
+        });
+      }
+      markers.current.push({ marker, cluster: c });
     }
-  }, [spots, zoom, selected, t]);
+    if (focused) {
+      const again = markers.current.find((x) => x.cluster.cells.some((c) => focused.includes(c.key)));
+      again?.marker.getElement()?.focus();
+    }
+    setBuilt((n) => n + 1);
+  }, [spots, zoom, t]);
+
+  // Auswahl: Symbole an Ort und Stelle tauschen (DivIcon behält das Element, der Fokus bleibt)
+  useEffect(() => {
+    for (const { marker, cluster } of markers.current) {
+      const on = !!selected && cluster.cells.some((x) => selected.includes(x.key));
+      marker.setIcon(pinIcon(cluster, on)).setZIndexOffset(on ? 1000 : cluster.free ? 100 : 0);
+      marker.getElement()?.setAttribute("aria-expanded", on ? "true" : "false");
+    }
+  }, [selected, built]);
+
+  // Panel geöffnet: Fokus in die Überschrift
+  const open = !!sel;
+  useEffect(() => {
+    if (open) panelHead.current?.focus();
+  }, [open, selected]);
+
+  /** Panel schliessen und den Fokus zurück auf den Punkt geben */
+  const close = useCallback(() => {
+    const keys = lastPicked.current;
+    setSelected(null);
+    if (!keys) return;
+    requestAnimationFrame(() => {
+      const back = markers.current.find((x) => x.cluster.cells.some((c) => keys.includes(c.key)));
+      back?.marker.getElement()?.focus();
+    });
+  }, []);
 
   useEffect(() => {
     if (!selected) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setSelected(null);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selected]);
+  }, [selected, close]);
 
   const titles = new Set(spots.flatMap((s) => s.items.map((i) => i.h.work_id))).size;
 
@@ -216,10 +272,10 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
             className="absolute z-[1100] inset-x-2 bottom-2 max-h-[58%] md:inset-x-auto md:right-3 md:top-3 md:bottom-8 md:max-h-none md:w-[360px] flex flex-col rounded-[10px] border border-line bg-paper anim-rise">
             <header className="flex items-start justify-between gap-3 px-4 pt-3.5 pb-3 border-b border-line">
               <div className="min-w-0">
-                <p className="font-medium text-[15px]">{t.inArea(sel.items.length)}</p>
+                <p ref={panelHead} tabIndex={-1} className="font-medium text-[15px] focus:outline-none">{t.inArea(sel.items.length)}</p>
                 <p className="text-[12.5px] text-muted mt-0.5">{selFree ? t.freeCount(selFree) : ""}{t.rounded}</p>
               </div>
-              <button type="button" onClick={() => setSelected(null)} aria-label={t.close}
+              <button type="button" onClick={close} aria-label={t.close}
                 className="-mr-1.5 -mt-1 h-9 w-9 grid place-items-center rounded-[6px] text-ink-2 hover:bg-paper-2 hover:text-ink transition-colors">
                 <IconClose width={18} height={18} />
               </button>

@@ -22,15 +22,39 @@ export async function vapidKeys() {
   return (cached = { publicKey: k.public, privateKey: k.private });
 }
 
+/**
+ * Nur bekannte Push-Dienste der Browser (Chrome/Edge über FCM, Firefox, Safari, Windows).
+ * Sonst könnte ein Konto den Server beliebige Adressen anfragen lassen (SSRF) oder den Worker mit
+ * absichtlich langsamen Servern aufhalten.
+ */
+const PUSH_HOSTS = ["fcm.googleapis.com", "updates.push.services.mozilla.com", "push.services.mozilla.com", "web.push.apple.com"];
+const PUSH_SUFFIXES = [".push.apple.com", ".notify.windows.com", ".push.services.mozilla.com"];
+
+export function isAllowedPushEndpoint(endpoint: string) {
+  let url: URL;
+  try {
+    url = new URL(endpoint);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:" || url.port !== "" || url.username || url.password) return false;
+  const host = url.hostname.toLowerCase();
+  return PUSH_HOSTS.includes(host) || PUSH_SUFFIXES.some((x) => host.endsWith(x));
+}
+
 export async function subscribe(u: SessionUser, s: { endpoint: string; p256dh: string; auth: string }, userAgent: string | null) {
-  const url = new URL(s.endpoint);
-  if (url.protocol !== "https:") throw err.invalid("Ungültiger Push-Endpunkt.");
-  // Ein Endpunkt gehört immer dem zuletzt angemeldeten Konto auf diesem Gerät
-  await sql`
+  if (!isAllowedPushEndpoint(s.endpoint)) throw err.invalid("Ungültiger Push-Endpunkt.");
+  // Ein Endpunkt wechselt das Konto nur, wenn dasselbe Gerät ihn meldet (gleiche Schlüssel).
+  // Abmelden löscht die Sitzung und damit das Abo; danach ist der Endpunkt ohnehin frei.
+  const rows = await sql`
     insert into push_subscriptions (user_id, session_id, endpoint, p256dh, auth, user_agent)
     values (${u.id}, ${u.session_id}, ${s.endpoint}, ${s.p256dh}, ${s.auth}, ${userAgent?.slice(0, 200) ?? null})
     on conflict (endpoint) do update set user_id = excluded.user_id, session_id = excluded.session_id,
-      p256dh = excluded.p256dh, auth = excluded.auth, user_agent = excluded.user_agent, failures = 0`;
+      p256dh = excluded.p256dh, auth = excluded.auth, user_agent = excluded.user_agent, failures = 0
+     where push_subscriptions.user_id = excluded.user_id
+        or (push_subscriptions.p256dh = excluded.p256dh and push_subscriptions.auth = excluded.auth)
+    returning id`;
+  if (!rows.length) throw err.conflict("push_taken", "Dieses Gerät ist noch mit einem anderen Konto verbunden. Melde es dort zuerst ab.");
   // Höchstens 10 Geräte pro Konto; die ältesten fallen weg
   await sql`delete from push_subscriptions where user_id = ${u.id} and id not in (
               select id from push_subscriptions where user_id = ${u.id} order by created_at desc limit 10)`;
@@ -47,7 +71,18 @@ export async function deviceCount(userId: string) {
 
 export type PushMessage = { title: string; body: string; href: string; tag?: string };
 
-/** Schickt eine Nachricht an alle Geräte eines Kontos. Abgelaufene Abos werden entfernt. */
+/** Harte Obergrenze pro Gerät, unabhängig davon, ob der Server tröpfchenweise antwortet */
+const SEND_DEADLINE_MS = 5_000;
+
+function withDeadline<T>(p: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(Object.assign(new Error(`Zeitlimit ${ms} ms`), { statusCode: undefined })), ms);
+  });
+  return Promise.race([p, timeout]).finally(() => clearTimeout(timer));
+}
+
+/** Schickt eine Nachricht an alle Geräte eines Kontos, parallel. Abgelaufene Abos werden entfernt. */
 export async function pushToUser(userId: string, msg: PushMessage) {
   const subs = await sql<{ id: string; endpoint: string; p256dh: string; auth: string }[]>`
     select id, endpoint, p256dh, auth from push_subscriptions where user_id = ${userId}`;
@@ -55,18 +90,22 @@ export async function pushToUser(userId: string, msg: PushMessage) {
   const keys = await vapidKeys();
   const subject = env.appUrl.startsWith("https://") ? env.appUrl : "https://leihregal.ch";
   const payload = JSON.stringify(msg);
-  let sent = 0;
-  for (const s of subs) {
+  const results = await Promise.allSettled(subs.map(async (s) => {
+    // Alte Abos von vor der Liste nicht mehr anfragen
+    if (!isAllowedPushEndpoint(s.endpoint)) {
+      await sql`delete from push_subscriptions where id = ${s.id}`;
+      return false;
+    }
     try {
-      await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload, {
+      await withDeadline(webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload, {
         TTL: 60 * 60 * 24,
         urgency: "normal",
         topic: msg.tag?.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 32) || undefined,
         vapidDetails: { subject, publicKey: keys.publicKey, privateKey: keys.privateKey },
-        timeout: 10_000,
-      });
-      sent++;
+        timeout: SEND_DEADLINE_MS,
+      }), SEND_DEADLINE_MS + 500);
       await sql`update push_subscriptions set failures = 0, last_ok_at = now() where id = ${s.id}`;
+      return true;
     } catch (e) {
       const status = (e as { statusCode?: number }).statusCode;
       if (status === 404 || status === 410) {
@@ -76,7 +115,8 @@ export async function pushToUser(userId: string, msg: PushMessage) {
         await sql`update push_subscriptions set failures = failures + 1 where id = ${s.id}`;
         await sql`delete from push_subscriptions where id = ${s.id} and failures >= 8`;
       }
+      return false;
     }
-  }
-  return { sent };
+  }));
+  return { sent: results.filter((r) => r.status === "fulfilled" && r.value).length };
 }

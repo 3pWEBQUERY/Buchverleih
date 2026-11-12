@@ -4,12 +4,22 @@ function bool(v: string | undefined, d = false) {
   return ["1", "true", "yes", "on"].includes(v.toLowerCase());
 }
 
+let warnedAppUrl = false;
+
 export const env = {
   get appUrl() {
-    const raw =
-      process.env.APP_URL ||
-      (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : "http://localhost:3000");
-    return raw.replace(/\/$/, "");
+    const raw = process.env.APP_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : "");
+    if (raw) return raw.replace(/\/$/, "");
+    // In Produktion würden Links in E-Mails sonst still auf localhost zeigen
+    if (process.env.NODE_ENV === "production" && !warnedAppUrl) {
+      warnedAppUrl = true;
+      console.error("[env] APP_URL fehlt (und RAILWAY_PUBLIC_DOMAIN): Links in E-Mails und Push zeigen auf localhost. Setze APP_URL auf web und worker.");
+    }
+    return "http://localhost:3000";
+  },
+  /** true, wenn eine öffentliche Adresse gesetzt ist (APP_URL oder RAILWAY_PUBLIC_DOMAIN) */
+  get appUrlConfigured() {
+    return Boolean(process.env.APP_URL || process.env.RAILWAY_PUBLIC_DOMAIN);
   },
   get production() {
     return process.env.NODE_ENV === "production";

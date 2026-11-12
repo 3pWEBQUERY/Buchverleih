@@ -1,4 +1,5 @@
 import { sql } from "@/lib/db";
+import { env } from "@/lib/env";
 
 /**
  * GET /api/v1/health – für den Railway-Healthcheck (antwortet 200, solange die Datenbank erreichbar ist).
@@ -14,9 +15,12 @@ export async function GET(req: Request) {
              (select count(*)::int from jobs where done_at is null and attempts >= 5) as dead,
              (select count(*)::int from jobs where done_at is null and attempts < 5 and run_at < now() - interval '15 minutes') as queued`;
     const stale = !r.last || Date.now() - r.last.getTime() > 2 * 3600_000;
-    const ok = !stale && r.dead === 0;
+    // Ohne Mailversand oder öffentliche Adresse funktionieren Anmeldung und Links nicht
+    const mail = Boolean(env.smtpUrl);
+    const appUrl = env.appUrlConfigured;
+    const ok = !stale && r.dead === 0 && (!env.production || (mail && appUrl));
     return Response.json(
-      { ok: strict ? ok : true, db: true, deadlinesLastRun: r.last, deadlinesStale: stale, deadJobs: r.dead, overdueJobs: r.queued },
+      { ok: strict ? ok : true, db: true, mailConfigured: mail, appUrlConfigured: appUrl, deadlinesLastRun: r.last, deadlinesStale: stale, deadJobs: r.dead, overdueJobs: r.queued },
       { status: strict && !ok ? 503 : 200 },
     );
   } catch {

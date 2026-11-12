@@ -12,6 +12,7 @@ import { pushToUser } from "@/lib/push";
 import { MAIL } from "@/lib/notify/texts";
 import { isLocale, type Locale } from "@/lib/i18n/locale";
 
+let warnedNoMail = false;
 const loc = (x: unknown): Locale => (isLocale(x) ? x : "de");
 
 type Job = { id: number; kind: string; payload: Record<string, unknown>; attempts: number };
@@ -69,6 +70,12 @@ const handlers: Record<string, (p: Record<string, unknown>) => Promise<void>> = 
       select n.id, n.type, n.payload, n.loan_id, u.email, n.sent_at, u.deleted_at, u.locale
         from notifications n join users u on u.id = n.user_id where n.id = ${p.notificationId as string}`;
     if (!n || n.sent_at || n.deleted_at) return;
+    // Ohne Mailanbieter: Benachrichtigung überspringen statt fünfmal scheitern (die App zeigt sie trotzdem)
+    if (!env.smtpUrl && env.production) {
+      if (!warnedNoMail) console.warn("[mail] SMTP_URL fehlt – E-Mail-Benachrichtigungen werden übersprungen");
+      warnedNoMail = true;
+      return;
+    }
     const l = loc(n.locale);
     const { title, body } = renderNotification(n.type, n.payload, l);
     const href = n.payload.href ? `${env.appUrl}${n.payload.href}` : n.loan_id ? `${env.appUrl}/vorgaenge/${n.loan_id}` : `${env.appUrl}/`;

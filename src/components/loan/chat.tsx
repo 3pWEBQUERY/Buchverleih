@@ -4,6 +4,7 @@ import { api } from "@/lib/client";
 import { ago, fmtDayTime } from "@/lib/dates";
 import { Button, Input, cx } from "@/components/ui";
 import { useToast } from "@/components/toast";
+import { systemChatText } from "@/lib/i18n/messages/chat-system";
 import { IconCalendar, IconCheck, IconFlag } from "@/components/icons";
 import { useLocale } from "@/components/locale-provider";
 import { htmlLang } from "@/lib/i18n/locale";
@@ -70,6 +71,7 @@ export function Chat({
       proposal_at: proposing ? new Date(when).toISOString() : null, proposal_status: proposing ? "open" : null, proposal_accepted_by: [me],
       created_at: new Date().toISOString(), pending: true,
     };
+    const before = { text, proposing, when, place };
     setMsgs((m) => [...m, temp]);
     setText("");
     setProposing(false);
@@ -78,7 +80,12 @@ export function Chat({
       await api("/messages", { body });
       refresh();
     } catch (err) {
+      // Nicht gesendet: Nachricht entfernen und das Getippte zurückgeben
       setMsgs((m) => m.filter((x) => x.id !== temp.id));
+      setText((cur) => cur || before.text);
+      setProposing(before.proposing);
+      setWhen(before.when);
+      setPlace(before.place);
       toast.error((err as Error).message);
     }
   }
@@ -137,7 +144,7 @@ export function Chat({
               </li>
             ) : null;
             if (!m.sender_id) {
-              return [sep, <li key={m.id} className="flex justify-center py-2"><span className="chip !h-auto py-1 text-center !whitespace-normal">{m.body}</span></li>];
+              return [sep, <li key={m.id} className="flex justify-center py-2"><span className="chip !h-auto py-1 text-center !whitespace-normal">{systemChatText(m.body, l)}</span></li>];
             }
             return [sep, (
               <li key={m.id} className={cx("group flex flex-col max-w-[85%] md:max-w-[75%] anim-rise", mine ? "ml-auto items-end" : "items-start", firstOfGroup && !newDay && "pt-3", m.pending && "opacity-60")}>

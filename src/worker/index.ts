@@ -2,6 +2,8 @@
  * Worker-Dienst auf Railway (PRD 10.1): Fristen, Erinnerungen, Bildvarianten,
  * Katalogabfragen, Titelalarm und Tauschtreffer.
  */
+import { readdir } from "node:fs/promises";
+import path from "node:path";
 import { sql } from "@/lib/db";
 import { ensureCors } from "@/lib/storage";
 import { runTitleAlarms, runSwapMatches } from "@/lib/wishlist";
@@ -9,7 +11,26 @@ import { runDeadlines, runRetention } from "./deadlines";
 import { nextJob, runJob } from "./jobs";
 
 const DEADLINE_MINUTES = Number(process.env.DEADLINE_INTERVAL_MINUTES ?? 10);
+/** Parallele Jobs: ein langsamer Cover- oder Upload-Job hält Mails, SMS und Push nicht auf */
+const JOB_CONCURRENCY = Math.max(1, Number(process.env.JOB_CONCURRENCY ?? 3));
 let stopping = false;
+const running = new Set<Promise<unknown>>();
+
+/**
+ * Wartet, bis alle Migrationen eingespielt sind. Migriert wird beim Deploy von «web»;
+ * startet der Worker früher, würden seine Abfragen auf das alte Schema treffen.
+ */
+async function waitForMigrations() {
+  const files = (await readdir(path.resolve(process.cwd(), "db/migrations"))).filter((f) => f.endsWith(".sql"));
+  for (let i = 0; !stopping; i++) {
+    const done = await sql<{ name: string }[]>`select name from schema_migrations`.catch(() => [] as { name: string }[]);
+    const have = new Set(done.map((r) => r.name));
+    const missing = files.filter((f) => !have.has(f));
+    if (!missing.length) return;
+    if (i % 6 === 0) console.log(`[worker] warte auf Migrationen: ${missing.join(", ")}`);
+    await new Promise((r) => setTimeout(r, 5000));
+  }
+}
 
 async function heartbeat(job: string, result: unknown) {
   await sql`insert into worker_heartbeats (job, last_run_at, last_result) values (${job}, now(), ${sql.json(result as never)})
@@ -47,8 +68,13 @@ async function jobLoop() {
       console.error("[worker] queue", e.message);
       return null;
     });
-    if (job) await runJob(job);
-    else await new Promise((r) => setTimeout(r, 1500));
+    if (!job) {
+      await new Promise((r) => setTimeout(r, 1500));
+      continue;
+    }
+    const p = runJob(job);
+    running.add(p);
+    await p.finally(() => running.delete(p));
   }
 }
 
@@ -113,14 +139,21 @@ async function checkGoogleBooks() {
 
 async function main() {
   console.log(`[worker] gestartet · Fristenlauf alle ${DEADLINE_MINUTES} Min.`);
+  await waitForMigrations();
   await ensureCors();
   await checkGoogleBooks();
-  await Promise.all([jobLoop(), scheduler()]);
+  await Promise.all([...Array.from({ length: JOB_CONCURRENCY }, () => jobLoop()), scheduler()]);
 }
 
 for (const sig of ["SIGTERM", "SIGINT"]) {
   process.on(sig, async () => {
+    if (stopping) return;
     stopping = true;
+    // Keine neuen Jobs mehr; laufende bis zu 20 s fertig arbeiten lassen, sonst bleiben sie 5 Min. gesperrt
+    if (running.size) {
+      console.log(`[worker] beende, warte auf ${running.size} laufende Jobs`);
+      await Promise.race([Promise.allSettled([...running]), new Promise((r) => setTimeout(r, 20_000))]);
+    }
     console.log("[worker] beendet");
     await sql.end({ timeout: 5 });
     process.exit(0);

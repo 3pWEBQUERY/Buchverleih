@@ -107,6 +107,8 @@ export function SearchClient({
   const inputRef = useRef<HTMLInputElement>(null);
   const first = useRef(true);
   const lastQ = useRef(initialQ);
+  const enterFor = useRef<string | null>(null);
+  const href = (h: WorkHit) => `/titel/${h.work_id}${!loggedIn && plz ? `?plz=${plz}` : ""}`;
   const hasOrigin = loggedIn || !!plz;
 
   useEffect(() => {
@@ -128,6 +130,7 @@ export function SearchClient({
     }
     if (!hasOrigin && !q.trim()) {
       setResults(null);
+      setLoading(false);
       return;
     }
     const ctrl = new AbortController();
@@ -143,6 +146,9 @@ export function SearchClient({
         setResults(data.results);
         if (data.center !== undefined) setCenter(data.center);
         setResultsFor(q.trim());
+        // Enter wurde vor dem Eintreffen gedrückt: jetzt den ersten passenden Treffer öffnen
+        if (enterFor.current !== null && enterFor.current === q.trim() && data.results.length) router.push(href(data.results[0]));
+        enterFor.current = null;
         setError(null);
       } catch (e) {
         if ((e as Error).name !== "AbortError") setError(SEARCH[l].error);
@@ -165,12 +171,13 @@ export function SearchClient({
 
   const set = <K extends keyof Filters>(k: K, v: Filters[K]) => setF((x) => ({ ...x, [k]: v }));
   const n = activeCount(f);
-  const href = (h: WorkHit) => `/titel/${h.work_id}${!loggedIn && plz ? `?plz=${plz}` : ""}`;
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" && results?.length) {
+    if (e.key === "Enter") {
       e.preventDefault();
-      router.push(href(results[0]));
+      // Nur Treffer zum aktuellen Suchbegriff öffnen; sonst merken und nach dem Laden öffnen
+      if (!loading && resultsFor === q.trim() && results?.length) router.push(href(results[0]));
+      else enterFor.current = q.trim();
     }
     if (e.key === "Escape" && q) {
       e.preventDefault();

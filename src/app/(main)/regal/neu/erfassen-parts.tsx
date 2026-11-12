@@ -152,6 +152,8 @@ export function SearchTab({ hidden, onPick, onIsbn, onManual }: {
     const needle = q.trim();
     if (needle.length < 2 || isbnLike(needle)) {
       setRes(null);
+      // Eine noch laufende Suche wurde abgebrochen: Ladeanzeige nicht hängen lassen
+      setLoading(false);
       return;
     }
     let alive = true;

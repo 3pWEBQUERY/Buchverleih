@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { env } from "@/lib/env";
+import { AppError } from "@/lib/errors";
 import { htmlLang, type Locale } from "@/lib/i18n/locale";
 import { MAIL } from "./texts";
 
@@ -16,12 +17,17 @@ export async function sendMail(to: string, subject: string, text: string, link?:
   // Demo-Konten (…@demo.leihregal.invalid) bekommen nie Post
   if (/\.invalid$/i.test(to)) return;
   if (!env.smtpUrl) {
-    // In Produktion nie Inhalt oder Links ins Log schreiben: Anmeldelinks wären sonst für alle mit Log-Zugriff nutzbar
-    if (env.production) console.warn(`[mail] nicht gesendet, SMTP_URL fehlt · ${subject}`);
-    else console.log(`[mail] an ${to} · ${subject}\n${body}`);
+    // In Produktion nicht still verschlucken: der Job scheitert sichtbar, die Anmeldung meldet einen klaren Fehler.
+    // Nie Inhalt oder Links ins Log schreiben: Anmeldelinks wären sonst für alle mit Log-Zugriff nutzbar.
+    if (env.production) {
+      console.error(`[mail] nicht gesendet, SMTP_URL fehlt · ${subject}`);
+      throw new AppError(503, "mail_unavailable", "Der E-Mail-Versand ist noch nicht eingerichtet. Bitte versuche es später erneut.");
+    }
+    console.log(`[mail] an ${to} · ${subject}\n${body}`);
     return;
   }
-  transport ??= nodemailer.createTransport(env.smtpUrl);
+  // Feste Zeitlimits: ein hängender Mailserver darf weder den Worker noch die Anmeldung minutenlang blockieren
+  transport ??= nodemailer.createTransport({ url: env.smtpUrl, connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 20_000 });
   await transport.sendMail({
     from: env.mailFrom,
     to,

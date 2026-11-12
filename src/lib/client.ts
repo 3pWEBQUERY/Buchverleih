@@ -1,5 +1,9 @@
 "use client";
 /** Client-Zugriff auf die API. Alle Schreibzugriffe laufen über /api/v1 (PRD 10.2). */
+import { clientLocale } from "@/lib/i18n/client-locale";
+import { CLIENT_ERRORS } from "@/lib/i18n/messages/client-errors";
+
+const fallback = () => CLIENT_ERRORS[clientLocale()] ?? CLIENT_ERRORS.de;
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string) {
     super(message);
@@ -14,9 +18,15 @@ export async function api<T = unknown>(path: string, init: { method?: string; bo
     credentials: "same-origin",
   });
   const text = await res.text();
-  const data = text ? JSON.parse(text) : {};
+  // Proxy-Fehlerseiten (502/504) liefern HTML statt JSON: dann die allgemeine Meldung zeigen
+  let data: { error?: { code?: string; message?: string } } = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    if (res.ok) throw new ApiError(res.status, "bad_response", fallback().generic);
+  }
   if (!res.ok) {
-    throw new ApiError(res.status, data?.error?.code ?? "error", data?.error?.message ?? "Etwas ist schiefgelaufen. Versuche es erneut.");
+    throw new ApiError(res.status, data?.error?.code ?? "error", data?.error?.message ?? fallback().generic);
   }
   return data as T;
 }
@@ -39,7 +49,7 @@ export async function uploadPhoto(file: File, purpose: string, refId?: string): 
   }
   if (!ok) {
     const r = await fetch(prep.proxy, { method: "PUT", body: file, headers: { "content-type": type } });
-    if (!r.ok) throw new ApiError(r.status, "upload", "Das Foto konnte nicht hochgeladen werden. Prüfe die Verbindung und versuche es erneut.");
+    if (!r.ok) throw new ApiError(r.status, "upload", fallback().upload);
   }
   await api(`/uploads/${prep.id}`, { method: "POST" });
   return { id: prep.id, key: prep.key };

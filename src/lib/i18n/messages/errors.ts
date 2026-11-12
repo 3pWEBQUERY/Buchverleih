@@ -10,6 +10,8 @@ type FrIt = [fr: string, it: string];
 
 export const ERRORS: Record<string, FrIt> = {
   // Allgemein (errors.ts, api.ts)
+  "Der E-Mail-Versand ist noch nicht eingerichtet. Bitte versuche es später erneut.": ["L’envoi d’e-mails n’est pas encore configuré. Réessaie plus tard.", "L’invio di e-mail non è ancora configurato. Riprova più tardi."],
+  "Dieses Gerät ist noch mit einem anderen Konto verbunden. Melde es dort zuerst ab.": ["Cet appareil est encore lié à un autre compte. Déconnecte-le d’abord de ce compte.", "Questo dispositivo è ancora collegato a un altro conto. Esci prima da quel conto."],
   "Bitte melde dich an.": ["Connecte-toi, s’il te plaît.", "Accedi, per favore."],
   "Dafür fehlt dir die Berechtigung.": ["Tu n’as pas l’autorisation pour cela.", "Non hai l’autorizzazione per farlo."],
   "Nicht gefunden.": ["Introuvable.", "Non trovato."],

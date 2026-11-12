@@ -8,9 +8,16 @@ import { DEFAULT_LOCALE, LOCALE_COOKIE, fromAcceptLanguage, isLocale, type Local
  */
 export function useClientLocale(): Locale {
   const [l, setL] = useState<Locale>(DEFAULT_LOCALE);
-  useEffect(() => {
-    const c = document.cookie.split("; ").find((x) => x.startsWith(`${LOCALE_COOKIE}=`))?.split("=")[1];
-    setL(isLocale(c) ? c : fromAcceptLanguage(navigator.languages?.join(",") || navigator.language));
-  }, []);
+  useEffect(() => setL(clientLocale()), []);
   return l;
+}
+
+/** Sprache synchron im Browser bestimmen (auch ausserhalb von React, z. B. in lib/client.ts). Auf dem Server: Deutsch. */
+export function clientLocale(): Locale {
+  if (typeof document === "undefined") return DEFAULT_LOCALE;
+  // Die Seite trägt die vom Server gewählte Sprache in <html lang>
+  const html = document.documentElement.lang?.slice(0, 2);
+  if (isLocale(html)) return html;
+  const c = document.cookie.split("; ").find((x) => x.startsWith(`${LOCALE_COOKIE}=`))?.split("=")[1];
+  return isLocale(c) ? c : fromAcceptLanguage(navigator.languages?.join(",") || navigator.language);
 }

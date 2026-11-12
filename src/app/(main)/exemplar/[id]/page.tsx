@@ -76,7 +76,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const st = shelfStatusLocal(copy, l);
   const photo = copy.photos[0];
   const cover = { title: copy.title, authors: copy.authors, photoKey: photo?.key, photoW: photo?.width, photoH: photo?.height, coverKey: copy.cover_key, seed: copy.work_id };
-  const dist = own ? null : fmtDistance(copy.dist);
+  const dist = own ? null : fmtDistance(copy.dist, l);
   const loanDays = circles[0]?.loan_days ?? copy.loan_days;
   // Im Kreis gilt dessen Leihfrist – auch im Kalender
   const cal = rawCal ? { ...rawCal, loanDays } : rawCal;
