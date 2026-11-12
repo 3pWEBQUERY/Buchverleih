@@ -292,3 +292,10 @@ body:has(.landing-stage) .public-header a:not([href="/anmelden"]):hover { backgr
   :root:not([data-theme="light"]) .search-map .map-tiles { filter: invert(1) hue-rotate(180deg) brightness(0.82) contrast(0.92) saturate(0.4); }
 }
 :root[data-theme="dark"] .search-map .map-tiles { filter: invert(1) hue-rotate(180deg) brightness(0.82) contrast(0.92) saturate(0.4); }
+
+/* ----------------------------------------------------------- Druck: QR-Einladung */
+@media print {
+  body:has(.invite-qr) * { visibility: hidden; }
+  body:has(.invite-qr) .invite-qr, body:has(.invite-qr) .invite-qr * { visibility: visible; }
+  body:has(.invite-qr) .invite-qr { position: absolute; inset: 0 auto auto 0; width: 100%; background: #fff; }
+}

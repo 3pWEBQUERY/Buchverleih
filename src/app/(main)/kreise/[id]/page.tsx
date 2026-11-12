@@ -178,7 +178,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </div>
 
         <aside className="lg:sticky lg:top-8 min-w-0 space-y-4 lg:mt-12">
-          <InviteBox circleId={circle.id} url={inviteUrl} admin={admin} appUrl={env.appUrl} />
+          <InviteBox circleId={circle.id} name={circle.name} url={inviteUrl} admin={admin} appUrl={env.appUrl} />
           <LeaveCircle circleId={circle.id} me={user.id} name={circle.name} lastAdmin={admin && admins === 1 && circle.member_count > 1} />
         </aside>
       </div>

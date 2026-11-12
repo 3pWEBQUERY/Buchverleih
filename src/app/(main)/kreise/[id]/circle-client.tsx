@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import QRCode from "qrcode";
 import { api } from "@/lib/client";
 import { labels } from "@/lib/i18n/labels";
 import { htmlLang } from "@/lib/i18n/locale";
@@ -30,11 +31,12 @@ function useLater() {
   };
 }
 
-export function InviteBox({ circleId, url, admin, appUrl }: { circleId: string; url: string | null; admin: boolean; appUrl: string }) {
+export function InviteBox({ circleId, name, url, admin, appUrl }: { circleId: string; name: string; url: string | null; admin: boolean; appUrl: string }) {
   const toast = useToast();
   const t = CIRCLES[useLocale()].client;
   const [link, setLink] = useState(url);
   const [busy, setBusy] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const input = useRef<HTMLInputElement>(null);
 
   async function copy() {
@@ -70,6 +72,10 @@ export function InviteBox({ circleId, url, admin, appUrl }: { circleId: string; 
           <input ref={input} readOnly value={link} aria-label={t.inviteLink} onFocus={(e) => e.target.select()}
             className="w-full h-11 px-3.5 rounded-[6px] bg-paper-2 border border-line text-[13.5px] text-ink-2 tnum truncate focus:outline-none focus:border-accent transition-colors" />
           <Button type="button" variant="primary" onClick={copy} className="w-full mt-2">{t.copy}</Button>
+          <Button type="button" variant="secondary" onClick={() => setShowQr((v) => !v)} className="w-full mt-2" aria-expanded={showQr}>
+            {showQr ? t.qrHide : t.qrShow}
+          </Button>
+          {showQr && <InviteQr link={link} name={name} />}
           {admin && (
             <div className="mt-4 pt-3 border-t border-line flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
               <p className="text-[13px] text-muted">{t.wrongHands}</p>
@@ -82,6 +88,70 @@ export function InviteBox({ circleId, url, admin, appUrl }: { circleId: string; 
       )}
     </section>
   );
+}
+
+/**
+ * QR-Einladung: Karte zum Vorzeigen, Ausdrucken oder als Bild (PNG). Der Code enthält den
+ * Einladungslink; auf iPhones mit der Leihregal-App öffnet er dank Universal Link direkt die App.
+ */
+function InviteQr({ link, name }: { link: string; name: string }) {
+  const t = CIRCLES[useLocale()].client;
+  const [svg, setSvg] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    QRCode.toString(link, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#141413", light: "#ffffff" } })
+      .then((s) => { if (alive) setSvg(s); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [link]);
+
+  async function download() {
+    // Druckfertige Karte: Titel, QR-Code, Link – weisser Grund, ohne Schatten
+    const qr = await QRCode.toDataURL(link, { margin: 1, width: 900, errorCorrectionLevel: "M", color: { dark: "#141413", light: "#ffffff" } });
+    const img = new Image();
+    img.src = qr;
+    await img.decode();
+    const c = document.createElement("canvas");
+    c.width = 1080; c.height = 1350;
+    const g = c.getContext("2d");
+    if (!g) return;
+    g.fillStyle = "#faf8f4"; g.fillRect(0, 0, c.width, c.height);
+    g.fillStyle = "#d23c1a"; g.fillRect(90, 96, 12, 12);
+    g.fillStyle = "#6c665c"; g.font = "500 34px system-ui, sans-serif"; g.fillText("Leihregal", 120, 112);
+    g.fillStyle = "#141413"; g.font = "600 56px system-ui, sans-serif";
+    wrap(g, t.qrTitle(name), 90, 200, 900, 66);
+    g.fillStyle = "#ffffff"; g.fillRect(90, 330, 900, 900);
+    g.drawImage(img, 90, 330, 900, 900);
+    g.fillStyle = "#3b3934"; g.font = "500 30px system-ui, sans-serif"; g.fillText(t.qrScan, 90, 1290);
+    const a = document.createElement("a");
+    a.href = c.toDataURL("image/png");
+    a.download = `einladung-${name.toLowerCase().replace(/[^a-z0-9äöü]+/gi, "-").replace(/^-|-$/g, "") || "kreis"}.png`;
+    a.click();
+  }
+
+  return (
+    <div className="mt-4 rounded-[10px] bg-paper-2 p-5 invite-qr">
+      <p className="text-[12.5px] text-muted">Leihregal</p>
+      <p className="text-[18px] font-[560] tracking-[-0.02em] leading-snug mt-1">{t.qrTitle(name)}</p>
+      <div className="mt-4 mx-auto max-w-[260px] rounded-[8px] bg-white p-3" aria-label={t.qrShow} role="img"
+        dangerouslySetInnerHTML={svg ? { __html: svg } : undefined} />
+      <p className="text-[13px] text-muted mt-4 leading-relaxed">{t.qrHint}</p>
+      <div className="mt-4 grid grid-cols-2 gap-2 print:hidden">
+        <Button type="button" variant="ghost" size="sm" onClick={download}>{t.qrDownload}</Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => window.print()}>{t.qrPrint}</Button>
+      </div>
+    </div>
+  );
+}
+
+function wrap(g: CanvasRenderingContext2D, text: string, x: number, y: number, max: number, lh: number) {
+  let line = "";
+  for (const w of text.split(" ")) {
+    const test = line ? `${line} ${w}` : w;
+    if (g.measureText(test).width > max && line) { g.fillText(line, x, y); line = w; y += lh; }
+    else line = test;
+  }
+  if (line) g.fillText(line, x, y);
 }
 
 export function MemberList({ circleId, me, admin, members }: { circleId: string; me: string; admin: boolean; members: Member[] }) {
