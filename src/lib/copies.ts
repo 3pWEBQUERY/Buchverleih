@@ -324,3 +324,85 @@ export async function removeBlock(userId: string, blockId: number) {
              where b.id = ${blockId} and b.loan_id is null and c.id = b.copy_id and c.owner_id = ${userId}
                and (b.note is null or b.note not like 'Tausch %')`;
 }
+
+// ---------------------------------------------------------------------------
+// Weiterstöbern auf der Exemplarseite
+// ---------------------------------------------------------------------------
+
+export type RelatedCopy = ShelfCopy & { dist: number | null; owner_name: string };
+export type Related = {
+  owner: RelatedCopy[];
+  sameWork: RelatedCopy[];
+  author: RelatedCopy[];
+  genre: RelatedCopy[];
+  nearby: RelatedCopy[];
+  genreName: string | null;
+  authorName: string | null;
+};
+
+/**
+ * Weitere Bücher rund um ein Exemplar: aus demselben Regal, andere Exemplare desselben Titels,
+ * mehr von der Autorin oder dem Autor, dasselbe Genre und Neues in der Nähe.
+ * Pro Werk erscheint ein Exemplar (bevorzugt mit Bild, dann das nächste), kein Buch doppelt.
+ */
+export async function relatedForCopy(copyId: string, viewerId: string | null, viewerOrigin: { lat: number; lng: number } | null): Promise<Related> {
+  const empty: Related = { owner: [], sameWork: [], author: [], genre: [], nearby: [], genreName: null, authorName: null };
+  const [base] = await sql<{ owner_id: string; work_id: string; genre: string | null; authors: string[]; lat: number | null; lng: number | null }[]>`
+    select c.owner_id, e.work_id, w.genre, w.authors, o.display_lat as lat, o.display_lng as lng
+      from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id join users o on o.id = c.owner_id
+     where c.id = ${copyId}`;
+  if (!base) return empty;
+  const center = viewerOrigin ?? (base.lat != null && base.lng != null ? { lat: base.lat, lng: base.lng } : null);
+  const lat = center?.lat ?? null;
+  const lng = center?.lng ?? null;
+  const RADIUS = 25_000;
+  const distExpr = sql`case when ${lat}::float8 is null then null
+    else earth_distance(ll_to_earth(${lat}::float8, ${lng}::float8), ll_to_earth(o.display_lat, o.display_lng)) end`;
+  const near = sql`(${lat}::float8 is null or (
+      earth_box(ll_to_earth(${lat}::float8, ${lng}::float8), ${RADIUS}) @> ll_to_earth(o.display_lat, o.display_lng)
+      and earth_distance(ll_to_earth(${lat}::float8, ${lng}::float8), ll_to_earth(o.display_lat, o.display_lng)) <= ${RADIUS}))`;
+  const visible = sql`c.removed_at is null and cardinality(c.offers) > 0 and copy_visible_to(c.id, ${viewerId}::uuid)
+    and (${viewerId}::uuid is null or c.owner_id <> ${viewerId}::uuid)`;
+
+  /** Ein Exemplar pro Werk, frei und mit Bild zuerst, dann nach Entfernung */
+  const perWork = (where: typeof SHELF_SELECT, order: typeof SHELF_SELECT, limit: number) => sql<RelatedCopy[]>`
+    select * from (
+      select distinct on (e.work_id) ${SHELF_SELECT}, ${distExpr} as dist, o.first_name as owner_name
+        from ${SHELF_FROM}
+       where ${visible} and e.work_id <> ${base.work_id} and ${where}
+       order by e.work_id, (ph.key is null and e.cover_key is null), ${distExpr} nulls last
+    ) t
+    order by ${order}
+    limit ${limit}`;
+  const avail = sql`(t.status <> 'available'), (t.photo_key is null and t.cover_key is null)`;
+
+  const author = base.authors[0] ?? null;
+  const ownShelf = viewerId === base.owner_id;
+  const [owner, sameWork, byAuthor] = await Promise.all([
+    ownShelf ? Promise.resolve([] as RelatedCopy[]) : sql<RelatedCopy[]>`
+      select * from (
+        select ${SHELF_SELECT}, ${distExpr} as dist, o.first_name as owner_name
+          from ${SHELF_FROM}
+         where c.owner_id = ${base.owner_id} and c.id <> ${copyId} and c.removed_at is null and cardinality(c.offers) > 0
+           and copy_visible_to(c.id, ${viewerId}::uuid)
+      ) t
+      order by ${avail}, t.created_at desc
+      limit 30`,
+    sql<RelatedCopy[]>`
+      select ${SHELF_SELECT}, ${distExpr} as dist, o.first_name as owner_name
+        from ${SHELF_FROM}
+       where ${visible} and e.work_id = ${base.work_id} and c.id <> ${copyId}
+       order by ${distExpr} nulls last
+       limit 20`,
+    author ? perWork(sql`${author} = any(w.authors) and ${near}`, sql`${avail}, t.dist nulls last`, 24) : Promise.resolve([] as RelatedCopy[]),
+  ]);
+
+  const seen = new Set<string>([base.work_id, ...owner.map((c) => c.work_id), ...byAuthor.map((c) => c.work_id)]);
+  const genre = base.genre
+    ? (await perWork(sql`w.genre = ${base.genre} and ${near}`, sql`${avail}, t.dist nulls last`, 60)).filter((c) => !seen.has(c.work_id)).slice(0, 24)
+    : [];
+  genre.forEach((c) => seen.add(c.work_id));
+  const nearby = (await perWork(near, sql`t.created_at desc`, 80)).filter((c) => !seen.has(c.work_id)).slice(0, 30);
+
+  return { owner, sameWork, author: byAuthor, genre, nearby, genreName: base.genre, authorName: author };
+}
