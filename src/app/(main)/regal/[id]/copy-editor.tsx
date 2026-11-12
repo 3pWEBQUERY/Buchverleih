@@ -14,6 +14,9 @@ import { shelfStatusText } from "@/components/status";
 import { useToast } from "@/components/toast";
 import { Button, Field, Input, Notice, Switch, Textarea, cx } from "@/components/ui";
 import { OptionCard, Stepper } from "@/components/form-controls";
+import { timeMeter, TimeMeter } from "@/components/loan/loan-row";
+import { Monogram } from "@/components/person/monogram";
+import { offerNoun, statusLabel } from "@/lib/i18n/de-CH";
 import { IconArrowLeft, IconArrowRight, IconCamera, IconCheck, IconClose, IconLoans, IconSwap, IconBookmark, IconCircles, IconUser, IconShield, IconPlus } from "@/components/icons";
 
 /**
@@ -37,15 +40,22 @@ type Settings = {
   dropoffAllowed: boolean;
 };
 
+export type HistoryRow = {
+  id: string; kind: OfferKind; status: string; late: boolean;
+  borrower_id: string; borrower_name: string; borrower_avatar: string | null;
+  requested_at: string; handed_over_at: string | null; ended_at: string | null; due_at: string | null;
+};
+
 const SECTIONS = [
   ["angebot", "Angebot"],
   ["leihe", "Leihe"],
   ["kalender", "Kalender"],
   ["weitergabe", "Weitergabe"],
   ["zustand", "Zustand"],
+  ["verlauf", "Verlauf"],
 ] as const;
 
-export function CopyEditor({ copy, calendar, circles }: { copy: CopyDetail; calendar: Calendar; circles: { id: string; name: string; loanDays: number }[] }) {
+export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDetail; calendar: Calendar; circles: { id: string; name: string; loanDays: number }[]; history: HistoryRow[] }) {
   const router = useRouter();
   const toast = useToast();
   const [s, setS] = useState<Settings>({
@@ -120,6 +130,13 @@ export function CopyEditor({ copy, calendar, circles }: { copy: CopyDetail; cale
   const coverData = { title: copy.title, authors: copy.authors, photoKey: photo?.key, photoW: photo?.width, photoH: photo?.height, coverKey: copy.cover_key, seed: copy.work_id };
   const dot = { ok: "bg-ok", lent: "bg-lent", late: "bg-late", wait: "bg-wait", done: "bg-done", accent: "bg-accent" }[st.tone];
   const offered = s.offers.length > 0;
+  const handed = history.filter((h) => h.handed_over_at);
+  const daysOut = handed.reduce((n, h) => n + Math.max(0, Math.round(((h.ended_at ? new Date(h.ended_at) : new Date()).getTime() - new Date(h.handed_over_at!).getTime()) / 86_400_000)), 0);
+  const people = new Set(handed.map((h) => h.borrower_id)).size;
+  const meter = copy.lent_until
+    ? timeMeter({ status: "active", kind: "lend", role: "owner", other_name: copy.lent_to ?? "der Person", wanted: "", due_at: copy.lent_until, respond_by: new Date(), requested_at: new Date(),
+        handed_over_at: copy.lent_since, handover_by: null, returned_at: null, inspection_until: null })
+    : null;
 
   return (
     <div>
@@ -152,9 +169,21 @@ export function CopyEditor({ copy, calendar, circles }: { copy: CopyDetail; cale
                 </Link>
               )}
             </div>
-            {copy.lent_until && (
-              <p className="px-4 py-3 text-[13.5px] text-muted">Zurück {relDays(dueDay(copy.lent_until))}, am {fmtDay(dayToDate(dueDay(copy.lent_until)))}</p>
+            {meter && <div className="p-2"><TimeMeter m={meter} /></div>}
+            {copy.open_requests > 0 && (
+              <Link href="/vorgaenge?seite=verleihe" className="px-4 py-3 flex items-center justify-between gap-3 text-[13.5px] font-medium text-accent-hover hover:bg-accent-soft/20 transition-colors">
+                <span className="inline-flex items-center gap-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent live-dot" />{copy.open_requests === 1 ? "1 offene Anfrage" : `${copy.open_requests} offene Anfragen`}</span>
+                <IconArrowRight width={14} height={14} />
+              </Link>
             )}
+            <dl className="grid grid-cols-3 divide-x divide-line">
+              {([[handed.length, handed.length === 1 ? "Leihe" : "Leihen"], [daysOut, "Tage unterwegs"], [people, people === 1 ? "Person" : "Personen"]] as [number, string][]).map(([n, l]) => (
+                <div key={l} className="px-3 py-3 flex flex-col-reverse">
+                  <dt className="text-[11.5px] text-muted mt-1 leading-tight">{l}</dt>
+                  <dd className="text-[20px] font-[560] tracking-[-0.04em] leading-none tnum">{n}</dd>
+                </div>
+              ))}
+            </dl>
             <dl className="px-4 py-3 text-[13.5px] grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
               {[
                 ["Ausgabe", [copy.publisher, copy.year, copy.binding === "hardcover" ? "gebunden" : copy.binding === "paperback" ? "Taschenbuch" : null].filter(Boolean).join(", ") || "–"],
@@ -333,7 +362,7 @@ export function CopyEditor({ copy, calendar, circles }: { copy: CopyDetail; cale
           </Section>
 
           {/* 05 Zustand */}
-          <Section id="zustand" n={5} title="Zustand und Fotos" desc="Bei einem Schaden wird mit diesen Angaben verglichen. Normale Lesespuren sind kein Schaden." last>
+          <Section id="zustand" n={5} title="Zustand und Fotos" desc="Bei einem Schaden wird mit diesen Angaben verglichen. Normale Lesespuren sind kein Schaden.">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[1, 2, 3, 4].map((c) => (
                 <OptionCard key={c} on={s.condition === c} title={conditionLabel[c]} desc={conditionHint[c]} compact onClick={() => save({ condition: c })} />
@@ -345,6 +374,43 @@ export function CopyEditor({ copy, calendar, circles }: { copy: CopyDetail; cale
             </Field>
             <Label title="Fotos" hint={copy.cover_key ? "Das Original-Cover erscheint im Regal. Fotos zeigen den Zustand deines Exemplars." : "Ohne Cover erscheint das erste Foto im Regal."} className="mt-8" />
             <Photos copy={copy} />
+          </Section>
+
+          {/* 06 Verlauf */}
+          <Section id="verlauf" n={6} title="Leihverlauf" desc="Wer das Buch schon hatte und wie es lief. Ein Tippen öffnet den Vorgang." last>
+            {history.length === 0 ? (
+              <div className="rounded-[10px] border border-dashed border-line-strong p-6 text-[14.5px] text-ink-2">
+                Noch keine Anfrage für dieses Buch. Sobald jemand es leiht, steht es hier.
+              </div>
+            ) : (
+              <ul className="rounded-[10px] border border-line divide-y divide-line overflow-hidden">
+                {history.map((h) => {
+                  const open = ["requested", "accepted", "active", "return_reported", "returned", "disputed"].includes(h.status);
+                  const ended = ["declined", "withdrawn", "expired", "cancelled"].includes(h.status);
+                  const days = h.handed_over_at ? Math.max(1, Math.round(((h.ended_at ? new Date(h.ended_at) : new Date()).getTime() - new Date(h.handed_over_at).getTime()) / 86_400_000)) : null;
+                  const tone = h.status === "lost" || h.status === "disputed" || (h.late && h.status === "completed") ? "bg-late" : open ? "bg-accent" : ended ? "bg-done" : "bg-ok";
+                  return (
+                    <li key={h.id}>
+                      <Link href={`/vorgaenge/${h.id}`} className="group grid grid-cols-[36px_minmax(0,1fr)_auto] gap-x-3.5 items-center px-4 md:px-5 py-3.5 hover:bg-paper-2 transition-colors">
+                        <Monogram name={h.borrower_name} seed={h.borrower_id} size={36} photo={h.borrower_avatar} />
+                        <div className="min-w-0">
+                          <p className="text-[15px] font-medium truncate group-hover:underline underline-offset-4 decoration-1">{h.borrower_name} <span className="text-muted font-normal">· {offerNoun[h.kind]}</span></p>
+                          <p className="text-[13px] text-muted tnum truncate mt-0.5">
+                            {h.handed_over_at
+                              ? `${fmtDay(h.handed_over_at)} – ${h.ended_at ? fmtDay(h.ended_at) : "heute"}${days ? ` · ${days} ${days === 1 ? "Tag" : "Tage"}` : ""}`
+                              : `Angefragt am ${fmtDay(h.requested_at)}`}
+                          </p>
+                        </div>
+                        <span className="inline-flex items-center gap-1.5 text-[13px] text-ink-2 whitespace-nowrap">
+                          <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", tone)} />
+                          {h.status === "completed" && h.late ? "Verspätet zurück" : h.status === "completed" && h.kind === "lend" ? "Pünktlich zurück" : statusLabel[h.status as keyof typeof statusLabel] ?? h.status}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </Section>
         </div>
       </div>
