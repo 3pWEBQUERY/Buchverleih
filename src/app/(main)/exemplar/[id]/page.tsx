@@ -13,7 +13,7 @@ import { shelfStatusText } from "@/components/status";
 import { Monogram } from "@/components/person/monogram";
 import { conditionHint, conditionLabel, languageLabel, offerLabel, trustLabel } from "@/lib/i18n/de-CH";
 import { fmtDistance } from "@/lib/geo";
-import { fmtMonthYear } from "@/lib/dates";
+import { dayToDate, fmtDay, fmtMonthYear } from "@/lib/dates";
 import { IconArrowLeft, IconArrowRight } from "@/components/icons";
 import { CalendarView } from "@/components/calendar";
 import { BookRow } from "@/components/regal/book-row";
@@ -40,7 +40,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const copy = await copyDetail(id, user?.id ?? null, origin(user));
   if (!copy) notFound();
   const own = user?.id === copy.owner_id;
-  const [cal, blocker, myOffers, circles, owner, related] = await Promise.all([
+  const [rawCal, blocker, myOffers, circles, owner, related] = await Promise.all([
     getCalendar(sql, id, user?.id ?? null),
     user ? requestBlocker(sql, user) : Promise.resolve(null),
     user && copy.offers.includes("swap")
@@ -59,10 +59,21 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const cover = { title: copy.title, authors: copy.authors, photoKey: photo?.key, photoW: photo?.width, photoH: photo?.height, coverKey: copy.cover_key, seed: copy.work_id };
   const dist = own ? null : fmtDistance(copy.dist);
   const loanDays = circles[0]?.loan_days ?? copy.loan_days;
+  // Im Kreis gilt dessen Leihfrist – auch im Kalender
+  const cal = rawCal ? { ...rawCal, loanDays } : rawCal;
   const extraPhotos = copy.cover_key ? copy.photos : copy.photos.slice(1);
+  const freeFrom = cal?.free[0]?.start ?? null;
+  const freeNow = freeFrom != null && cal != null && freeFrom === cal.today;
+  const respond = owner?.median_response_hours;
+  const respondText = respond == null ? null : respond < 1 ? "Antwortet meist innert einer Stunde" : respond < 24 ? `Antwortet meist innert ${Math.ceil(respond)} Std.` : `Antwortet meist innert ${Math.ceil(respond / 24)} Tagen`;
+  const quick: { text: string; tone: "ok" | "wait" | "plain" }[] = [
+    ...(copy.offers.includes("lend") && cal ? [{ text: freeNow ? "Jetzt frei" : freeFrom ? `Frei ab ${fmtDay(dayToDate(freeFrom))}` : "Gerade nicht buchbar", tone: freeNow ? "ok" as const : "wait" as const }] : []),
+    ...(copy.offers.includes("lend") ? [{ text: `Bis ${loanDays} Tage`, tone: "plain" as const }] : []),
+    ...(dist ? [{ text: `${dist} entfernt`, tone: "plain" as const }] : []),
+    ...(respondText ? [{ text: respondText, tone: "plain" as const }] : []),
+  ];
 
   const facts: [string, React.ReactNode][] = [
-    ["Zustand", conditionLabel[copy.condition]],
     ["Ausgabe", [copy.publisher, copy.year, copy.binding === "hardcover" ? "gebunden" : copy.binding === "paperback" ? "Taschenbuch" : null].filter(Boolean).join(", ") || "–"],
     ["Sprache", copy.language ? languageLabel[copy.language] ?? copy.language : "–"],
     ["Leihfrist", `${loanDays} Tage`],
@@ -112,11 +123,21 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                 <div key={k} className="contents"><dt className="text-muted">{k}</dt><dd className="text-right tnum truncate">{v}</dd></div>
               ))}
             </dl>
-            {(copy.condition_note || copy.condition) && (
-              <p className="px-4 py-3 text-[13.5px] text-muted leading-snug">
+            <div className="px-4 py-3.5">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="text-[13.5px] text-muted">Zustand</p>
+                <p className="text-[13.5px] font-medium">{conditionLabel[copy.condition]}</p>
+              </div>
+              <div aria-hidden className="mt-2 grid grid-cols-4 gap-1">
+                {[1, 2, 3, 4].map((c) => (
+                  <span key={c} className={cx("h-1.5 rounded-full", c <= copy.condition ? (c === copy.condition ? "bg-accent" : "bg-ink-2/70") : "bg-paper-3")} />
+                ))}
+              </div>
+              <div aria-hidden className="mt-1.5 flex justify-between text-[11px] text-muted"><span>Wie neu</span><span>Stark gebraucht</span></div>
+              <p className="text-[13px] text-muted leading-snug mt-2.5">
                 {conditionHint[copy.condition]}.{copy.condition_note && <> Notiz: <span className="text-ink">«{copy.condition_note}»</span></>}
               </p>
-            )}
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -125,8 +146,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                 Bearbeiten <IconArrowRight width={16} height={16} />
               </Link>
             )}
-            <Link href={`/titel/${copy.work_id}`} className="h-11 rounded-[6px] border border-line-strong font-medium text-[14.5px] inline-flex items-center justify-center gap-2 hover:border-ink-2 transition-colors">
-              Weitere Exemplare dieses Titels
+            <Link href={`/titel/${copy.work_id}`} className="h-11 rounded-[6px] border border-line-strong font-medium text-[14.5px] inline-flex items-center justify-center gap-2 hover:border-accent hover:text-accent-hover transition-colors">
+              {related && related.sameWork.length > 0 ? `${related.sameWork.length} ${related.sameWork.length === 1 ? "weiteres Exemplar" : "weitere Exemplare"} vergleichen` : "Zur Titelseite"} <IconArrowRight width={16} height={16} />
             </Link>
           </div>
           <CorrectionForm editionId={copy.edition_id} loggedIn={Boolean(user)} />
@@ -142,6 +163,17 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                 : copy.offers.includes("swap") ? <>Tausch <em>dieses Buch.</em></>
                 : <>Ein Geschenk <em>für dich.</em></>}
             </h2>
+            {!own && quick.length > 0 && (
+              <ul className="mt-5 flex flex-wrap gap-1.5" aria-label="Auf einen Blick">
+                {quick.map((q) => (
+                  <li key={q.text} className={cx("inline-flex items-center gap-1.5 h-8 px-3 rounded-[8px] text-[13px] font-medium",
+                    q.tone === "ok" ? "bg-ok/10 text-ok" : q.tone === "wait" ? "bg-wait/10 text-ink-2" : "bg-paper-2 text-ink-2")}>
+                    {q.tone !== "plain" && <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", q.tone === "ok" ? "bg-ok" : "bg-wait")} />}
+                    {q.text}
+                  </li>
+                ))}
+              </ul>
+            )}
           </header>
 
           {/* Wer verleiht – vor der Anfrage sichtbar (PRD 6.1) */}
@@ -167,6 +199,37 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               </dl>
             )}
           </section>
+
+          {owner && !own && (owner.shared_circles.length > 0 || owner.good_ratings > 0) && (
+            <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 px-1 text-[13px] text-muted">
+              {owner.shared_circles.length > 0 && <li>Gemeinsam in <span className="text-ink-2 font-medium">{owner.shared_circles.join(", ")}</span></li>}
+              {owner.good_ratings > 0 && <li><span className="text-ink-2 font-medium tnum">{owner.good_ratings}</span> gute Bewertungen</li>}
+            </ul>
+          )}
+
+          {/* So läuft es ab */}
+          {!own && copy.offers.length > 0 && (
+            <section aria-labelledby="ablauf" className="mt-8 anim-rise" style={{ animationDelay: "90ms" }}>
+              <h3 id="ablauf" className="eyebrow mb-3">So läuft es ab</h3>
+              <ol className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+                {[
+                  ["Anfragen", copy.offers.includes("lend") ? "Zeitraum wählen, kurz hallo sagen." : "Kurz hallo sagen und senden."],
+                  ["Antwort", `${copy.owner_name} antwortet innert 72 Stunden${respond != null && respond < 24 ? `, meist in ${Math.max(1, Math.ceil(respond))} Std.` : "."}`],
+                  ["Übergabe", "Ort im Chat abmachen, Code scannen, fertig."],
+                  copy.offers.includes("lend")
+                    ? ["Zurückgeben", `Nach ${loanDays} Tagen${copy.auto_extend ? ", verlängern geht" : ""}. Wir erinnern dich.`]
+                    : ["Behalten", copy.offers.includes("swap") ? "Ihr tauscht, jedes Buch gehört danach der anderen Person." : "Das Buch gehört danach dir."],
+                ].map(([t, d], i) => (
+                  <li key={t} className="rounded-[10px] bg-paper-2 px-4 py-3.5">
+                    <p className="flex items-center gap-2 text-[14px] font-semibold">
+                      <span className="h-6 w-6 rounded-full bg-paper text-accent-hover text-[12px] grid place-items-center tnum border border-line">{i + 1}</span>{t}
+                    </p>
+                    <p className="text-[13px] text-muted mt-1.5 leading-snug">{d}</p>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
 
           {!own && cal && (
             <RequestPanel
