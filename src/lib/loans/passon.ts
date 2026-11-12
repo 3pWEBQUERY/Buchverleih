@@ -1,6 +1,7 @@
 /**
  * Direkte Weitergabe (PRD 4.9) und Übergabe-Chat (4.10).
  */
+import { systemText } from "@/lib/notify/system-texts";
 import type postgres from "postgres";
 import { sql, type Tx } from "@/lib/db";
 import { err } from "@/lib/errors";
@@ -93,7 +94,7 @@ export async function afterAcceptConsecutive(tx: TxSql, next: LoanRow) {
       userId: next.owner_id,
       type: "pass_on_ask",
       loanId: next.id,
-      data: { title: info.title, text: `Direkt von ${await firstName(tx, prev.borrower_id)} an ${info.borrower_name} weitergeben?` },
+      data: { title: info.title, ...systemText("pass_on_owner", { from: await firstName(tx, prev.borrower_id), to: info.borrower_name }) },
     });
   }
 }
@@ -112,13 +113,13 @@ async function askBorrowers(tx: Tx, nextId: string, title: string, nextName: str
     userId: l.prev_borrower,
     type: "pass_on_ask",
     loanId: nextId,
-    data: { title, text: `Gibst du das Buch direkt an ${nextName} weiter? Das spart euch zwei Treffen.` },
+    data: { title, ...systemText("pass_on_prev", { name: nextName }) },
   });
   await notify(tx, {
     userId: l.next_borrower,
     type: "pass_on_ask",
     loanId: nextId,
-    data: { title, text: "Holst du das Buch direkt bei der Person ab, die es gerade hat?" },
+    data: { title, ...systemText("pass_on_next") },
   });
 }
 

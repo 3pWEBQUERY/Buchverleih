@@ -2,6 +2,7 @@
  * Chat im Vorgang (PRD 7.4) und Übergabe-Chat (4.10). Keine freien Direktnachrichten.
  * Terminvorschläge sind strukturierte Nachrichten mit Annehmen und Gegenvorschlag.
  */
+import { systemText } from "@/lib/notify/system-texts";
 import { sql, type Tx } from "@/lib/db";
 import { err } from "@/lib/errors";
 import { rateLimit } from "@/lib/ratelimit";
@@ -108,7 +109,7 @@ export async function sendMessage(
         userId: other,
         type: "message",
         loanId: t.type === "loan" ? t.id : null,
-        data: { name: me.first_name, title: m.title, text: body ? body.slice(0, 140) : "Terminvorschlag" },
+        data: { name: me.first_name, title: m.title, ...(body ? { text: body.slice(0, 140) } : systemText("chat_proposal")) },
       });
     }
     return msg.id;

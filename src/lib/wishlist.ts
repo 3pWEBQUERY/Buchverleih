@@ -1,9 +1,9 @@
 /** Wunschliste, Titelalarm und Tauschtreffer (PRD 4.6, 5.3) */
+import { systemText } from "@/lib/notify/system-texts";
 import { sql } from "@/lib/db";
 import { err } from "@/lib/errors";
 import { entitlements } from "@/lib/trust";
 import { notify } from "@/lib/notify";
-import { fmtDistance } from "@/lib/geo";
 
 export type WishRow = {
   work_id: string;
@@ -106,7 +106,7 @@ export async function runTitleAlarms() {
   for (const h of hits) {
     await sql.begin(async (tx) => {
       await tx`update wishlist_items set last_alerted_at = now() where user_id = ${h.user_id} and work_id = ${h.work_id}`;
-      await notify(tx, { userId: h.user_id, type: "title_alarm", data: { title: h.title, text: `Ein Exemplar ist ${fmtDistance(h.dist)} entfernt frei.`, href: `/titel/${h.work_id}` } });
+      await notify(tx, { userId: h.user_id, type: "title_alarm", data: { title: h.title, ...systemText("title_alarm_free", { meters: Math.round(h.dist) }), href: `/titel/${h.work_id}` } });
     });
   }
   return hits.length;

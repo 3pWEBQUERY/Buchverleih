@@ -1,4 +1,5 @@
 /** Kreise (PRD 7.5): geschlossene Gruppe mit gemeinsamem Regal. Beitritt per Link oder Freigabe. */
+import { systemText } from "@/lib/notify/system-texts";
 import { sql } from "@/lib/db";
 import { err } from "@/lib/errors";
 import { shortCode } from "@/lib/crypto";
@@ -69,7 +70,7 @@ export async function joinCircle(userId: string, code: string) {
     if (status === "pending") {
       const admins = await tx<{ user_id: string }[]>`select user_id from circle_members where circle_id = ${c.id} and role = 'admin'`;
       const [me] = await tx<{ first_name: string }[]>`select first_name from users where id = ${userId}`;
-      for (const a of admins) await notify(tx, { userId: a.user_id, type: "circle_join_request", data: { name: me.first_name, text: `Kreis «${c.name}»`, href: `/kreise/${c.id}` } });
+      for (const a of admins) await notify(tx, { userId: a.user_id, type: "circle_join_request", data: { name: me.first_name, ...systemText("circle_name", { name: c.name }), href: `/kreise/${c.id}` } });
     }
     return { circleId: c.id, status };
   });

@@ -2,6 +2,21 @@ import { NextResponse } from "next/server";
 import { z, ZodError, type ZodType } from "zod";
 import { AppError } from "@/lib/errors";
 import { PG, pgCode } from "@/lib/db";
+import { LOCALE_COOKIE, fromAcceptLanguage, isLocale, type Locale } from "@/lib/i18n/locale";
+import { translateError } from "@/lib/i18n/messages/errors";
+
+/** Sprache der Anfrage, ohne auf den Request-Kontext zu warten: gewählte Sprache (Cookie), sonst Browser */
+export function requestLocale(req: Request): Locale {
+  const m = (req.headers.get("cookie") ?? "").match(new RegExp(`(?:^|;\\s*)${LOCALE_COOKIE}=([a-z]{2})`));
+  if (m && isLocale(m[1])) return m[1];
+  return fromAcceptLanguage(req.headers.get("accept-language"));
+}
+
+/** Standardmeldungen von zod in der Sprache der Anfrage; eigene Meldungen im Schema haben Vorrang */
+const zodLocales = { de: z.locales.de(), fr: z.locales.fr(), it: z.locales.it() };
+const zodErrors = (l: Locale) => ({ error: zodLocales[l].localeError });
+
+const INPUT: Record<Locale, string> = { de: "Eingabe", fr: "Saisie", it: "Inserimento" };
 
 /**
  * Hülle für alle Endpunkte unter /api/v1. Einheitliches Fehlerformat:
@@ -35,52 +50,46 @@ export function route<P = Record<string, string>>(fn: (req: Request, params: P) 
       if (out instanceof Response) return out;
       return NextResponse.json(out ?? { ok: true });
     } catch (e) {
-      return errorResponse(e);
+      return errorResponse(e, requestLocale(req));
     }
   };
 }
 
-export function errorResponse(e: unknown) {
+/** Fehlerantwort; Meldungen werden in die Sprache der Anfrage übersetzt (Unbekanntes bleibt deutsch) */
+export function errorResponse(e: unknown, l: Locale = "de") {
+  const res = errorBody(e);
+  let message = translateError(res.error.message, l);
+  // Eingabefehler wie bisher mit Feldname: «email: …»
+  if (e instanceof ZodError && e.issues[0]) message = `${e.issues[0].path.join(".") || INPUT[l]}: ${message}`;
+  return NextResponse.json({ error: { ...res.error, message } }, { status: res.status });
+}
+
+function errorBody(e: unknown): { status: number; error: { code: string; message: string; details?: unknown } } {
   if (e instanceof AppError) {
-    return NextResponse.json({ error: { code: e.code, message: e.message, details: e.details } }, { status: e.status });
+    return { status: e.status, error: { code: e.code, message: e.message, details: e.details } };
   }
   if (e instanceof ZodError) {
     const first = e.issues[0];
-    return NextResponse.json(
-      { error: { code: "invalid", message: first ? `${first.path.join(".") || "Eingabe"}: ${first.message}` : "Ungültige Eingabe.", details: e.issues } },
-      { status: 422 },
-    );
+    return { status: 422, error: { code: "invalid", message: first ? first.message : "Ungültige Eingabe.", details: e.issues } };
   }
   const code = pgCode(e);
   if (code === PG.EXCLUSION) {
-    return NextResponse.json(
-      { error: { code: "calendar_conflict", message: "Dieser Zeitraum ist im Verleihkalender bereits belegt. Wähle einen freien Zeitraum." } },
-      { status: 409 },
-    );
+    return { status: 409, error: { code: "calendar_conflict", message: "Dieser Zeitraum ist im Verleihkalender bereits belegt. Wähle einen freien Zeitraum." } };
   }
   if (code === PG.UNIQUE) {
-    return NextResponse.json(
-      { error: { code: "duplicate", message: "Das gibt es bereits. Lade die Seite neu, um den aktuellen Stand zu sehen." } },
-      { status: 409 },
-    );
+    return { status: 409, error: { code: "duplicate", message: "Das gibt es bereits. Lade die Seite neu, um den aktuellen Stand zu sehen." } };
   }
   if (code === "22007" || code === "22008") {
-    return NextResponse.json({ error: { code: "invalid", message: "Dieses Datum gibt es nicht. Prüfe die Eingabe." } }, { status: 422 });
+    return { status: 422, error: { code: "invalid", message: "Dieses Datum gibt es nicht. Prüfe die Eingabe." } };
   }
   if (code === "22P02") {
-    return NextResponse.json({ error: { code: "not_found", message: "Nicht gefunden." } }, { status: 404 });
+    return { status: 404, error: { code: "not_found", message: "Nicht gefunden." } };
   }
   if (code === PG.CHECK) {
-    return NextResponse.json(
-      { error: { code: "rule_violation", message: "Dieser Schritt verletzt eine Regel des Vorgangs. Lade die Seite neu." } },
-      { status: 409 },
-    );
+    return { status: 409, error: { code: "rule_violation", message: "Dieser Schritt verletzt eine Regel des Vorgangs. Lade die Seite neu." } };
   }
   console.error(e);
-  return NextResponse.json(
-    { error: { code: "server_error", message: "Etwas ist schiefgelaufen. Versuche es in einem Moment erneut." } },
-    { status: 500 },
-  );
+  return { status: 500, error: { code: "server_error", message: "Etwas ist schiefgelaufen. Versuche es in einem Moment erneut." } };
 }
 
 /** Höchstgrösse für JSON-Anfragen (Bilder laufen über den Bucket, nie durch diese Funktion) */
@@ -120,7 +129,7 @@ export async function body<T extends ZodType>(req: Request, schema: T): Promise<
       throw new AppError(400, "bad_json", "Die Anfrage konnte nicht gelesen werden.");
     }
   }
-  return schema.parse(data);
+  return schema.parse(data, zodErrors(requestLocale(req)));
 }
 
 export function query<T extends ZodType>(req: Request, schema: T): z.infer<T> {
@@ -130,7 +139,7 @@ export function query<T extends ZodType>(req: Request, schema: T): z.infer<T> {
     if (k in obj) obj[k] = ([] as string[]).concat(obj[k], v);
     else obj[k] = v;
   }
-  return schema.parse(obj);
+  return schema.parse(obj, zodErrors(requestLocale(req)));
 }
 
 export const uuid = z.string().uuid({ message: "ungültige ID" });
