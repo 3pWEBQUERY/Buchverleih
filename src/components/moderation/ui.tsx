@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { cx } from "@/components/ui";
 import { IconArrowLeft } from "@/components/icons";
+import type { Locale } from "@/lib/i18n/locale";
+import { MOD_LABELS } from "@/lib/i18n/messages/moderation-labels";
 
 /** Bausteine des internen Moderations-Dashboards (Server-Komponenten). */
 
@@ -20,15 +22,15 @@ export function Chip({ tone = "done", strong, children, className }: { tone?: To
 }
 
 export type Priority = "hoch" | "mittel" | "normal" | "niedrig";
-const prio: Record<Priority, [string, Tone, boolean]> = {
-  hoch: ["Priorität hoch", "late", true],
-  mittel: ["Priorität mittel", "lent", true],
-  normal: ["Läuft automatisch", "wait", false],
-  niedrig: ["Priorität niedrig", "done", false],
+const prio: Record<Priority, [Tone, boolean]> = {
+  hoch: ["late", true],
+  mittel: ["lent", true],
+  normal: ["wait", false],
+  niedrig: ["done", false],
 };
-export function PriorityChip({ p }: { p: Priority }) {
-  const [label, tone, strong] = prio[p];
-  return <Chip tone={tone} strong={strong}>{label}</Chip>;
+export function PriorityChip({ p, l = "de" }: { p: Priority; l?: Locale }) {
+  const [tone, strong] = prio[p];
+  return <Chip tone={tone} strong={strong}>{(MOD_LABELS[l] ?? MOD_LABELS.de).priority[p]}</Chip>;
 }
 
 /** Abschnittskopf mit Zähler */
