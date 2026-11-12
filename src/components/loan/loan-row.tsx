@@ -5,7 +5,8 @@ import { type Tone } from "@/components/status";
 import { IconArrowRight } from "@/components/icons";
 import { cx } from "@/components/ui";
 import { statusLabel, offerNoun } from "@/lib/i18n/de-CH";
-import { deadline, dueDay, parseRange, relHours, fmtRange, fmtDay, dayToDate, relDays } from "@/lib/dates";
+import { deadline, dueDay, parseRange, relHours, fmtRange, fmtDay, fmtDayTime, dayToDate, relDays, diffDays, isoDay, todayCH, addDays } from "@/lib/dates";
+import { Monogram } from "@/components/person/monogram";
 
 export function loanTone(status: LoanListItem["status"], due: Date | null): Tone {
   if ((status === "active" || status === "disputed") && due && new Date(due) < new Date()) return "late";
@@ -51,6 +52,130 @@ function whenText(loan: LoanListItem) {
     when = overdue ? `Fällig war ${fmtDay(dayToDate(d))} (${relDays(d)})` : deadline(d);
   }
   return { when, overdue: Boolean(overdue) };
+}
+
+
+/** Restzeit als Zahl und Einheit: «26 Tage», «41 Std.», «25 Min.» */
+function leftOf(until: Date | string): { n: string; unit: string; ms: number } {
+  const ms = new Date(until).getTime() - Date.now();
+  const h = Math.floor(Math.max(0, ms) / 3_600_000);
+  if (h >= 48) { const d = Math.round(h / 24); return { n: String(d), unit: "Tage", ms }; }
+  if (h >= 1) return { n: String(h), unit: "Std.", ms };
+  return { n: String(Math.max(1, Math.round(Math.max(0, ms) / 60_000))), unit: "Min.", ms };
+}
+
+const clamp = (x: number) => Math.min(1, Math.max(0, x));
+const span = (a: Date | string, b: Date | string) => clamp((Date.now() - new Date(a).getTime()) / Math.max(1, new Date(b).getTime() - new Date(a).getTime()));
+
+type Meter = {
+  eyebrow: string;
+  value: string;
+  unit: string;
+  sideLabel: string;
+  side: string;
+  pct: number | null;
+  foot: [string, string] | null;
+  tone: "accent" | "late" | "plain";
+};
+
+/**
+ * Wie viel Zeit bleibt? Je nach Status: Leihzeit bis zur Rückgabe, Antwortfrist,
+ * Beginn der Leihe, Übergabe oder Prüffrist nach der Rückgabe.
+ */
+export function timeMeter(loan: LoanListItem): Meter | null {
+  const today = todayCH();
+  const r = parseRange(loan.wanted);
+  const owner = loan.role === "owner";
+
+  if ((loan.status === "active" || loan.status === "disputed") && loan.due_at) {
+    const end = dueDay(loan.due_at);
+    const start = loan.handed_over_at ? isoDay(loan.handed_over_at) : r?.start ?? today;
+    const total = Math.max(1, diffDays(start, end) + 1);
+    const day = Math.min(total, Math.max(1, diffDays(start, today) + 1));
+    const left = diffDays(today, end);
+    const foot: [string, string] = [`Seit ${fmtDay(dayToDate(start))}`, left < 0 ? `${total} Tage Leihzeit` : `Tag ${day} von ${total}`];
+    if (left < 0) {
+      return { eyebrow: "Überfällig seit", value: String(-left), unit: -left === 1 ? "Tag" : "Tagen", sideLabel: "War fällig", side: fmtDay(dayToDate(end)), pct: 1, foot, tone: "late" };
+    }
+    const eyebrow = owner ? `Zurück von ${loan.other_name} in` : "Rückgabe in";
+    if (left === 0) return { eyebrow: owner ? "Kommt zurück" : "Rückgabe", value: "Heute", unit: "", sideLabel: "Letzter Tag", side: fmtDay(dayToDate(end)), pct: 1, foot, tone: "accent" };
+    return {
+      eyebrow, value: String(left), unit: left === 1 ? "Tag" : "Tagen", sideLabel: "Rückgabe bis", side: fmtDay(dayToDate(end)),
+      pct: clamp(day / total), foot, tone: left <= 2 ? "accent" : "plain",
+    };
+  }
+
+  if (loan.status === "requested") {
+    const l = leftOf(loan.respond_by);
+    const len = r?.end ? diffDays(r.start, r.end) : null;
+    return {
+      eyebrow: owner ? "Zeit für deine Antwort" : "Antwortfrist noch",
+      value: l.n, unit: l.unit, sideLabel: "Frist", side: fmtDayTime(loan.respond_by),
+      pct: span(loan.requested_at, loan.respond_by),
+      foot: r && loan.kind === "lend" ? [`Gewünscht ${fmtRange(r)}`, len ? `${len} Tage` : ""] : null,
+      tone: l.ms < 12 * 3_600_000 ? "late" : "accent",
+    };
+  }
+
+  if (loan.status === "accepted") {
+    if (r && loan.kind === "lend" && diffDays(today, r.start) > 0) {
+      const n = diffDays(today, r.start);
+      const len = r.end ? diffDays(r.start, r.end) : null;
+      return {
+        eyebrow: "Leihe beginnt in", value: n === 1 ? "1" : String(n), unit: n === 1 ? "Tag" : "Tagen",
+        sideLabel: "Leihzeit", side: fmtRange(r), pct: null,
+        foot: [len ? `${len} Tage Leihzeit` : "Leihzeit offen", r.end ? `Rückgabe ${fmtDay(dayToDate(addDays(r.end, -1)))}` : ""], tone: "plain",
+      };
+    }
+    if (loan.handover_by) {
+      const l = leftOf(loan.handover_by);
+      return {
+        eyebrow: "Zeit für die Übergabe", value: l.n, unit: l.unit, sideLabel: "Übergabe bis", side: fmtDayTime(loan.handover_by),
+        pct: null, foot: r && loan.kind === "lend" ? [`Leihzeit ${fmtRange(r)}`, ""] : null, tone: l.ms < 24 * 3_600_000 ? "late" : "accent",
+      };
+    }
+    return null;
+  }
+
+  if (loan.status === "returned" && loan.inspection_until) {
+    const l = leftOf(loan.inspection_until);
+    return {
+      eyebrow: owner ? "Zeit, den Zustand zu prüfen" : "Prüfung läuft noch", value: l.n, unit: l.unit, sideLabel: "Frist", side: fmtDayTime(loan.inspection_until),
+      pct: loan.returned_at ? span(loan.returned_at, loan.inspection_until) : null,
+      foot: owner ? ["Danach gilt das Buch als zurück in gutem Zustand.", ""] : null, tone: "plain",
+    };
+  }
+  return null;
+}
+
+/** Restzeit gross, darunter der Balken mit der verstrichenen Zeit */
+function TimeMeter({ m }: { m: Meter }) {
+  const late = m.tone === "late";
+  return (
+    <div className={cx("rounded-[8px] px-4 py-3.5", late ? "bg-late/[0.07]" : "bg-paper-2")}>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 items-end">
+        <p className={cx("text-[12px]", late ? "text-late" : "text-muted")}>{m.eyebrow}</p>
+        <p className="text-[12px] text-muted text-right">{m.sideLabel}</p>
+        <p className={cx("flex items-baseline gap-1.5 leading-none", late && "text-late")}>
+          <span className="text-[30px] md:text-[34px] font-[560] tracking-[-0.045em] tnum">{m.value}</span>
+          {m.unit && <span className="text-[15px] font-medium">{m.unit}</span>}
+        </p>
+        <p className={cx("text-[14px] font-medium tnum text-right truncate pb-0.5", late && "text-late")}>{m.side}</p>
+      </div>
+      {m.pct != null && (
+        <div className="relative mt-3 h-1.5 rounded-full bg-paper-3 overflow-hidden" role="presentation">
+          <span className={cx("absolute inset-y-0 left-0 rounded-full", late ? "bg-late" : m.tone === "accent" ? "bg-accent" : "bg-ink-2")}
+            style={{ width: `${Math.max(3, Math.round(m.pct * 100))}%` }} />
+        </div>
+      )}
+      {m.foot && (m.foot[0] || m.foot[1]) && (
+        <div className="mt-2 flex justify-between gap-3 text-[12px] text-muted tnum">
+          <span className="truncate">{m.foot[0]}</span>
+          {m.foot[1] && <span className="flex-none">{m.foot[1]}</span>}
+        </div>
+      )}
+    </div>
+  );
 }
 
 const coverOf = (loan: LoanListItem) => ({ title: loan.title, authors: loan.authors, photoKey: loan.photo_key, photoW: loan.photo_w, photoH: loan.photo_h, coverKey: loan.cover_key, seed: loan.work_id });
@@ -108,33 +233,47 @@ export function LoanRow({ loan, variant, i = 0 }: { loan: LoanListItem; variant?
     );
   }
 
+  const meter = timeMeter(loan);
+  const p = loanProgress(loan.status, loan.kind);
   return (
     <li className="anim-rise min-w-0" style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
       <Link href={`/vorgaenge/${loan.id}`}
-        className={cx("group grid grid-cols-[72px_minmax(0,1fr)] gap-4 md:gap-5 rounded-[10px] border p-4 md:p-5 h-full transition-colors",
-          v === "action" ? "border-line-strong hover:border-accent" : "border-line hover:border-ink-2")}>
-        <span className="book self-start"><span className="book-face block"><Cover data={coverOf(loan)} width={72} height={108} uniform /></span></span>
-        <div className="min-w-0 flex flex-col">
-          <div className="flex items-start justify-between gap-3">
-            <p className="text-[12.5px] text-muted truncate pt-0.5">{who(loan)}</p>
-            <Unread n={loan.unread} />
+        className={cx("group flex flex-col gap-4 rounded-[10px] border p-4 md:p-5 h-full transition-colors",
+          tone === "late" ? "border-late/50 hover:border-late" : v === "action" ? "border-line-strong hover:border-accent" : "border-line hover:border-ink-2")}>
+        <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-4">
+          <span className="book self-start"><span className="book-face block"><Cover data={coverOf(loan)} width={64} height={96} uniform /></span></span>
+          <div className="min-w-0 flex flex-col">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[12.5px] text-muted truncate inline-flex items-center gap-2 min-w-0">
+                <Monogram name={loan.other_name} seed={loan.other_id} size={20} photo={loan.other_avatar} />
+                <span className="truncate">{who(loan)}</span>
+              </p>
+              <Unread n={loan.unread} />
+            </div>
+            <p className="font-serif text-[19px] md:text-[20px] leading-[1.15] mt-1.5 line-clamp-2 group-hover:underline underline-offset-4 decoration-1">{loan.title}</p>
+            {loan.authors[0] && <p className="text-[13px] text-muted truncate mt-0.5">{loan.authors.join(", ")}</p>}
+            {!p.ended && <div className="mt-auto pt-3"><Progress loan={loan} trouble={tone === "late"} /></div>}
           </div>
-          <p className="font-serif text-[19px] md:text-[20px] leading-[1.15] mt-1 line-clamp-2">{loan.title}</p>
-          {loan.authors[0] && <p className="text-[13px] text-muted truncate mt-0.5">{loan.authors.join(", ")}</p>}
-          <div className="mt-4"><Progress loan={loan} trouble={tone === "late"} /></div>
-          <div className="mt-auto pt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-            <span className={cx("inline-flex items-center gap-1.5 text-[13px] tnum min-w-0", overdue ? "text-late font-medium" : "text-ink-2")}>
-              <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none", toneDot(tone))} />
-              <span className="truncate">{v === "action" ? (when ?? statusLabel[loan.status]) : (loan.waitingText ?? statusLabel[loan.status])}</span>
+        </div>
+
+        {meter ? <TimeMeter m={meter} /> : when && (
+          <p className={cx("inline-flex items-center gap-1.5 text-[13px] tnum", overdue ? "text-late font-medium" : "text-ink-2")}>
+            <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none", toneDot(tone))} />{when}
+          </p>
+        )}
+
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <span className="inline-flex items-center gap-1.5 text-[13px] text-ink-2 min-w-0">
+            <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none", toneDot(tone))} />
+            <span className="truncate">{v === "action" ? "Du bist am Zug" : (loan.waitingText ?? statusLabel[loan.status])}</span>
+          </span>
+          {v === "action" ? (
+            <span className="h-9 px-3.5 rounded-[6px] bg-accent text-accent-ink text-[13.5px] font-medium inline-flex items-center gap-1.5 whitespace-nowrap group-hover:bg-accent-hover transition-colors">
+              {loan.step!.label} <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
             </span>
-            {v === "action" ? (
-              <span className="h-9 px-3.5 rounded-[6px] bg-accent text-accent-ink text-[13.5px] font-medium inline-flex items-center gap-1.5 whitespace-nowrap group-hover:bg-accent-hover transition-colors">
-                {loan.step!.label} <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
-              </span>
-            ) : (
-              when && <span className={cx("text-[13px] tnum", overdue ? "text-late font-medium" : "text-muted")}>{when}</span>
-            )}
-          </div>
+          ) : (
+            <span className="text-[13px] font-medium text-accent-hover inline-flex items-center gap-1">Öffnen <IconArrowRight width={14} height={14} /></span>
+          )}
         </div>
       </Link>
     </li>

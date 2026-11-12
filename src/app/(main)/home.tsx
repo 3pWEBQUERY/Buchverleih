@@ -107,7 +107,7 @@ export async function Home({ user }: { user: SessionUser }) {
             <span className="h-10 w-10 rounded-full bg-accent-soft text-accent-hover grid place-items-center flex-none"><IconCheck width={18} height={18} /></span>
             <div>
               <p className="font-medium">Alles erledigt.</p>
-              <p className="text-ink-2 text-[14.5px]">{running.length > 0 ? `${running.length} ${running.length === 1 ? "Vorgang läuft" : "Vorgänge laufen"}, die andere Seite ist am Zug.` : "Kein offener Vorgang. Zeit, etwas Neues zu lesen."}</p>
+              <p className="text-ink-2 text-[14.5px]">{running.length > 0 ? `Bei ${running.length === 1 ? "deinem laufenden Vorgang" : `deinen ${running.length} laufenden Vorgängen`} ist die andere Seite am Zug.` : "Kein offener Vorgang. Zeit, etwas Neues zu lesen."}</p>
             </div>
           </div>
         ) : (
@@ -115,8 +115,23 @@ export async function Home({ user }: { user: SessionUser }) {
             {mine.slice(0, 4).map((l, i) => <LoanRow key={l.id} loan={l} variant="action" i={i} />)}
           </ul>
         )}
-        {running.length > 0 && mine.length > 0 && (
-          <p className="text-[13.5px] text-muted mt-4">Dazu {running.length === 1 ? "ein laufender Vorgang, bei dem" : `${running.length} laufende Vorgänge, bei denen`} die andere Seite am Zug ist.</p>
+        {mine.length > 4 && (
+          <p className="text-[13.5px] text-muted mt-4"><Link href="/vorgaenge" className="font-medium text-accent-hover hover:underline underline-offset-4">{mine.length - 4} weitere warten auf dich</Link></p>
+        )}
+
+        {running.length > 0 && (
+          <div className="mt-10">
+            <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-1 mb-4">
+              <div>
+                <h3 className="text-[18px] md:text-[20px] font-[560] tracking-[-0.025em]">Läuft gerade</h3>
+                <p className="text-[14px] text-muted mt-0.5">Hier ist die andere Seite am Zug. Die Restzeit siehst du auf einen Blick.</p>
+              </div>
+              {running.length > 4 && <Link href="/vorgaenge" className="text-[13.5px] font-medium text-accent-hover hover:underline underline-offset-4 pb-0.5">Alle {running.length} ansehen</Link>}
+            </div>
+            <ul className="grid xl:grid-cols-2 gap-3">
+              {running.slice(0, 4).map((l, i) => <LoanRow key={l.id} loan={l} variant="running" i={i} />)}
+            </ul>
+          </div>
         )}
       </StepSection>
 

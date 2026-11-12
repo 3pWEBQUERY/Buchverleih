@@ -19,11 +19,17 @@ export type LoanListItem = {
   work_id: string;
   other_name: string;
   other_id: string;
+  other_avatar: string | null;
   wanted: string;
   due_at: Date | null;
   respond_by: Date;
   requested_at: Date;
   closed_at: Date | null;
+  handed_over_at: Date | null;
+  handover_by: Date | null;
+  returned_at: Date | null;
+  inspection_until: Date | null;
+  extensions_used: number;
   photo_key: string | null;
   photo_w: number | null;
   photo_h: number | null;
@@ -39,6 +45,8 @@ type Joined = LoanRow & {
   authors: string[];
   owner_name: string;
   borrower_name: string;
+  owner_avatar: string | null;
+  borrower_avatar: string | null;
   photo_key: string | null;
   photo_w: number | null;
   photo_h: number | null;
@@ -52,7 +60,7 @@ type Joined = LoanRow & {
 };
 
 const JOINED = (userId: string) => sql`
-  select l.*, l.wanted::text as wanted, w.title, w.authors, e.work_id, o.first_name as owner_name, b.first_name as borrower_name,
+  select l.*, l.wanted::text as wanted, w.title, w.authors, e.work_id, o.first_name as owner_name, b.first_name as borrower_name, o.avatar_key as owner_avatar, b.avatar_key as borrower_avatar,
          ph.key as photo_key, ph.width as photo_w, ph.height as photo_h, e.cover_key,
          oc.response as case_response, oc.kind::text as case_kind,
          exists (select 1 from ratings r where r.loan_id = l.id and r.from_user = ${userId}) as rated_by_me,
@@ -101,7 +109,9 @@ export async function myLoans(userId: string): Promise<LoanListItem[]> {
     return {
       id: r.id, kind: r.kind, status: r.status, role: s.role, title: r.title, authors: r.authors, copy_id: r.copy_id, work_id: r.work_id,
       other_name: s.role === "owner" ? r.borrower_name : r.owner_name, other_id: s.role === "owner" ? r.borrower_id : r.owner_id,
+      other_avatar: s.role === "owner" ? r.borrower_avatar : r.owner_avatar,
       wanted: r.wanted, due_at: r.due_at, respond_by: r.respond_by, requested_at: r.requested_at, closed_at: r.closed_at,
+      handed_over_at: r.handed_over_at, handover_by: r.handover_by, returned_at: r.returned_at, inspection_until: r.inspection_until, extensions_used: r.extensions_used,
       photo_key: r.photo_key, photo_w: r.photo_w, photo_h: r.photo_h, cover_key: r.cover_key, unread: r.unread, step: s.step, turn: s.turn, waitingText: s.waitingText,
     } satisfies LoanListItem;
   });
