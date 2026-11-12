@@ -10,12 +10,14 @@ import { publicProfile } from "@/lib/profile";
 import { requestBlocker } from "@/lib/trust";
 import { Cover, imageUrl } from "@/components/cover";
 import { cx } from "@/components/ui";
-import { shelfStatusText } from "@/components/status";
+import { shelfStatusLocal } from "@/lib/i18n/messages/shelf-status";
+import { getLocale } from "@/lib/i18n/server";
+import { labels } from "@/lib/i18n/labels";
+import { EXEMPLAR } from "@/lib/i18n/messages/exemplar";
+import { responseText } from "@/lib/response-time";
 import { Monogram } from "@/components/person/monogram";
-import { conditionHint, conditionLabel, languageLabel, offerLabel, trustLabel } from "@/lib/i18n/de-CH";
 import { fmtDistance } from "@/lib/geo";
 import { dayToDate, fmtDay, fmtMonthYear } from "@/lib/dates";
-import { responseText } from "@/lib/response-time";
 import { IconArrowLeft, IconArrowRight } from "@/components/icons";
 import { CalendarView } from "@/components/calendar";
 import { MoreBooksLoader } from "@/components/more-books";
@@ -25,13 +27,14 @@ import { CorrectionForm } from "./correction";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return { title: "Buch" };
+  const book = EXEMPLAR[await getLocale()].book;
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { title: book };
   // Titel nur verraten, wenn das Exemplar für die betrachtende Person sichtbar ist (z. B. Kreis-Bücher)
   const viewer = await getUser();
   const [c] = await sql<{ title: string }[]>`
     select w.title from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id
      where c.id = ${id} and copy_visible_to(c.id, ${viewer?.id ?? null}::uuid)`;
-  return { title: c?.title ?? "Buch", robots: { index: false } };
+  return { title: c?.title ?? book, robots: { index: false } };
 }
 
 const toneDot = { ok: "bg-ok", lent: "bg-lent", late: "bg-late", wait: "bg-wait", done: "bg-done", accent: "bg-accent" } as const;
@@ -43,6 +46,9 @@ const toneDot = { ok: "bg-ok", lent: "bg-lent", late: "bg-late", wait: "bg-wait"
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await getUser();
+  const l = await getLocale();
+  const t = EXEMPLAR[l];
+  const L = labels(l);
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const copy = await copyDetail(id, user?.id ?? null, origin(user));
   if (!copy) notFound();
@@ -66,7 +72,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
          and (${user?.id ?? null}::uuid is null or c2.owner_id <> ${user?.id ?? null}::uuid)
          and copy_visible_to(c2.id, ${user?.id ?? null}::uuid)`,
   ]);
-  const st = shelfStatusText(copy);
+  const st = shelfStatusLocal(copy, l);
   const photo = copy.photos[0];
   const cover = { title: copy.title, authors: copy.authors, photoKey: photo?.key, photoW: photo?.width, photoH: photo?.height, coverKey: copy.cover_key, seed: copy.work_id };
   const dist = own ? null : fmtDistance(copy.dist);
@@ -77,25 +83,26 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const freeFrom = cal?.free[0]?.start ?? null;
   const freeNow = freeFrom != null && cal != null && freeFrom === cal.today;
   const respond = owner?.median_response_hours;
-  const respondText = responseText(respond) ? `Antwortet meist ${responseText(respond)}` : null;
+  const rt = responseText(respond, l);
+  const respondText = rt ? t.respondsUsually(rt) : null;
   const quick: { text: string; tone: "ok" | "wait" | "plain" }[] = [
-    ...(copy.offers.includes("lend") && cal ? [{ text: freeNow ? "Jetzt frei" : freeFrom ? `Frei ab ${fmtDay(dayToDate(freeFrom))}` : "Gerade nicht buchbar", tone: freeNow ? "ok" as const : "wait" as const }] : []),
-    ...(copy.offers.includes("lend") ? [{ text: `Bis ${loanDays} Tage`, tone: "plain" as const }] : []),
-    ...(dist ? [{ text: `${dist} entfernt`, tone: "plain" as const }] : []),
+    ...(copy.offers.includes("lend") && cal ? [{ text: freeNow ? t.freeNow : freeFrom ? t.freeFrom(fmtDay(dayToDate(freeFrom), l)) : t.notBookable, tone: freeNow ? "ok" as const : "wait" as const }] : []),
+    ...(copy.offers.includes("lend") ? [{ text: t.upToDays(loanDays), tone: "plain" as const }] : []),
+    ...(dist ? [{ text: t.away(dist), tone: "plain" as const }] : []),
     ...(respondText ? [{ text: respondText, tone: "plain" as const }] : []),
   ];
 
   const facts: [string, React.ReactNode][] = [
-    ["Ausgabe", [copy.publisher, copy.year, copy.binding === "hardcover" ? "gebunden" : copy.binding === "paperback" ? "Taschenbuch" : null].filter(Boolean).join(", ") || "–"],
-    ["Sprache", copy.language ? languageLabel[copy.language] ?? copy.language : "–"],
-    ["Leihfrist", `${loanDays} Tage`],
+    [t.edition, [copy.publisher, copy.year, copy.binding === "hardcover" ? t.hardcover : copy.binding === "paperback" ? t.paperback : null].filter(Boolean).join(", ") || "–"],
+    [t.language, copy.language ? L.languageLabel[copy.language] ?? copy.language : "–"],
+    [t.loanPeriod, t.days(loanDays)],
     ...(copy.isbn13 ? [["ISBN", copy.isbn13] as [string, string]] : []),
   ];
 
   return (
     <div>
       <Link href={own ? "/regal" : "/suche"} className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
-        <IconArrowLeft width={16} height={16} /> {own ? "Mein Regal" : "Suche"}
+        <IconArrowLeft width={16} height={16} /> {own ? t.myShelf : t.search}
       </Link>
 
       <div className="grid lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)] gap-10 xl:gap-16 items-start">
@@ -103,8 +110,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <aside className="lg:sticky lg:top-8 space-y-5">
           <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-5 items-end lg:block lg:space-y-5">
             <div className="lg:rounded-[12px] lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center anim-cover">
-              <span className="block lg:hidden"><Cover priority data={cover} width={104} height={156} uniform /></span>
-              <span className="hidden lg:block"><Cover priority large data={cover} width={220} height={330} uniform /></span>
+              <span className="block lg:hidden"><Cover priority data={cover} width={104} height={156} uniform l={l} /></span>
+              <span className="hidden lg:block"><Cover priority large data={cover} width={220} height={330} uniform l={l} /></span>
             </div>
             <div className="anim-rise min-w-0">
               <h1 lang="de" className="font-serif text-[24px] md:text-[32px] leading-[1.1] hyphens-auto break-words">{copy.title}</h1>
@@ -113,12 +120,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           </div>
 
           {extraPhotos.length > 0 && (
-            <ul className="grid grid-cols-4 gap-2" aria-label="Fotos des Exemplars">
+            <ul className="grid grid-cols-4 gap-2" aria-label={t.photosAria}>
               {extraPhotos.slice(0, 4).map((p) => (
                 <li key={p.id} className="aspect-[3/4]">
                   <a href={imageUrl(p.key, false)} target="_blank" className="block h-full rounded-[8px] overflow-hidden border border-line hover:border-ink-2 transition-colors">
                     { }
-                    <img src={imageUrl(p.key)} alt={`Foto von ${copy.title}`} className="h-full w-full object-cover" />
+                    <img src={imageUrl(p.key)} alt={t.photoAlt(copy.title)} className="h-full w-full object-cover" />
                   </a>
                 </li>
               ))}
@@ -137,17 +144,17 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             </dl>
             <div className="px-4 py-3.5">
               <div className="flex items-baseline justify-between gap-3">
-                <p className="text-[13.5px] text-muted">Zustand</p>
-                <p className="text-[13.5px] font-medium">{conditionLabel[copy.condition]}</p>
+                <p className="text-[13.5px] text-muted">{t.condition}</p>
+                <p className="text-[13.5px] font-medium">{L.conditionLabel[copy.condition]}</p>
               </div>
               <div aria-hidden className="mt-2 grid grid-cols-4 gap-1">
                 {[1, 2, 3, 4].map((c) => (
                   <span key={c} className={cx("h-1.5 rounded-full", c <= copy.condition ? (c === copy.condition ? "bg-accent" : "bg-ink-2/70") : "bg-paper-3")} />
                 ))}
               </div>
-              <div aria-hidden className="mt-1.5 flex justify-between text-[11px] text-muted"><span>Wie neu</span><span>Stark gebraucht</span></div>
+              <div aria-hidden className="mt-1.5 flex justify-between text-[11px] text-muted"><span>{t.condNew}</span><span>{t.condWorn}</span></div>
               <p className="text-[13px] text-muted leading-snug mt-2.5">
-                {conditionHint[copy.condition]}.{copy.condition_note && <> Notiz: <span className="text-ink">«{copy.condition_note}»</span></>}
+                {L.conditionHint[copy.condition]}.{copy.condition_note && <> {t.note} <span className="text-ink">«{copy.condition_note}»</span></>}
               </p>
             </div>
           </div>
@@ -155,13 +162,13 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <div className="flex flex-col gap-2">
             {own && (
               <Link href={`/regal/${copy.id}`} className="h-11 rounded-[6px] bg-accent-soft text-accent-hover font-medium text-[14.5px] inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-accent-ink transition-colors">
-                Bearbeiten <IconArrowRight width={16} height={16} />
+                {t.edit} <IconArrowRight width={16} height={16} />
               </Link>
             )}
             <Link href={`/titel/${copy.work_id}`} className="h-11 rounded-[6px] border border-line-strong font-medium text-[14.5px] inline-flex items-center justify-center gap-2 hover:border-accent hover:text-accent-hover transition-colors">
-              {sameWork.n > 0 ? `${sameWork.n} ${sameWork.n === 1 ? "weiteres Exemplar" : "weitere Exemplare"} vergleichen` : "Zur Titelseite"} <IconArrowRight width={16} height={16} />
+              {sameWork.n > 0 ? t.compare(sameWork.n) : t.toTitle} <IconArrowRight width={16} height={16} />
             </Link>
-            {!own && <ShareButton title={copy.title} text={`«${copy.title}» bei Leihregal`} path={`/titel/${copy.work_id}`} />}
+            {!own && <ShareButton title={copy.title} text={t.shareText(copy.title)} path={`/titel/${copy.work_id}`} />}
           </div>
           <CorrectionForm editionId={copy.edition_id} loggedIn={Boolean(user)} />
         </aside>
@@ -169,15 +176,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         {/* ------------------------------------------------ Anfrage */}
         <div className="min-w-0">
           <header className="anim-rise">
-            <p className="eyebrow">{copy.offers.map((o) => offerLabel[o]).join(" · ") || "Nicht angeboten"}</p>
+            <p className="eyebrow">{copy.offers.map((o) => L.offerLabel[o]).join(" · ") || t.notOffered}</p>
             <h2 className="display text-[28px] md:text-[38px] mt-2">
-              {own ? <>Dein Exemplar. <em>So sehen es andere.</em></>
-                : copy.offers.includes("lend") ? <>Leih dir <em>dieses Buch.</em></>
-                : copy.offers.includes("swap") ? <>Tausch <em>dieses Buch.</em></>
-                : <>Ein Geschenk <em>für dich.</em></>}
+              {(() => {
+                const h = own ? t.heads.own : copy.offers.includes("lend") ? t.heads.lend : copy.offers.includes("swap") ? t.heads.swap : t.heads.gift;
+                return <>{h[0]}<em>{h[1]}</em></>;
+              })()}
             </h2>
             {!own && quick.length > 0 && (
-              <ul className="mt-5 flex flex-wrap gap-1.5" aria-label="Auf einen Blick">
+              <ul className="mt-5 flex flex-wrap gap-1.5" aria-label={t.glance}>
                 {quick.map((q) => (
                   <li key={q.text} className={cx("inline-flex items-center gap-1.5 h-8 px-3 rounded-[8px] text-[13px] font-medium",
                     q.tone === "ok" ? "bg-ok/10 text-ok" : q.tone === "wait" ? "bg-wait/10 text-ink-2" : "bg-paper-2 text-ink-2")}>
@@ -194,18 +201,18 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <div className="flex items-center gap-4 min-w-0">
               <Monogram name={copy.owner_name} seed={copy.owner_id} size={56} photo={copy.owner_avatar} />
               <div className="min-w-0">
-                <p className="text-[13px] text-muted">{own ? "Dein Exemplar" : "Verleiht"}</p>
+                <p className="text-[13px] text-muted">{own ? t.yourCopy : t.lends}</p>
                 <Link id="verleiher" href={`/profil/${copy.owner_id}`} className="text-[22px] font-[560] tracking-[-0.03em] leading-tight hover:underline underline-offset-4 decoration-1">{copy.owner_name}</Link>
                 <p className="text-[13.5px] text-muted mt-0.5">
-                  {trustLabel[copy.owner_trust] ?? "Neu"}{copy.owner_municipality && ` · ${copy.owner_municipality}`} · seit {fmtMonthYear(copy.owner_since)}
+                  {L.trustLabel[copy.owner_trust] ?? t.newTrust}{copy.owner_municipality && ` · ${copy.owner_municipality}`} · {t.since(fmtMonthYear(copy.owner_since, l))}
                 </p>
               </div>
             </div>
             {owner && (
               <dl className="grid grid-cols-3 gap-2">
-                {[[String(owner.lent), "verliehen"], [String(owner.borrowed), "geliehen"], [owner.punctual_pct == null ? "–" : `${owner.punctual_pct}%`, "pünktlich"]].map(([n, l]) => (
-                  <div key={l} className="rounded-[8px] bg-paper-2 px-4 py-3 min-w-[84px] flex flex-col-reverse">
-                    <dt className="text-[12px] text-muted mt-1">{l}</dt>
+                {[[String(owner.lent), t.stats.lent], [String(owner.borrowed), t.stats.borrowed], [owner.punctual_pct == null ? "–" : `${owner.punctual_pct}%`, t.stats.punctual]].map(([n, lab]) => (
+                  <div key={lab} className="rounded-[8px] bg-paper-2 px-4 py-3 min-w-[84px] flex flex-col-reverse">
+                    <dt className="text-[12px] text-muted mt-1">{lab}</dt>
                     <dd className="text-[24px] font-[560] tracking-[-0.04em] leading-none tnum">{n}</dd>
                   </div>
                 ))}
@@ -215,27 +222,27 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
           {owner && !own && (owner.shared_circles.length > 0 || owner.good_ratings > 0) && (
             <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 px-1 text-[13px] text-muted">
-              {owner.shared_circles.length > 0 && <li>Gemeinsam in <span className="text-ink-2 font-medium">{owner.shared_circles.join(", ")}</span></li>}
-              {owner.good_ratings > 0 && <li><span className="text-ink-2 font-medium tnum">{owner.good_ratings}</span> {owner.good_ratings === 1 ? "gute Bewertung" : "gute Bewertungen"}</li>}
+              {owner.shared_circles.length > 0 && <li>{t.together} <span className="text-ink-2 font-medium">{owner.shared_circles.join(", ")}</span></li>}
+              {owner.good_ratings > 0 && <li><span className="text-ink-2 font-medium tnum">{owner.good_ratings}</span> {t.goodRatings(owner.good_ratings)}</li>}
             </ul>
           )}
 
           {/* So läuft es ab */}
           {!own && copy.offers.length > 0 && (
             <section aria-labelledby="ablauf" className="mt-8 anim-rise" style={{ animationDelay: "90ms" }}>
-              <h3 id="ablauf" className="eyebrow mb-3">So läuft es ab</h3>
+              <h3 id="ablauf" className="eyebrow mb-3">{t.flow}</h3>
               <ol className="grid grid-cols-2 xl:grid-cols-4 gap-2">
                 {[
-                  ["Anfragen", copy.offers.includes("lend") ? "Zeitraum wählen, kurz hallo sagen." : "Kurz hallo sagen und senden."],
-                  ["Antwort", `${copy.owner_name} antwortet innert 72 Stunden${respond != null && respond < 24 ? `, meist in ${Math.max(1, Math.ceil(respond))} Std.` : "."}`],
-                  ["Übergabe", "Ort im Chat abmachen, Code scannen, fertig."],
+                  [t.flowAsk[0], copy.offers.includes("lend") ? t.flowAsk[1] : t.flowAsk[2]],
+                  [t.answer, t.flowAnswer(copy.owner_name, respond ?? null)],
+                  [t.handover[0], t.handover[1]],
                   copy.offers.includes("lend")
-                    ? ["Zurückgeben", `Nach ${loanDays} Tagen${copy.auto_extend ? ", verlängern geht" : ""}. Wir erinnern dich.`]
-                    : ["Behalten", copy.offers.includes("swap") ? "Ihr tauscht, jedes Buch gehört danach der anderen Person." : "Das Buch gehört danach dir."],
-                ].map(([t, d], i) => (
-                  <li key={t} className="rounded-[10px] bg-paper-2 px-4 py-3.5">
+                    ? [t.giveBack, t.giveBackText(loanDays, copy.auto_extend)]
+                    : [t.keep, copy.offers.includes("swap") ? t.keepSwap : t.keepGift],
+                ].map(([title, d], i) => (
+                  <li key={title} className="rounded-[10px] bg-paper-2 px-4 py-3.5">
                     <p className="flex items-center gap-2 text-[14px] font-semibold">
-                      <span className="h-6 w-6 rounded-full bg-paper text-accent-hover text-[12px] grid place-items-center tnum border border-line">{i + 1}</span>{t}
+                      <span className="h-6 w-6 rounded-full bg-paper text-accent-hover text-[12px] grid place-items-center tnum border border-line">{i + 1}</span>{title}
                     </p>
                     <p className="text-[13px] text-muted mt-1.5 leading-snug">{d}</p>
                   </li>
@@ -246,8 +253,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
           {!own && copy.owner_demo && (
             <div className="mt-8 rounded-[10px] border border-dashed border-line-strong p-5 text-[14.5px] text-ink-2">
-              <p className="font-medium text-ink">Beispielbuch aus dem Demo-Bestand</p>
-              <p className="mt-1">Dieses Exemplar zeigt, wie Leihregal funktioniert. Anfragen sind hier nicht möglich – such dir ein Buch eines echten Mitglieds.</p>
+              <p className="font-medium text-ink">{t.demoTitle}</p>
+              <p className="mt-1">{t.demoText}</p>
             </div>
           )}
           {!own && cal && !copy.owner_demo && (
@@ -268,8 +275,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               <div className="grid md:grid-cols-[56px_minmax(0,1fr)] gap-x-4 gap-y-1 mb-7">
                 <span className="text-[13px] tnum text-muted pt-1.5">01</span>
                 <div>
-                  <h2 id="kalender" className="text-[24px] md:text-[28px] font-[560] tracking-[-0.03em]">Verleihkalender</h2>
-                  <p className="text-[15px] text-muted mt-1.5">Du siehst Namen, andere nur frei und belegt.</p>
+                  <h2 id="kalender" className="text-[24px] md:text-[28px] font-[560] tracking-[-0.03em]">{t.calTitle}</h2>
+                  <p className="text-[15px] text-muted mt-1.5">{t.calDesc}</p>
                 </div>
               </div>
               <div className="md:pl-[72px]"><div className="rounded-[10px] border border-line p-5 md:p-6"><CalendarView cal={cal} /></div></div>

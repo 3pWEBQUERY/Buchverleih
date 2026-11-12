@@ -1,4 +1,7 @@
 import { cx } from "./ui";
+import type { Locale } from "@/lib/i18n/locale";
+
+const BY: Record<Locale, string> = { de: "von", fr: "de", it: "di" };
 
 /**
  * Cover (PRD 8.1): immer im echten Seitenverhältnis, nie beschnitten, mit feiner Kante.
@@ -51,14 +54,14 @@ export function imageUrl(key: string, small = true) {
 }
 
 export function Cover({
-  data, height, width, className, large = false, priority = false, uniform = false,
-}: { data: CoverData; height?: number; width?: number; className?: string; large?: boolean; priority?: boolean; uniform?: boolean }) {
+  data, height, width, className, large = false, priority = false, uniform = false, l = "de",
+}: { data: CoverData; height?: number; width?: number; className?: string; large?: boolean; priority?: boolean; uniform?: boolean; l?: Locale }) {
   // uniform: alle Bücher einer Reihe exakt gleich gross (Box im Buchformat 2:3)
   const ratio = uniform ? 2 / 3 : coverRatio(data);
   const h = uniform && width && height ? height : height ?? (width ? Math.round(width / ratio) : 180);
   const w = uniform && width && height ? width : width ?? Math.round(h * ratio);
   const author = data.authors?.[0] ?? "";
-  const alt = author ? `${data.title} von ${author}` : data.title;
+  const alt = author ? `${data.title} ${BY[l] ?? BY.de} ${author}` : data.title;
   // Original-Cover zuerst, dann Foto des Mitglieds, sonst typografisch (PRD 7.2)
   const key = data.coverKey ?? data.photoKey;
   const natural = Boolean(data.coverKey);

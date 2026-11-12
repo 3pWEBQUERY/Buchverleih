@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { ShelfCopy } from "@/lib/copies";
 import { Cover } from "@/components/cover";
-import { shelfStatusText, type Tone } from "@/components/status";
+import type { Tone } from "@/components/status";
+import { shelfStatusLocal } from "@/lib/i18n/messages/shelf-status";
+import type { Locale } from "@/lib/i18n/locale";
 import { cx } from "@/components/ui";
 
 /**
@@ -23,14 +25,14 @@ export type BookRowItem = Pick<ShelfCopy, "id" | "title" | "authors" | "photo_ke
   Partial<Pick<ShelfCopy, "status" | "lent_until" | "next_start" | "open_requests">> & { href?: string; note?: { tone: Tone; text: string } };
 
 /** `wrap`: statt seitlich zu scrollen, laufen die Bücher auf weiteren Brettern weiter (für schmale Spalten) */
-export function BookRow({ items, height = 168, hrefBase = "/regal/", label, wrap }: { items: BookRowItem[]; height?: number; hrefBase?: string; label?: string; wrap?: boolean }) {
+export function BookRow({ items, height = 168, hrefBase = "/regal/", label, wrap, l = "de" }: { items: BookRowItem[]; height?: number; hrefBase?: string; label?: string; wrap?: boolean; l?: Locale }) {
   return (
     <ul className={cx("shelf !gap-0 !items-stretch mt-1 !pb-1", wrap && "!flex-wrap !overflow-visible !gap-y-9")} aria-label={label}>
       {items.map((c, i) => {
         const cover = { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id };
         const bw = Math.round(height * (2 / 3)); // gleiche Grösse für alle Bücher
         const w = Math.max(128, bw);
-        const st = c.note ?? (c.status ? shelfStatusText({ status: c.status, lent_until: c.lent_until ?? null, next_start: c.next_start ?? null, open_requests: c.open_requests ?? 0 }) : null);
+        const st = c.note ?? (c.status ? shelfStatusLocal({ status: c.status, lent_until: c.lent_until ?? null, next_start: c.next_start ?? null, open_requests: c.open_requests ?? 0 }, l) : null);
         const last = i === items.length - 1;
         return (
           <li key={c.id} style={{ width: w + (wrap ? 14 : last ? 0 : 22), animationDelay: `${Math.min(i, 10) * 30}ms` }} className="anim-rise relative">
@@ -38,7 +40,7 @@ export function BookRow({ items, height = 168, hrefBase = "/regal/", label, wrap
             <div aria-hidden className="absolute left-0 right-0 h-[3px] bg-night-ink/90" style={{ top: height }} />
             <Link href={c.href ?? `${hrefBase}${c.id}`} className="book group flex flex-col h-full" style={{ width: w }}>
               <div className="flex items-end flex-none" style={{ height }}>
-                <div className="book-face"><Cover data={cover} width={bw} height={height} uniform /></div>
+                <div className="book-face"><Cover data={cover} width={bw} height={height} uniform l={l} /></div>
               </div>
               <div className="pt-[13px] pr-2 flex-1 flex flex-col">
                 <p className="text-[13.5px] font-medium leading-snug line-clamp-2 group-hover:underline underline-offset-2">{c.title}</p>

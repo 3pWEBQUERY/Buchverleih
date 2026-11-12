@@ -2,8 +2,12 @@ import { pageUser } from "@/lib/page";
 import { listShelf } from "@/lib/copies";
 import { isoDay, todayCH } from "@/lib/dates";
 import { Erfassen, type Added } from "./erfassen";
+import { getLocale } from "@/lib/i18n/server";
+import { CAPTURE } from "@/lib/i18n/messages/capture";
 
-export const metadata = { title: "Buch erfassen" };
+export async function generateMetadata() {
+  return { title: CAPTURE[await getLocale()].title };
+}
 
 /** Erfassen ohne Formular (PRD 7.1, 8.3 Punkt 4): Scan, Zustand antippen, fertig. */
 export default async function Page() {

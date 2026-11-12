@@ -5,14 +5,17 @@ import { copyDetail } from "@/lib/copies";
 import { getCalendar } from "@/lib/loans/calendar";
 import { myCircles } from "@/lib/circles";
 import { CopyEditor, type HistoryRow } from "./copy-editor";
+import { getLocale } from "@/lib/i18n/server";
+import { COPY } from "@/lib/i18n/messages/copy";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!UUID.test(id)) return { title: "Buch" };
+  const t = COPY[await getLocale()];
+  if (!UUID.test(id)) return { title: t.titleFallback };
   const [c] = await sql<{ title: string }[]>`select w.title from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id where c.id = ${id}`;
-  return { title: c ? `${c.title} bearbeiten` : "Buch" };
+  return { title: c ? t.editTitle(c.title) : t.titleFallback };
 }
 
 /** Exemplar bearbeiten (nur Besitzer). Jede Änderung speichert sofort. */

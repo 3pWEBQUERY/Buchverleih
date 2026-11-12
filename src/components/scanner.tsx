@@ -1,6 +1,14 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { cx } from "./ui";
+import { useLocale } from "./locale-provider";
+import type { Locale } from "@/lib/i18n/locale";
+
+const T: Record<Locale, { blocked: string; unavailable: string; starting: string }> = {
+  de: { blocked: "Die Kamera ist blockiert.", unavailable: "Die Kamera ist nicht verfügbar.", starting: "Kamera startet …" },
+  fr: { blocked: "La caméra est bloquée.", unavailable: "La caméra n’est pas disponible.", starting: "Démarrage de la caméra …" },
+  it: { blocked: "La fotocamera è bloccata.", unavailable: "La fotocamera non è disponibile.", starting: "Avvio della fotocamera …" },
+};
 
 /**
  * Kamera im Browser (PRD 4.3, 7.1). Nutzt die eingebaute Strichcode-Erkennung, wo es sie gibt,
@@ -22,6 +30,9 @@ type Props = {
 type Detector = { detect: (src: CanvasImageSource) => Promise<{ rawValue: string }[]> };
 
 export function Scanner({ mode, onResult, continuous, paused, fallbackHint, className, onUnavailable }: Props) {
+  const t = T[useLocale()] ?? T.de;
+  const tRef = useRef(t);
+  useEffect(() => { tRef.current = t; }, [t]);
   const video = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -93,8 +104,8 @@ export function Scanner({ mode, onResult, continuous, paused, fallbackHint, clas
         unavailable.current?.();
         setError(
           name === "NotAllowedError" || name === "SecurityError"
-            ? `Die Kamera ist blockiert. ${fallbackHint}`
-            : `Die Kamera ist nicht verfügbar. ${fallbackHint}`,
+            ? `${tRef.current.blocked} ${fallbackHint}`
+            : `${tRef.current.unavailable} ${fallbackHint}`,
         );
       }
     })();
@@ -121,7 +132,7 @@ export function Scanner({ mode, onResult, continuous, paused, fallbackHint, clas
   return (
     <div className={cx("relative overflow-hidden rounded-sm bg-black aspect-[4/3]", className)}>
       <video ref={video} playsInline muted className="absolute inset-0 h-full w-full object-cover" />
-      {!ready && <div className="absolute inset-0 grid place-items-center text-sm text-white/70">Kamera startet …</div>}
+      {!ready && <div className="absolute inset-0 grid place-items-center text-sm text-white/70">{t.starting}</div>}
       {/* Zielrahmen */}
       <div aria-hidden className={cx("absolute border-2 border-white/90 rounded-sm", mode === "qr" ? "inset-[18%] aspect-square mx-auto" : "left-[12%] right-[12%] top-[32%] bottom-[32%]")}>
         <span className="absolute inset-x-0 top-1/2 h-px bg-[var(--accent)]" style={{ animation: "scan-line 1.6s ease-in-out infinite alternate" }} />
