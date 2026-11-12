@@ -147,15 +147,22 @@ export async function requestPhoneCode(user: SessionUser, raw: string, ip = "unb
   await rateLimit("sms:global", 1000, 86400);
   const [banned] = await sql<{ n: number }[]>`select count(*)::int as n from banned_phones where phone_e164 = ${phone}`;
   if (banned.n) throw err.conflict("phone_banned", "Diese Nummer kann nicht verwendet werden. Melde dich bei der Moderation, wenn du das für einen Fehler hältst.");
-  const [taken] = await sql<{ n: number }[]>`
-    select count(*)::int as n from users where phone_e164 = ${phone} and phone_verified_at is not null and id <> ${user.id} and deleted_at is null`;
-  if (taken.n) throw err.conflict("phone_taken", "Diese Nummer gehört bereits zu einem anderen Konto. Eine Nummer, ein Konto.");
   const code = sixDigits();
   await sql`insert into phone_verifications (user_id, phone_e164, code_hash, expires_at)
             values (${user.id}, ${phone}, ${hashToken(`${user.id}:${code}`)}, now() + interval '10 minutes')`;
-  await sendSms(phone, `Dein Leihregal-Code: ${code}. Gültig 10 Minuten.`);
+  // Gehört die Nummer schon einem anderen Konto, geht keine SMS raus – die Antwort ist aber dieselbe,
+  // damit sich nicht abfragen lässt, welche Nummern registriert sind. Die Bestätigung scheitert später.
+  if (!(await phoneTaken(phone, user.id))) await sendSms(phone, `Dein Leihregal-Code: ${code}. Gültig 10 Minuten.`);
   return { devCode: env.showCodes ? code : undefined };
 }
+
+async function phoneTaken(phone: string, userId: string) {
+  const [taken] = await sql<{ n: number }[]>`
+    select count(*)::int as n from users where phone_e164 = ${phone} and phone_verified_at is not null and id <> ${userId} and deleted_at is null`;
+  return taken.n > 0;
+}
+
+const WRONG_CODE = "Der Code stimmt nicht. Prüfe die sechs Ziffern aus der SMS.";
 
 export async function verifyPhoneCode(user: SessionUser, code: string) {
   await rateLimit(`smsverify:${user.id}`, 10, 3600);
@@ -165,16 +172,23 @@ export async function verifyPhoneCode(user: SessionUser, code: string) {
      order by created_at desc limit 1`;
   if (!v) throw err.conflict("no_code", "Der Code ist abgelaufen. Fordere einen neuen an.");
   if (v.attempts >= 5) throw err.tooMany("Zu viele Versuche. Fordere einen neuen Code an.");
-  if (v.code_hash !== hashToken(`${user.id}:${code.replace(/\D/g, "")}`)) {
+  // Fremde Nummer: wie ein falscher Code behandeln (verrät nicht, dass sie registriert ist)
+  if (v.code_hash !== hashToken(`${user.id}:${code.replace(/\D/g, "")}`) || (await phoneTaken(v.phone_e164, user.id))) {
     // ausserhalb einer Transaktion, damit der Fehlversuch bestehen bleibt
     await sql`update phone_verifications set attempts = attempts + 1 where id = ${v.id}`;
-    throw err.invalid("Der Code stimmt nicht. Prüfe die sechs Ziffern aus der SMS.");
+    throw err.invalid(WRONG_CODE);
   }
-  return sql.begin(async (tx) => {
-    const [ok] = await tx<{ id: string }[]>`
-      update phone_verifications set verified_at = now()
-       where id = ${v.id} and verified_at is null and attempts < 5 returning id`;
-    if (!ok) throw err.conflict("no_code", "Der Code ist abgelaufen. Fordere einen neuen an.");
-    await tx`update users set phone_e164 = ${v.phone_e164}, phone_verified_at = now() where id = ${user.id}`;
-  });
+  try {
+    return await sql.begin(async (tx) => {
+      const [ok] = await tx<{ id: string }[]>`
+        update phone_verifications set verified_at = now()
+         where id = ${v.id} and verified_at is null and attempts < 5 returning id`;
+      if (!ok) throw err.conflict("no_code", "Der Code ist abgelaufen. Fordere einen neuen an.");
+      await tx`update users set phone_e164 = ${v.phone_e164}, phone_verified_at = now() where id = ${user.id}`;
+    });
+  } catch (e) {
+    // Gleichzeitig von einem anderen Konto bestätigt (eindeutiger Index): ebenfalls neutral antworten
+    if ((e as { code?: string }).code === "23505") throw err.invalid(WRONG_CODE);
+    throw e;
+  }
 }

@@ -224,7 +224,9 @@ export async function onPassOnBroken(tx: TxSql, next: LoanRow) {
   try {
     await tx.savepoint(async (sp) => {
       await sp`update copy_bookings set period = daterange(lower(period), upper(period) + 3) where loan_id = ${prevId}`;
-      await sp`update loans set due_at = due_at + interval '3 days', wanted = daterange(lower(wanted), upper(wanted) + 3)
+      // Fälligkeit aus der Buchung ableiten (Kalendertage in Schweizer Zeit, auch über die Zeitumstellung)
+      await sp`update loans set due_at = (select day_start_ch(upper(period)) from copy_bookings where loan_id = ${prevId}),
+                                wanted = daterange(lower(wanted), upper(wanted) + 3)
                 where id = ${prevId} and status = 'active'`;
     });
   } catch {

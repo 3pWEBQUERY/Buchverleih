@@ -38,8 +38,16 @@ Ohne Mail- und SMS-Anbieter zeigt `DEV_SHOW_CODES=true` den Anmeldelink und den 
 Projekt «Leihregal», Region EU (europe-west4 / ams):
 
 - **Postgres** (Template `postgres`), **Bucket** `Dateien`
-- **web**: Build `npm run build`, Start `npm start`, Pre-Deploy `npm run migrate`, Healthcheck `/api/v1/health`
-- **worker**: Start `npm run worker`
+- **web**: Build `npm run build`, Start `node_modules/.bin/next start -p $PORT`, Pre-Deploy `npm run migrate`, Healthcheck `/api/v1/health`
+- **worker**: Start `node_modules/.bin/tsx src/worker/index.ts` (wartet beim Start, bis alle Migrationen eingespielt sind)
+
+Startbefehle direkt statt über `npm start`/`npm run worker`: npm meldet sonst bei jedem Deploy
+«npm error … signal SIGTERM», obwohl der Prozess sauber beendet wird. Die Variable
+`NPM_CONFIG_PRODUCTION` kann entfernt werden (erzeugt nur die Warnung «Use --omit=dev»).
+
+Migrationen laufen je Datei in einer Transaktion. Für `CREATE INDEX CONCURRENTLY` beginnt die
+Datei mit der Zeile `-- no-transaction`; dann laufen die Anweisungen (getrennt an «;» am Zeilenende)
+einzeln. Solche Dateien müssen wiederholbar sein (`if not exists`).
 
 Variablen pro Dienst (Referenzen statt kopierter Werte):
 
@@ -57,7 +65,7 @@ SMS_PROVIDER=webhook     # plus SMS_WEBHOOK_URL / SMS_WEBHOOK_TOKEN
 DEV_SHOW_CODES=false     # in Produktion zwingend aus
 GOOGLE_BOOKS_API_KEY=…   # nur auf «web»; «worker» referenziert ${{web.GOOGLE_BOOKS_API_KEY}}
 COVERS=true              # Original-Cover (DNB, Open Library, Google Books)
-ADMIN_EMAILS=…           # kommagetrennt; diese Konten werden beim nächsten Seitenaufruf Admin
+ADMIN_EMAILS=…           # kommagetrennt; Admin beim nächsten Seitenaufruf, entfernt = Rolle wieder weg
 ```
 
 Vor dem Start: Point-in-Time Recovery für Postgres aktivieren und eine Wiederherstellung üben (PRD 10.4).

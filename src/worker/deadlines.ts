@@ -4,6 +4,7 @@
  * beim nächsten Mal alles nach; jeder Schritt passiert dank deadline_marks genau einmal.
  */
 import { sql, type Tx } from "@/lib/db";
+import { deleteObject } from "@/lib/storage";
 import { notify, type NotificationType } from "@/lib/notify";
 import { loanInfo, transition } from "@/lib/loans/core";
 import { releaseFollowers } from "@/lib/loans/passon";
@@ -226,5 +227,38 @@ export async function runRetention() {
   const dead = await sql`delete from jobs where done_at is null and attempts >= 5 and run_at < now() - interval '30 days' returning id`;
   const [stuck] = await sql<{ n: number }[]>`select count(*)::int as n from jobs where done_at is null and attempts >= 5`;
   if (stuck.n) console.warn(`[jobs] ${stuck.n} Jobs endgültig gescheitert (attempts >= 5)`);
-  return { messagesDeleted: msgs.length, searchesDeleted: searches.length, deadJobsDeleted: dead.length, deadJobs: stuck.n };
+  // Nie versandte E-Mails/SMS nach 30 Tagen; Interessensignale nach 12 Monaten
+  await sql`delete from notifications where channel <> 'app' and sent_at is null and created_at < now() - interval '30 days'`;
+  await sql`delete from interest_signals where created_at < now() - interval '12 months'`;
+  const uploads = await cleanUploads();
+  return { messagesDeleted: msgs.length, searchesDeleted: searches.length, deadJobsDeleted: dead.length, deadJobs: stuck.n, ...uploads };
+}
+
+const VARIANTS = ["", "-480"].flatMap((v) => ["avif", "webp"].map((x) => `${v}.${x}`));
+
+/**
+ * Verwaiste Uploads: nie fertig verarbeitet nach 24 h (Rohdatei weg, Zeile weg) und verarbeitet,
+ * aber nach 7 Tagen nirgends verwendet (Varianten weg). Speicher-Fehler blockieren den Lauf nicht.
+ */
+async function cleanUploads() {
+  const stale = await sql<{ id: string; raw_key: string }[]>`
+    select id, raw_key from uploads where status in ('pending', 'uploaded', 'rejected') and created_at < now() - interval '24 hours' limit 500`;
+  for (const u of stale) {
+    await deleteObject(u.raw_key).catch(() => {});
+    await sql`delete from uploads where id = ${u.id}`;
+  }
+  const unused = await sql<{ id: string; raw_key: string; key: string }[]>`
+    select u.id, u.raw_key, u.key from uploads u
+     where u.status = 'processed' and u.key is not null and coalesce(u.processed_at, u.created_at) < now() - interval '7 days'
+       and not exists (select 1 from copy_photos p where p.key = u.key)
+       and not exists (select 1 from users x where x.avatar_key = u.key)
+       and not exists (select 1 from loans l where l.dropoff_photo_key = u.key or u.key = any(l.condition_photo_keys))
+       and not exists (select 1 from cases c where u.key = any(c.photo_keys))
+       and not exists (select 1 from editions e where e.cover_key = u.key)
+     limit 500`;
+  for (const u of unused) {
+    await Promise.allSettled([u.raw_key, ...VARIANTS.map((v) => u.key + v)].map((k) => deleteObject(k)));
+    await sql`delete from uploads where id = ${u.id}`;
+  }
+  return { uploadsStale: stale.length, uploadsUnused: unused.length };
 }

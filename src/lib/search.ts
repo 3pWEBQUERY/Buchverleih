@@ -1,4 +1,5 @@
 import { sql } from "@/lib/db";
+import { roundDistance } from "@/lib/geo";
 import type { OfferKind } from "@/lib/loans/machine";
 
 /**
@@ -108,6 +109,8 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
      limit ${f.limit ?? 150}`;
   return rows.map(({ o_lend, o_swap, o_gift, ...r }) => ({
     ...r,
+    // Nie die exakte Distanz herausgeben (Trilateration des Anzeigeorts)
+    nearest_m: roundDistance(r.nearest_m),
     offers: [o_lend && "lend", o_swap && "swap", o_gift && "gift"].filter(Boolean) as OfferKind[],
   }));
 }

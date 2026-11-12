@@ -1,6 +1,9 @@
 /**
  * Versionierte Migrationen (PRD 10.4). Läuft vor dem Start jedes Deployments.
  * Jede Datei wird genau einmal in einer Transaktion ausgeführt.
+ * Ausnahme: Beginnt eine Datei mit der Zeile «-- no-transaction», laufen ihre Anweisungen einzeln
+ * ohne Transaktion (nötig für CREATE INDEX CONCURRENTLY). Solche Dateien müssen wiederholbar sein
+ * («if not exists»), denn bricht eine Anweisung ab, wird die Datei beim nächsten Deploy erneut ausgeführt.
  */
 import postgres from "postgres";
 import { readdir, readFile } from "node:fs/promises";
@@ -27,6 +30,12 @@ async function main() {
       if (done.has(file)) continue;
       const body = await readFile(path.join(dir, file), "utf8");
       process.stdout.write(`migrate ${file} … `);
+      if (/^--\s*no-transaction\b/.test(body.trimStart())) {
+        await runWithoutTransaction(body);
+        await sql`insert into schema_migrations (name) values (${file})`;
+        console.log("ok (ohne Transaktion)");
+        continue;
+      }
       await sql.begin(async (tx) => {
         // Nicht ewig auf Sperren warten (laufende App): lieber abbrechen und den Deploy wiederholen
         await tx`set local lock_timeout = '15s'`;
@@ -39,6 +48,22 @@ async function main() {
   } finally {
     await sql`select pg_advisory_unlock(727274)`;
     await sql.end();
+  }
+}
+
+/** Anweisungen einzeln ausführen; getrennt an «;» am Zeilenende (keine Funktionskörper mit $$ in solchen Dateien) */
+async function runWithoutTransaction(body: string) {
+  const statements = body
+    .split(/;\s*$/m)
+    .map((s) => s.replace(/^\s*--.*$/gm, "").trim())
+    .filter(Boolean);
+  await sql`set lock_timeout = '15s'`;
+  await sql`set statement_timeout = '30min'`;
+  try {
+    for (const st of statements) await sql.unsafe(st);
+  } finally {
+    await sql`reset lock_timeout`;
+    await sql`reset statement_timeout`;
   }
 }
 

@@ -136,6 +136,21 @@ export async function acceptProposal(userId: string, messageId: string) {
   });
 }
 
+/**
+ * Text für eine ICS-Eigenschaft nach RFC 5545: Backslash, Komma und Semikolon maskieren,
+ * Zeilenumbrüche als \n, alle übrigen Steuerzeichen (auch ein einzelnes CR) entfernen.
+ * So kann niemand über Ort oder Titel eigene Kalender-Eigenschaften einschleusen.
+ */
+export function icsText(s: string) {
+  return s
+    .replace(/\r\n|\r|\n/g, "\n")
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u0009\u000B-\u001F\u007F]/g, "")
+    .replace(/\\/g, "\\\\")
+    .replace(/[,;]/g, (c) => `\\${c}`)
+    .replace(/\n/g, "\\n");
+}
+
 /** Kalenderdatei für einen angenommenen Termin (PRD 7.4) */
 export async function proposalIcs(userId: string, messageId: string) {
   const [msg] = await sql<{ loan_id: string | null; handover_chat_id: string | null; proposal_place: string | null; proposal_at: Date; proposal_status: string }[]>`
@@ -145,7 +160,6 @@ export async function proposalIcs(userId: string, messageId: string) {
   const m = await assertMember(t, userId);
   const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
   const end = new Date(msg.proposal_at.getTime() + 15 * 60_000);
-  const esc = (s: string) => s.replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n");
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -155,8 +169,8 @@ export async function proposalIcs(userId: string, messageId: string) {
     `DTSTAMP:${fmt(new Date())}`,
     `DTSTART:${fmt(msg.proposal_at)}`,
     `DTEND:${fmt(end)}`,
-    `SUMMARY:${esc(`Buchübergabe: ${m.title}`)}`,
-    msg.proposal_place ? `LOCATION:${esc(msg.proposal_place)}` : "",
+    `SUMMARY:${icsText(`Buchübergabe: ${m.title}`)}`,
+    msg.proposal_place ? `LOCATION:${icsText(msg.proposal_place)}` : "",
     "END:VEVENT",
     "END:VCALENDAR",
   ]

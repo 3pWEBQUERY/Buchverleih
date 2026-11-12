@@ -51,9 +51,10 @@ export async function listWishlist(userId: string) {
     select w.id as work_id, w.title, w.authors, m.radius_km, m.alarm, to_json(m.created_at) #>> '{}' as since,
            (select count(*)::int from cand k where k.work_id = m.work_id and k.dist <= m.radius_km * 1000) as total_near,
            (select count(*)::int from cand k where k.work_id = m.work_id and k.dist <= m.radius_km * 1000 and k.busy_until is null) as available_near,
-           f.id as free_copy, f.dist as free_dist, f.owner_name as free_owner,
+           -- Entfernungen nur auf 100 m genau herausgeben (Anzeigeort nicht rückrechenbar)
+           f.id as free_copy, (case when f.dist is null then null else greatest(100, round(f.dist / 100) * 100) end)::float8 as free_dist, f.owner_name as free_owner,
            (select min(k.busy_until)::text from cand k where k.work_id = m.work_id and k.dist <= m.radius_km * 1000 and k.busy_until is not null) as next_free,
-           (select min(k.dist) from cand k where k.work_id = m.work_id and k.dist > m.radius_km * 1000) as nearest_beyond
+           (select (case when min(k.dist) is null then null else greatest(100, round(min(k.dist) / 100) * 100) end)::float8 from cand k where k.work_id = m.work_id and k.dist > m.radius_km * 1000) as nearest_beyond
       from mine m
       join works w on w.id = m.work_id
       left join lateral (

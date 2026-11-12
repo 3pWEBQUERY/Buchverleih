@@ -30,6 +30,8 @@ export type SessionUser = {
   avatar_key: string | null;
   email_prefs: Record<string, boolean>;
   session_id: string;
+  /** Admin nur dank ADMIN_EMAILS (wird beim Entfernen aus der Liste entzogen) */
+  admin_via_env?: boolean;
 };
 
 /** Legt eine Sitzung in Postgres an. Für die iOS-App dieselben Sitzungen per Token (PRD 10.2). */
@@ -82,23 +84,37 @@ export const getUser = cache(async (): Promise<SessionUser | null> => {
     select u.id, u.email, u.first_name, u.role, u.trust_level, u.plz, u.municipality,
            u.home_lat, u.home_lng, u.email_verified_at, u.phone_verified_at, u.phone_e164,
            u.onboarded_at, u.age_confirmed_at, u.shelf_paused, u.banned_at, u.lending_suspended_at,
-           u.plan_id, u.avatar_key, u.email_prefs, s.id as session_id
+           u.plan_id, u.avatar_key, u.email_prefs, u.admin_via_env, s.id as session_id
       from s join users u on u.id = s.user_id
      where u.deleted_at is null`;
   return rows[0] ? applyAdminEmails(rows[0]) : null;
 });
 
-/** Admins kommen aus der Variable ADMIN_EMAILS (kommagetrennt); nur mit bestätigter Adresse */
-export async function applyAdminEmails<T extends Pick<SessionUser, "id" | "email" | "role" | "email_verified_at">>(u: T): Promise<T> {
-  if (u.role !== "admin" && u.email_verified_at && adminEmails().has(u.email.toLowerCase())) {
-    await sql`update users set role = 'admin' where id = ${u.id}`;
+/**
+ * Admins aus der Variable ADMIN_EMAILS (kommagetrennt), nur mit bestätigter Adresse.
+ * Wer nicht mehr in der Liste steht, verliert die so erhaltene Rolle wieder. Fehlt die Variable
+ * ganz, ändert sich nichts (schützt vor versehentlichem Entzug bei falscher Konfiguration);
+ * eine gesetzte, aber leere Liste entzieht alle über die Variable vergebenen Admin-Rechte.
+ * Admins, die auf anderem Weg entstanden (SQL, Seed), bleiben unberührt.
+ */
+export async function applyAdminEmails<T extends Pick<SessionUser, "id" | "email" | "role" | "email_verified_at"> & { admin_via_env?: boolean }>(u: T): Promise<T> {
+  const raw = process.env.ADMIN_EMAILS;
+  if (raw === undefined) return u;
+  const listed = !!u.email_verified_at && adminEmails(raw).has(u.email.toLowerCase());
+  if (listed && u.role !== "admin") {
+    await sql`update users set role = 'admin', admin_via_env = true where id = ${u.id}`;
     u.role = "admin";
+    u.admin_via_env = true;
+  } else if (!listed && u.admin_via_env) {
+    await sql`update users set role = 'member', admin_via_env = false where id = ${u.id} and admin_via_env`;
+    u.role = "member";
+    u.admin_via_env = false;
   }
   return u;
 }
 
-function adminEmails() {
-  return new Set((process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean));
+function adminEmails(raw: string) {
+  return new Set(raw.split(",").map((e) => e.trim().toLowerCase()).filter(Boolean));
 }
 
 export async function requireUser(): Promise<SessionUser> {

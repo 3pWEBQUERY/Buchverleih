@@ -33,3 +33,12 @@ export function homeFromPlz(lat: number, lng: number) {
   const display = fuzz(home.lat, home.lng, 150);
   return { home, display };
 }
+
+/**
+ * Entfernungen, die an Clients gehen, auf 100 m runden (mindestens 100 m). Sonst liesse sich aus
+ * mehreren exakten Messungen der feste Anzeigeort eines Regals bestimmen.
+ */
+export function roundDistance(m: number | null | undefined): number | null {
+  if (m == null || Number.isNaN(m)) return null;
+  return Math.max(100, Math.round(m / 100) * 100);
+}

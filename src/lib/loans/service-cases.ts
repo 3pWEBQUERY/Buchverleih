@@ -225,7 +225,7 @@ export async function markLostTx(tx: TxSql, caseId: string, actor: ActorRef) {
     const l2 = await transition(tx, f.id, action, SYSTEM, { set: tx`closed_at = now()`, meta: { reason: "copy_lost" } });
     await tx`delete from copy_bookings where loan_id = ${f.id}`;
     const info2 = await loanInfo(tx, f.id);
-    await notify(tx, { userId: l2.borrower_id, type: "cancelled", loanId: f.id, data: { title: info2.title, name: "Das System" } });
+    await notify(tx, { userId: l2.borrower_id, type: "cancelled", loanId: f.id, data: { title: info2.title } }); // ohne Namen: Text nennt «die andere Seite» in der Sprache der Person
   }
   await tx`delete from copy_bookings where copy_id = ${loan.copy_id}`;
   // Sperre der Nummer bei Verlust (6.5)

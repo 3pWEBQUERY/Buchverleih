@@ -46,19 +46,48 @@ async function lastRun(job: string) {
  * Advisory-Lock auf einer reservierten Verbindung: läuft mehr als ein Worker,
  * arbeitet nur einer die Fristen ab. Gibt true zurück, wenn dieser Worker gelaufen ist.
  */
-async function withDeadlineLock(fn: () => Promise<void>) {
+async function withLock(id: number, fn: () => Promise<void>) {
   const conn = await sql.reserve();
   try {
-    const [lock] = await conn<{ ok: boolean }[]>`select pg_try_advisory_lock(424242) as ok`;
+    const [lock] = await conn<{ ok: boolean }[]>`select pg_try_advisory_lock(${id}) as ok`;
     if (!lock?.ok) return false;
     try {
       await fn();
       return true;
     } finally {
-      await conn`select pg_advisory_unlock(424242)`.catch(() => {});
+      await conn`select pg_advisory_unlock(${id})`.catch(() => {});
     }
   } finally {
     conn.release();
+  }
+}
+
+const withDeadlineLock = (fn: () => Promise<void>) => withLock(424242, fn);
+const DAILY_LOCK = 434343;
+
+/**
+ * Täglicher Lauf: jeder Schritt hat einen eigenen Merker. Scheitert einer, laufen die anderen
+ * trotzdem, und nur der gescheiterte wird in der nächsten Stunde wiederholt (nicht jede Minute alles).
+ */
+async function runDaily() {
+  const steps: [string, () => Promise<unknown>][] = [
+    ["daily_alarms", runTitleAlarms],
+    ["daily_matches", runSwapMatches],
+    ["daily_retention", runRetention],
+  ];
+  for (const [job, fn] of steps) {
+    const last = await lastRun(job);
+    if (last && Date.now() - last.getTime() < 24 * 3600_000) continue;
+    const failed = await lastRun(`${job}_failed`);
+    if (failed && Date.now() - failed.getTime() < 3600_000) continue;
+    try {
+      const result = await fn();
+      await heartbeat(job, result);
+      console.log(`[${job}]`, JSON.stringify(result));
+    } catch (e) {
+      console.error(`[${job}]`, (e as Error).message);
+      await heartbeat(`${job}_failed`, { error: (e as Error).message.slice(0, 300) }).catch(() => {});
+    }
   }
 }
 
@@ -91,15 +120,8 @@ async function scheduler() {
           if (covers) console.log(`[covers] ${covers} Cover zum Nachladen eingereiht`);
         });
       }
-      // Täglicher Lauf für Titelalarm, Tauschtreffer und Aufbewahrung
-      const daily = await lastRun("daily");
-      if (!daily || Date.now() - daily.getTime() >= 24 * 3600_000) {
-        const alarms = await runTitleAlarms();
-        const matches = await runSwapMatches();
-        const retention = await runRetention();
-        await heartbeat("daily", { alarms, matches, ...retention });
-        console.log("[daily]", { alarms, matches, ...retention });
-      }
+      // Täglicher Lauf für Titelalarm, Tauschtreffer und Aufbewahrung – nur ein Worker gleichzeitig
+      await withLock(DAILY_LOCK, runDaily);
     } catch (e) {
       console.error("[scheduler]", (e as Error).message);
     }

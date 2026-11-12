@@ -221,7 +221,7 @@ export async function listVisibleShelf(ownerId: string, viewerId: string | null)
 export async function newNearby(viewerId: string | null, origin: { lat: number; lng: number }, radiusKm = 5, limit = 16) {
   return sql<(ShelfCopy & { dist: number; owner_name: string })[]>`
     select ${SHELF_SELECT},
-           earth_distance(ll_to_earth(${origin.lat}, ${origin.lng}), ll_to_earth(o.display_lat, o.display_lng)) as dist,
+           greatest(100, round(earth_distance(ll_to_earth(${origin.lat}, ${origin.lng}), ll_to_earth(o.display_lat, o.display_lng)) / 100) * 100)::float8 as dist,
            o.first_name as owner_name
       from ${SHELF_FROM}
      where c.removed_at is null and cardinality(c.offers) > 0
@@ -278,7 +278,7 @@ export async function copyDetail(copyId: string, viewerId: string | null, origin
                        from copy_photos p where p.copy_id = c.id), '[]') as photos,
            array(select circle_id from circle_copies where copy_id = c.id) as circle_ids,
            case when ${origin?.lat ?? null}::float8 is null then null
-                else earth_distance(ll_to_earth(${origin?.lat ?? null}::float8, ${origin?.lng ?? null}::float8), ll_to_earth(o.display_lat, o.display_lng)) end as dist
+                else greatest(100, round(earth_distance(ll_to_earth(${origin?.lat ?? null}::float8, ${origin?.lng ?? null}::float8), ll_to_earth(o.display_lat, o.display_lng)) / 100) * 100)::float8 end as dist
       from ${SHELF_FROM}
      where c.id = ${copyId} and (c.removed_at is null or c.owner_id = ${viewerId}::uuid)
        and copy_visible_to(c.id, ${viewerId}::uuid)`;
@@ -293,7 +293,7 @@ export async function copiesOfWork(workId: string, viewerId: string | null, orig
            (not o.shelf_paused and not exists (select 1 from copy_bookings b where b.copy_id = c.id
               and daterange(lower(b.period), upper(b.period) + b.buffer_days) @> today_ch())) as free_now,
            case when ${origin?.lat ?? null}::float8 is null then null
-                else earth_distance(ll_to_earth(${origin?.lat ?? null}::float8, ${origin?.lng ?? null}::float8), ll_to_earth(o.display_lat, o.display_lng)) end as dist
+                else greatest(100, round(earth_distance(ll_to_earth(${origin?.lat ?? null}::float8, ${origin?.lng ?? null}::float8), ll_to_earth(o.display_lat, o.display_lng)) / 100) * 100)::float8 end as dist
       from ${SHELF_FROM}
       left join user_stats st on st.user_id = c.owner_id
      where e.work_id = ${workId} and c.removed_at is null and cardinality(c.offers) > 0
@@ -321,7 +321,15 @@ export async function addSpot(userId: string, s: { label: string; detail?: strin
 }
 
 export async function removeSpot(userId: string, id: string) {
-  await sql`delete from pickup_spots where id = ${id} and user_id = ${userId}`;
+  await sql.begin(async (tx) => {
+    // Offene Vorgänge behalten ihren Übergabeort; nur bei abgeschlossenen wird er entfernt (on delete set null)
+    const [open] = await tx<{ n: number }[]>`
+      select count(*)::int as n from loans
+       where pickup_spot_id = ${id} and status in ('requested', 'accepted', 'active', 'return_reported')`;
+    if (open.n > 0)
+      throw err.conflict("spot_in_use", "Dieser Übergabeort gehört zu einem offenen Vorgang. Du kannst ihn entfernen, sobald der Vorgang abgeschlossen ist.");
+    await tx`delete from pickup_spots where id = ${id} and user_id = ${userId}`;
+  });
 }
 
 export async function addBlock(userId: string, copyId: string, start: string, end: string, note?: string) {
@@ -382,7 +390,7 @@ export async function relatedForCopy(copyId: string, viewerId: string | null, vi
   /** Ein Exemplar pro Werk, frei und mit Bild zuerst, dann nach Entfernung */
   const perWork = (where: typeof SHELF_SELECT, order: typeof SHELF_SELECT, limit: number) => sql<RelatedCopy[]>`
     select * from (
-      select distinct on (e.work_id) ${SHELF_SELECT}, ${distExpr} as dist, o.first_name as owner_name
+      select distinct on (e.work_id) ${SHELF_SELECT}, (case when ${distExpr} is null then null else greatest(100, round(${distExpr} / 100) * 100) end)::float8 as dist, o.first_name as owner_name
         from ${SHELF_FROM}
        where ${visible} and e.work_id <> ${base.work_id} and ${where}
        order by e.work_id, (ph.key is null and e.cover_key is null), ${distExpr} nulls last
@@ -396,7 +404,7 @@ export async function relatedForCopy(copyId: string, viewerId: string | null, vi
   const [owner, sameWork, byAuthor] = await Promise.all([
     ownShelf ? Promise.resolve([] as RelatedCopy[]) : sql<RelatedCopy[]>`
       select * from (
-        select ${SHELF_SELECT}, ${distExpr} as dist, o.first_name as owner_name
+        select ${SHELF_SELECT}, (case when ${distExpr} is null then null else greatest(100, round(${distExpr} / 100) * 100) end)::float8 as dist, o.first_name as owner_name
           from ${SHELF_FROM}
          where c.owner_id = ${base.owner_id} and c.id <> ${copyId} and c.removed_at is null and cardinality(c.offers) > 0
            and copy_visible_to(c.id, ${viewerId}::uuid)
@@ -404,7 +412,7 @@ export async function relatedForCopy(copyId: string, viewerId: string | null, vi
       order by ${avail}, t.created_at desc
       limit 30`,
     sql<RelatedCopy[]>`
-      select ${SHELF_SELECT}, ${distExpr} as dist, o.first_name as owner_name
+      select ${SHELF_SELECT}, (case when ${distExpr} is null then null else greatest(100, round(${distExpr} / 100) * 100) end)::float8 as dist, o.first_name as owner_name
         from ${SHELF_FROM}
        where ${visible} and e.work_id = ${base.work_id} and c.id <> ${copyId}
        order by ${distExpr} nulls last
