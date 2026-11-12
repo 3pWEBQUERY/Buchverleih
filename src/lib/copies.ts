@@ -161,6 +161,9 @@ export type ShelfCopy = {
   next_start: string | null;
   open_requests: number;
   loan_id: string | null;
+  /** bei laufender Leihe: wer das Buch hat und seit wann */
+  lent_to: string | null;
+  lent_since: Date | null;
   owner_id: string;
   created_at: Date;
 };
@@ -168,7 +171,7 @@ export type ShelfCopy = {
 const SHELF_SELECT = sql`
   c.id, c.edition_id, e.work_id, w.title, w.authors, c.condition, c.offers, c.visibility, c.owner_id, c.created_at, e.cover_key,
   ph.key as photo_key, ph.width as photo_w, ph.height as photo_h,
-  cur.id as loan_id, cur.due_at as lent_until,
+  cur.id as loan_id, cur.due_at as lent_until, cur.borrower_name as lent_to, cur.handed_over_at as lent_since,
   (select lower(b.period)::text from copy_bookings b join loans n on n.id = b.loan_id
     where b.copy_id = c.id and n.status = 'accepted' order by lower(b.period) limit 1) as next_start,
   (select count(*)::int from loans r where r.copy_id = c.id and r.status = 'requested') as open_requests,
@@ -187,7 +190,8 @@ const SHELF_FROM = sql`
   join works w on w.id = e.work_id
   join users o on o.id = c.owner_id
   left join lateral (select key, width, height from copy_photos p where p.copy_id = c.id order by position limit 1) ph on true
-  left join lateral (select id, due_at from loans l where l.copy_id = c.id and l.status in ('active', 'return_reported', 'disputed') limit 1) cur on true`;
+  left join lateral (select l.id, l.due_at, l.handed_over_at, bu.first_name as borrower_name from loans l join users bu on bu.id = l.borrower_id
+                      where l.copy_id = c.id and l.status in ('active', 'return_reported', 'disputed') limit 1) cur on true`;
 
 export async function listShelf(ownerId: string): Promise<ShelfCopy[]> {
   return sql<ShelfCopy[]>`

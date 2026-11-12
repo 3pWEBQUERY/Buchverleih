@@ -9,8 +9,10 @@ import { Cover } from "@/components/cover";
 import Link from "next/link";
 import { BookRow } from "@/components/regal/book-row";
 import { useToast } from "@/components/toast";
-import { Button, LinkButton, PageTitle, Switch, cx } from "@/components/ui";
-import { IconCalendar, IconCheck, IconScan } from "@/components/icons";
+import { Button, PageTitle, Switch, cx } from "@/components/ui";
+import { IconArrowRight, IconCalendar, IconCheck, IconClose, IconScan, IconSearch } from "@/components/icons";
+import { StatTile, StepSection } from "@/components/step-section";
+import { timeMeter, TimeMeterInline } from "@/components/loan/loan-row";
 
 type Visibility = ShelfCopy["visibility"];
 type Bulk = { offers?: OfferKind[]; visibility?: Visibility; loanDays?: 14 | 28 | 42 | 56 };
@@ -42,6 +44,8 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [panel, setPanel] = useState<"offers" | "visibility" | "loanDays" | null>(null);
   const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState<string>("alle");
+  const [q, setQ] = useState("");
 
   useEffect(() => setPaused(initialPaused), [initialPaused]);
   useEffect(() => {
@@ -51,10 +55,18 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
     return () => window.removeEventListener("keydown", onKey);
   }, [selecting]);
 
-  const groups = useMemo(
+  const needle = q.trim().toLowerCase();
+  const matches = (c: ShelfCopy) => !needle || c.title.toLowerCase().includes(needle) || c.authors.some((a) => a.toLowerCase().includes(needle));
+  const allGroups = useMemo(
     () => GROUPS.map((g) => ({ ...g, items: copies.filter((c) => g.statuses.includes(c.status)) })).filter((g) => g.items.length > 0),
     [copies],
   );
+  const groups = allGroups
+    .filter((g) => filter === "alle" || g.key === filter)
+    .map((g) => ({ ...g, items: g.items.filter(matches) }))
+    .filter((g) => g.items.length > 0);
+  const lentCopies = copies.filter((c) => c.status === "lent").sort((a, b) => new Date(a.lent_until ?? 0).getTime() - new Date(b.lent_until ?? 0).getTime());
+  const asked = copies.filter((c) => c.open_requests > 0);
 
   const count = (s: ShelfStatus[]) => copies.filter((c) => s.includes(c.status)).length;
   const lent = count(["lent"]);
@@ -149,70 +161,151 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
     );
   }
 
-  const tiles: [number, string][] = [
-    [copies.length, copies.length === 1 ? "Buch" : "Bücher"],
-    [lent, "ausgeliehen"],
-    [requests, requests === 1 ? "Anfrage" : "Anfragen"],
-  ];
+  const free = count(["available"]);
+  let n = 0;
 
   return (
     <div className={cx(selecting ? "pb-48" : "")}>
-      <header className="mb-10 md:mb-12 grid lg:grid-cols-[1fr_auto] gap-6 lg:gap-8 items-end">
-        <div className="min-w-0 anim-rise">
-          <p className="eyebrow">{summary}</p>
-          <h1 className="display text-[32px] md:text-[44px] mt-3">Mein <em>Regal</em></h1>
-        </div>
-        <dl className="grid grid-cols-3 gap-2 anim-rise" style={{ animationDelay: "80ms" }}>
-          {tiles.map(([n, l], i) => (
-            <div key={l} className="panel-quiet px-4 md:px-5 py-4 lg:min-w-[124px]">
-              <dd className="font-[520] tracking-[-0.035em] text-[40px] leading-none tnum flex items-center gap-2">
-                {n}
-                {i === 2 && n > 0 && <span aria-hidden className="h-2 w-2 rounded-full bg-accent live-dot" />}
-              </dd>
-              <dt className="text-[13px] text-muted mt-1.5">{l}</dt>
-            </div>
-          ))}
-        </dl>
-      </header>
+      <PageTitle eyebrow={summary}
+        aside={
+          <dl className="grid grid-cols-4 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
+            <StatTile n={copies.length} label={copies.length === 1 ? "Buch" : "Bücher"} href="#regal" />
+            <StatTile n={free} label="frei" href="#regal" />
+            <StatTile n={lent} label="ausgeliehen" href={lent ? "#unterwegs" : null} />
+            <StatTile n={requests} label={requests === 1 ? "Anfrage" : "Anfragen"} href={requests ? "/vorgaenge?seite=verleihe" : null} live={requests > 0} />
+          </dl>
+        }>
+        Mein Regal. <em>Was bei dir steht.</em>
+      </PageTitle>
 
-      <div className="flex flex-wrap items-center gap-2 mb-6 anim-rise" style={{ animationDelay: "120ms" }}>
-        <span className="hidden md:contents">
-          <LinkButton href="/regal/neu" variant="primary" title="Tastenkürzel n">
-            <IconScan /> Buch scannen <kbd className="font-sans text-xs opacity-75 border border-current/40 rounded-[4px] px-1">n</kbd>
-          </LinkButton>
-        </span>
-        <LinkButton href="/regal/kalender" variant="ghost"><IconCalendar width={18} height={18} /> Kalender</LinkButton>
-        <Button variant={selecting ? "secondary" : "ghost"} aria-pressed={selecting} onClick={() => (selecting ? stopSelecting() : setSelecting(true))}>
+      <div className="flex flex-wrap items-center gap-2 mb-2 anim-rise" style={{ animationDelay: "100ms" }}>
+        <Link href="/regal/neu" title="Tastenkürzel n" className="h-11 px-4 rounded-[6px] bg-accent text-accent-ink font-medium text-[14.5px] hidden md:inline-flex items-center gap-2 hover:bg-accent-hover transition-colors">
+          <IconScan width={18} height={18} /> Buch erfassen <kbd className="hidden md:inline font-sans text-[11px] opacity-75 border border-current/40 rounded-[4px] px-1 leading-4">n</kbd>
+        </Link>
+        <Link href="/regal/kalender" className="h-11 px-4 rounded-[6px] bg-accent-soft text-accent-hover font-medium text-[14.5px] inline-flex items-center gap-2 hover:bg-accent hover:text-accent-ink transition-colors">
+          <IconCalendar width={18} height={18} /> Kalender
+        </Link>
+        <button type="button" aria-pressed={selecting} onClick={() => (selecting ? stopSelecting() : setSelecting(true))}
+          className={cx("h-11 px-4 rounded-[6px] border font-medium text-[14.5px] inline-flex items-center gap-2 transition-colors",
+            selecting ? "border-accent bg-accent-soft/40 text-accent-hover" : "border-line-strong hover:border-ink-2")}>
           {selecting ? <><IconCheck width={18} height={18} /> Fertig</> : "Mehrere ändern"}
-        </Button>
-        {paused && <span className="chip ml-auto"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-done" />Ferienmodus</span>}
+        </button>
+        {paused && <a href="#ferien" className="ml-auto inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[6px] bg-paper-2 text-ink-2 text-[13px] font-medium"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait" />Ferienmodus an</a>}
       </div>
 
       {selecting ? (
-        <SelectGrid copies={copies} sel={sel} toggle={toggle} setSel={setSel} />
+        <div className="mt-8"><SelectGrid copies={copies} sel={sel} toggle={toggle} setSel={setSel} /></div>
       ) : (
         <>
-          {/* Das Büchergestell: eine dunkle Fläche, jede Gruppe ein Brett */}
-          <div className="surface-night rounded-[12px] px-5 md:px-9 pt-7 md:pt-9 pb-4 md:pb-6 -mx-1 md:mx-0">
-            {groups.map((g, gi) => (
-              <section key={g.key} aria-labelledby={`g-${g.key}`} className={cx(gi > 0 && "mt-8 md:mt-10")}>
-                <div className="flex items-baseline justify-between gap-4">
-                  <h2 id={`g-${g.key}`} className="text-[24px] md:text-[30px] font-[560] tracking-[-0.03em] leading-none">{g.label}</h2>
-                  <span className="text-[13px] text-night-muted tnum">{plural(g.items.length, "Buch", "Bücher")}</span>
-                </div>
-                <BookRow items={g.items} />
-              </section>
-            ))}
-          </div>
+          {lentCopies.length > 0 && (
+            <StepSection id="unterwegs" n={++n} first title="Unterwegs" aside={plural(lentCopies.length, "Buch", "Bücher")}
+              desc="Diese Bücher sind gerade bei jemandem. Die früheste Rückgabe steht zuoberst." className="mt-8">
+              <ul className="grid xl:grid-cols-2 gap-3">
+                {lentCopies.map((c, i) => {
+                  const m = c.lent_until ? timeMeter({ status: "active", kind: "lend", role: "owner", other_name: c.lent_to ?? "der Person", wanted: "", due_at: c.lent_until,
+                    respond_by: new Date(), requested_at: new Date(), handed_over_at: c.lent_since, handover_by: null, returned_at: null, inspection_until: null }) : null;
+                  return (
+                    <li key={c.id} className="anim-rise min-w-0" style={{ animationDelay: `${i * 40}ms` }}>
+                      <Link href={c.loan_id ? `/vorgaenge/${c.loan_id}` : `/regal/${c.id}`}
+                        className={cx("group h-full rounded-[10px] border p-4 grid grid-cols-[48px_minmax(0,1fr)_auto] gap-4 items-start transition-colors",
+                          m?.tone === "late" ? "border-late/50 hover:border-late" : "border-line hover:border-accent")}>
+                        <Cover data={{ title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id }} width={48} height={72} uniform />
+                        <div className="min-w-0">
+                          <p className="text-[12.5px] text-muted">Bei {c.lent_to ?? "jemandem"}</p>
+                          <p className="font-serif text-[18px] leading-[1.15] mt-0.5 line-clamp-2 group-hover:underline underline-offset-4 decoration-1">{c.title}</p>
+                          {m && <TimeMeterInline m={m} className="mt-2.5" />}
+                        </div>
+                        <IconArrowRight width={16} height={16} className="text-accent-hover mt-1 transition-transform group-hover:translate-x-0.5" />
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </StepSection>
+          )}
 
-          <section className="mt-10 md:mt-12 panel px-5 md:px-8 py-3 md:py-4 grid md:grid-cols-[1fr_auto] gap-2 items-center">
-            <Switch
-              checked={paused}
-              onChange={togglePause}
-              label={<span className="font-semibold">{paused ? "Ferienmodus ist an" : "Ferienmodus"}</span>}
-              hint={paused ? "Dein Regal bleibt sichtbar, Anfragen sind gerade nicht möglich. Laufende Leihen gehen normal weiter." : "Dein Regal bleibt sichtbar, neue Anfragen sind nicht möglich. Laufende Leihen gehen weiter."}
-            />
-          </section>
+          {asked.length > 0 && (
+            <StepSection id="anfragen" n={++n} first={n === 1} title="Wartet auf deine Antwort" aside={plural(requests, "Anfrage", "Anfragen")}
+              desc="Für diese Bücher liegen Anfragen vor. Antworte innert 72 Stunden, sonst verfallen sie." className={n === 1 ? "mt-8" : undefined}>
+              <ul className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                {asked.map((c, i) => (
+                  <li key={c.id} className="anim-rise" style={{ animationDelay: `${i * 40}ms` }}>
+                    <Link href="/vorgaenge?seite=verleihe" className="group h-full rounded-[10px] border border-accent/40 bg-accent-soft/15 p-4 grid grid-cols-[40px_minmax(0,1fr)] gap-3.5 items-center hover:border-accent transition-colors">
+                      <Cover data={{ title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id }} width={40} height={60} uniform />
+                      <div className="min-w-0">
+                        <p className="font-serif text-[17px] leading-tight truncate">{c.title}</p>
+                        <p className="text-[13px] font-medium text-accent-hover mt-1 inline-flex items-center gap-1.5">
+                          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent live-dot" />{plural(c.open_requests, "Anfrage", "Anfragen")} beantworten
+                          <IconArrowRight width={13} height={13} className="transition-transform group-hover:translate-x-0.5" />
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </StepSection>
+          )}
+
+          <StepSection id="regal" n={++n} first={n === 1} title="Dein Regal" aside={plural(copies.length, "Buch", "Bücher")}
+            desc="Nach Status sortiert. Ein Tippen öffnet ein Buch zum Bearbeiten." className={n === 1 ? "mt-8" : undefined}>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div role="tablist" aria-label="Nach Status filtern" className="flex flex-wrap gap-1.5">
+                {[{ key: "alle", label: "Alle", n: copies.length }, ...allGroups.map((g) => ({ key: g.key, label: g.label, n: g.items.length }))].map((f) => {
+                  const on = filter === f.key;
+                  return (
+                    <button key={f.key} type="button" role="tab" aria-selected={on} onClick={() => setFilter(f.key)}
+                      className={cx("h-9 pl-3 pr-1.5 rounded-[8px] border text-[13.5px] font-medium inline-flex items-center gap-2 transition-colors",
+                        on ? "border-accent bg-accent-soft/40 text-accent-hover" : "border-line text-ink-2 hover:border-ink-2")}>
+                      {f.label}
+                      <span className={cx("h-6 min-w-6 px-1.5 rounded-[5px] text-[12px] grid place-items-center tnum", on ? "bg-accent-soft" : "bg-paper-2 text-muted")}>{f.n}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <label className="relative w-full sm:w-[260px]">
+                <span className="sr-only">Im Regal suchen</span>
+                <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"><IconSearch width={16} height={16} /></span>
+                <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Im Regal suchen"
+                  className="w-full h-10 rounded-[8px] border border-line-strong bg-paper pl-9 pr-9 text-[14.5px] placeholder:text-muted/80 [&::-webkit-search-cancel-button]:appearance-none hover:border-ink-2 focus:outline-none focus:border-accent transition-colors" />
+                {q && (
+                  <button type="button" onClick={() => setQ("")} aria-label="Suche leeren" className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 grid place-items-center rounded-[5px] text-muted hover:text-ink hover:bg-paper-3">
+                    <IconClose width={14} height={14} />
+                  </button>
+                )}
+              </label>
+            </div>
+
+            {groups.length === 0 ? (
+              <div className="rounded-[10px] border border-dashed border-line-strong p-6 flex flex-wrap items-center justify-between gap-4">
+                <p className="text-ink-2 text-[15px]">{needle ? `Nichts gefunden für «${q.trim()}».` : "In dieser Auswahl steht kein Buch."}</p>
+                <button type="button" onClick={() => { setQ(""); setFilter("alle"); }} className="text-[14px] font-medium text-accent-hover hover:underline underline-offset-4">Alle zeigen</button>
+              </div>
+            ) : (
+              /* Das Büchergestell: eine dunkle Fläche, jede Gruppe ein Brett */
+              <div className="surface-night rounded-[12px] px-5 md:px-8 pt-6 md:pt-7 pb-4 md:pb-5 -mx-1 md:mx-0">
+                {groups.map((g, gi) => (
+                  <section key={g.key} aria-labelledby={`g-${g.key}`} className={cx(gi > 0 && "mt-8 md:mt-9")}>
+                    <div className="flex items-baseline justify-between gap-4">
+                      <h3 id={`g-${g.key}`} className="text-[20px] md:text-[24px] font-[560] tracking-[-0.03em] leading-none">{g.label}</h3>
+                      <span className="text-[13px] text-night-muted tnum">{plural(g.items.length, "Buch", "Bücher")}</span>
+                    </div>
+                    <BookRow items={g.items} height={156} />
+                  </section>
+                ))}
+              </div>
+            )}
+          </StepSection>
+
+          <StepSection id="ferien" n={++n} title="Ferienmodus" desc="Wenn du eine Weile nicht verleihen kannst: Regal bleibt sichtbar, neue Anfragen sind pausiert.">
+            <div className={cx("rounded-[10px] border px-5 md:px-6 py-2", paused ? "border-wait/50 bg-wait/[0.06]" : "border-line")}>
+              <Switch
+                checked={paused}
+                onChange={togglePause}
+                label={<span className="font-semibold">{paused ? "Ferienmodus ist an" : "Ferienmodus"}</span>}
+                hint={paused ? "Anfragen sind gerade nicht möglich. Laufende Leihen gehen normal weiter." : "Laufende Leihen gehen weiter, Rückgaben wie vereinbart."}
+              />
+            </div>
+          </StepSection>
         </>
       )}
 
@@ -287,7 +380,7 @@ function SelectGrid({ copies, sel, toggle, setSel }: { copies: ShelfCopy[]; sel:
             <li key={c.id}>
               <button type="button" aria-pressed={on} onClick={() => toggle(c.id)} className="group block w-full text-left">
                 <div className="relative flex items-end justify-center h-[112px] md:h-[136px]">
-                  <span className={cx("block rounded-xs transition-opacity duration-150", on && "outline-2 outline-ink outline-offset-2", !on && sel.size > 0 && "opacity-60")}>
+                  <span className={cx("block rounded-xs transition-opacity duration-150", on && "outline-2 outline-accent outline-offset-2", !on && sel.size > 0 && "opacity-60")}>
                     <span className="block md:hidden">
                       <Cover data={{ title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id }} height={104} />
                     </span>
@@ -299,7 +392,7 @@ function SelectGrid({ copies, sel, toggle, setSel }: { copies: ShelfCopy[]; sel:
                     aria-hidden
                     className={cx(
                       "absolute top-1 right-1 h-6 w-6 grid place-items-center rounded-full border transition-colors duration-150",
-                      on ? "bg-ink border-ink text-paper" : "bg-paper/90 border-line-strong text-transparent group-hover:border-ink",
+                      on ? "bg-accent border-accent text-accent-ink" : "bg-paper/90 border-line-strong text-transparent group-hover:border-accent",
                     )}
                   >
                     <IconCheck width={15} height={15} strokeWidth={2} />
