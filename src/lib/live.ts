@@ -30,3 +30,20 @@ export async function subscribe(channel: string, fn: Fn): Promise<() => void> {
   }
   return () => { entry.fns.delete(fn); };
 }
+
+/** Offene Live-Verbindungen pro Person und Prozess begrenzen (viele Tabs ja, Flut nein) */
+const conns = new Map<string, number>();
+export const MAX_STREAMS_PER_USER = 6;
+export function acquireStream(userId: string) {
+  const n = conns.get(userId) ?? 0;
+  if (n >= MAX_STREAMS_PER_USER) return null;
+  conns.set(userId, n + 1);
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    const m = (conns.get(userId) ?? 1) - 1;
+    if (m <= 0) conns.delete(userId);
+    else conns.set(userId, m);
+  };
+}

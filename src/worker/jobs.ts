@@ -45,7 +45,15 @@ export async function runJob(job: Job) {
 const handlers: Record<string, (p: Record<string, unknown>) => Promise<void>> = {
   /** Einmaliger Demo-Bestand für die Beta (siehe seed-demo.ts) */
   async seed_demo() {
-    await seedDemo(sql);
+    // Nie zweimal gleichzeitig (der Job kann länger als die 5-Minuten-Sperre laufen)
+    const conn = await sql.reserve();
+    try {
+      const [l] = await conn<{ ok: boolean }[]>`select pg_try_advisory_lock(515151) as ok`;
+      if (!l?.ok) return;
+      try { await seedDemo(sql); } finally { await conn`select pg_advisory_unlock(515151)`.catch(() => {}); }
+    } finally {
+      conn.release();
+    }
   },
   async remove_demo() {
     await removeDemo(sql);
@@ -86,6 +94,8 @@ const handlers: Record<string, (p: Record<string, unknown>) => Promise<void>> = 
       img = sharp(raw, { failOn: "error" }).rotate(); // EXIF-Ausrichtung anwenden; Metadaten werden nicht übernommen
       meta = await img.metadata();
       if (!meta.width || !meta.height || meta.width * meta.height > 60_000_000) throw new Error("ungültige Grösse");
+      // Nur echte Fotos: tatsächliches Format prüfen (nicht dem Content-Type vertrauen; kein SVG, PDF, GIF …)
+      if (!["jpeg", "png", "webp", "heif", "avif"].includes(meta.format ?? "")) throw new Error(`Format ${meta.format} nicht erlaubt`);
     } catch {
       await sql`update uploads set status = 'rejected' where id = ${u.id}`;
       await deleteObject(u.raw_key).catch(() => {});

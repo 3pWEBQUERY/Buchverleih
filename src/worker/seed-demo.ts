@@ -178,7 +178,8 @@ export async function seedDemo(sql: Sql) {
   }
   const [circle] = await sql<{ id: string }[]>`
     insert into circles (name, description, loan_days, auto_accept, fixed_spot, invite_code, created_by)
-    values ('Bücherfreunde Unterland', 'Wir tauschen und leihen zwischen Bülach, Kloten und Embrach. Neue sind willkommen.', 42, false, null, 'unterland-demo', ${ids[0]})
+    values ('Bücherfreunde Unterland', 'Wir tauschen und leihen zwischen Bülach, Kloten und Embrach. Neue sind willkommen.', 42, false, null,
+            ${"demo-" + Math.random().toString(36).slice(2, 12)}, ${ids[0]})
     on conflict do nothing returning id`;
   if (circle) {
     for (const uid of [0, 1, 2, 3, 4, 9].map((i) => ids[i]).filter(Boolean)) {
@@ -197,8 +198,9 @@ export async function removeDemo(sql: Sql) {
   const like = `%@${DEMO_DOMAIN}`;
   await sql`update copies set removed_at = coalesce(removed_at, now()), removed_reason = coalesce(removed_reason, 'deleted')
              where owner_id in (select id from users where email like ${like})`;
-  await sql`update loans set circle_id = null where circle_id in (select id from circles where invite_code = 'unterland-demo')`;
-  await sql`delete from circles where invite_code = 'unterland-demo'`;
+  const demoCircles = sql`select ci.id from circles ci join users u on u.id = ci.created_by where u.is_demo`;
+  await sql`update loans set circle_id = null where circle_id in (${demoCircles})`;
+  await sql`delete from circles where id in (${demoCircles})`;
   await sql`delete from pickup_spots where user_id in (select id from users where email like ${like})`;
   await sql`update users set first_name = 'Ehemaliges Mitglied', deleted_at = coalesce(deleted_at, now()),
                     home_lat = null, home_lng = null, display_lat = null, display_lng = null

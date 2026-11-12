@@ -9,7 +9,7 @@ export const POST = route<{ id: string }>(async (req, p) => {
   const b = await body(
     req,
     z.discriminatedUnion("action", [
-      z.object({ action: z.literal("respond"), response: z.enum(["return_date", "replace_same", "replace_other", "swap_offer", "object"]), detail: z.string().max(500).optional(), returnAt: z.string().optional(), swapCopyId: z.string().uuid().optional() }),
+      z.object({ action: z.literal("respond"), response: z.enum(["return_date", "replace_same", "replace_other", "swap_offer", "object"]), detail: z.string().max(500).optional(), returnAt: z.string().max(40).refine((d) => !Number.isNaN(Date.parse(d)), "Dieses Datum gibt es nicht").optional(), swapCopyId: z.string().uuid().optional() }),
       z.object({ action: z.literal("resolve"), outcome: z.enum(["returned", "replaced"]) }),
     ]),
   );

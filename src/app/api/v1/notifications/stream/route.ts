@@ -1,6 +1,6 @@
 import { getUser } from "@/lib/auth/session";
 import { sql } from "@/lib/db";
-import { subscribe } from "@/lib/live";
+import { acquireStream, subscribe } from "@/lib/live";
 import { renderNotification, type NotificationType, type NotifyData } from "@/lib/notify";
 
 /**
@@ -12,6 +12,8 @@ export async function GET(req: Request) {
   const u = await getUser();
   if (!u) return new Response(null, { status: 401 });
   if (u.banned_at) return new Response(null, { status: 403 });
+  const release = acquireStream(u.id);
+  if (!release) return new Response(null, { status: 429 });
   const userId = u.id;
 
   const unread = async () => {
@@ -25,6 +27,7 @@ export async function GET(req: Request) {
   let closed = false;
   const cleanup = () => {
     closed = true;
+    release();
     if (ping) clearInterval(ping);
     stop?.();
   };

@@ -25,6 +25,8 @@ export async function sendMail(to: string, subject: string, text: string, link?:
     subject,
     text: `${body}\n—\nLeihregal · Bücher aus Regalen in deiner Nähe\nBenachrichtigungen ändern: ${env.appUrl}/einstellungen`,
     html: renderHtml(subject, text, link),
+    // Mailprogramme zeigen damit «Abmelden»; führt zu den E-Mail-Einstellungen
+    headers: { "List-Unsubscribe": `<${env.appUrl}/einstellungen#benachrichtigungen>` },
   });
 }
 

@@ -1000,6 +1000,10 @@ export async function rate(
 ) {
   return sql.begin(async (tx) => {
     const { loan, role } = await loanFor(tx, loanId, user.id);
+    // Vorgang sperren: geben beide gleichzeitig ab, sieht die zweite Transaktion die erste Bewertung
+    await tx`select id from loans where id = ${loanId} for update`;
+    const [mine] = await tx`select 1 from ratings where loan_id = ${loanId} and from_user = ${user.id}`;
+    if (mine) throw err.conflict("already_rated", "Du hast diesen Vorgang bereits bewertet.");
     if (loan.status !== "completed" || !loan.rating_closes_at || loan.rating_closes_at < new Date())
       throw err.conflict("rating_closed", "Für diesen Vorgang ist keine Bewertung mehr möglich.");
     const forUser = role === "owner" ? loan.borrower_id : loan.owner_id;
