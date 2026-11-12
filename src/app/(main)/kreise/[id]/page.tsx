@@ -115,8 +115,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <h2 id="regal-t" className="text-[26px] md:text-[32px] font-[560] tracking-[-0.03em] leading-none mt-2">Gemeinsames Regal</h2>
             {copies.length > 0 && (
               <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-night-muted tnum">
-                <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#8fd09a]" />{free} frei</span>
-                {lent > 0 && <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#f0c060]" />{lent} ausgeliehen</span>}
+                <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-night-ok" />{free} frei</span>
+                {lent > 0 && <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-night-lent" />{lent} ausgeliehen</span>}
                 {mine > 0 && <span>{mine === 1 ? "1 Buch von dir" : `${mine} Bücher von dir`}</span>}
               </p>
             )}

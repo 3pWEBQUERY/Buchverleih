@@ -156,7 +156,7 @@ export function CalendarView({
                     style={{ top: top + 2, height: trackH - 4, left: `${pct(b.end!)}%`, width: `${span(b.end!, bufEnd)}%`, backgroundImage: HATCH }} />
                 )}
                 {b.handoverChatId && bufEnd && (
-                  <Link href={`/uebergabe/${b.handoverChatId}`} className="absolute h-6 w-6 -translate-x-1/2 grid place-items-center rounded-full bg-paper border border-accent text-accent-hover hover:bg-accent hover:text-accent-ink transition-colors"
+                  <Link href={`/uebergabe/${b.handoverChatId}`} className="absolute h-6 w-6 -translate-x-1/2 grid place-items-center rounded-full bg-paper border border-accent after:absolute after:content-[''] after:-inset-2.5 text-accent-hover hover:bg-accent hover:text-accent-ink transition-colors"
                     style={{ left: `${pct(bufEnd)}%`, top: top - 10 }} aria-label="Übergabe-Chat zum Wechsel">
                     <IconChat width={12} height={12} />
                   </Link>

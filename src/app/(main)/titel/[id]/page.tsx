@@ -7,6 +7,8 @@ import { plzInfo } from "@/lib/account";
 import { copiesOfWork } from "@/lib/copies";
 import { Suspense } from "react";
 import { MoreBooksLoader } from "@/components/more-books";
+import { ShareButton } from "@/components/share-button";
+import { responseText } from "@/lib/response-time";
 import { dayToDate, dueDay, fmtDay } from "@/lib/dates";
 import { workById, wishFor } from "@/lib/title-queries";
 import { fmtDistance } from "@/lib/geo";
@@ -22,17 +24,16 @@ type Params = { params: Promise<{ id: string }>; searchParams: Promise<Record<st
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const w = await workById((await params).id);
-  return { title: w ? w.title : "Titel" };
+  if (!w) return { title: "Titel" };
+  const desc = `«${w.title}»${w.authors.length ? ` von ${w.authors.join(", ")}` : ""} ausleihen, tauschen oder geschenkt bekommen – von Privatpersonen in deiner Nähe.`;
+  return { title: w.title, description: desc, openGraph: { title: w.title, description: desc }, alternates: { canonical: `/titel/${w.id}` } };
 }
 
 const toneDot = { ok: "bg-ok", lent: "bg-lent", late: "bg-late", wait: "bg-wait", done: "bg-done", accent: "bg-accent" } as const;
 
 function responseHint(sec: number | null) {
-  if (sec == null) return null;
-  const h = sec / 3600;
-  if (h < 1) return "antwortet meist innert einer Stunde";
-  if (h < 36) return `antwortet meist innert ${Math.round(h)} Std.`;
-  return `antwortet meist innert ${Math.round(h / 24)} Tagen`;
+  const t = responseText(sec == null ? null : sec / 3600);
+  return t ? `antwortet meist ${t}` : null;
 }
 
 /** Titelseite (PRD 8.4): Welche Exemplare gibt es in der Nähe? Zustand, Entfernung, Verleiher, «Anfragen». */
@@ -127,6 +128,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
           </p>
           <WishButton workId={work.id} loggedIn={!!viewer} onList={!!wish} alarm={wish?.alarm ?? false} next={nextPath} primary={!nextId} className="w-full" />
         </div>
+        <ShareButton title={work.title} text={`«${work.title}» bei Leihregal`} path={`/titel/${work.id}`} className="w-full" />
       </aside>
 
       {/* ------------------------------------------------ Exemplare */}

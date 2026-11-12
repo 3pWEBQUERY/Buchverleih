@@ -185,7 +185,7 @@ export function SearchClient({
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={onKeyDown}
           placeholder="Titel, Autorin oder ISBN"
-          className="w-full h-14 md:h-[60px] bg-paper border border-line-strong rounded-[10px] pl-13 pr-14 text-[17px] md:text-[18px] tracking-[-0.01em] placeholder:text-muted/80 hover:border-ink-2 focus:outline-none focus:border-accent transition-colors duration-150 [&::-webkit-search-cancel-button]:appearance-none"
+          className="w-full h-14 md:h-[60px] bg-paper border border-line-strong rounded-[10px] pl-13 pr-14 text-[17px] md:text-[18px] tracking-[-0.01em] placeholder:text-muted/80 hover:border-ink-2 focus:outline-none focus:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20 transition-colors duration-150 [&::-webkit-search-cancel-button]:appearance-none"
         />
         {q ? (
           <button type="button" onClick={() => { setQ(""); inputRef.current?.focus(); }} aria-label="Suchbegriff löschen"
@@ -255,7 +255,7 @@ function FilterChips({ f, set, reset, n, hasOrigin }: { f: Filters; set: <K exte
             const on = f.radius === r;
             return (
               <button key={r} type="button" role="radio" aria-checked={on} onClick={() => set("radius", r)}
-                className={cx("h-7 min-w-7 px-2 rounded-[4px] text-[13px] font-medium tnum transition-colors duration-150", on ? "bg-accent text-accent-ink" : "text-ink-2 hover:bg-paper-2")}>
+                className={cx("h-7 min-w-7 px-2 rounded-[4px] text-[13px] font-medium tnum transition-colors duration-150 relative after:absolute after:content-[''] after:-inset-2", on ? "bg-accent text-accent-ink" : "text-ink-2 hover:bg-paper-2")}>
                 {r}{on && <span className="font-medium"> km</span>}
               </button>
             );
@@ -302,7 +302,7 @@ function PillSelect({ label, value, onChange, options }: { label: string; value:
     <label className="relative flex-none">
       <span className="sr-only">{label}</span>
       <select value={value} onChange={(e) => onChange(e.target.value)}
-        className={cx(chip, on ? chipOn : chipOff, "appearance-none [field-sizing:content] pr-8 cursor-pointer focus:outline-none focus-visible:border-accent [&>option]:bg-paper [&>option]:text-ink [&>option]:font-normal")}>
+        className={cx(chip, on ? chipOn : chipOff, "appearance-none [field-sizing:content] pr-8 cursor-pointer focus:outline-none focus-visible:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20 [&>option]:bg-paper [&>option]:text-ink [&>option]:font-normal")}>
         {options.map(([v, l]) => <option key={v} value={v}>{v === "" || v === "0" ? label : l}</option>)}
       </select>
       <svg aria-hidden viewBox="0 0 12 8" className={cx("absolute right-3 top-1/2 -translate-y-1/2 w-2.5 pointer-events-none", on ? "text-accent-hover" : "text-muted")} fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -412,7 +412,7 @@ function PlzBar({ plz, place, onSet }: { plz: string; place: string | null; onSe
       <div className="flex items-center gap-2">
         <input id="suche-plz" inputMode="numeric" autoComplete="postal-code" maxLength={4} placeholder="8180" value={value}
           onChange={(e) => setValue(e.target.value.replace(/\D/g, ""))} aria-describedby={err ? "suche-plz-err" : undefined}
-          className="w-28 h-11 bg-paper border border-line-strong rounded-[6px] px-5 text-[16px] tnum tracking-[0.08em] placeholder:text-muted/70 focus:outline-none focus:border-accent" />
+          className="w-28 h-11 bg-paper border border-line-strong rounded-[6px] px-5 text-[16px] tnum tracking-[0.08em] placeholder:text-muted/70 focus:outline-none focus:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20" />
         <Button type="submit" variant="primary" disabled={value.length !== 4}>Bestand zeigen</Button>
       </div>
       {err && <span id="suche-plz-err" role="alert" className="basis-full block text-sm text-late">{err}</span>}

@@ -8,12 +8,15 @@ import { RegisterSW } from "@/components/register-sw";
 import { ThemeSync } from "@/components/theme-sync";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.APP_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : "http://localhost:3000")),
   title: { default: "Leihregal", template: "%s · Leihregal" },
   description: "Bücher aus Regalen in deiner Nähe leihen, tauschen und verschenken. Kostenlos unter Privatpersonen.",
   applicationName: "Leihregal",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "Leihregal", statusBarStyle: "default" },
   icons: { icon: "/icons/icon.svg", apple: "/icons/apple-touch-icon.png" },
+  openGraph: { siteName: "Leihregal", locale: "de_CH", type: "website" },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

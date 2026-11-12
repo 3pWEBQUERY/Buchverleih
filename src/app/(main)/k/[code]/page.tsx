@@ -65,7 +65,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
             <p className="text-ink-2 flex items-center justify-center gap-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait live-dot" /> Deine Anfrage ist gesendet. Sobald ein Admin dich freigibt, erhältst du eine Nachricht.</p>
           ) : !user ? (
             <>
-              <p className="text-ink-2 mb-6 max-w-sm mx-auto">Ein Kreis teilt ein gemeinsames Regal. Melde dich an, um beizutreten. Ohne Konto dauert es eine Minute, ohne Passwort.</p>
+              <p className="text-ink-2 mb-6 max-w-sm mx-auto">Ein Kreis teilt ein gemeinsames Regal. Melde dich an, um beizutreten. Ein Konto ist in einer Minute erstellt, ohne Passwort.</p>
               <LinkButton href={`/anmelden?next=${encodeURIComponent(next)}`} variant="primary" size="lg" className="w-full sm:w-auto">Anmelden und beitreten</LinkButton>
             </>
           ) : !user.onboarded_at ? (

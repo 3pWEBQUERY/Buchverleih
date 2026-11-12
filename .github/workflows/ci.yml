@@ -23,6 +23,8 @@ jobs:
           --health-retries 10
     env:
       TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/leihregal_test
+      # Der Build lädt Module, die eine Datenbank-URL erwarten (es wird nichts abgefragt)
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/leihregal_test
       TZ: Europe/Zurich
     steps:
       - uses: actions/checkout@v4

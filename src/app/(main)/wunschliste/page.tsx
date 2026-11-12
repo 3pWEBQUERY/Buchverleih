@@ -25,7 +25,7 @@ export default async function WunschlistePage() {
       <PageTitle eyebrow="Titelalarm" sub="Titel, die du suchst. Mit dem Titelalarm melden wir uns, sobald ein Exemplar im gewählten Umkreis frei wird."
         aside={list.length > 0 && (
           <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
-            <StatTile n={list.length} label={list.length === 1 ? "Titel" : "Titel"} href="#titel" />
+            <StatTile n={list.length} label="Titel" href="#titel" />
             <StatTile n={free} label="jetzt frei" href="#titel" live={free > 0} />
             <StatTile n={alarms} label="Alarme an" />
           </dl>

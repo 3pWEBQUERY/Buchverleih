@@ -155,7 +155,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
   if (copies.length === 0) {
     return (
       <div>
-        <PageTitle sub="Alles, was du verleihst, tauschst oder verschenkst, steht hier.">Mein <em>Regal</em></PageTitle>
+        <PageTitle sub="Alles, was du verleihst, tauschst oder verschenkst, steht hier.">Mein Regal. <em>Was bei dir steht.</em></PageTitle>
         <section className="rounded-[12px] bg-accent text-accent-ink p-8 md:p-12 grid md:grid-cols-[1fr_auto] gap-8 items-end">
           <div>
             <p className="eyebrow !text-accent-ink/75">Dein Regal ist noch leer</p>
@@ -272,7 +272,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
                 <span className="sr-only">Im Regal suchen</span>
                 <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"><IconSearch width={16} height={16} /></span>
                 <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Im Regal suchen"
-                  className="w-full h-10 rounded-[8px] border border-line-strong bg-paper pl-9 pr-9 text-[14.5px] placeholder:text-muted/80 [&::-webkit-search-cancel-button]:appearance-none hover:border-ink-2 focus:outline-none focus:border-accent transition-colors" />
+                  className="w-full h-10 rounded-[8px] border border-line-strong bg-paper pl-9 pr-9 text-[14.5px] placeholder:text-muted/80 [&::-webkit-search-cancel-button]:appearance-none hover:border-ink-2 focus:outline-none focus:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20 transition-colors" />
                 {q && (
                   <button type="button" onClick={() => setQ("")} aria-label="Suche leeren" className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 grid place-items-center rounded-[5px] text-muted hover:text-ink hover:bg-paper-3">
                     <IconClose width={14} height={14} />
@@ -376,7 +376,7 @@ function SelectGrid({ copies, sel, toggle, setSel }: { copies: ShelfCopy[]; sel:
       <div className="flex items-center justify-between gap-4 panel-quiet px-5 py-3 mb-6">
         <p className="text-[15px] text-ink-2">Tippe die Bücher an, die du gemeinsam ändern willst.</p>
         <Button variant="quiet" className="text-sm" onClick={() => setSel(all ? new Set() : new Set(copies.map((c) => c.id)))}>
-          {all ? "Keine" : "Alle auswählen"}
+          {all ? "Auswahl aufheben" : "Alle auswählen"}
         </Button>
       </div>
       <ul className="grid gap-x-3 gap-y-5 grid-cols-[repeat(auto-fill,minmax(76px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(96px,1fr))]">

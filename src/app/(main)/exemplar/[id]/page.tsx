@@ -15,9 +15,11 @@ import { Monogram } from "@/components/person/monogram";
 import { conditionHint, conditionLabel, languageLabel, offerLabel, trustLabel } from "@/lib/i18n/de-CH";
 import { fmtDistance } from "@/lib/geo";
 import { dayToDate, fmtDay, fmtMonthYear } from "@/lib/dates";
+import { responseText } from "@/lib/response-time";
 import { IconArrowLeft, IconArrowRight } from "@/components/icons";
 import { CalendarView } from "@/components/calendar";
 import { MoreBooksLoader } from "@/components/more-books";
+import { ShareButton } from "@/components/share-button";
 import { RequestPanel } from "./request-panel";
 import { CorrectionForm } from "./correction";
 
@@ -75,7 +77,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const freeFrom = cal?.free[0]?.start ?? null;
   const freeNow = freeFrom != null && cal != null && freeFrom === cal.today;
   const respond = owner?.median_response_hours;
-  const respondText = respond == null ? null : respond < 1 ? "Antwortet meist innert einer Stunde" : respond < 24 ? `Antwortet meist innert ${Math.ceil(respond)} Std.` : (Math.ceil(respond / 24) === 1 ? "Antwortet meist innert eines Tages" : `Antwortet meist innert ${Math.ceil(respond / 24)} Tagen`);
+  const respondText = responseText(respond) ? `Antwortet meist ${responseText(respond)}` : null;
   const quick: { text: string; tone: "ok" | "wait" | "plain" }[] = [
     ...(copy.offers.includes("lend") && cal ? [{ text: freeNow ? "Jetzt frei" : freeFrom ? `Frei ab ${fmtDay(dayToDate(freeFrom))}` : "Gerade nicht buchbar", tone: freeNow ? "ok" as const : "wait" as const }] : []),
     ...(copy.offers.includes("lend") ? [{ text: `Bis ${loanDays} Tage`, tone: "plain" as const }] : []),
@@ -159,6 +161,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <Link href={`/titel/${copy.work_id}`} className="h-11 rounded-[6px] border border-line-strong font-medium text-[14.5px] inline-flex items-center justify-center gap-2 hover:border-accent hover:text-accent-hover transition-colors">
               {sameWork.n > 0 ? `${sameWork.n} ${sameWork.n === 1 ? "weiteres Exemplar" : "weitere Exemplare"} vergleichen` : "Zur Titelseite"} <IconArrowRight width={16} height={16} />
             </Link>
+            {!own && <ShareButton title={copy.title} text={`«${copy.title}» bei Leihregal`} path={`/titel/${copy.work_id}`} />}
           </div>
           <CorrectionForm editionId={copy.edition_id} loggedIn={Boolean(user)} />
         </aside>

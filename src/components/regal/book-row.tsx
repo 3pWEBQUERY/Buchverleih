@@ -11,10 +11,10 @@ import { cx } from "@/components/ui";
  */
 // Auf der dunklen Fläche gelten feste, helle Statusfarben (wie auf der Startseite)
 const NIGHT_DOT: Record<Tone, string> = {
-  ok: "bg-[#8fd09a]",
-  lent: "bg-[#f0c060]",
-  late: "bg-[#ff8aa3]",
-  wait: "bg-[#a9bfe3]",
+  ok: "bg-night-ok",
+  lent: "bg-night-lent",
+  late: "bg-night-late",
+  wait: "bg-night-wait",
   done: "bg-night-muted",
   accent: "bg-accent",
 };

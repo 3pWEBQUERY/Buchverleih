@@ -7,6 +7,7 @@ import { listVisibleShelf } from "@/lib/copies";
 import { isUuid } from "@/lib/title-queries";
 import { trustLabel } from "@/lib/i18n/de-CH";
 import { TZ, dayToDate, dueDay, fmtDay } from "@/lib/dates";
+import { responseText } from "@/lib/response-time";
 import { sql } from "@/lib/db";
 import { offerNoun, statusLabel } from "@/lib/i18n/de-CH";
 import { Cover } from "@/components/cover";
@@ -88,10 +89,7 @@ export default async function ProfilPage({ params }: Params) {
   const level = trustLabel[p.trust_level] ?? "Neu";
 
   const since = sinceFmt.format(new Date(p.member_since));
-  const response = p.median_response_hours == null ? null
-    : p.median_response_hours < 1 ? "in weniger als einer Stunde"
-    : p.median_response_hours < 24 ? `innert ca. ${Math.round(p.median_response_hours)} Std.`
-    : Math.round(p.median_response_hours / 24) === 1 ? "innert eines Tages" : `innert ca. ${Math.round(p.median_response_hours / 24)} Tagen`;
+  const response = responseText(p.median_response_hours);
   const facts: [string, string][] = [
     ...(response ? [["Antwortet meist", response] as [string, string]] : []),
     ["Bücher im Regal", String(shelf.length)],

@@ -221,7 +221,7 @@ function WishCard({ it, i, onRadius, onAlarm, onRemove }: { it: WishItem; i: num
               const on = it.radius_km === r;
               return (
                 <button key={r} type="button" role="radio" aria-checked={on} onClick={() => !on && onRadius(r)}
-                  className={cx("h-8 px-2 sm:px-2.5 rounded-[6px] text-[12.5px] font-medium tnum whitespace-nowrap transition-colors",
+                  className={cx("h-8 px-2 sm:px-2.5 rounded-[6px] text-[12.5px] font-medium tnum whitespace-nowrap transition-colors relative after:absolute after:content-[''] after:-inset-y-1.5",
                     on ? "bg-paper text-accent-hover outline outline-1 outline-accent/50" : "text-ink-2 hover:text-ink")}>
                   {r} km
                 </button>
@@ -298,7 +298,7 @@ function AddTitle({ onList, autoFocus }: { onList: Set<string>; autoFocus: boole
         <input id="wunsch-q" ref={ref} type="search" autoComplete="off" autoFocus={autoFocus} value={q} onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Escape") setQ(""); if (e.key === "Enter" && hits?.[0] && !onList.has(hits[0].work_id)) { e.preventDefault(); add(hits[0]); } }}
           placeholder="Titel hinzufügen: Titel oder Autorin"
-          className="w-full h-13 bg-paper border border-line-strong rounded-[8px] pl-12 pr-5 [&::-webkit-search-cancel-button]:appearance-none text-[16px] placeholder:text-muted/80 hover:border-ink-2 focus:outline-none focus:border-accent transition-colors" />
+          className="w-full h-13 bg-paper border border-line-strong rounded-[8px] pl-12 pr-5 [&::-webkit-search-cancel-button]:appearance-none text-[16px] placeholder:text-muted/80 hover:border-ink-2 focus:outline-none focus:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20 transition-colors" />
       </div>
       {hits && (
         <div className="anim-rise mt-2" aria-live="polite">

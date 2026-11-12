@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* dark:-Klassen folgen der gewählten Darstellung (data-theme) und sonst dem System */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *), &:where(:root:not([data-theme="light"]) *):is(@media (prefers-color-scheme: dark)));
+
 /*
  * Leihregal Designsystem v2 – Tokens (PRD 8.1, 8.5)
  * Flach und kontrastreich: helles Papier, tiefe Tinte als zweite Fläche, eine einzige
@@ -107,6 +110,11 @@
   --color-night-ink: var(--night-ink);
   --color-night-muted: var(--night-muted);
   --color-night-line: var(--night-line);
+  /* Statusfarben auf dunklen Flächen (Regal, Bühne) – in beiden Modi gleich hell */
+  --color-night-ok: #8fd09a;
+  --color-night-lent: #f0c060;
+  --color-night-late: #ff8aa3;
+  --color-night-wait: #a9bfe3;
   --color-ok: var(--st-ok);
   --color-lent: var(--st-lent);
   --color-late: var(--st-late);

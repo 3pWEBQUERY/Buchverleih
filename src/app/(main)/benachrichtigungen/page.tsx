@@ -104,7 +104,7 @@ export default async function BenachrichtigungenPage({ searchParams }: { searchP
           </dl>
         )}
       >
-        Benach&shy;richtigungen
+        Benach&shy;richtigungen. <em>Was neu ist.</em>
       </PageTitle>
 
       {all.length > 0 && (
