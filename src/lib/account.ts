@@ -128,6 +128,7 @@ export async function deleteAccount(userId: string) {
     await tx`delete from copy_photos p using copies c where c.id = p.copy_id and c.owner_id = ${userId}`;
     await tx`delete from circle_copies cc using copies c where c.id = cc.copy_id and c.owner_id = ${userId}`;
     await tx`delete from sessions where user_id = ${userId}`;
+    await tx`delete from push_subscriptions where user_id = ${userId}`;
     await tx`delete from passkeys where user_id = ${userId}`;
     await tx`update loans set pickup_spot_id = null where pickup_spot_id in (select id from pickup_spots where user_id = ${userId})`;
     await tx`delete from pickup_spots where user_id = ${userId}`;

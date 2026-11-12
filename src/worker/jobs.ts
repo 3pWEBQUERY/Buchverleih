@@ -8,6 +8,7 @@ import { renderNotification, type NotificationType, type NotifyData } from "@/li
 import { deleteObject, getObjectBytes, keys, putObject } from "@/lib/storage";
 import { coverCandidates, fetchImage } from "@/lib/catalog/covers";
 import { removeDemo, seedDemo } from "./seed-demo";
+import { pushToUser } from "@/lib/push";
 
 type Job = { id: number; kind: string; payload: Record<string, unknown>; attempts: number };
 
@@ -20,7 +21,7 @@ export async function nextJob(): Promise<Job | null> {
         where done_at is null and run_at <= now() and attempts < 5
           and (locked_at is null or locked_at < now() - interval '5 minutes')
         -- Mails und SMS zuerst, damit sie nicht hinter Cover-Jobs warten
-        order by (kind in ('send_email', 'send_sms')) desc, run_at limit 1 for update skip locked)
+        order by (kind in ('send_email', 'send_sms', 'send_push')) desc, run_at limit 1 for update skip locked)
     returning id, kind, payload, attempts`;
   return j ?? null;
 }
@@ -68,6 +69,29 @@ const handlers: Record<string, (p: Record<string, unknown>) => Promise<void>> = 
     const href = n.payload.href ? `${env.appUrl}${n.payload.href}` : n.loan_id ? `${env.appUrl}/vorgaenge/${n.loan_id}` : `${env.appUrl}/`;
     await sendMail(n.email, title, body, { href, label: n.loan_id ? "Zum Vorgang" : "Öffnen" });
     await sql`update notifications set sent_at = now() where id = ${n.id}`;
+  },
+
+  /** Push an alle Geräte. Schon gelesene Benachrichtigungen (live in der App gesehen) nicht mehr schicken. */
+  async send_push(p) {
+    const [n] = await sql<{ id: string; user_id: string; type: NotificationType; payload: NotifyData; loan_id: string | null; read_at: Date | null; created_at: Date }[]>`
+      select n.id, n.user_id, n.type, n.payload, n.loan_id, n.read_at, n.created_at
+        from notifications n join users u on u.id = n.user_id
+       where n.id = ${p.notificationId as string} and u.deleted_at is null and u.banned_at is null`;
+    if (!n || n.read_at) return;
+    // Nach einem Ausfall keine veralteten Hinweise nachschieben
+    if (Date.now() - n.created_at.getTime() > 24 * 3600_000) return;
+    const { title, body } = renderNotification(n.type, n.payload);
+    const href = n.payload.href ?? (n.loan_id ? `/vorgaenge/${n.loan_id}` : "/benachrichtigungen");
+    await pushToUser(n.user_id, { title, body, href, tag: n.loan_id ? `loan-${n.loan_id}` : n.id });
+  },
+
+  async send_push_test(p) {
+    await pushToUser(p.userId as string, {
+      title: "Push ist eingerichtet",
+      body: "So erscheinen Anfragen, Zusagen und Fristen auf diesem Gerät.",
+      href: "/einstellungen#push",
+      tag: "test",
+    });
   },
 
   async send_sms(p) {

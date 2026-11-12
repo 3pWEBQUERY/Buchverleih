@@ -108,14 +108,19 @@ export async function notify(
   n: { userId: string; type: NotificationType; loanId?: string | null; data?: NotifyData; sms?: boolean },
 ) {
   const data = n.data ?? {};
-  const [row] = await tx<{ id: string; email: string; email_prefs: Record<string, boolean>; phone_e164: string | null }[]>`
+  const [row] = await tx<{ id: string; email: string; email_prefs: Record<string, boolean>; phone_e164: string | null; has_push: boolean }[]>`
     with ins as (
       insert into notifications (user_id, type, channel, loan_id, payload)
       values (${n.userId}, ${n.type}, 'app', ${n.loanId ?? null}, ${tx.json(data as never)})
       returning id, user_id
     )
-    select ins.id, u.email, u.email_prefs, u.phone_e164 from ins join users u on u.id = ins.user_id`;
+    select ins.id, u.email, u.email_prefs, u.phone_e164,
+           exists (select 1 from push_subscriptions p where p.user_id = ins.user_id) as has_push
+      from ins join users u on u.id = ins.user_id`;
   if (!row) return;
+
+  // Push aufs Handy, sofern ein Gerät angemeldet ist (verweist auf die App-Benachrichtigung)
+  if (row.has_push) await enqueue(tx, "send_push", { notificationId: row.id });
 
   const cat = EMAIL_CATEGORY[n.type];
   if (cat && (cat === "cases" || row.email_prefs?.[cat] !== false)) {

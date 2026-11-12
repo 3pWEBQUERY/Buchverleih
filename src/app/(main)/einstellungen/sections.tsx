@@ -528,6 +528,132 @@ export function ThemeChoice() {
   );
 }
 
+/* ------------------------------------------------------------------- Push */
+function keyBytes(b64: string) {
+  const pad = "=".repeat((4 - (b64.length % 4)) % 4);
+  const raw = atob((b64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+}
+
+/** Service Worker abwarten; ohne (z. B. lokal in der Entwicklung) nach kurzer Zeit aufgeben */
+const swReady = () => Promise.race([navigator.serviceWorker.ready, new Promise<null>((r) => setTimeout(() => r(null), 6000))]);
+
+type PushState = "loading" | "unsupported" | "ios-install" | "denied" | "off" | "on";
+
+export function PushSettings() {
+  const toast = useToast();
+  const [state, setState] = useState<PushState>("loading");
+  const [devices, setDevices] = useState(0);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
+      if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+        return setState(ios && !standalone ? "ios-install" : "unsupported");
+      }
+      if (Notification.permission === "denied") return setState("denied");
+      try {
+        const reg = await swReady();
+        if (!reg) return setState("unsupported");
+        const sub = await reg.pushManager.getSubscription();
+        const d = await api<{ devices: number; thisDevice: boolean }>(`/push${sub ? `?endpoint=${encodeURIComponent(sub.endpoint)}` : ""}`);
+        setDevices(d.devices);
+        if (sub && !d.thisDevice) {
+          // Browser hat noch ein Abo, der Server nicht (z. B. nach Abmelden): neu melden
+          await api("/push", { body: sub.toJSON() }).then((r) => setDevices((r as { devices: number }).devices)).catch(() => {});
+        }
+        setState(sub ? "on" : "off");
+      } catch {
+        setState("unsupported");
+      }
+    })();
+  }, []);
+
+  async function enable() {
+    setBusy(true);
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") {
+        setState(perm === "denied" ? "denied" : "off");
+        return;
+      }
+      const { publicKey } = await api<{ publicKey: string }>("/push");
+      const reg = await swReady();
+      if (!reg) throw new Error("Die App ist auf diesem Gerät noch nicht bereit. Lade die Seite neu und versuche es erneut.");
+      const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(publicKey) }));
+      const r = await api<{ devices: number }>("/push", { body: sub.toJSON() });
+      setDevices(r.devices);
+      setState("on");
+      toast.show({ text: "Push ist auf diesem Gerät an." });
+    } catch (e) {
+      toast.error(msg(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function disable() {
+    setBusy(true);
+    try {
+      const reg = await swReady();
+      const sub = await reg?.pushManager.getSubscription();
+      if (sub) {
+        const r = await api<{ devices: number }>("/push", { method: "DELETE", body: { endpoint: sub.endpoint } });
+        setDevices(r.devices);
+        await sub.unsubscribe().catch(() => {});
+      }
+      setState("off");
+      toast.show({ text: "Push ist auf diesem Gerät aus." });
+    } catch (e) {
+      toast.error(msg(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function test() {
+    setBusy(true);
+    try {
+      await api("/push", { body: { test: true } });
+      toast.show({ text: "Testmitteilung unterwegs. Sie kommt in wenigen Sekunden." });
+    } catch (e) {
+      toast.error(msg(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (state === "loading") return <div className="skeleton h-[60px] rounded-[10px] max-w-[460px]" />;
+  if (state === "ios-install") {
+    return (
+      <Notice>
+        Auf iPhone und iPad gibt es Push nur in der installierten App: Tippe in Safari auf <strong>Teilen</strong>, dann auf
+        <strong> Zum Home-Bildschirm</strong>. Öffne Leihregal danach vom Home-Bildschirm und schalte Push hier ein.
+      </Notice>
+    );
+  }
+  if (state === "unsupported") return <Notice>Dieser Browser unterstützt keine Push-Mitteilungen. In Chrome, Edge, Firefox und Safari klappt es.</Notice>;
+  if (state === "denied") {
+    return <Notice>Mitteilungen sind für Leihregal im Browser blockiert. Erlaube sie in den Website-Einstellungen (Schloss-Symbol neben der Adresse) und lade die Seite neu.</Notice>;
+  }
+  const on = state === "on";
+  return (
+    <div className="max-w-[560px]">
+      <div className={cx("rounded-[10px] border px-4 transition-colors duration-300", on ? "bg-accent-soft/35 border-accent/30" : "bg-paper border-line")}>
+        <Switch checked={on} disabled={busy} onChange={(v) => (v ? enable() : disable())}
+          label={<span className="font-medium">Auf diesem Gerät</span>}
+          hint={on ? "An. Anfragen, Zusagen, Fristen und Nachrichten kommen als Mitteilung." : "Aus. Neues siehst du in der App und per E-Mail."} />
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-muted">
+        <span>{devices === 0 ? "Noch auf keinem Gerät aktiv." : devices === 1 ? "Auf 1 Gerät aktiv." : `Auf ${devices} Geräten aktiv.`}</span>
+        {on && <button type="button" onClick={test} disabled={busy} className="font-medium text-accent-hover hover:underline underline-offset-4 disabled:opacity-50">Testmitteilung senden</button>}
+      </div>
+    </div>
+  );
+}
+
 /* --------------------------------------------------------- Daten und Konto */
 export function ExportData() {
   return (
@@ -544,6 +670,11 @@ export function Logout() {
   async function logout() {
     setBusy(true);
     try {
+      // Push auf diesem Gerät beenden (das Abo am Server endet mit der Sitzung)
+      await Promise.race([
+        navigator.serviceWorker?.getRegistration().then((r) => r?.pushManager?.getSubscription()).then((s) => s?.unsubscribe()).catch(() => {}),
+        new Promise((r) => setTimeout(r, 800)),
+      ]);
       await api("/auth/logout", { method: "POST" });
       window.location.assign("/");
     } catch {

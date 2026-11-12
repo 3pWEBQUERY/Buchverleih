@@ -9,7 +9,7 @@ import { PageTitle, cx } from "@/components/ui";
 import { StepSection } from "@/components/step-section";
 import { Monogram } from "@/components/person/monogram";
 import {
-  AvatarEditor, BlockList, DeleteAccount, EmailPrefs, ExportData, Logout, PasskeyList, PhoneSection, ProfileForm, ShelfPause, SpotList, ThemeChoice,
+  AvatarEditor, BlockList, DeleteAccount, EmailPrefs, ExportData, Logout, PasskeyList, PhoneSection, ProfileForm, PushSettings, ShelfPause, SpotList, ThemeChoice,
 } from "./sections";
 import { SettingsNav, type NavGroup } from "./settings-nav";
 
@@ -18,7 +18,7 @@ export const metadata = { title: "Einstellungen" };
 const NAV: NavGroup[] = [
   { title: "Konto", items: [{ id: "profilbild", label: "Profilbild" }, { id: "profil", label: "Profil" }, { id: "mobilnummer", label: "Mobilnummer" }, { id: "passkeys", label: "Passkeys" }] },
   { title: "Leihen", items: [{ id: "uebergabeorte", label: "Übergabeorte" }, { id: "ferienmodus", label: "Ferienmodus" }, { id: "blockiert", label: "Blockiert" }] },
-  { title: "Allgemein", items: [{ id: "benachrichtigungen", label: "E-Mail" }, { id: "darstellung", label: "Darstellung" }, { id: "daten", label: "Daten" }] },
+  { title: "Allgemein", items: [{ id: "push", label: "Push" }, { id: "benachrichtigungen", label: "E-Mail" }, { id: "darstellung", label: "Darstellung" }, { id: "daten", label: "Daten" }] },
   { title: "Gefahrenzone", danger: true, items: [{ id: "konto-loeschen", label: "Konto löschen" }] },
 ];
 
@@ -95,6 +95,9 @@ export default async function Page() {
 
           <StepSection n={3} title="Allgemein" desc="Mitteilungen, Aussehen und deine Daten.">
             <Card>
+              <Row id="push" label="Push-Mitteilungen" text="Neues sofort aufs Handy oder den Computer, auch wenn Leihregal geschlossen ist. Pro Gerät einzeln.">
+                <PushSettings />
+              </Row>
               <Row id="benachrichtigungen" label="E-Mail-Benachrichtigungen" text="In der App siehst du immer alles. Hier legst du fest, was zusätzlich per E-Mail kommt.">
                 <EmailPrefs categories={categories} prefs={user.email_prefs ?? {}} />
               </Row>

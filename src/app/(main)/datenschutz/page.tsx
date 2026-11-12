@@ -96,6 +96,11 @@ export default function Page() {
           (ersatzweise von OpenStreetMap). Diese sehen dabei deine IP-Adresse und den Kartenausschnitt, aber weder deinen Namen noch deine Suche.
           Ohne Klick auf «Karte» wird nichts geladen.
         </p>
+        <p>
+          Schaltest du Push-Mitteilungen ein, stellt der Push-Dienst deines Browsers sie zu (bei Chrome Google, bei Safari Apple, bei Firefox Mozilla).
+          Der Inhalt ist Ende-zu-Ende verschlüsselt; der Dienst sieht nur, dass eine Mitteilung kommt. Ausschalten kannst du sie jederzeit in den Einstellungen;
+          mit dem Abmelden endet Push auf dem Gerät.
+        </p>
         <p>Andere Mitglieder sehen deinen Vornamen, dein Profilbild (falls du eines hochlädst), deine Gemeinde, dein Regal, deine Stufe und deine Zahlen. Mobilnummer und E-Mail-Adresse sehen sie nie.</p>
       </DocSection>
 
