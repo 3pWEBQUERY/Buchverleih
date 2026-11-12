@@ -3,6 +3,8 @@ import { sql } from "@/lib/db";
 import { env } from "@/lib/env";
 import { SIGN_WINDOW_MS, signedGetUrl, stableSignedUrl } from "@/lib/storage";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * GET /api/v1/images/<key>?w=480 – liefert eine Bildvariante über eine kurzlebige
  * vorsignierte URL aus (PRD 10.3). Fotos aus Vorgängen und Fällen nur für Beteiligte.
@@ -16,13 +18,15 @@ export async function GET(req: Request, ctx: { params: Promise<{ key: string[] }
     const u = await getUser();
     if (!u) return new Response(null, { status: 401 });
     const ref = parts[1];
+    // Nur gültige IDs; der Vergleich als uuid nutzt die Indizes (kein Vollscan über loans und cases)
+    if (!ref || !UUID_RE.test(ref)) return new Response(null, { status: 404 });
     // Beteiligte immer; Moderation nur bei offenem Fall oder Meldung zum Vorgang, und protokolliert (PRD 12)
     const [ok] = await sql<{ party: boolean; mod: boolean }[]>`
-      select exists (select 1 from loans where id::text = ${ref} and (owner_id = ${u.id} or borrower_id = ${u.id}))
-          or exists (select 1 from cases c join loans l on l.id = c.loan_id where c.id::text = ${ref} and (l.owner_id = ${u.id} or l.borrower_id = ${u.id}))
+      select exists (select 1 from loans where id = ${ref}::uuid and (owner_id = ${u.id} or borrower_id = ${u.id}))
+          or exists (select 1 from cases c join loans l on l.id = c.loan_id where c.id = ${ref}::uuid and (l.owner_id = ${u.id} or l.borrower_id = ${u.id}))
              as party,
              ${u.role} <> 'member' and (
-               exists (select 1 from cases c where (c.loan_id::text = ${ref} or c.id::text = ${ref}))
+               exists (select 1 from cases c where c.loan_id = ${ref}::uuid or c.id = ${ref}::uuid)
                or exists (select 1 from reports r where r.target_type = 'loan' and r.target_id = ${ref})
              ) as mod`;
     if (!ok?.party && !ok?.mod) return new Response(null, { status: 404 });

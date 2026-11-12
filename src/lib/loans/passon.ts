@@ -3,7 +3,7 @@
  */
 import { systemText } from "@/lib/notify/system-texts";
 import type postgres from "postgres";
-import { sql, type Tx } from "@/lib/db";
+import { sql, type Tx, PG, pgCode } from "@/lib/db";
 import { err } from "@/lib/errors";
 import type { SessionUser } from "@/lib/auth/session";
 import { notify } from "@/lib/notify";
@@ -247,7 +247,10 @@ export async function releaseFollowers(tx: TxSql, prevId: string, reason: string
      where (received_from_loan_id = ${prevId} or pass_on_candidate_id = ${prevId}) and status = 'accepted'
      returning id`;
   for (const n of freed) {
-    await tx`update copy_bookings b set buffer_days = c.buffer_days from copies c where b.loan_id = ${prevId} and c.id = b.copy_id`;
+    // Puffer wiederherstellen; ist der Kalender inzwischen bis zur Folge-Leihe belegt, bleibt er bei 0
+    await tx
+      .savepoint((sp) => sp`update copy_bookings b set buffer_days = c.buffer_days from copies c where b.loan_id = ${prevId} and c.id = b.copy_id`)
+      .catch((e) => { if (pgCode(e) !== PG.EXCLUSION) throw e; });
     await tx`update handover_chats set route = 'via_owner' where prev_loan_id = ${prevId} and next_loan_id = ${n.id}`;
     await logEvent(tx, n.id, null, "pass_on_broken", "accepted", "accepted", { reason });
   }

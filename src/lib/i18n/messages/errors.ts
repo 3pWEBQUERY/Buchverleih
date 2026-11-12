@@ -158,6 +158,9 @@ export const ERRORS: Record<string, FrIt> = {
   "Es liegt kein Tauschangebot vor.": ["Il n’y a aucune offre d’échange.", "Non c’è nessuna offerta di scambio."],
   "Du hast diesen Vorgang bereits bewertet.": ["Tu as déjà évalué cette transaction.", "Hai già valutato questa pratica."],
   "Für diesen Vorgang ist keine Bewertung mehr möglich.": ["Il n’est plus possible d’évaluer cette transaction.", "Per questa pratica non è più possibile una valutazione."],
+  "Der gebuchte Zeitraum ist vorbei und das Buch ist danach schon gebucht. Storniere den Vorgang und frag für einen neuen Zeitraum an.": ["La période réservée est passée et le livre est déjà réservé ensuite. Annule la transaction et fais une demande pour une nouvelle période.", "Il periodo prenotato è passato e il libro è già prenotato subito dopo. Annulla la pratica e richiedi un nuovo periodo."],
+  "Möglich sind Mobilnummern aus der Schweiz und Liechtenstein.": ["Seuls les numéros de mobile de Suisse et du Liechtenstein sont possibles.", "Sono possibili solo numeri di cellulare svizzeri e del Liechtenstein."],
+  "Das angebotene Buch ist inzwischen verliehen oder gebucht. Der Tausch ist so nicht mehr möglich.": ["Le livre proposé est entre-temps prêté ou réservé. L’échange n’est plus possible ainsi.", "Il libro offerto nel frattempo è in prestito o prenotato. Lo scambio così non è più possibile."],
 };
 
 type Pattern = { re: RegExp; fr: (m: RegExpMatchArray) => string; it: (m: RegExpMatchArray) => string };

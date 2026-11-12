@@ -2,7 +2,7 @@ import Link from "next/link";
 import { pageUser } from "@/lib/page";
 import { sql } from "@/lib/db";
 import { listShelf } from "@/lib/copies";
-import { getCalendar } from "@/lib/loans/calendar";
+import { getCalendars } from "@/lib/calendar-batch";
 import { addDays, todayCH } from "@/lib/dates";
 import { CalendarAxis, CalendarView } from "@/components/calendar";
 import { Cover } from "@/components/cover";
@@ -29,7 +29,8 @@ export default async function Page() {
   const t = s.cal;
   const lg = CALENDAR[l].legend;
   const copies = await listShelf(user.id);
-  const rows = (await Promise.all(copies.map(async (c) => ({ copy: c, cal: await getCalendar(sql, c.id, user.id) }))))
+  const cals = await getCalendars(sql, copies.map((c) => c.id), user.id);
+  const rows = copies.map((c) => ({ copy: c, cal: cals.get(c.id) ?? null }))
     .filter((r): r is { copy: (typeof copies)[number]; cal: NonNullable<typeof r.cal> } => r.cal !== null)
     .sort((a, b) => a.copy.title.localeCompare(b.copy.title, l));
   const busy = rows.filter((r) => r.cal.bars.length > 0);

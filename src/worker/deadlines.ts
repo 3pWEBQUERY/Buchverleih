@@ -45,6 +45,27 @@ async function remind(loanId: string, m: string, targets: ("owner" | "borrower")
   });
 }
 
+/**
+ * Übergabe verfällt. Die Bedingung wird im Wechsel erneut geprüft, damit eine Meldung oder eine
+ * neue Übergabefrist zwischen Abfrage und Ausführung gewinnt. Ausnahme: gebuchter Zeitraum vorbei.
+ */
+async function expireHandover(id: string, reason: "deadline" | "period_over") {
+  return sql.begin(async (tx) => {
+    const l = await transition(tx, id, "expire_handover", SYSTEM, {
+      set: tx`closed_at = now()`,
+      where: reason === "deadline"
+        ? tx`l.handover_by < now() and l.handover_reported_at is null and l.received_from_loan_id is null`
+        : tx`l.handover_reported_at < now() - interval '48 hours'`,
+      meta: { reason },
+    });
+    await tx`delete from copy_bookings where loan_id = ${id}`;
+    await releaseFollowers(tx, id, "expired");
+    if (l.swap_copy_id) await tx`delete from copy_bookings where copy_id = ${l.swap_copy_id} and note = ${"Tausch " + id}`;
+    const info = await loanInfo(tx, id);
+    for (const uid of [l.owner_id, l.borrower_id]) await notify(tx, { userId: uid, type: "handover_expired", loanId: id, data: { title: info.title } });
+  });
+}
+
 export async function runDeadlines(): Promise<Result> {
   const out: Result = {};
 
@@ -53,7 +74,8 @@ export async function runDeadlines(): Promise<Result> {
     await sql`select id from loans where status = 'requested' and respond_by < now()`,
     (id) =>
       sql.begin(async (tx) => {
-        const l = await transition(tx, id, "expire_request", SYSTEM, { set: tx`closed_at = now()` });
+        // Frist erneut im Wechsel prüfen: eine Antwort zwischen Abfrage und Ausführung gewinnt
+        const l = await transition(tx, id, "expire_request", SYSTEM, { set: tx`closed_at = now()`, where: tx`l.respond_by < now()` });
         const info = await loanInfo(tx, id);
         await notify(tx, { userId: l.borrower_id, type: "request_expired", loanId: id, data: { title: info.title } });
       }),
@@ -72,7 +94,13 @@ export async function runDeadlines(): Promise<Result> {
     (id) =>
       sql.begin(async (tx) => {
         const [l] = await tx<{ handover_method: string }[]>`select handover_method from loans where id = ${id}`;
-        await executeHandover(tx, id, "handover_report_lapse", SYSTEM, (l.handover_method as "report" | "dropoff") ?? "report");
+        // Ein Einspruch zwischen Abfrage und Ausführung gewinnt (Meldung muss noch stehen und alt genug sein)
+        await executeHandover(tx, id, "handover_report_lapse", SYSTEM, (l.handover_method as "report" | "dropoff") ?? "report",
+          tx`l.handover_reported_at < now() - interval '48 hours'`);
+      }).catch(async (e) => {
+        // Gebuchter Zeitraum vorbei und danach vergeben: Vorgang verfällt, statt bei jedem Lauf zu scheitern
+        if ((e as { code?: string }).code !== "period_over") throw e;
+        await expireHandover(id, "period_over");
       }),
     "handover_reports_lapsed",
     out,
@@ -81,15 +109,7 @@ export async function runDeadlines(): Promise<Result> {
   // 7 Tage nach geplantem Beginn ohne Übergabe → Vorgang verfällt, Zeitraum wieder frei
   await each(
     await sql`select id from loans where status = 'accepted' and handover_by < now() and handover_reported_at is null and received_from_loan_id is null`,
-    (id) =>
-      sql.begin(async (tx) => {
-        const l = await transition(tx, id, "expire_handover", SYSTEM, { set: tx`closed_at = now()` });
-        await tx`delete from copy_bookings where loan_id = ${id}`;
-        await releaseFollowers(tx, id, "expired");
-        if (l.swap_copy_id) await tx`delete from copy_bookings where copy_id = ${l.swap_copy_id} and note = ${"Tausch " + id}`;
-        const info = await loanInfo(tx, id);
-        for (const uid of [l.owner_id, l.borrower_id]) await notify(tx, { userId: uid, type: "handover_expired", loanId: id, data: { title: info.title } });
-      }),
+    (id) => expireHandover(id, "deadline"),
     "handovers_expired",
     out,
   );
@@ -97,7 +117,7 @@ export async function runDeadlines(): Promise<Result> {
   // Rückgabemeldung gilt nach 48 h ohne Einspruch – schützt den Leiher
   await each(
     await sql`select id from loans where status = 'return_reported' and return_reported_at < now() - interval '48 hours'`,
-    (id) => sql.begin((tx) => executeReturn(tx, id, "return_report_lapse", SYSTEM)),
+    (id) => sql.begin((tx) => executeReturn(tx, id, "return_report_lapse", SYSTEM, tx`l.return_reported_at < now() - interval '48 hours'`)),
     "return_reports_lapsed",
     out,
   );
@@ -105,7 +125,7 @@ export async function runDeadlines(): Promise<Result> {
   // Prüfung: ohne Schadenmeldung innert 48 h abgeschlossen
   await each(
     await sql`select id from loans where status = 'returned' and inspection_until < now()`,
-    (id) => sql.begin((tx) => completeTx(tx, id, SYSTEM)),
+    (id) => sql.begin((tx) => completeTx(tx, id, SYSTEM, tx`l.inspection_until < now()`)),
     "completed",
     out,
   );

@@ -66,8 +66,10 @@ export async function joinCircle(userId: string, code: string) {
     const [c] = await tx<{ id: string; join_mode: string; name: string }[]>`select id, join_mode, name from circles where invite_code = ${code}`;
     if (!c) throw err.notFound("Dieser Einladungslink ist ungültig oder wurde erneuert.");
     const status = c.join_mode === "approval" ? "pending" : "active";
-    await tx`insert into circle_members (circle_id, user_id, status) values (${c.id}, ${userId}, ${status}) on conflict do nothing`;
-    if (status === "pending") {
+    const inserted = await tx`insert into circle_members (circle_id, user_id, status) values (${c.id}, ${userId}, ${status})
+                              on conflict do nothing returning 1`;
+    // Admins nur bei einer neuen Anfrage benachrichtigen, nicht bei jeder Wiederholung
+    if (status === "pending" && inserted.length > 0) {
       const admins = await tx<{ user_id: string }[]>`select user_id from circle_members where circle_id = ${c.id} and role = 'admin'`;
       const [me] = await tx<{ first_name: string }[]>`select first_name from users where id = ${userId}`;
       for (const a of admins) await notify(tx, { userId: a.user_id, type: "circle_join_request", data: { name: me.first_name, ...systemText("circle_name", { name: c.name }), href: `/kreise/${c.id}` } });

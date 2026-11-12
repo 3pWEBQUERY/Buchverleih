@@ -20,12 +20,15 @@ export async function releaseBookings(tx: Tx, loan: LoanRow) {
 }
 
 
+/** Verschiebt die Buchung eines Vorgangs. false, wenn der Zeitraum leer, verkehrt oder belegt ist. */
 export async function tryMoveBooking(tx: TxSql, loanId: string, start: string, end: string) {
+  if (!(start < end)) return false;
   try {
     await tx.savepoint((sp) => sp`update copy_bookings set period = daterange(${start}::date, ${end}::date) where loan_id = ${loanId}`);
     return true;
   } catch (e) {
-    if (pgCode(e) === PG.EXCLUSION) return false;
+    // 23P01 belegt, 23514 Prüfregel (z. B. leerer Zeitraum), 22000 ungültiger Zeitraum
+    if ([PG.EXCLUSION, PG.CHECK, "22000"].includes(pgCode(e) as string)) return false;
     throw e;
   }
 }

@@ -17,7 +17,7 @@ import { hashToken, randomToken, sixDigits } from "@/lib/crypto";
 import { rateLimit } from "@/lib/ratelimit";
 import { sendMail } from "@/lib/notify/mail";
 import { sendSms } from "@/lib/notify/sms";
-import { normalizePhone } from "./phone";
+import { normalizePhone, smsAllowed } from "./phone";
 import { safeNext } from "@/lib/safe-next";
 import type { SessionUser } from "./session";
 import type { Locale } from "@/lib/i18n/locale";
@@ -137,10 +137,14 @@ export async function passkeyLoginVerify(challengeId: string, response: Authenti
 // Mobilnummer
 // ---------------------------------------------------------------------------
 
-export async function requestPhoneCode(user: SessionUser, raw: string) {
+export async function requestPhoneCode(user: SessionUser, raw: string, ip = "unbekannt") {
   const phone = normalizePhone(raw);
   if (!phone) throw err.invalid("Gib eine Mobilnummer ein, zum Beispiel 079 123 45 67.");
+  if (!smsAllowed(phone)) throw err.invalid("Möglich sind Mobilnummern aus der Schweiz und Liechtenstein.");
   await rateLimit(`sms:${user.id}`, 4, 3600);
+  // Gegen SMS-Pumping über viele Konten: pro IP und insgesamt pro Tag gedeckelt
+  await rateLimit(`smsip:${ip}`, 10, 86400);
+  await rateLimit("sms:global", 1000, 86400);
   const [banned] = await sql<{ n: number }[]>`select count(*)::int as n from banned_phones where phone_e164 = ${phone}`;
   if (banned.n) throw err.conflict("phone_banned", "Diese Nummer kann nicht verwendet werden. Melde dich bei der Moderation, wenn du das für einen Fehler hältst.");
   const [taken] = await sql<{ n: number }[]>`

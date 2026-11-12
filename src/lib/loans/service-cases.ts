@@ -11,7 +11,7 @@ import { addDays, diffDays, parseRange, todayCH } from "@/lib/dates";
 import { getLoan, loanFor, loanInfo, logEvent, transition, type ActorRef } from "./core";
 import { onPassOnBroken, releaseFollowers } from "./passon";
 import { SYSTEM, releaseBookings, tryMoveBooking, transferOwnership, assertOwnPhotos, offerEarlierStart, pauseFutureBookings, resumePausedBookings, liftSuspensionIfClear } from "./service-shared";
-import { cancel } from "./service-request";
+import { cancelTx } from "./service-request";
 import type { TxSql } from "./service-shared";
 
 // ---------------------------------------------------------------------------
@@ -68,7 +68,7 @@ export async function cancelWithoutPenalty(user: SessionUser, loanId: string) {
          and p.status in ('active', 'disputed') and p.due_at <= day_start_ch(lower(${current.wanted}::daterange))
          and p.due_at < now()`;
     const [paused] = await tx<{ paused: boolean }[]>`select paused from copy_bookings where loan_id = ${loanId}`;
-    if (!blocked.n && !paused?.paused) return cancel(user, loanId);
+    if (!blocked.n && !paused?.paused) return cancelTx(tx, user, loanId);
     const loan = await transition(tx, loanId, "cancel", { role: "borrower", id: user.id }, {
       set: tx`closed_at = now(), cancelled_by = ${user.id}, cancelled_late = false`,
       meta: { reason: "predecessor_late" },
@@ -190,8 +190,11 @@ export async function resolveCaseTx(
                             moderator_note = ${note ?? null} where id = ${caseId}`;
   await tx`delete from copy_bookings where loan_id = ${loan.id} and upper(period) > today_ch()`;
   await resumePausedBookings(tx, loan.copy_id);
+  // Eine vereinbarte direkte Weitergabe ist mit dem Fall hinfällig: die nächste Person holt bei der verleihenden Person ab
+  await releaseFollowers(tx, loan.id, "case_resolved");
   await liftSuspensionIfClear(tx, loan.borrower_id);
   await tx`select recompute_trust(${loan.borrower_id})`;
+  await offerEarlierStart(tx, loan.copy_id);
   const info = await loanInfo(tx, loan.id);
   const text = systemText(outcome === "replaced" ? "case_replaced" : outcome === "rejected" ? "case_rejected" : "case_returned");
   for (const uid of [loan.owner_id, loan.borrower_id]) await notify(tx, { userId: uid, type: "case_resolved", loanId: loan.id, data: { title: info.title, ...text } });
@@ -275,8 +278,14 @@ export async function offerSwap(user: SessionUser, loanId: string, copyId: strin
 
 export async function acceptSwapOffer(user: SessionUser, loanId: string) {
   return sql.begin(async (tx) => {
-    const current = await getLoan(tx, loanId);
+    const current = await getLoan(tx, loanId, true);
     if (!current?.swap_offer_copy_id) throw err.conflict("no_offer", "Es liegt kein Tauschangebot vor.");
+    // Das angebotene Buch darf inzwischen nicht verliehen oder gebucht sein (sonst wechselt es den Besitz bei Dritten)
+    const [free] = await tx<{ id: string }[]>`
+      select id from copies where id = ${current.swap_offer_copy_id} and owner_id = ${current.borrower_id} and removed_at is null
+         and not exists (select 1 from loans where copy_id = copies.id and status in ('requested', 'accepted', 'active', 'return_reported', 'returned', 'disputed'))
+       for update`;
+    if (!free) throw err.conflict("offer_unavailable", "Das angebotene Buch ist inzwischen verliehen oder gebucht. Der Tausch ist so nicht mehr möglich.");
     const loan = await transition(tx, loanId, "convert_to_swap", { role: "owner", id: user.id }, {
       set: tx`closed_at = now(), returned_at = null, rating_closes_at = now() + interval '14 days'`,
     });

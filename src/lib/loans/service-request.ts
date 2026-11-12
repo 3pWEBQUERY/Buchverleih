@@ -240,27 +240,30 @@ export async function withdraw(user: SessionUser, loanId: string) {
 // ---------------------------------------------------------------------------
 
 export async function cancel(user: SessionUser, loanId: string) {
-  return sql.begin(async (tx) => {
-    const { loan: current, role } = await loanFor(tx, loanId, user.id);
-    const start = parseRange(current.wanted)!.start;
-    const daysToStart = diffDays(todayCH(), start);
-    // Leiher: weniger als 48 h vor Beginn zählt wie unpünktlich. Verleiher: weniger als 7 Tage.
-    const late = role === "borrower" ? daysToStart < 2 : daysToStart < 7;
-    const loan = await transition(tx, loanId, "cancel", { role: role!, id: user.id }, {
-      set: tx`closed_at = now(), cancelled_by = ${user.id}, cancelled_late = ${late}`,
-    });
-    await releaseBookings(tx, loan);
-    if (loan.received_from_loan_id) await onPassOnBroken(tx, loan);
-    await releaseFollowers(tx, loanId, "cancelled");
-    const info = await loanInfo(tx, loanId);
-    const other = role === "owner" ? loan.borrower_id : loan.owner_id;
-    await notify(tx, {
-      userId: other,
-      type: "cancelled",
-      loanId,
-      data: { title: info.title, name: role === "owner" ? info.owner_name : info.borrower_name },
-    });
-    await offerEarlierStart(tx, loan.copy_id);
-    return loan;
+  return sql.begin((tx) => cancelTx(tx, user, loanId));
+}
+
+/** Storno in einer laufenden Transaktion (ohne eigene; sonst zwei Verbindungen gleichzeitig) */
+export async function cancelTx(tx: TxSql, user: SessionUser, loanId: string) {
+  const { loan: current, role } = await loanFor(tx, loanId, user.id);
+  const start = parseRange(current.wanted)!.start;
+  const daysToStart = diffDays(todayCH(), start);
+  // Leiher: weniger als 48 h vor Beginn zählt wie unpünktlich. Verleiher: weniger als 7 Tage.
+  const late = role === "borrower" ? daysToStart < 2 : daysToStart < 7;
+  const loan = await transition(tx, loanId, "cancel", { role: role!, id: user.id }, {
+    set: tx`closed_at = now(), cancelled_by = ${user.id}, cancelled_late = ${late}`,
   });
+  await releaseBookings(tx, loan);
+  if (loan.received_from_loan_id) await onPassOnBroken(tx, loan);
+  await releaseFollowers(tx, loanId, "cancelled");
+  const info = await loanInfo(tx, loanId);
+  const other = role === "owner" ? loan.borrower_id : loan.owner_id;
+  await notify(tx, {
+    userId: other,
+    type: "cancelled",
+    loanId,
+    data: { title: info.title, name: role === "owner" ? info.owner_name : info.borrower_name },
+  });
+  await offerEarlierStart(tx, loan.copy_id);
+  return loan;
 }

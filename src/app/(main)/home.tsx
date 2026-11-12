@@ -16,6 +16,33 @@ import { htmlLang } from "@/lib/i18n/locale";
 import { labels } from "@/lib/i18n/labels";
 import { HOME } from "@/lib/i18n/messages/home";
 
+/**
+ * Häufigste Genres ohne die eigenen Bücher. Die Zählung über den ganzen Bestand ist teuer und
+ * ändert sich langsam: sie wird pro Prozess 10 Minuten gehalten, nur die eigenen Bücher werden
+ * jedes Mal (über den Index auf owner_id) abgezogen.
+ */
+let genreCache: { at: number; rows: { genre: string; n: number }[] } | null = null;
+
+async function topGenres(userId: string) {
+  if (!genreCache || Date.now() - genreCache.at > 10 * 60_000) {
+    const rows = await sql<{ genre: string; n: number }[]>`
+      select w.genre, count(*)::int as n from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id
+       where c.removed_at is null and cardinality(c.offers) > 0 and w.genre is not null
+       group by w.genre`;
+    genreCache = { at: Date.now(), rows: [...rows] };
+  }
+  const own = await sql<{ genre: string; n: number }[]>`
+    select w.genre, count(*)::int as n from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id
+     where c.owner_id = ${userId} and c.removed_at is null and cardinality(c.offers) > 0 and w.genre is not null
+     group by w.genre`;
+  const mine = new Map(own.map((r) => [r.genre, r.n]));
+  return genreCache.rows
+    .map((r) => ({ genre: r.genre, n: r.n - (mine.get(r.genre) ?? 0) }))
+    .filter((r) => r.n > 0)
+    .sort((a, b) => b.n - a.n || a.genre.localeCompare(b.genre))
+    .slice(0, 10);
+}
+
 /** Start angemeldet (PRD 8.4): Handlungsbedarf zuoberst, darunter zwei Regalreihen. */
 export async function Home({ user }: { user: SessionUser }) {
   const origin = { lat: user.home_lat!, lng: user.home_lng! };
@@ -39,10 +66,7 @@ export async function Home({ user }: { user: SessionUser }) {
       select (select count(*)::int from copies where owner_id = ${user.id} and removed_at is null) as shelf,
              (select count(*)::int from loans where owner_id = ${user.id} and status in ('active', 'return_reported', 'disputed')) as lent,
              (select count(*)::int from loans where borrower_id = ${user.id} and status in ('active', 'return_reported', 'disputed')) as borrowed`,
-    sql<{ genre: string; n: number }[]>`
-      select w.genre, count(*)::int as n from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id
-       where c.removed_at is null and cardinality(c.offers) > 0 and w.genre is not null and c.owner_id <> ${user.id}
-       group by w.genre order by n desc limit 10`,
+    topGenres(user.id),
   ]);
   const mine = loans.filter((x) => x.turn === "me" && x.step);
   const running = loans.filter((x) => !mine.includes(x) && ["requested", "accepted", "active", "return_reported", "returned", "disputed"].includes(x.status));

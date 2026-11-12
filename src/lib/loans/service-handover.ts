@@ -11,6 +11,9 @@ import { getLoan, loanFor, loanInfo, transition, type ActorRef, type LoanRow } f
 import { releaseFollowers } from "./passon";
 import { SYSTEM, tryMoveBooking, transferOwnership, assertOwnPhotos, offerEarlierStart, resumePausedBookings, liftSuspensionIfClear, closeHandoverChatsFor } from "./service-shared";
 import type { TxSql } from "./service-shared";
+import type postgres from "postgres";
+
+type Fragment = postgres.PendingQuery<postgres.Row[]>;
 
 // ---------------------------------------------------------------------------
 // Übergabe (4.3) – Ausführung nach Scan, Code, bestätigter Meldung oder Fristablauf
@@ -26,6 +29,8 @@ export async function executeHandover(
   action: "handover" | "confirm_handover" | "handover_report_lapse",
   actor: ActorRef,
   method: "scan" | "code" | "report" | "dropoff",
+  /** Zusatzbedingung für den Wechsel, z. B. die Frist beim Fristablauf (atomar geprüft) */
+  where?: Fragment,
 ) {
   const current = await getLoan(tx, loanId, true);
   if (!current) throw err.notFound();
@@ -52,14 +57,19 @@ export async function executeHandover(
       const moved = await tryMoveBooking(tx, loanId, newStart, newEnd);
       if (!moved) {
         // Ende bleibt, nur der Beginn rückt nach
-        const startOnly = await tryMoveBooking(tx, loanId, today < range.start ? range.start : today, range.end!);
+        const start = today < range.start ? range.start : today;
+        const startOnly = start < range.end! && (await tryMoveBooking(tx, loanId, start, range.end!));
         if (!startOnly && today < range.start)
           throw err.conflict("too_early", "Das Buch ist bis zum geplanten Beginn noch gebucht.");
+        // Der gebuchte Zeitraum ist schon vorbei und danach ist das Buch vergeben: keine Leihfrist mehr möglich
+        if (!startOnly && today >= range.end!)
+          throw err.conflict("period_over", "Der gebuchte Zeitraum ist vorbei und das Buch ist danach schon gebucht. Storniere den Vorgang und frag für einen neuen Zeitraum an.");
         newEnd = range.end!;
       }
     }
 
     const loan = await transition(tx, loanId, action, actor, {
+      where,
       set: tx`handed_over_at = ${handedAt},
               handover_method = ${method},
               due_at = (select day_start_ch(upper(period)) from copy_bookings where loan_id = ${loanId}),
@@ -76,6 +86,7 @@ export async function executeHandover(
 
   // Geschenk und Tausch: Besitzwechsel
   const loan = await transition(tx, loanId, action, actor, {
+    where,
     set: tx`handed_over_at = ${handedAt}, handover_method = ${method}, closed_at = now(), rating_closes_at = now() + interval '14 days'`,
   });
   await transferOwnership(tx, loan.copy_id, loan.borrower_id, loan.kind, loan.owner_id);
@@ -111,10 +122,15 @@ export async function reportHandover(user: SessionUser, loanId: string, input: {
       await assertOwnPhotos(tx, user.id, loanId, [input.dropoffPhotoKey], "dropoff");
       action = "dropoff";
     }
+    // Gleiches Fenster wie bei der Übergabe selbst: frühestens 3 Tage vor dem Beginn
+    const start = parseRange(current.wanted)?.start;
+    if (current.kind === "lend" && start && diffDays(todayCH(), start) > 3)
+      throw err.conflict("too_early", "Die Übergabe ist frühestens 3 Tage vor dem geplanten Beginn möglich.");
     const loan = await transition(tx, loanId, action, { role: role!, id: user.id }, {
       set: tx`handover_reported_at = now(), handover_reported_by = ${user.id},
               handover_method = ${action === "dropoff" ? "dropoff" : "report"},
               dropoff_photo_key = ${input.dropoffPhotoKey ?? null}`,
+      where: tx`l.handover_reported_at is null`,
     });
     const info = await loanInfo(tx, loanId);
     await notify(tx, { userId: role === "owner" ? loan.borrower_id : loan.owner_id, type: "handover_reported", loanId, data: { title: info.title } });
@@ -127,7 +143,9 @@ export async function confirmHandover(user: SessionUser, loanId: string) {
     const { loan, role } = await loanFor(tx, loanId, user.id);
     if (!loan.handover_reported_at || loan.handover_reported_by === user.id)
       throw err.conflict("nothing_to_confirm", "Es gibt keine Meldung der anderen Seite zu bestätigen.");
-    return executeHandover(tx, loanId, "confirm_handover", { role: role!, id: user.id }, (loan.handover_method as "report" | "dropoff") ?? "report");
+    // Ein Einspruch dazwischen gewinnt: die Meldung muss beim Wechsel noch stehen
+    return executeHandover(tx, loanId, "confirm_handover", { role: role!, id: user.id }, (loan.handover_method as "report" | "dropoff") ?? "report",
+      tx`l.handover_reported_at is not null and l.handover_reported_by <> ${user.id}`);
   });
 }
 
@@ -176,7 +194,9 @@ async function extensionEnd(tx: Tx, loan: LoanRow): Promise<string | null> {
 
 export async function extend(user: SessionUser, loanId: string) {
   return sql.begin(async (tx) => {
-    const { loan } = await loanFor(tx, loanId, user.id);
+    const { loan: unlocked } = await loanFor(tx, loanId, user.id);
+    // Sperren vor der Buchung (gleiche Reihenfolge wie Rückruf und Rückgabe: erst Vorgang, dann Buchung)
+    const loan = (await getLoan(tx, unlocked.id, true))!;
     if (loan.borrower_id !== user.id) throw err.forbidden();
     const [copy] = await tx<{ auto_extend: boolean; max_extensions: number }[]>`
       select auto_extend, max_extensions from copies where id = ${loan.copy_id}`;
@@ -202,7 +222,8 @@ export async function extend(user: SessionUser, loanId: string) {
 
 export async function grantExtension(user: SessionUser, loanId: string) {
   return sql.begin(async (tx) => {
-    const { loan } = await loanFor(tx, loanId, user.id);
+    const { loan: unlocked } = await loanFor(tx, loanId, user.id);
+    const loan = (await getLoan(tx, unlocked.id, true))!;
     if (!loan.extension_requested_at) throw err.conflict("nothing_requested", "Es liegt keine Anfrage für eine Verlängerung vor.");
     if (loan.recalled_at) throw err.conflict("recalled", "Du hast das Buch zurückgerufen. Eine Verlängerung passt nicht dazu.");
     const [copy] = await tx<{ max_extensions: number }[]>`select max_extensions from copies where id = ${loan.copy_id}`;
@@ -215,16 +236,24 @@ export async function grantExtension(user: SessionUser, loanId: string) {
 }
 
 async function applyExtension(tx: TxSql, loan: LoanRow, end: string, action: "extend" | "grant_extension", actor: ActorRef) {
-  await tx`update copy_bookings set period = daterange(lower(period), ${end}::date) where loan_id = ${loan.id}`;
+  const start = parseRange(loan.wanted)?.start;
+  // Gleichzeitig angenommene Buchung danach: freundliche Meldung statt Serverfehler
+  if (!start || !(await tryMoveBooking(tx, loan.id, (await bookingStart(tx, loan.id)) ?? start, end)))
+    throw err.conflict("calendar_next", "Direkt danach ist das Buch gebucht. Eine Verlängerung ist nicht möglich.");
   const l = await transition(tx, loan.id, action, actor, {
     set: tx`due_at = day_start_ch(${end}::date), extensions_used = l.extensions_used + 1, extension_requested_at = null,
             wanted = daterange(lower(l.wanted), ${end}::date)`,
-    where: tx`l.extensions_used = ${loan.extensions_used}`,
+    where: tx`l.extensions_used = ${loan.extensions_used} and l.recalled_at is null`,
     meta: { until: end },
   });
   const info = await loanInfo(tx, loan.id);
   await notify(tx, { userId: l.borrower_id, type: "extended", loanId: l.id, data: { title: info.title, due: l.due_at?.toISOString() } });
   return l;
+}
+
+async function bookingStart(tx: Tx, loanId: string) {
+  const [b] = await tx<{ start: string }[]>`select lower(period)::text as start from copy_bookings where loan_id = ${loanId}`;
+  return b?.start ?? null;
 }
 
 /** Rückruf: frühestens nach 14 Tagen Leihdauer, Rückgabe innert 7 Tagen. Nicht abschaltbar. */
@@ -256,6 +285,8 @@ export async function executeReturn(
   loanId: string,
   action: "return" | "confirm_return" | "return_report_lapse",
   actor: ActorRef,
+  /** Zusatzbedingung, z. B. die Einspruchsfrist beim Fristablauf */
+  extra?: Fragment,
 ) {
   const current = await getLoan(tx, loanId, true);
   if (!current) throw err.notFound();
@@ -269,7 +300,7 @@ export async function executeReturn(
             inspection_until = ${returnedAt}::timestamptz + interval '48 hours', -- bei gemeldeter Rückgabe zählt die Einspruchsfrist als Prüfung (PRD)
             late = (${returnedAt}::timestamptz > l.due_at + interval '3 days')`,
     // Aus «Fall offen» nur bei ausbleibender Rückgabe, nicht bei einem Schadenfall
-    where: tx`(l.status <> 'disputed' or ${hadCase})`,
+    where: extra ? tx`(l.status <> 'disputed' or ${hadCase}) and ${extra}` : tx`(l.status <> 'disputed' or ${hadCase})`,
   });
   // Kalender freigeben: Buchung endet mit dem Rückgabetag
   await tx`update copy_bookings
@@ -316,9 +347,10 @@ export async function objectReturn(user: SessionUser, loanId: string) {
 // Prüfung und Abschluss (4.2, 6.2)
 // ---------------------------------------------------------------------------
 
-export async function completeTx(tx: TxSql, loanId: string, actor: ActorRef) {
+export async function completeTx(tx: TxSql, loanId: string, actor: ActorRef, where?: Fragment) {
   const loan = await transition(tx, loanId, "complete", actor, {
     set: tx`closed_at = now(), rating_closes_at = now() + interval '14 days'`,
+    where,
   });
   await tx`select recompute_trust(${loan.borrower_id})`;
   const info = await loanInfo(tx, loanId);

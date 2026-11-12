@@ -58,9 +58,7 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
              )) as free_now,
              st.median_response_seconds,
              e.cover_key,
-             (select p.key from copy_photos p where p.copy_id = c.id order by p.position limit 1) as photo_key,
-             (select p.width from copy_photos p where p.copy_id = c.id order by p.position limit 1) as photo_w,
-             (select p.height from copy_photos p where p.copy_id = c.id order by p.position limit 1) as photo_h,
+             ph.key as photo_key, ph.width as photo_w, ph.height as photo_h,
              w.title, w.authors, w.genre,
              -- Für die Karte nur grobe Zellen (0.01° ≈ 1.1 km × 0.75 km), nie den Anzeigeort selbst
              round(o.display_lat::numeric, 2)::float8 as cell_lat, round(o.display_lng::numeric, 2)::float8 as cell_lng,
@@ -70,7 +68,12 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
         join works w on w.id = e.work_id
         join users o on o.id = c.owner_id
         left join user_stats st on st.user_id = c.owner_id
+        left join lateral (
+          select p.key, p.width, p.height from copy_photos p where p.copy_id = c.id order by p.position limit 1
+        ) ph on true
        where c.removed_at is null
+         -- Grobe Vorauswahl über den GiST-Index (Würfel um den Umkreis); die genaue Distanz prüft «hit»
+         ${lat != null ? sql`and earth_box(ll_to_earth(${lat}::float8, ${lng}::float8), ${radiusM}::float8) @> ll_to_earth(o.display_lat, o.display_lng)` : sql``}
          and cardinality(c.offers) > 0
          and copy_visible_to(c.id, ${viewerId}::uuid)
          and (${viewerId}::uuid is null or c.owner_id <> ${viewerId}::uuid)
