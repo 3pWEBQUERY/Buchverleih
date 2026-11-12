@@ -50,6 +50,9 @@ const de = {
     go: "Jetzt anmelden",
     missing: "Dem Link fehlt ein Teil. Fordere auf der Anmeldeseite einen neuen an.",
     otherAddress: "Andere Adresse? ",
+    appLead: "Du hast den Link in der Leihregal-App angefordert. Öffne ihn dort – oder melde dich hier im Browser an.",
+    openApp: "In der App öffnen",
+    inBrowser: "Im Browser anmelden",
   },
   banned: {
     title: "Konto gesperrt",
@@ -116,6 +119,9 @@ const fr: M = {
     go: "Se connecter maintenant",
     missing: "Il manque une partie du lien. Demande-en un nouveau sur la page de connexion.",
     otherAddress: "Autre adresse ? ",
+    appLead: "Tu as demandé ce lien dans l’app Leihregal. Ouvre-le là-bas – ou connecte-toi ici dans le navigateur.",
+    openApp: "Ouvrir dans l’app",
+    inBrowser: "Se connecter dans le navigateur",
   },
   banned: {
     title: "Compte bloqué",
@@ -181,6 +187,9 @@ const it: M = {
     go: "Accedi ora",
     missing: "Manca una parte del link. Richiedine uno nuovo nella pagina di accesso.",
     otherAddress: "Altro indirizzo? ",
+    appLead: "Hai richiesto il link nell’app Leihregal. Aprilo lì – oppure accedi qui nel browser.",
+    openApp: "Apri nell’app",
+    inBrowser: "Accedi nel browser",
   },
   banned: {
     title: "Conto bloccato",

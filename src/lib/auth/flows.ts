@@ -30,14 +30,18 @@ const LOGIN_MAIL: Record<Locale, [string, string, string]> = {
   it: ["Il tuo link di accesso", "Con questo link accedi a Leihregal. È valido 20 minuti e funziona una sola volta.", "Accedi"],
 };
 
-export async function requestEmailLink(rawEmail: string, next?: string | null, l: Locale = "de") {
+/**
+ * Fordert einen Anmeldelink an. `app`: angefordert aus der iOS-App – der Link trägt dann `app=1`,
+ * und die Linkseite bietet «In der App öffnen» an (leihregal://anmelden/link?token=…).
+ */
+export async function requestEmailLink(rawEmail: string, next?: string | null, l: Locale = "de", app = false) {
   const email = rawEmail.trim().toLowerCase();
   if (!EMAIL_RE.test(email)) throw err.invalid("Diese E-Mail-Adresse sieht unvollständig aus.");
   await rateLimit(`login:${email}`, 5, 900);
   const token = randomToken(32);
   await sql`insert into login_tokens (email, token_hash, expires_at) values (${email}, ${hashToken(token)}, now() + interval '20 minutes')`;
   const safe = safeNext(next);
-  const link = `${env.appUrl}/anmelden/link?token=${token}${safe ? `&next=${encodeURIComponent(safe)}` : ""}`;
+  const link = `${env.appUrl}/anmelden/link?token=${token}${safe ? `&next=${encodeURIComponent(safe)}` : ""}${app ? "&app=1" : ""}`;
   const [subject, text, label] = LOGIN_MAIL[l] ?? LOGIN_MAIL.de;
   await sendMail(email, subject, text, { href: link, label }, l);
   return { devLink: env.showCodes ? link : undefined };
