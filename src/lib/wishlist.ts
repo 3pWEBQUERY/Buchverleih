@@ -5,18 +5,63 @@ import { entitlements } from "@/lib/trust";
 import { notify } from "@/lib/notify";
 import { fmtDistance } from "@/lib/geo";
 
+export type WishRow = {
+  work_id: string;
+  title: string;
+  authors: string[];
+  radius_km: number;
+  alarm: boolean;
+  since: string;
+  /** Exemplare im Umkreis, frei oder belegt */
+  total_near: number;
+  /** davon heute frei */
+  available_near: number;
+  /** nächstes freies Exemplar im Umkreis */
+  free_copy: string | null;
+  free_dist: number | null;
+  free_owner: string | null;
+  /** frühester Tag, an dem ein belegtes Exemplar im Umkreis wieder frei ist */
+  next_free: string | null;
+  /** nächstes Exemplar ausserhalb des Umkreises (Meter) */
+  nearest_beyond: number | null;
+};
+
+/**
+ * Wunschliste mit Verfügbarkeit: wie viele Exemplare im gewählten Umkreis stehen, wie viele heute frei sind,
+ * welches freie am nächsten ist, ab wann ein belegtes wieder frei wird und wie weit das nächste ausserhalb liegt.
+ */
 export async function listWishlist(userId: string) {
-  return sql<{ work_id: string; title: string; authors: string[]; radius_km: number; alarm: boolean; available_near: number }[]>`
-    select w.id as work_id, w.title, w.authors, wi.radius_km, wi.alarm,
-           (select count(*)::int from copies c join editions e on e.id = c.edition_id join users o on o.id = c.owner_id
-             where e.work_id = w.id and c.removed_at is null and cardinality(c.offers) > 0 and c.owner_id <> ${userId}
-               and copy_visible_to(c.id, ${userId})
-               and earth_distance(ll_to_earth(me.home_lat, me.home_lng), ll_to_earth(o.display_lat, o.display_lng)) <= wi.radius_km * 1000
-               and not exists (select 1 from copy_bookings b where b.copy_id = c.id
-                                and daterange(lower(b.period), upper(b.period) + b.buffer_days) @> today_ch())) as available_near
-      from wishlist_items wi join works w on w.id = wi.work_id join users me on me.id = wi.user_id
-     where wi.user_id = ${userId}
-     order by wi.created_at desc`;
+  return sql<WishRow[]>`
+    with mine as (
+      select wi.work_id, wi.radius_km, wi.alarm, wi.created_at, me.home_lat, me.home_lng
+        from wishlist_items wi join users me on me.id = wi.user_id
+       where wi.user_id = ${userId}
+    ), cand as (
+      select m.work_id, c.id, o.first_name as owner_name, m.radius_km,
+             earth_distance(ll_to_earth(m.home_lat, m.home_lng), ll_to_earth(o.display_lat, o.display_lng)) as dist,
+             (select max(upper(b.period) + b.buffer_days) from copy_bookings b where b.copy_id = c.id
+               and daterange(lower(b.period), upper(b.period) + b.buffer_days) @> today_ch()) as busy_until
+        from mine m
+        join editions e on e.work_id = m.work_id
+        join copies c on c.edition_id = e.id
+        join users o on o.id = c.owner_id
+       where c.removed_at is null and cardinality(c.offers) > 0 and c.owner_id <> ${userId}
+         and copy_visible_to(c.id, ${userId})
+    )
+    select w.id as work_id, w.title, w.authors, m.radius_km, m.alarm, to_json(m.created_at) #>> '{}' as since,
+           (select count(*)::int from cand k where k.work_id = m.work_id and k.dist <= m.radius_km * 1000) as total_near,
+           (select count(*)::int from cand k where k.work_id = m.work_id and k.dist <= m.radius_km * 1000 and k.busy_until is null) as available_near,
+           f.id as free_copy, f.dist as free_dist, f.owner_name as free_owner,
+           (select min(k.busy_until)::text from cand k where k.work_id = m.work_id and k.dist <= m.radius_km * 1000 and k.busy_until is not null) as next_free,
+           (select min(k.dist) from cand k where k.work_id = m.work_id and k.dist > m.radius_km * 1000) as nearest_beyond
+      from mine m
+      join works w on w.id = m.work_id
+      left join lateral (
+        select k.id, k.dist, k.owner_name from cand k
+         where k.work_id = m.work_id and k.dist <= m.radius_km * 1000 and k.busy_until is null
+         order by k.dist limit 1
+      ) f on true
+     order by m.created_at desc`;
 }
 
 export async function addWish(userId: string, planId: string, workId: string, radiusKm = 5) {

@@ -4,18 +4,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Cover } from "@/components/cover";
 import { useToast } from "@/components/toast";
-import { IconArrowRight, IconCheck, IconSearch, IconSwap } from "@/components/icons";
+import { IconArrowRight, IconBell, IconCheck, IconClose, IconSearch, IconSwap } from "@/components/icons";
 import { StepSection } from "@/components/step-section";
-import { Button, LinkButton, Switch, cx } from "@/components/ui";
+import { Button, LinkButton, cx } from "@/components/ui";
 import { api } from "@/lib/client";
+import type { WishRow } from "@/lib/wishlist";
+import { fmtDistance } from "@/lib/geo";
+import { dayToDate, diffDays, fmtDay, todayCH } from "@/lib/dates";
 
-export type WishItem = {
-  work_id: string;
-  title: string;
-  authors: string[];
-  radius_km: number;
-  alarm: boolean;
-  available_near: number;
+export type WishItem = WishRow & {
   cover_key: string | null;
   cover_w: number | null;
   cover_h: number | null;
@@ -125,55 +122,122 @@ export function WishlistClient({ items: initial, matches }: { items: WishItem[];
             </div>
           </div>
         ) : (
-          <ul className="rounded-[10px] border border-line divide-y divide-line">
-            {items.map((it, i) => (
-              <li key={it.work_id} className="anim-rise px-4 md:px-5 py-4" style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
-                <div className="grid grid-cols-[56px_minmax(0,1fr)] md:grid-cols-[64px_minmax(0,1fr)] gap-4 md:gap-5">
-                  <Link href={`/titel/${it.work_id}`} tabIndex={-1} aria-hidden className="book self-start">
-                    <span className="book-face block md:hidden"><Cover data={{ title: it.title, authors: it.authors, coverKey: it.cover_key, seed: it.work_id }} width={56} height={84} uniform /></span>
-                    <span className="book-face hidden md:block"><Cover data={{ title: it.title, authors: it.authors, coverKey: it.cover_key, seed: it.work_id }} width={64} height={96} uniform /></span>
-                  </Link>
-                  <div className="min-w-0 flex flex-col xl:flex-row xl:items-center gap-4 xl:gap-8">
-                    <div className="min-w-0 flex-1">
-                      <Link href={`/titel/${it.work_id}`} className="font-serif text-[19px] md:text-[21px] leading-[1.15] hover:underline underline-offset-4 decoration-1 line-clamp-2">{it.title}</Link>
-                      {it.authors.length > 0 && <p className="text-[13.5px] text-muted mt-0.5 truncate">{it.authors.join(", ")}</p>}
-                      <p className="mt-2.5 text-[13px] flex items-center gap-1.5">
-                        {it.available_near > 0 ? (
-                          <Link href={`/titel/${it.work_id}`} className="inline-flex items-center gap-1.5 font-medium text-ok hover:underline underline-offset-4">
-                            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok" />
-                            <span className="tnum">{it.available_near}</span> jetzt frei in der Nähe <IconArrowRight width={13} height={13} />
-                          </Link>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 text-muted"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-done" />Bis {it.radius_km} km gerade nichts frei</span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-3 xl:flex-none">
-                      <div role="radiogroup" aria-label={`Umkreis für ${it.title}`} className="flex gap-1">
-                        {RADII.map((r) => {
-                          const on = it.radius_km === r;
-                          return (
-                            <button key={r} type="button" role="radio" aria-checked={on} onClick={() => !on && setRadius(it, r)}
-                              className={cx("h-9 px-3 rounded-[6px] border text-[13px] font-medium tnum whitespace-nowrap transition-colors",
-                                on ? "border-accent bg-accent-soft/40 text-accent-hover" : "border-line text-ink-2 hover:border-ink-2")}>
-                              {r} km
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="w-[132px]"><Switch checked={it.alarm} onChange={(v) => setAlarm(it, v)} label={<span className="block text-[13.5px] font-medium leading-[32px]">Titelalarm</span>} /></div>
-                        <Button variant="quiet" className="text-[13.5px]" onClick={() => remove(it)} aria-label={`«${it.title}» entfernen`}>Entfernen</Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </li>
-            ))}
+          <ul className="grid xl:grid-cols-2 gap-3">
+            {items.map((it, i) => <WishCard key={it.work_id} it={it} i={i} onRadius={(r) => setRadius(it, r)} onAlarm={(v) => setAlarm(it, v)} onRemove={() => remove(it)} />)}
           </ul>
         )}
       </StepSection>
     </div>
+  );
+}
+
+/** Eine Karte pro Wunschtitel: Buch, Verfügbarkeit im Umkreis, nächster Schritt, Umkreis und Titelalarm */
+function WishCard({ it, i, onRadius, onAlarm, onRemove }: { it: WishItem; i: number; onRadius: (r: number) => void; onAlarm: (v: boolean) => void; onRemove: () => void }) {
+  const free = it.available_near > 0;
+  const busy = !free && it.total_near > 0;
+  const widen = !free && it.nearest_beyond != null ? RADII.find((r) => r * 1000 >= it.nearest_beyond!) ?? null : null;
+  const waitDays = it.next_free ? Math.max(0, diffDays(todayCH(), it.next_free)) : null;
+  const cover = { title: it.title, authors: it.authors, coverKey: it.cover_key, seed: it.work_id };
+
+  return (
+    <li className="anim-rise min-w-0" style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
+      <article className={cx("h-full rounded-[10px] border p-4 md:p-5 flex flex-col gap-4 transition-colors", free ? "border-ok/40" : "border-line")}>
+        {/* Buch */}
+        <div className="grid grid-cols-[64px_minmax(0,1fr)_auto] gap-4">
+          <Link href={`/titel/${it.work_id}`} tabIndex={-1} aria-hidden className="book self-start">
+            <span className="book-face block"><Cover data={cover} width={64} height={96} uniform /></span>
+          </Link>
+          <div className="min-w-0">
+            <p className="text-[12.5px] text-muted flex items-center gap-2 flex-wrap">
+              <span>Seit {fmtDay(it.since)} auf der Liste</span>
+              {it.alarm && (
+                <span className="inline-flex items-center gap-1 h-5 px-1.5 rounded-[5px] bg-accent-soft text-accent-hover text-[11.5px] font-semibold">
+                  <IconBell width={11} height={11} /> Alarm an
+                </span>
+              )}
+            </p>
+            <Link href={`/titel/${it.work_id}`} className="block font-serif text-[19px] md:text-[21px] leading-[1.15] mt-1.5 hover:underline underline-offset-4 decoration-1 line-clamp-2">{it.title}</Link>
+            {it.authors.length > 0 && <p className="text-[13.5px] text-muted mt-0.5 truncate">{it.authors.join(", ")}</p>}
+          </div>
+          <button type="button" onClick={onRemove} aria-label={`«${it.title}» entfernen`} title="Entfernen"
+            className="h-9 w-9 -mt-1 -mr-1 rounded-[6px] text-muted hover:text-ink hover:bg-paper-3 grid place-items-center transition-colors">
+            <IconClose width={16} height={16} />
+          </button>
+        </div>
+
+        {/* Verfügbarkeit */}
+        <div className={cx("rounded-[8px] px-4 py-3.5", free ? "bg-ok/[0.07]" : "bg-paper-2")}>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 items-end">
+            <p className={cx("text-[12px]", free ? "text-ok" : "text-muted")}>
+              {free ? `Jetzt frei, bis ${it.radius_km} km` : busy ? (waitDays === 0 ? "Wieder frei" : "Wieder frei in") : `Im Umkreis von ${it.radius_km} km`}
+            </p>
+            <p className="text-[12px] text-muted text-right">{free ? "Am nächsten" : busy ? "Frei ab" : it.nearest_beyond != null ? "Nächstes Exemplar" : ""}</p>
+            <p className={cx("flex items-baseline gap-1.5 leading-none", free && "text-ok")}>
+              {free ? (
+                <><span className="text-[30px] font-[560] tracking-[-0.045em] tnum">{it.available_near}</span><span className="text-[15px] font-medium">{it.available_near === 1 ? "Exemplar" : "Exemplare"}</span></>
+              ) : busy && waitDays != null ? (
+                waitDays === 0 ? <span className="text-[24px] font-[560] tracking-[-0.04em]">Heute</span>
+                  : <><span className="text-[30px] font-[560] tracking-[-0.045em] tnum">{waitDays}</span><span className="text-[15px] font-medium">{waitDays === 1 ? "Tag" : "Tagen"}</span></>
+              ) : (
+                <span className="text-[20px] font-[560] tracking-[-0.03em] text-ink-2">{busy ? "Belegt" : "Kein Exemplar"}</span>
+              )}
+            </p>
+            <p className="text-[14px] font-medium tnum text-right truncate pb-0.5">
+              {free ? <>{fmtDistance(it.free_dist)}{it.free_owner && <span className="text-muted font-normal"> · {it.free_owner}</span>}</>
+                : busy && it.next_free ? fmtDay(dayToDate(it.next_free))
+                : it.nearest_beyond != null ? fmtDistance(it.nearest_beyond) : ""}
+            </p>
+          </div>
+          <p className="mt-2.5 text-[12.5px] text-muted leading-snug">
+            {free
+              ? it.total_near > it.available_near ? `${it.total_near - it.available_near} weitere im Umkreis gerade verliehen.` : "Frag an, solange es frei ist."
+              : busy ? `${it.total_near === 1 ? "Das Exemplar" : `Alle ${it.total_near} Exemplare`} im Umkreis von ${it.radius_km} km ${it.total_near === 1 ? "ist" : "sind"} gerade verliehen.${it.alarm ? " Wir melden uns, sobald eines frei wird." : ""}`
+              : it.nearest_beyond != null ? `Ausserhalb deines Umkreises steht eines in ${fmtDistance(it.nearest_beyond)}.`
+              : `Noch niemand bietet diesen Titel an.${it.alarm ? " Der Titelalarm meldet sich, sobald jemand ihn einstellt." : ""}`}
+          </p>
+          {(free || widen) && (
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+              {free && it.free_copy && (
+                <Link href={`/exemplar/${it.free_copy}`} className="h-9 px-3.5 rounded-[6px] bg-accent text-accent-ink text-[13.5px] font-medium inline-flex items-center gap-1.5 hover:bg-accent-hover transition-colors">
+                  Jetzt anfragen <IconArrowRight width={15} height={15} />
+                </Link>
+              )}
+              {free && it.available_near > 1 && (
+                <Link href={`/titel/${it.work_id}`} className="text-[13.5px] font-medium text-accent-hover hover:underline underline-offset-4">Alle {it.available_near} vergleichen</Link>
+              )}
+              {widen && (
+                <button type="button" onClick={() => onRadius(widen)} className="h-9 px-3.5 rounded-[6px] bg-accent-soft text-accent-hover text-[13.5px] font-medium hover:bg-accent hover:text-accent-ink transition-colors">
+                  Umkreis auf {widen} km erweitern
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Einstellungen */}
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 sm:gap-x-5 gap-y-3">
+          <div role="radiogroup" aria-label={`Umkreis für ${it.title}`} className="inline-flex p-0.5 rounded-[8px] bg-paper-2 border border-line">
+            {RADII.map((r) => {
+              const on = it.radius_km === r;
+              return (
+                <button key={r} type="button" role="radio" aria-checked={on} onClick={() => !on && onRadius(r)}
+                  className={cx("h-8 px-2 sm:px-2.5 rounded-[6px] text-[12.5px] font-medium tnum whitespace-nowrap transition-colors",
+                    on ? "bg-paper text-accent-hover outline outline-1 outline-accent/50" : "text-ink-2 hover:text-ink")}>
+                  {r} km
+                </button>
+              );
+            })}
+          </div>
+          <button type="button" role="switch" aria-checked={it.alarm} aria-label={`Titelalarm für ${it.title}`} onClick={() => onAlarm(!it.alarm)}
+            className="inline-flex items-center gap-2.5 h-9 text-[13.5px] font-medium">
+            <span><span className="sm:hidden">Alarm</span><span className="hidden sm:inline">Titelalarm</span></span>
+            <span aria-hidden className={cx("relative h-6 w-10 flex-none rounded-full transition-colors duration-200", it.alarm ? "bg-accent" : "bg-paper-3")}>
+              <span className={cx("absolute top-1 h-4 w-4 rounded-full bg-paper transition-[left] duration-300 ease-[var(--ease-spring)]", it.alarm ? "left-5" : "left-1")} />
+            </span>
+          </button>
+        </div>
+      </article>
+    </li>
   );
 }
 
