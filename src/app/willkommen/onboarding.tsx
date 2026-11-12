@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { safeNext } from "@/lib/safe-next";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/client";
 import { Button, Field, Input, cx } from "@/components/ui";
@@ -84,7 +85,7 @@ export function Onboarding({ initialStep, next, firstName, devCodes }: { initial
               <Button type="submit" variant="primary" size="lg" className="w-full sm:w-auto" disabled={busy}>Code senden <IconArrowRight width={18} height={18} /></Button>
             </form>
           ) : (
-            <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); run(async () => { await api("/me/phone/verify", { body: { code } }); router.replace(next); router.refresh(); }); }}>
+            <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); run(async () => { await api("/me/phone/verify", { body: { code } }); router.replace(safeNext(next) || "/"); router.refresh(); }); }}>
               <Field label="Code aus der SMS" error={error} hint={codeSent.devCode ? `Testumgebung ohne SMS-Versand: ${codeSent.devCode}` : "Sechs Ziffern, 10 Minuten gültig."}>
                 <Input required autoFocus inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className="max-w-[240px] text-[24px] tracking-[0.35em] tnum h-14 text-center font-medium" placeholder="······" />
               </Field>

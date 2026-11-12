@@ -63,9 +63,36 @@ export function errorResponse(e: unknown) {
   );
 }
 
+/** Höchstgrösse für JSON-Anfragen (Bilder laufen über den Bucket, nie durch diese Funktion) */
+const MAX_JSON_BYTES = 64 * 1024;
+
+/** Liest den Body mit Obergrenze – ohne zuerst alles in den Speicher zu laden */
+export async function readLimited(req: Request, max: number): Promise<Uint8Array> {
+  const declared = Number(req.headers.get("content-length") ?? "0");
+  if (declared > max) throw new AppError(413, "too_large", "Die Anfrage ist zu gross.");
+  if (!req.body) return new Uint8Array();
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) {
+      await reader.cancel().catch(() => {});
+      throw new AppError(413, "too_large", "Die Anfrage ist zu gross.");
+    }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(size);
+  let off = 0;
+  for (const c of chunks) { out.set(c, off); off += c.byteLength; }
+  return out;
+}
+
 export async function body<T extends ZodType>(req: Request, schema: T): Promise<z.infer<T>> {
   let data: unknown = {};
-  const text = await req.text();
+  const text = new TextDecoder().decode(await readLimited(req, MAX_JSON_BYTES));
   if (text) {
     try {
       data = JSON.parse(text);

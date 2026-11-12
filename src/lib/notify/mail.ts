@@ -10,8 +10,12 @@ let transport: ReturnType<typeof nodemailer.createTransport> | null = null;
  */
 export async function sendMail(to: string, subject: string, text: string, link?: { href: string; label: string }) {
   const body = link ? `${text}\n\n${link.label}: ${link.href}\n` : text;
+  // Demo-Konten (…@demo.leihregal.invalid) bekommen nie Post
+  if (/\.invalid$/i.test(to)) return;
   if (!env.smtpUrl) {
-    console.log(`[mail] an ${to} · ${subject}\n${body}`);
+    // In Produktion nie Inhalt oder Links ins Log schreiben: Anmeldelinks wären sonst für alle mit Log-Zugriff nutzbar
+    if (env.production) console.warn(`[mail] nicht gesendet, SMTP_URL fehlt · ${subject}`);
+    else console.log(`[mail] an ${to} · ${subject}\n${body}`);
     return;
   }
   transport ??= nodemailer.createTransport(env.smtpUrl);

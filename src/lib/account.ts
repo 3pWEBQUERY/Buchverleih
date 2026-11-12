@@ -32,6 +32,19 @@ export async function completeProfile(userId: string, input: { firstName: string
      where id = ${userId}`;
 }
 
+/** Umzug innerhalb fertiger Profile: neuer Wohnort aus der PLZ, keine Änderung an Alter oder Onboarding */
+export async function movePlz(userId: string, plz: string) {
+  const p = await plzInfo(plz);
+  if (!p || !p.enabled)
+    throw err.conflict("region_closed", "Leihregal ist in dieser Region noch nicht offen. Trag dich auf die Warteliste ein, wir melden uns.");
+  const { home, display } = homeFromPlz(p.lat, p.lng);
+  await sql`
+    update users set plz = ${p.plz}, municipality = ${p.municipality}, home_lat = ${home.lat}, home_lng = ${home.lng},
+           display_lat = case when plz = ${p.plz} then display_lat else ${display.lat} end,
+           display_lng = case when plz = ${p.plz} then display_lng else ${display.lng} end
+     where id = ${userId} and onboarded_at is not null`;
+}
+
 export async function updateSettings(userId: string, s: { firstName?: string; shelfPaused?: boolean; emailPrefs?: Record<string, boolean>; avatarKey?: string | null }) {
   const row: Record<string, unknown> = {};
   if (s.firstName !== undefined) row.first_name = s.firstName.trim().slice(0, 40);

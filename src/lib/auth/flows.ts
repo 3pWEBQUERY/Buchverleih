@@ -18,6 +18,7 @@ import { rateLimit } from "@/lib/ratelimit";
 import { sendMail } from "@/lib/notify/mail";
 import { sendSms } from "@/lib/notify/sms";
 import { normalizePhone } from "./phone";
+import { safeNext } from "@/lib/safe-next";
 import type { SessionUser } from "./session";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -28,8 +29,8 @@ export async function requestEmailLink(rawEmail: string, next?: string | null) {
   await rateLimit(`login:${email}`, 5, 900);
   const token = randomToken(32);
   await sql`insert into login_tokens (email, token_hash, expires_at) values (${email}, ${hashToken(token)}, now() + interval '20 minutes')`;
-  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "";
-  const link = `${env.appUrl}/anmelden/link?token=${token}${safeNext ? `&next=${encodeURIComponent(safeNext)}` : ""}`;
+  const safe = safeNext(next);
+  const link = `${env.appUrl}/anmelden/link?token=${token}${safe ? `&next=${encodeURIComponent(safe)}` : ""}`;
   await sendMail(email, "Dein Anmeldelink", "Mit diesem Link meldest du dich bei Leihregal an. Er ist 20 Minuten gültig und funktioniert einmal.", {
     href: link,
     label: "Anmelden",
@@ -148,18 +149,23 @@ export async function requestPhoneCode(user: SessionUser, raw: string) {
 }
 
 export async function verifyPhoneCode(user: SessionUser, code: string) {
+  await rateLimit(`smsverify:${user.id}`, 10, 3600);
+  const [v] = await sql<{ id: string; phone_e164: string; code_hash: string; attempts: number }[]>`
+    select id, phone_e164, code_hash, attempts from phone_verifications
+     where user_id = ${user.id} and verified_at is null and expires_at > now()
+     order by created_at desc limit 1`;
+  if (!v) throw err.conflict("no_code", "Der Code ist abgelaufen. Fordere einen neuen an.");
+  if (v.attempts >= 5) throw err.tooMany("Zu viele Versuche. Fordere einen neuen Code an.");
+  if (v.code_hash !== hashToken(`${user.id}:${code.replace(/\D/g, "")}`)) {
+    // ausserhalb einer Transaktion, damit der Fehlversuch bestehen bleibt
+    await sql`update phone_verifications set attempts = attempts + 1 where id = ${v.id}`;
+    throw err.invalid("Der Code stimmt nicht. Prüfe die sechs Ziffern aus der SMS.");
+  }
   return sql.begin(async (tx) => {
-    const [v] = await tx<{ id: string; phone_e164: string; code_hash: string; attempts: number }[]>`
-      select id, phone_e164, code_hash, attempts from phone_verifications
-       where user_id = ${user.id} and verified_at is null and expires_at > now()
-       order by created_at desc limit 1 for update`;
-    if (!v) throw err.conflict("no_code", "Der Code ist abgelaufen. Fordere einen neuen an.");
-    if (v.attempts >= 5) throw err.tooMany("Zu viele Versuche. Fordere einen neuen Code an.");
-    if (v.code_hash !== hashToken(`${user.id}:${code.replace(/\D/g, "")}`)) {
-      await tx`update phone_verifications set attempts = attempts + 1 where id = ${v.id}`;
-      throw err.invalid("Der Code stimmt nicht. Prüfe die sechs Ziffern aus der SMS.");
-    }
-    await tx`update phone_verifications set verified_at = now() where id = ${v.id}`;
+    const [ok] = await tx<{ id: string }[]>`
+      update phone_verifications set verified_at = now()
+       where id = ${v.id} and verified_at is null and attempts < 5 returning id`;
+    if (!ok) throw err.conflict("no_code", "Der Code ist abgelaufen. Fordere einen neuen an.");
     await tx`update users set phone_e164 = ${v.phone_e164}, phone_verified_at = now() where id = ${user.id}`;
   });
 }

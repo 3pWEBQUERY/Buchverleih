@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { safeNext } from "@/lib/safe-next";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/client";
 import { Button, LinkButton } from "@/components/ui";
@@ -13,7 +14,7 @@ export function VerifyLink({ token, next }: { token: string; next: string | null
     setBusy(true);
     try {
       const r = await api<{ created: boolean }>("/auth/email/verify", { body: { token } });
-      router.replace(r.created ? `/willkommen${next ? `?next=${encodeURIComponent(next)}` : ""}` : next ?? "/");
+      router.replace(r.created ? `/willkommen${safeNext(next) ? `?next=${encodeURIComponent(safeNext(next))}` : ""}` : safeNext(next) || "/");
       router.refresh();
     } catch (e) {
       setError((e as Error).message);

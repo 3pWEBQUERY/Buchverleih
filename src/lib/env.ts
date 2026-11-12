@@ -14,8 +14,9 @@ export const env = {
   get production() {
     return process.env.NODE_ENV === "production";
   },
+  /** Anmeldelinks und Codes in der Antwort zeigen – nur in der Entwicklung, in Produktion nie. */
   get showCodes() {
-    return bool(process.env.DEV_SHOW_CODES, false);
+    return process.env.NODE_ENV !== "production" && bool(process.env.DEV_SHOW_CODES, false);
   },
   get smtpUrl() {
     return process.env.SMTP_URL || "";

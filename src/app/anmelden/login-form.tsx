@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { safeNext } from "@/lib/safe-next";
 import { useRouter } from "next/navigation";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { api } from "@/lib/client";
@@ -32,7 +33,7 @@ export function LoginForm({ next }: { next: string | null }) {
       const { options, challengeId } = await api<{ options: Parameters<typeof startAuthentication>[0]["optionsJSON"]; challengeId: string }>("/auth/passkey/options", { method: "POST" });
       const response = await startAuthentication({ optionsJSON: options });
       await api("/auth/passkey/verify", { body: { challengeId, response } });
-      router.replace(next ?? "/");
+      router.replace(safeNext(next) || "/");
       router.refresh();
     } catch (e) {
       const msg = (e as Error).message;

@@ -72,7 +72,18 @@ export async function handleReport(mod: SessionUser, reportId: string, status: "
   await log(mod.id, `report_${status}`, "report", reportId, note);
 }
 
+const RANK: Record<string, number> = { member: 0, moderator: 1, admin: 2 };
+
+/** Eingriffe nur gegenüber Personen mit niedrigerer Rolle; sich selbst nie */
+async function assertOutranks(mod: SessionUser, userId: string) {
+  if (userId === mod.id) throw err.forbidden("Das geht nicht beim eigenen Konto.");
+  const [t] = await sql<{ role: string }[]>`select role from users where id = ${userId}`;
+  if (!t) throw err.notFound();
+  if ((RANK[t.role] ?? 0) >= (RANK[mod.role] ?? 0)) throw err.forbidden("Personen mit gleicher oder höherer Rolle kannst du nicht moderieren.");
+}
+
 export async function setBan(mod: SessionUser, userId: string, banned: boolean, reason?: string) {
+  await assertOutranks(mod, userId);
   if (banned) {
     await sql`update users set banned_at = now(), ban_reason = ${reason ?? null} where id = ${userId}`;
     await sql`delete from sessions where user_id = ${userId}`;
@@ -86,12 +97,14 @@ export async function setBan(mod: SessionUser, userId: string, banned: boolean, 
 }
 
 export async function setSuspension(mod: SessionUser, userId: string, suspended: boolean) {
+  await assertOutranks(mod, userId);
   await sql`update users set lending_suspended_at = ${suspended ? sql`now()` : null} where id = ${userId}`;
   await log(mod.id, suspended ? "suspend" : "unsuspend", "user", userId);
 }
 
 /** Unpassendes Profilbild entfernen (Regeln: Fotos). Die Dateien werden aus dem Bucket gelöscht. */
 export async function removeAvatar(mod: SessionUser, userId: string, note?: string) {
+  await assertOutranks(mod, userId);
   const { setAvatar } = await import("@/lib/account");
   await setAvatar(userId, null);
   await log(mod.id, "avatar_removed", "user", userId, note);
@@ -145,6 +158,8 @@ export async function flags() {
 }
 
 export async function setFlag(mod: SessionUser, key: string, regionId: string, enabled: boolean) {
+  // Regionen und Funktionen schalten nur Admins
+  if (mod.role !== "admin") throw err.forbidden("Regionen und Funktionen schalten nur Admins.");
   if (key === "__region") await sql`update regions set enabled = ${enabled} where id = ${regionId}`;
   else await sql`update feature_flags set enabled = ${enabled}, updated_at = now() where key = ${key} and region_id = ${regionId}`;
   await log(mod.id, `flag_${enabled ? "on" : "off"}`, "flag", `${regionId}:${key}`);

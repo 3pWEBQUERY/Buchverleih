@@ -1,11 +1,13 @@
 import { AuthHead, AuthStage } from "@/components/auth/stage";
+import { safeNext } from "@/lib/safe-next";
 import { VerifyLink } from "./verify";
 
 export const metadata = { title: "Anmelden" };
 
 /** Der Link wird erst per Knopfdruck eingelöst, damit Vorschauen von Mailprogrammen ihn nicht verbrauchen. */
 export default async function Page({ searchParams }: { searchParams: Promise<{ token?: string; next?: string }> }) {
-  const { token, next } = await searchParams;
+  const { token, next: rawNext } = await searchParams;
+  const next = safeNext(rawNext) || null;
   return (
     <AuthStage
       eyebrow="Anmeldelink"

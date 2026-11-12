@@ -7,6 +7,7 @@ import { sql } from "@/lib/db";
 import { err } from "@/lib/errors";
 import { hashToken, randomToken, sixDigits } from "@/lib/crypto";
 import { env } from "@/lib/env";
+import { rateLimit } from "@/lib/ratelimit";
 import type { SessionUser } from "@/lib/auth/session";
 import { getLoan, type LoanRow } from "./core";
 import { executeHandover, executeReturn } from "./service";
@@ -92,22 +93,29 @@ export async function redeemToken(user: SessionUser, token: string) {
   });
 }
 
-/** Einlösen per sechs Ziffern */
+/**
+ * Einlösen per sechs Ziffern. Fehlversuche werden ausserhalb der Transaktion gezählt,
+ * damit der Fehler sie nicht zurückrollt (höchstens 5 pro Code, dazu ein Ratenlimit pro Person).
+ */
 export async function redeemCode(user: SessionUser, loanId: string, code: string) {
+  await rateLimit(`handovercode:${user.id}`, 20, 600);
+  const [hit] = await sql<{ id: string }[]>`
+    select id from handover_tokens
+     where loan_id = ${loanId} and code_hash = ${hashToken(`${loanId}:${code.replace(/\D/g, "")}`)}
+       and redeemed_at is null and valid_until > now() and attempts < 5`;
+  if (!hit) {
+    const open = await sql<{ id: string }[]>`
+      update handover_tokens set attempts = attempts + 1
+       where loan_id = ${loanId} and redeemed_at is null and valid_until > now() returning id`;
+    if (!open.length) throw err.conflict("no_code", "Es ist gerade kein Code offen. Bitte die andere Person, den Code anzuzeigen.");
+    throw err.invalid("Die Ziffern stimmen nicht. Prüfe sie und versuche es erneut.");
+  }
   return sql.begin(async (tx) => {
-    const tokens = await tx<TokenRow[]>`
+    const [t] = await tx<TokenRow[]>`
       select id, loan_id, direction, valid_until, redeemed_at, created_by, attempts from handover_tokens
-       where loan_id = ${loanId} and redeemed_at is null and valid_until > now() for update`;
-    if (!tokens.length) throw err.conflict("no_code", "Es ist gerade kein Code offen. Bitte die andere Person, den Code anzuzeigen.");
-    const [hit] = await tx<TokenRow[]>`
-      select id, loan_id, direction, valid_until, redeemed_at, created_by, attempts from handover_tokens
-       where loan_id = ${loanId} and code_hash = ${hashToken(`${loanId}:${code.replace(/\D/g, "")}`)}
-         and redeemed_at is null and valid_until > now() and attempts < 5`;
-    if (!hit) {
-      await tx`update handover_tokens set attempts = attempts + 1 where id in ${tx(tokens.map((t) => t.id))}`;
-      throw err.invalid("Die Ziffern stimmen nicht. Prüfe sie und versuche es erneut.");
-    }
-    return redeem(tx, user, hit, "code");
+       where id = ${hit.id} for update`;
+    if (!t || t.attempts >= 5) throw err.invalid("Die Ziffern stimmen nicht. Prüfe sie und versuche es erneut.");
+    return redeem(tx, user, t, "code");
   });
 }
 

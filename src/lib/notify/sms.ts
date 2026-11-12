@@ -6,10 +6,12 @@ import { env } from "@/lib/env";
  */
 export async function sendSms(to: string, text: string) {
   if (env.smsProvider !== "webhook" || !process.env.SMS_WEBHOOK_URL) {
-    console.log(`[sms] an ${to}: ${text}`);
+    if (env.production) console.warn("[sms] nicht gesendet, kein SMS-Anbieter eingerichtet");
+    else console.log(`[sms] an ${to}: ${text}`);
     return;
   }
   const res = await fetch(process.env.SMS_WEBHOOK_URL, {
+    signal: AbortSignal.timeout(8000),
     method: "POST",
     headers: {
       "content-type": "application/json",

@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { body, route } from "@/lib/api";
 import { getUser, requireUser } from "@/lib/auth/session";
-import { completeProfile, setAvatar, updateSettings } from "@/lib/account";
+import { completeProfile, movePlz, setAvatar, updateSettings } from "@/lib/account";
+import { err } from "@/lib/errors";
 import { requestBlocker } from "@/lib/trust";
 import { sql } from "@/lib/db";
 
@@ -47,7 +48,11 @@ export const PATCH = route(async (req) => {
     const key = await setAvatar(u.id, b.avatarUploadId);
     if (Object.keys(b).length === 1) return { ok: true, avatarKey: key };
   }
-  if (b.plz) await completeProfile(u.id, { firstName: b.firstName ?? u.first_name, plz: b.plz, birthDate: "1900-01-01" });
+  if (b.plz) {
+    // Umzug: nur für fertige Profile. Das Onboarding (mit Altersprüfung) läuft über POST /me/profile.
+    if (!u.onboarded_at) throw err.conflict("onboarding", "Schliesse zuerst die Anmeldung ab.");
+    await movePlz(u.id, b.plz);
+  }
   await updateSettings(u.id, b);
   return { ok: true };
 });
