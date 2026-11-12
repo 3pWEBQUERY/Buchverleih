@@ -200,5 +200,11 @@ export async function runRetention() {
   await sql`delete from phone_verifications where expires_at < now() - interval '7 days'`;
   await sql`delete from jobs where done_at < now() - interval '14 days'`;
   await sql`delete from notifications where channel <> 'app' and sent_at < now() - interval '90 days'`;
-  return { messagesDeleted: msgs.length };
+  // App-Benachrichtigungen: gelesene nach 12 Monaten; Suchprotokoll nach 6 Monaten; tote Jobs nach 30 Tagen
+  await sql`delete from notifications where channel = 'app' and read_at < now() - interval '12 months'`;
+  const searches = await sql`delete from search_log where created_at < now() - interval '6 months' returning id`;
+  const dead = await sql`delete from jobs where done_at is null and attempts >= 5 and run_at < now() - interval '30 days' returning id`;
+  const [stuck] = await sql<{ n: number }[]>`select count(*)::int as n from jobs where done_at is null and attempts >= 5`;
+  if (stuck.n) console.warn(`[jobs] ${stuck.n} Jobs endgültig gescheitert (attempts >= 5)`);
+  return { messagesDeleted: msgs.length, searchesDeleted: searches.length, deadJobsDeleted: dead.length, deadJobs: stuck.n };
 }

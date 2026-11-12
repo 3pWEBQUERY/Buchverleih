@@ -21,6 +21,26 @@ async function lastRun(job: string) {
   return r?.last_run_at ?? null;
 }
 
+/**
+ * Advisory-Lock auf einer reservierten Verbindung: läuft mehr als ein Worker,
+ * arbeitet nur einer die Fristen ab. Gibt true zurück, wenn dieser Worker gelaufen ist.
+ */
+async function withDeadlineLock(fn: () => Promise<void>) {
+  const conn = await sql.reserve();
+  try {
+    const [lock] = await conn<{ ok: boolean }[]>`select pg_try_advisory_lock(424242) as ok`;
+    if (!lock?.ok) return false;
+    try {
+      await fn();
+      return true;
+    } finally {
+      await conn`select pg_advisory_unlock(424242)`.catch(() => {});
+    }
+  } finally {
+    conn.release();
+  }
+}
+
 async function jobLoop() {
   while (!stopping) {
     const job = await nextJob().catch((e) => {
@@ -37,11 +57,13 @@ async function scheduler() {
     try {
       const last = await lastRun("deadlines");
       if (!last || Date.now() - last.getTime() >= DEADLINE_MINUTES * 60_000) {
-        const r = await runDeadlines();
-        if (Object.keys(r).length) console.log("[deadlines]", JSON.stringify(r));
-        // Fehlende Cover nachladen; jede Ausgabe höchstens einmal pro Woche
-        const covers = await backfillCovers().catch((e) => { console.error("[covers]", e.message); return 0; });
-        if (covers) console.log(`[covers] ${covers} Cover zum Nachladen eingereiht`);
+        await withDeadlineLock(async () => {
+          const r = await runDeadlines();
+          if (Object.keys(r).length) console.log("[deadlines]", JSON.stringify(r));
+          // Fehlende Cover nachladen; jede Ausgabe höchstens einmal pro Woche
+          const covers = await backfillCovers().catch((e) => { console.error("[covers]", e.message); return 0; });
+          if (covers) console.log(`[covers] ${covers} Cover zum Nachladen eingereiht`);
+        });
       }
       // Täglicher Lauf für Titelalarm, Tauschtreffer und Aufbewahrung
       const daily = await lastRun("daily");

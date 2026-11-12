@@ -326,7 +326,7 @@ export async function executeHandover(
               handover_method = ${method},
               due_at = (select day_start_ch(upper(period)) from copy_bookings where loan_id = ${loanId}),
               wanted = (select period from copy_bookings where loan_id = ${loanId}),
-              condition_note_until = ${handedAt}::timestamptz + interval '24 hours'`,
+              condition_note_until = greatest(${handedAt}::timestamptz + interval '24 hours', now() + interval '24 hours')`,
     });
     const info = await loanInfo(tx, loanId);
     for (const uid of [loan.owner_id, loan.borrower_id]) {
@@ -573,7 +573,7 @@ export async function executeReturn(
 
   const loan = await transition(tx, loanId, action, actor, {
     set: tx`returned_at = ${returnedAt},
-            inspection_until = ${returnedAt}::timestamptz + interval '48 hours',
+            inspection_until = ${returnedAt}::timestamptz + interval '48 hours', -- bei gemeldeter Rückgabe zählt die Einspruchsfrist als Prüfung (PRD)
             late = (${returnedAt}::timestamptz > l.due_at + interval '3 days')`,
     // Aus «Fall offen» nur bei ausbleibender Rückgabe, nicht bei einem Schadenfall
     where: tx`(l.status <> 'disputed' or ${hadCase})`,
@@ -692,7 +692,7 @@ export async function startEarlier(user: SessionUser, loanId: string, start: str
     if (!(await tryMoveBooking(tx, loanId, start, end)) && !(await tryMoveBooking(tx, loanId, start, r.end!)))
       throw err.conflict("calendar_conflict", "Dieser Tag ist nicht mehr frei.");
     await tx`update loans set wanted = (select period from copy_bookings where loan_id = ${loanId}),
-                              handover_by = day_start_ch(${start}::date + 8) where id = ${loanId}`;
+                              handover_by = day_start_ch(${start}::date + 8) where id = ${loanId} and status = 'accepted'`;
     await logEvent(tx, loanId, user.id, "start_earlier", "accepted", "accepted", { start });
     return getLoan(tx, loanId);
   });
@@ -736,6 +736,11 @@ export async function cancelWithoutPenalty(user: SessionUser, loanId: string) {
       meta: { reason: "predecessor_late" },
     });
     await releaseBookings(tx, loan);
+    if (loan.received_from_loan_id) await onPassOnBroken(tx, loan);
+    await releaseFollowers(tx, loanId, "cancelled");
+    const info = await loanInfo(tx, loanId);
+    await notify(tx, { userId: loan.owner_id, type: "cancelled", loanId, data: { title: info.title, name: info.borrower_name } });
+    await offerEarlierStart(tx, loan.copy_id);
     return loan;
   });
 }

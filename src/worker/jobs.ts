@@ -19,20 +19,26 @@ export async function nextJob(): Promise<Job | null> {
        select id from jobs
         where done_at is null and run_at <= now() and attempts < 5
           and (locked_at is null or locked_at < now() - interval '5 minutes')
-        order by run_at limit 1 for update skip locked)
+        -- Mails und SMS zuerst, damit sie nicht hinter Cover-Jobs warten
+        order by (kind in ('send_email', 'send_sms')) desc, run_at limit 1 for update skip locked)
     returning id, kind, payload, attempts`;
   return j ?? null;
 }
 
 export async function runJob(job: Job) {
   try {
-    await handlers[job.kind]?.(job.payload);
+    const handler = handlers[job.kind];
+    // Unbekannte Arten nicht still als erledigt markieren: sie landen nach den Versuchen sichtbar als tot
+    if (!handler) throw new Error(`Kein Handler für «${job.kind}»`);
+    await handler(job.payload);
     await sql`update jobs set done_at = now(), last_error = null where id = ${job.id}`;
   } catch (e) {
     const backoff = Math.min(3600, 30 * 2 ** job.attempts);
-    await sql`update jobs set locked_at = null, last_error = ${(e as Error).message.slice(0, 500)},
-                              run_at = now() + make_interval(secs => ${backoff}) where id = ${job.id}`;
     console.error(`[job ${job.kind} #${job.id}]`, (e as Error).message);
+    // Auch dieses Update kann scheitern (DB weg): nicht den ganzen Worker beenden, der Lock läuft nach 5 Min. ab
+    await sql`update jobs set locked_at = null, last_error = ${(e as Error).message.slice(0, 500)},
+                              run_at = now() + make_interval(secs => ${backoff}) where id = ${job.id}`
+      .catch((e2) => console.error(`[job ${job.kind} #${job.id}] Status nicht gespeichert:`, (e2 as Error).message));
   }
 }
 
