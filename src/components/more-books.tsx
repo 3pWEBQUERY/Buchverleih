@@ -4,25 +4,32 @@ import { fmtDistance } from "@/lib/geo";
 import { BookRow } from "@/components/regal/book-row";
 import { IconArrowRight } from "@/components/icons";
 import { cx } from "@/components/ui";
+import type { Locale } from "@/lib/i18n/locale";
+import { labels } from "@/lib/i18n/labels";
+import { getLocale } from "@/lib/i18n/server";
+import { TITLE } from "@/lib/i18n/messages/title";
 
 type ShelfKey = "regal" | "titel" | "autor" | "genre" | "neu";
 
+const labelsGenre = (l: Locale, g: string) => labels(l).genreLabel[g] ?? g;
+
 /** Weiterstöbern: mehrere Bretter mit weiteren Büchern rund um dieses Exemplar */
-export function MoreBooks({ related, ownerName, ownerId, workId, title, hasOrigin, skip = [] }: {
-  related: Related; ownerName: string; ownerId: string; workId: string; title: string; hasOrigin: boolean; skip?: ShelfKey[];
+export function MoreBooks({ related, ownerName, ownerId, workId, title, hasOrigin, skip = [], l = "de" }: {
+  related: Related; ownerName: string; ownerId: string; workId: string; title: string; hasOrigin: boolean; skip?: ShelfKey[]; l?: Locale;
 }) {
-  const where = hasOrigin ? "in deiner Nähe" : "in der Nähe";
+  const t = TITLE[l].more;
+  const where = hasOrigin ? t.inYourArea : t.near;
   const note = (c: RelatedCopy) => {
     const free = c.status === "available";
     const d = c.dist != null ? fmtDistance(c.dist) : null;
-    return { tone: free ? ("ok" as const) : ("lent" as const), text: [free ? "frei" : "belegt", c.owner_name, d].filter(Boolean).join(" · ") };
+    return { tone: free ? ("ok" as const) : ("lent" as const), text: [free ? t.free : t.taken, c.owner_name, d].filter(Boolean).join(" · ") };
   };
   const shelves: { id: string; title: string; desc: string; items: RelatedCopy[]; link?: { href: string; label: string }; withNote: boolean }[] = [
-    { id: "regal", title: `Mehr aus dem Regal von ${ownerName}`, desc: "Was sonst noch bei dieser Person steht. Eine Übergabe, mehrere Bücher.", items: related.owner, link: { href: `/profil/${ownerId}`, label: "Ganzes Regal" }, withNote: false },
-    { id: "titel", title: `Weitere Exemplare von «${title}»`, desc: "Dasselbe Buch bei anderen Mitgliedern, das nächste zuerst.", items: related.sameWork, link: { href: `/titel/${workId}`, label: "Alle vergleichen" }, withNote: true },
-    { id: "autor", title: `Mehr von ${related.authorName}`, desc: `Andere Titel ${where}, im Umkreis von 25 km.`, items: related.author, link: related.authorName ? { href: `/suche?q=${encodeURIComponent(related.authorName)}`, label: "Alle suchen" } : undefined, withNote: true },
-    { id: "genre", title: `Ebenfalls ${related.genreName}`, desc: `Aus demselben Genre, ${where}.`, items: related.genre, link: related.genreName ? { href: `/suche?genre=${encodeURIComponent(related.genreName)}`, label: "Ganzes Genre" } : undefined, withNote: true },
-    { id: "neu", title: `Neu ${where}`, desc: "Zuletzt eingestellt, im Umkreis von 25 km.", items: related.nearby, link: { href: "/suche", label: "Alle durchsuchen" }, withNote: true },
+    { id: "regal", title: t.ownerTitle(ownerName), desc: t.ownerDesc, items: related.owner, link: { href: `/profil/${ownerId}`, label: t.ownerLink }, withNote: false },
+    { id: "titel", title: t.workTitle(title), desc: t.workDesc, items: related.sameWork, link: { href: `/titel/${workId}`, label: t.workLink }, withNote: true },
+    { id: "autor", title: t.authorTitle(related.authorName ?? ""), desc: t.authorDesc(where), items: related.author, link: related.authorName ? { href: `/suche?q=${encodeURIComponent(related.authorName)}`, label: t.authorLink } : undefined, withNote: true },
+    { id: "genre", title: t.genreTitle(related.genreName ? labelsGenre(l, related.genreName) : ""), desc: t.genreDesc(where), items: related.genre, link: related.genreName ? { href: `/suche?genre=${encodeURIComponent(related.genreName)}`, label: t.genreLink } : undefined, withNote: true },
+    { id: "neu", title: t.newTitle(where), desc: t.newDesc, items: related.nearby, link: { href: "/suche", label: t.newLink }, withNote: true },
   ].filter((s) => s.items.length > 0 && !skip.includes(s.id as ShelfKey));
   if (!shelves.length) return null;
   const total = shelves.reduce((n, s) => n + s.items.length, 0);
@@ -31,13 +38,13 @@ export function MoreBooks({ related, ownerName, ownerId, workId, title, hasOrigi
     <section aria-labelledby="weiter" className="mt-16 md:mt-24 pt-10 md:pt-12 border-t border-line">
       <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
         <div>
-          <p className="eyebrow">Weiterstöbern</p>
-          <h2 id="weiter" className="display text-[28px] md:text-[38px] mt-2">Noch mehr Bücher, <em>{where}.</em></h2>
+          <p className="eyebrow">{t.eyebrow}</p>
+          <h2 id="weiter" className="display text-[28px] md:text-[38px] mt-2">{t.heading(where)[0]}<em>{t.heading(where)[1]}</em></h2>
         </div>
-        <p className="text-[14px] text-muted tnum pb-1">{total} Bücher auf {shelves.length} {shelves.length === 1 ? "Brett" : "Brettern"}</p>
+        <p className="text-[14px] text-muted tnum pb-1">{t.total(total, shelves.length)}</p>
       </header>
 
-      <nav aria-label="Bretter" className="mt-6 flex flex-wrap gap-2">
+      <nav aria-label={t.shelves} className="mt-6 flex flex-wrap gap-2">
         {shelves.map((s) => (
           <a key={s.id} href={`#mehr-${s.id}`} className="h-9 pl-3.5 pr-1.5 rounded-[8px] border border-line inline-flex items-center gap-2.5 text-[13.5px] font-medium hover:border-accent hover:text-accent-hover transition-colors">
             <span className="max-w-[28ch] truncate">{s.title}</span>
@@ -82,5 +89,5 @@ export async function MoreBooksLoader({ copyId, viewerId, origin, ...rest }: {
 }) {
   const related = await relatedForCopy(copyId, viewerId, origin).catch(() => null);
   if (!related) return null;
-  return <MoreBooks related={related} {...rest} />;
+  return <MoreBooks related={related} {...rest} l={await getLocale()} />;
 }

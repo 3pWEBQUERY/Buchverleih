@@ -4,13 +4,19 @@ import { circleByInvite } from "@/lib/circles";
 import { LinkButton } from "@/components/ui";
 import { Spine } from "@/components/spine";
 import { JoinButton } from "./join-button";
+import { getLocale } from "@/lib/i18n/server";
+import { CIRCLES } from "@/lib/i18n/messages/circles";
 
-export const metadata = { title: "Einladung", robots: { index: false } };
+export async function generateMetadata() {
+  return { title: CIRCLES[await getLocale()].invite.title, robots: { index: false } };
+}
 
 /** Öffentliche Einladungsseite eines Kreises (PRD 7.5) */
 export default async function Page({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
   const [user, circle] = await Promise.all([getUser(), circleByInvite(code)]);
+  const c = CIRCLES[await getLocale()];
+  const t = c.invite;
 
   if (!circle) {
     return (
@@ -21,10 +27,10 @@ export default async function Page({ params }: { params: Promise<{ code: string 
             <Spine title="Der Process" author="Franz Kafka" height={88} />
             <Spine title="Homo faber" author="Max Frisch" height={88} />
           </div>
-          <p className="eyebrow mt-8">Einladung</p>
-          <h1 className="display text-[32px] md:text-[44px] mt-3">Dieser Link gilt <em>nicht mehr.</em></h1>
-          <p className="text-ink-2 text-[16px] mt-5 max-w-sm mx-auto">Vielleicht wurde er erneuert. Frag die Person, die dich eingeladen hat, nach dem aktuellen Link.</p>
-          <LinkButton href="/" className="mt-8">Zur Startseite</LinkButton>
+          <p className="eyebrow mt-8">{t.title}</p>
+          <h1 className="display text-[32px] md:text-[44px] mt-3">{t.invalidHeading[0]}<em>{t.invalidHeading[1]}</em></h1>
+          <p className="text-ink-2 text-[16px] mt-5 max-w-sm mx-auto">{t.invalidText}</p>
+          <LinkButton href="/" className="mt-8">{t.home}</LinkButton>
         </div>
       </div>
     );
@@ -46,32 +52,32 @@ export default async function Page({ params }: { params: Promise<{ code: string 
             ))}
           </div>
           <div aria-hidden className="h-[3px] bg-night-ink/90 rounded-full max-w-[420px] mx-auto" />
-          <p className="text-[12px] font-medium text-night-muted mt-8">Einladung in einen Kreis</p>
+          <p className="text-[12px] font-medium text-night-muted mt-8">{t.eyebrow}</p>
           <h1 className="display text-[32px] md:text-[44px] mt-3 break-words">{circle.name}</h1>
           {circle.description && <p className="text-[17px] text-night-ink/85 mt-5 leading-relaxed max-w-md mx-auto">{circle.description}</p>}
           <div className="mt-6 flex flex-wrap justify-center gap-2 tnum">
-            <span className="h-7 px-3 rounded-[6px] bg-night-2 text-[13px] font-medium inline-flex items-center">{circle.member_count} {circle.member_count === 1 ? "Mitglied" : "Mitglieder"}</span>
-            <span className="h-7 px-3 rounded-[6px] bg-night-2 text-[13px] font-medium inline-flex items-center">{circle.join_mode === "link" ? "Beitritt sofort" : "Beitritt mit Freigabe"}</span>
+            <span className="h-7 px-3 rounded-[6px] bg-night-2 text-[13px] font-medium inline-flex items-center">{circle.member_count} {c.members(circle.member_count)}</span>
+            <span className="h-7 px-3 rounded-[6px] bg-night-2 text-[13px] font-medium inline-flex items-center">{circle.join_mode === "link" ? t.joinNow : c.joinApproval}</span>
           </div>
         </div>
 
         <div className="panel !rounded-t-none !rounded-b-[22px] !border-t-0 px-6 md:px-10 py-7 md:py-8 text-center">
           {membership?.status === "active" ? (
             <>
-              <p className="text-ink-2 mb-5">Du bist bereits Mitglied.</p>
-              <LinkButton href={`/kreise/${circle.id}`} variant="primary" size="lg">Zum Kreis</LinkButton>
+              <p className="text-ink-2 mb-5">{t.already}</p>
+              <LinkButton href={`/kreise/${circle.id}`} variant="primary" size="lg">{t.toCircle}</LinkButton>
             </>
           ) : membership?.status === "pending" ? (
-            <p className="text-ink-2 flex items-center justify-center gap-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait live-dot" /> Deine Anfrage ist gesendet. Sobald ein Admin dich freigibt, erhältst du eine Nachricht.</p>
+            <p className="text-ink-2 flex items-center justify-center gap-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait live-dot" /> {t.sent}</p>
           ) : !user ? (
             <>
-              <p className="text-ink-2 mb-6 max-w-sm mx-auto">Ein Kreis teilt ein gemeinsames Regal. Melde dich an, um beizutreten. Ein Konto ist in einer Minute erstellt, ohne Passwort.</p>
-              <LinkButton href={`/anmelden?next=${encodeURIComponent(next)}`} variant="primary" size="lg" className="w-full sm:w-auto">Anmelden und beitreten</LinkButton>
+              <p className="text-ink-2 mb-6 max-w-sm mx-auto">{t.loginText}</p>
+              <LinkButton href={`/anmelden?next=${encodeURIComponent(next)}`} variant="primary" size="lg" className="w-full sm:w-auto">{t.loginJoin}</LinkButton>
             </>
           ) : !user.onboarded_at ? (
             <>
-              <p className="text-ink-2 mb-6 max-w-sm mx-auto">Vervollständige zuerst dein Profil. Danach geht es hier weiter.</p>
-              <LinkButton href={`/willkommen?next=${encodeURIComponent(next)}`} variant="primary" size="lg" className="w-full sm:w-auto">Profil vervollständigen</LinkButton>
+              <p className="text-ink-2 mb-6 max-w-sm mx-auto">{t.profileText}</p>
+              <LinkButton href={`/willkommen?next=${encodeURIComponent(next)}`} variant="primary" size="lg" className="w-full sm:w-auto">{t.profile}</LinkButton>
             </>
           ) : (
             <JoinButton code={code} circleId={circle.id} approval={circle.join_mode === "approval"} />

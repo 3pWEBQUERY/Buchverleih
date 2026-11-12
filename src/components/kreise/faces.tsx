@@ -1,5 +1,7 @@
 import { cx } from "@/components/ui";
 import { monogramColors } from "@/lib/monogram-colors";
+import type { Locale } from "@/lib/i18n/locale";
+import { CIRCLES } from "@/lib/i18n/messages/circles";
 
 /** Auf dunkler Fläche: helle Töne, damit sich die Initialen abheben */
 const NIGHT_TONES = ["bg-night-ink text-night", "bg-night-muted text-night"];
@@ -26,10 +28,10 @@ export function Avatar({ name, seed, size = 40, className, night, photo }: { nam
 }
 
 /** Überlappende Initialen, dazu «+n», wenn es mehr Mitglieder gibt */
-export function Faces({ names, seeds, photos, total, size = 34, ring = "ring-paper", night }: { names: string[]; seeds?: string[]; photos?: (string | null)[]; total: number; size?: number; ring?: string; night?: boolean }) {
+export function Faces({ names, seeds, photos, total, size = 34, ring = "ring-paper", night, l = "de" }: { names: string[]; seeds?: string[]; photos?: (string | null)[]; total: number; size?: number; ring?: string; night?: boolean; l?: Locale }) {
   const more = total - names.length;
   return (
-    <span className="flex items-center" role="img" aria-label={`${total} ${total === 1 ? "Mitglied" : "Mitglieder"}: ${names.join(", ")}${more > 0 ? " und weitere" : ""}`}>
+    <span className="flex items-center" role="img" aria-label={CIRCLES[l].faces(total, names.join(", "), more > 0)}>
       {names.map((n, i) => (
         <Avatar key={`${n}-${i}`} name={n} seed={seeds?.[i]} photo={photos?.[i]} size={size} night={night} className={cx("ring-[2.5px]", ring, i > 0 && "-ml-2.5")} />
       ))}

@@ -8,11 +8,14 @@ import { copiesOfWork } from "@/lib/copies";
 import { Suspense } from "react";
 import { MoreBooksLoader } from "@/components/more-books";
 import { ShareButton } from "@/components/share-button";
-import { responseText } from "@/lib/response-time";
 import { dayToDate, dueDay, fmtDay } from "@/lib/dates";
 import { workById, wishFor } from "@/lib/title-queries";
 import { fmtDistance } from "@/lib/geo";
-import { conditionLabel, languageLabel, offerLabel, trustLabel } from "@/lib/i18n/de-CH";
+import { labels } from "@/lib/i18n/labels";
+import type { Locale } from "@/lib/i18n/locale";
+import { getLocale } from "@/lib/i18n/server";
+import { TITLE } from "@/lib/i18n/messages/title";
+import { responseTextL } from "@/lib/i18n/messages/profile";
 import { Cover } from "@/components/cover";
 import { shelfStatusText } from "@/components/status";
 import { Monogram } from "@/components/person/monogram";
@@ -24,16 +27,17 @@ type Params = { params: Promise<{ id: string }>; searchParams: Promise<Record<st
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const w = await workById((await params).id);
-  if (!w) return { title: "Titel" };
-  const desc = `«${w.title}»${w.authors.length ? ` von ${w.authors.join(", ")}` : ""} ausleihen, tauschen oder geschenkt bekommen – von Privatpersonen in deiner Nähe.`;
+  const t = TITLE[await getLocale()];
+  if (!w) return { title: t.title };
+  const desc = t.metaDesc(w.title, w.authors.join(", "));
   return { title: w.title, description: desc, openGraph: { title: w.title, description: desc }, alternates: { canonical: `/titel/${w.id}` } };
 }
 
 const toneDot = { ok: "bg-ok", lent: "bg-lent", late: "bg-late", wait: "bg-wait", done: "bg-done", accent: "bg-accent" } as const;
 
-function responseHint(sec: number | null) {
-  const t = responseText(sec == null ? null : sec / 3600);
-  return t ? `antwortet meist ${t}` : null;
+function responseHint(sec: number | null, l: Locale) {
+  const r = responseTextL(sec == null ? null : sec / 3600, l);
+  return r ? TITLE[l].answersUsually(r) : null;
 }
 
 /** Titelseite (PRD 8.4): Welche Exemplare gibt es in der Nähe? Zustand, Entfernung, Verleiher, «Anfragen». */
@@ -42,6 +46,9 @@ export default async function TitelPage({ params, searchParams }: Params) {
   const sp = await searchParams;
   const work = await workById(id);
   if (!work) notFound();
+  const l = await getLocale();
+  const t = TITLE[l];
+  const L = labels(l);
 
   const user = await getUser();
   const viewer = user?.onboarded_at ? user : null;
@@ -80,10 +87,10 @@ export default async function TitelPage({ params, searchParams }: Params) {
     seed: work.id,
   };
   const facts: [string, string][] = [
-    ...(work.genre ? [["Genre", work.genre] as [string, string]] : []),
-    ["Ausgaben", String(work.editions)],
-    ...(work.original_language ? [["Originalsprache", languageLabel[work.original_language] ?? work.original_language] as [string, string]] : []),
-    ["In der Nähe", others.length === 1 ? "1 Exemplar" : `${others.length} Exemplare`],
+    ...(work.genre ? [[t.genre, L.genreLabel[work.genre] ?? work.genre] as [string, string]] : []),
+    [t.editions, String(work.editions)],
+    ...(work.original_language ? [[t.originalLanguage, L.languageLabel[work.original_language] ?? work.original_language] as [string, string]] : []),
+    [t.nearby, t.copies(others.length)],
   ];
 
   return (
@@ -106,7 +113,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
           <div className="px-4 py-3.5 flex items-center justify-between gap-3">
             <span className="inline-flex items-center gap-2 text-[14px] font-medium">
               <span aria-hidden className={cx("h-2 w-2 rounded-full", freeCount ? "bg-ok" : others.length ? "bg-lent" : "bg-done")} />
-              {freeCount ? (freeCount === 1 ? "1 Exemplar jetzt frei" : `${freeCount} Exemplare jetzt frei`) : others.length ? "Alle gerade vergeben" : "Noch kein Exemplar in der Nähe"}
+              {freeCount ? t.freeCopies(freeCount) : others.length ? t.allTaken : t.noneNear}
             </span>
             {nearest != null && <span className="text-[13px] text-muted tnum">{fmtDistance(nearest)}</span>}
           </div>
@@ -118,75 +125,75 @@ export default async function TitelPage({ params, searchParams }: Params) {
         </div>
 
         <div className="rounded-[10px] border border-line p-4">
-          <p className="font-medium text-[15px]">Titelalarm</p>
+          <p className="font-medium text-[15px]">{t.alarm}</p>
           <p className="text-[13px] text-muted mt-0.5 mb-3 leading-snug">
             {wish
               ? wish.alarm
-                ? `Wir melden uns, sobald ein Exemplar im Umkreis von ${wish.radius_km} km frei wird.`
-                : "Titelalarm aus. Du findest den Titel auf deiner Wunschliste."
-              : "Setz den Titel auf die Wunschliste. Wir melden uns, sobald ein Exemplar in deiner Nähe frei wird."}
+                ? t.alarmOn(wish.radius_km)
+                : t.alarmOff
+              : t.alarmAdd}
           </p>
           <WishButton workId={work.id} loggedIn={!!viewer} onList={!!wish} alarm={wish?.alarm ?? false} next={nextPath} primary={!nextId} className="w-full" />
         </div>
-        <ShareButton title={work.title} text={`«${work.title}» bei Leihregal`} path={`/titel/${work.id}`} className="w-full" />
+        <ShareButton title={work.title} text={t.shareText(work.title)} path={`/titel/${work.id}`} className="w-full" />
       </aside>
 
       {/* ------------------------------------------------ Exemplare */}
       <div className="min-w-0">
         <header className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6 anim-rise">
           <div className="min-w-0">
-            <p className="eyebrow">{place ? `Rund um ${place}` : "In der Nähe"}</p>
+            <p className="eyebrow">{place ? t.around(place) : t.near}</p>
             <h2 className="display text-[28px] md:text-[38px] mt-2">
-              {freeCount ? <>Leih dir <em>dieses Buch.</em></> : others.length ? <>Gerade vergeben. <em>Vormerken geht.</em></> : <>Noch nicht <em>in der Nähe.</em></>}
+              {freeCount ? <>{t.headFree[0]}<em>{t.headFree[1]}</em></> : others.length ? <>{t.headTaken[0]}<em>{t.headTaken[1]}</em></> : <>{t.headNone[0]}<em>{t.headNone[1]}</em></>}
             </h2>
             {others.length > 0 && (
               <p className="text-[15.5px] text-ink-2 mt-3 max-w-xl leading-relaxed">
-                {others.length === 1 ? "Ein Exemplar" : `${others.length} Exemplare`} {place ? `rund um ${place}` : "in der Nähe"}
-                {nextId ? <>, das nächste freie {fmtDistance(others.find((c) => c.id === nextId)!.dist) ? `${fmtDistance(others.find((c) => c.id === nextId)!.dist)} entfernt ` : ""}bei {others.find((c) => c.id === nextId)!.owner_name}.</> : ". Alle sind gerade unterwegs, vormerken geht trotzdem."}
+                {others.length === 1 ? t.oneCopy : t.nCopies(others.length)} {place ? t.aroundLower(place) : t.nearLower}
+                {nextId ? t.nextFree(fmtDistance(others.find((c) => c.id === nextId)!.dist), others.find((c) => c.id === nextId)!.owner_name) : t.allOut}
               </p>
             )}
           </div>
           <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto">
-            <StatTile n={others.length} label={others.length === 1 ? "Exemplar" : "Exemplare"} />
-            <StatTile n={freeCount} label="jetzt frei" live={freeCount > 0} />
-            <StatTile n={nearest != null ? (fmtDistance(nearest) ?? "–").replace(/^ca\. /, "") : "–"} label="am nächsten" />
+            <StatTile n={others.length} label={t.copyWord(others.length)} />
+            <StatTile n={freeCount} label={t.freeNow} live={freeCount > 0} />
+            <StatTile n={nearest != null ? (fmtDistance(nearest) ?? "–").replace(/^ca\. /, "") : "–"} label={t.nearest} />
           </dl>
         </header>
 
-        <StepSection id="exemplare" n={1} title={others.length === 1 ? "1 Exemplar" : `${others.length} Exemplare`} className="mt-10 md:mt-12"
-          desc="Sortiert nach Entfernung. Zustand, Ausgabe und wer verleiht – ein Tippen öffnet Kalender und Anfrage."
-          aside={others.length > 0 ? (freeCount === 1 ? "1 jetzt frei" : `${freeCount} jetzt frei`) : undefined}>
+        <StepSection id="exemplare" n={1} title={t.copies(others.length)} className="mt-10 md:mt-12"
+          desc={t.listDesc}
+          aside={others.length > 0 ? t.nFree(freeCount) : undefined}>
           {!viewer && !o && (
             <form method="get" className="rounded-[10px] border border-line p-5 mb-4 flex flex-wrap items-center justify-between gap-4">
-              <label htmlFor="titel-plz" className="text-[14.5px] text-ink-2">Deine Postleitzahl, um Entfernungen zu sehen.</label>
+              <label htmlFor="titel-plz" className="text-[14.5px] text-ink-2">{t.plzLabel}</label>
               <div className="flex items-center gap-2">
-                <input id="titel-plz" name="plz" inputMode="numeric" pattern="\d{4}" maxLength={4} placeholder="8180"
+                <input id="titel-plz" name="plz" inputMode="numeric" pattern="\d{4}" maxLength={4} placeholder={t.plzPlaceholder}
                   className="w-28 h-11 bg-paper border border-line-strong rounded-[6px] px-5 text-[16px] tnum tracking-[0.08em] placeholder:text-muted/70 focus:outline-none focus:border-accent" />
-                <button type="submit" className="h-11 px-5 rounded-[6px] bg-accent text-accent-ink font-medium hover:bg-accent-hover transition-colors">Zeigen</button>
+                <button type="submit" className="h-11 px-5 rounded-[6px] bg-accent text-accent-ink font-medium hover:bg-accent-hover transition-colors">{t.show}</button>
               </div>
             </form>
           )}
 
           {others.length === 0 ? (
             <div className="rounded-[10px] border border-dashed border-line-strong p-6 md:p-8 flex flex-wrap items-center justify-between gap-4">
-              <p className="text-[15px] text-ink-2 max-w-lg">Im Moment steht kein Exemplar in deiner Nähe im Regal. Mit dem Titelalarm melden wir uns.</p>
-              <LinkButton href="/suche" variant="secondary">Weiter suchen</LinkButton>
+              <p className="text-[15px] text-ink-2 max-w-lg">{t.empty}</p>
+              <LinkButton href="/suche" variant="secondary">{t.searchOn}</LinkButton>
             </div>
           ) : (
             <>
               {/* Wo die Exemplare stehen: eine Achse von dir aus */}
               {withDist.length > 1 && (
-                <div className="rounded-[10px] bg-paper-2 px-5 pt-4 pb-5 mb-4" aria-label="Entfernungen der Exemplare">
+                <div className="rounded-[10px] bg-paper-2 px-5 pt-4 pb-5 mb-4" aria-label={t.whereAria}>
                   <div className="flex items-baseline justify-between gap-4 text-[12.5px] text-muted">
-                    <span>Wo sie stehen</span>
+                    <span>{t.where}</span>
                     <span className="inline-flex items-center gap-3">
-                      <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2 w-2 rounded-full bg-ok" />frei</span>
-                      <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2 w-2 rounded-full bg-lent" />vergeben</span>
+                      <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2 w-2 rounded-full bg-ok" />{t.free}</span>
+                      <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2 w-2 rounded-full bg-lent" />{t.taken}</span>
                     </span>
                   </div>
                   <div className="relative mt-7 mb-6 mx-2 h-[2px] bg-line-strong rounded-full">
-                    <span className="absolute -left-2 -top-[5px] h-3 w-3 rounded-full bg-ink-2 ring-4 ring-paper-2" title="Du" />
-                    <span className="absolute -left-2 top-3 text-[11.5px] font-medium text-ink-2">Du</span>
+                    <span className="absolute -left-2 -top-[5px] h-3 w-3 rounded-full bg-ink-2 ring-4 ring-paper-2" title={t.you} />
+                    <span className="absolute -left-2 top-3 text-[11.5px] font-medium text-ink-2">{t.you}</span>
                     {withDist.map((c, i) => (
                       <a key={c.id} href={`#ex-${c.id}`} title={`${c.owner_name}, ${fmtDistance(c.dist)}`}
                         className={cx("absolute -top-[7px] h-4 w-4 -ml-2 rounded-full ring-[3px] ring-paper-2 hover:scale-125 transition-transform", c.free_now ? "bg-ok" : "bg-lent", c.id === nextId && "ring-accent/60")}
@@ -201,13 +208,13 @@ export default async function TitelPage({ params, searchParams }: Params) {
 
               <ul className="space-y-3">
                 {others.map((c, i) => {
-                  const st = c.free_now ? { tone: "ok" as const, text: "Jetzt frei" } : shelfStatusText(c);
-                  const binding = c.binding === "hardcover" ? "Gebunden" : c.binding === "paperback" ? "Taschenbuch" : null;
-                  const edition = [c.year, c.publisher, binding, c.language ? languageLabel[c.language] ?? c.language : null].filter(Boolean).join(" · ");
+                  const st = c.free_now ? { tone: "ok" as const, text: t.freeNowCap } : shelfStatusText(c, l);
+                  const binding = c.binding === "hardcover" ? t.hardcover : c.binding === "paperback" ? t.paperback : null;
+                  const edition = [c.year, c.publisher, binding, c.language ? L.languageLabel[c.language] ?? c.language : null].filter(Boolean).join(" · ");
                   const dist = fmtDistance(c.dist);
                   const next = c.id === nextId;
-                  const resp = responseHint(c.median_response_seconds);
-                  const freeAgain = !c.free_now && c.lent_until ? `Ausgeliehen bis ${fmtDay(dayToDate(dueDay(c.lent_until)))}` : null;
+                  const resp = responseHint(c.median_response_seconds, l);
+                  const freeAgain = !c.free_now && c.lent_until ? t.lentUntil(fmtDay(dayToDate(dueDay(c.lent_until)), l)) : null;
                   return (
                     <li key={c.id} id={`ex-${c.id}`} className="anim-rise scroll-mt-28" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
                       <div className={cx(
@@ -218,9 +225,9 @@ export default async function TitelPage({ params, searchParams }: Params) {
                           <span className="book-face block"><Cover data={{ title: work.title, authors: work.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: work.id }} width={56} height={84} uniform /></span>
                         </Link>
                         <div className="min-w-0">
-                          {next && <p className="text-[12.5px] font-medium text-accent-hover mb-1">Nächstes freies Exemplar</p>}
+                          {next && <p className="text-[12.5px] font-medium text-accent-hover mb-1">{t.nextFreeCopy}</p>}
                           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                            <Link href={`/exemplar/${c.id}`} className="text-[19px] md:text-[21px] font-[560] tracking-[-0.025em] leading-tight hover:underline underline-offset-4 decoration-1">{conditionLabel[c.condition]}</Link>
+                            <Link href={`/exemplar/${c.id}`} className="text-[19px] md:text-[21px] font-[560] tracking-[-0.025em] leading-tight hover:underline underline-offset-4 decoration-1">{L.conditionLabel[c.condition]}</Link>
                             {dist && <span className="text-[14px] font-medium tnum text-ink-2">{dist}</span>}
                           </div>
                           <div aria-hidden className="mt-1.5 grid grid-cols-4 gap-0.5 w-24">
@@ -231,18 +238,18 @@ export default async function TitelPage({ params, searchParams }: Params) {
                             <span className={cx("inline-flex items-center gap-1.5 font-medium", st.tone === "ok" ? "text-ok" : "text-ink-2")}>
                               <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", toneDot[st.tone])} />{freeAgain ?? st.text}
                             </span>
-                            <span className="text-muted">{c.offers.map((x) => offerLabel[x]).join(" · ")}{c.offers.includes("lend") ? ` · ${c.loan_days} Tage` : ""}</span>
+                            <span className="text-muted">{c.offers.map((x) => L.offerLabel[x]).join(" · ")}{c.offers.includes("lend") ? ` · ${t.days(c.loan_days)}` : ""}</span>
                           </p>
                           <div className="mt-3 flex items-center gap-2.5 min-w-0">
                             <Monogram name={c.owner_name} seed={c.owner_id} size={28} photo={c.owner_avatar} />
                             <p className="text-[13px] min-w-0 truncate">
                               <Link href={`/profil/${c.owner_id}`} className="font-medium hover:underline underline-offset-4">{c.owner_name}</Link>
-                              <span className="text-muted"> · {trustLabel[c.owner_trust] ?? "Neu"}{resp ? ` · ${resp}` : ""}</span>
+                              <span className="text-muted"> · {L.trustLabel[c.owner_trust] ?? t.newcomer}{resp ? ` · ${resp}` : ""}</span>
                             </p>
                           </div>
                         </div>
                         <LinkButton href={`/exemplar/${c.id}`} variant={next ? "primary" : "secondary"} className="col-span-2 md:col-span-1 md:self-center justify-center">
-                          {c.free_now ? "Anfragen" : "Vormerken"}
+                          {c.free_now ? t.request : t.reserve}
                         </LinkButton>
                       </div>
                     </li>
@@ -255,8 +262,8 @@ export default async function TitelPage({ params, searchParams }: Params) {
           <div className="mt-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
             {own.length > 0 ? (
               <p className="text-sm text-muted">
-                Du hast {own.length === 1 ? "selbst ein Exemplar" : `selbst ${own.length} Exemplare`} im Regal.{" "}
-                <Link href={`/exemplar/${own[0].id}`} className="font-medium text-accent-hover hover:underline underline-offset-4">Ansehen</Link>
+                {t.own(own.length)}{" "}
+                <Link href={`/exemplar/${own[0].id}`} className="font-medium text-accent-hover hover:underline underline-offset-4">{t.view}</Link>
               </p>
             ) : <span />}
             <ShippingSignal />
