@@ -311,9 +311,26 @@ async function Flags() {
 
 /* -------------------------------------------------------------------- Konten */
 async function Accounts({ q }: { q: string }) {
-  const users = await moderation.findUsers(q);
+  const [users, team] = await Promise.all([moderation.findUsers(q), moderation.team()]);
   return (
     <div className="max-w-3xl">
+      {!q && (
+        <section aria-labelledby="team" className="mb-10">
+          <p id="team" className="eyebrow mb-3">Moderationsteam · {team.length}</p>
+          <ul className="flex flex-wrap gap-2">
+            {team.map((t) => (
+              <li key={t.id}>
+                <Link href={`/moderation/konto/${t.id}`} className="h-11 pl-1.5 pr-3.5 rounded-[8px] border border-line inline-flex items-center gap-2.5 hover:border-accent transition-colors">
+                  <Monogram name={t.first_name || "?"} seed={t.id} size={32} photo={t.avatar_key} />
+                  <span className="text-[14px] font-medium">{t.first_name || t.email}</span>
+                  <Chip tone={t.role === "admin" ? "ok" : "wait"} className="shrink-0">{t.role === "admin" ? "Admin" : "Moderation"}</Chip>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[13px] text-muted mt-3">Moderation ernennen: Konto öffnen, dann «Zur Moderation ernennen». Nur Admins sehen diesen Knopf.</p>
+        </section>
+      )}
       <form action="/moderation" method="get" role="search" className="flex items-center gap-2">
         <input type="hidden" name="ansicht" value="konten" />
         <label className="sr-only" htmlFor="mod-q">Vorname oder E-Mail</label>
@@ -334,6 +351,7 @@ async function Accounts({ q }: { q: string }) {
                   <span className="block text-[15px] font-medium">{u.first_name || "Ohne Namen"}</span>
                   <span className="block text-sm text-muted truncate">{u.email}{u.municipality ? ` · ${u.municipality}` : ""}</span>
                 </span>
+                {u.role !== "member" && <Chip tone={u.role === "admin" ? "ok" : "wait"} className="shrink-0">{u.role === "admin" ? "Admin" : "Moderation"}</Chip>}
                 {u.banned_at && <Chip tone="late" strong className="shrink-0">Gesperrt</Chip>}
                 <IconArrowRight width={16} height={16} className="text-muted shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-accent-hover" />
               </Link>

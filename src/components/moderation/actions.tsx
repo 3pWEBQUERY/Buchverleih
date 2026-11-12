@@ -187,3 +187,38 @@ export function RemoveAvatar({ userId }: { userId: string }) {
     }}>Profilbild entfernen</Button>
   );
 }
+
+/** Admins: Moderationsrechte vergeben oder entziehen. Wird protokolliert. */
+export function RoleControl({ userId, role, name }: { userId: string; role: string; name: string }) {
+  const router = useRouter();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const isMod = role === "moderator";
+  async function set(next: "member" | "moderator") {
+    setBusy(true);
+    try {
+      await mod({ action: "role", userId, role: next });
+      toast.show({ text: next === "moderator" ? `${name} moderiert jetzt mit.` : `${name} ist wieder Mitglied.` });
+      router.refresh();
+    } catch (e) {
+      toast.error(msg(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p className="font-medium text-[15px]">Moderation</p>
+        <p className="text-[13px] text-muted mt-0.5">
+          {isMod ? "Darf Meldungen, Fälle und Konten bearbeiten. Rollen vergeben nur Admins." : "Darf Meldungen, Fälle und Konten bearbeiten, sobald ernannt."}
+        </p>
+      </div>
+      {isMod ? (
+        <Button variant="secondary" size="sm" disabled={busy} onClick={() => set("member")}>Rechte entziehen</Button>
+      ) : (
+        <Button variant="primary" size="sm" disabled={busy} onClick={() => set("moderator")}>Zur Moderation ernennen</Button>
+      )}
+    </div>
+  );
+}

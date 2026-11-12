@@ -9,7 +9,7 @@ import { ago, fmtDay } from "@/lib/dates";
 import { reportReasonLabel, statusLabel, trustLabel } from "@/lib/i18n/de-CH";
 import { Notice, cx } from "@/components/ui";
 import { BackLink, Chip, ModHead, Quiet, StatTile } from "@/components/moderation/ui";
-import { BanControls, RemoveAvatar, SuspendSwitch } from "@/components/moderation/actions";
+import { BanControls, RemoveAvatar, RoleControl, SuspendSwitch } from "@/components/moderation/actions";
 import { kindLabel } from "../../labels";
 
 export const metadata = { title: "Konto · Moderation" };
@@ -81,6 +81,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <Notice>Das ist dein eigenes Konto. Sperren und Leihsperre setzt eine andere Person aus der Moderation.</Notice>
           ) : (
             <div className="rounded-[10px] border border-line divide-y divide-line">
+              {mod.role === "admin" && u.role !== "admin" && (
+                <div className="px-5 md:px-6 py-4">
+                  <RoleControl userId={u.id} role={u.role} name={u.first_name || "Diese Person"} />
+                </div>
+              )}
               <div className="px-5 md:px-6">
                 <SuspendSwitch userId={u.id} suspended={Boolean(u.lending_suspended_at)} />
               </div>

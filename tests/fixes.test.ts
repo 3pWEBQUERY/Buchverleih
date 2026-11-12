@@ -129,3 +129,23 @@ describe("Konto und Demo", () => {
     await expect(svc.requestLoan(lea, { copyId: await makeCopy(demo, "Faust"), kind: "lend" })).rejects.toMatchObject({ code: "demo_copy" });
   });
 });
+
+describe("Rollen", () => {
+  it("nur Admins ernennen Moderation, nie sich selbst oder andere Admins", async () => {
+    const { setRole } = await import("@/lib/moderation");
+    const admin = await makeUser("Admin");
+    await sql`update users set role = 'admin' where id = ${admin.id}`;
+    const adm = { ...admin, role: "admin" as const };
+    const lea = await makeUser("Lea");
+    await setRole(adm, lea.id, "moderator");
+    const [r] = await sql<{ role: string }[]>`select role::text as role from users where id = ${lea.id}`;
+    expect(r.role).toBe("moderator");
+    const modLea = { ...lea, role: "moderator" as const };
+    const jonas = await makeUser("Jonas");
+    await expect(setRole(modLea, jonas.id, "moderator")).rejects.toThrow(/nur Admins/);
+    await expect(setRole(adm, adm.id, "member")).rejects.toThrow(/eigene Rolle/);
+    await setRole(adm, lea.id, "member");
+    const [r2] = await sql<{ role: string }[]>`select role::text as role from users where id = ${lea.id}`;
+    expect(r2.role).toBe("member");
+  });
+});

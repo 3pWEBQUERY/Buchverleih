@@ -96,6 +96,23 @@ export async function setBan(mod: SessionUser, userId: string, banned: boolean, 
   await log(mod.id, banned ? "ban" : "unban", "user", userId, reason);
 }
 
+/**
+ * Rolle ändern: Nur Admins ernennen oder entziehen die Moderation. Admins selbst
+ * werden hier nicht verändert (Schutz vor Aussperren), das eigene Konto nie.
+ */
+export async function setRole(mod: SessionUser, userId: string, role: "member" | "moderator") {
+  if (mod.role !== "admin") throw err.forbidden("Rollen vergeben nur Admins.");
+  if (userId === mod.id) throw err.forbidden("Die eigene Rolle kannst du nicht ändern.");
+  const [t] = await sql<{ role: string; banned_at: Date | null; deleted_at: Date | null }[]>`select role, banned_at, deleted_at from users where id = ${userId}`;
+  if (!t || t.deleted_at) throw err.notFound();
+  if (t.role === "admin") throw err.forbidden("Admins lassen sich hier nicht ändern.");
+  if (role === "moderator" && t.banned_at) throw err.conflict("banned", "Gesperrte Konten können nicht moderieren.");
+  if (t.role === role) return;
+  await sql`update users set role = ${role} where id = ${userId}`;
+  // Neue Rechte gelten sofort: bestehende Sitzungen behalten sie über getUser ohnehin
+  await log(mod.id, role === "moderator" ? "role_moderator" : "role_member", "user", userId);
+}
+
 export async function setSuspension(mod: SessionUser, userId: string, suspended: boolean) {
   await assertOutranks(mod, userId);
   await sql`update users set lending_suspended_at = ${suspended ? sql`now()` : null} where id = ${userId}`;
@@ -122,10 +139,17 @@ export async function userDossier(userId: string) {
   return { user: u, loans, reports };
 }
 
+/** Moderationsteam: alle Admins und Moderatoren */
+export async function team() {
+  return sql<{ id: string; first_name: string; avatar_key: string | null; email: string; role: string }[]>`
+    select id, first_name, avatar_key, email, role::text as role from users
+     where role <> 'member' and deleted_at is null order by role desc, first_name`;
+}
+
 export async function findUsers(q: string) {
   const s = `%${q.trim().toLowerCase()}%`;
-  return sql<{ id: string; first_name: string; avatar_key: string | null; email: string; municipality: string | null; banned_at: Date | null }[]>`
-    select id, first_name, avatar_key, email, municipality, banned_at from users
+  return sql<{ id: string; first_name: string; avatar_key: string | null; email: string; municipality: string | null; banned_at: Date | null; role: string }[]>`
+    select id, first_name, avatar_key, email, municipality, banned_at, role::text as role from users
      where deleted_at is null and (lower(email) like ${s} or lower(first_name) like ${s}) order by created_at desc limit 20`;
 }
 
