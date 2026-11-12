@@ -33,7 +33,7 @@ export default function Page() {
 
       <DocSection id="verantwortlich" title="Verantwortlich">
         <p>
-          Verantwortlich für die Bearbeitung ist [Name und Adresse der Betreiberin], erreichbar unter [E-Mail-Adresse].
+          Verantwortlich für die Bearbeitung ist Alexander Sulschani, Schaffhauserstrasse 6, 8180 Bülach. Alle Angaben zur Kontaktaufnahme stehen im <Link href="/impressum">Impressum</Link>.
           Es gilt das schweizerische Datenschutzgesetz (DSG). Für Mitglieder in der EU gilt zusätzlich die Datenschutz-Grundverordnung (DSGVO).
           [Vertretung in der EU nach Art. 27 DSGVO zu prüfen.]
         </p>

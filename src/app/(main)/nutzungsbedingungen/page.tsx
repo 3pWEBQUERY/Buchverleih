@@ -36,7 +36,7 @@ export default function Page() {
 
       <DocSection id="geltung" title="Geltung">
         <p>
-          Diese Bedingungen gelten für die Nutzung von Leihregal im Web und in künftigen Apps. Betreiberin ist [Name und Adresse der Betreiberin].
+          Diese Bedingungen gelten für die Nutzung von Leihregal im Web und in künftigen Apps. Betreiber ist Alexander Sulschani, Schaffhauserstrasse 6, 8180 Bülach (siehe <Link href="/impressum">Impressum</Link>).
           Mit der Registrierung stimmst du ihnen zu. Ergänzend gelten die <Link href="/regeln">Gemeinschaftsregeln</Link> und
           die <Link href="/datenschutz">Datenschutzerklärung</Link>.
         </p>

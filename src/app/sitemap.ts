@@ -8,7 +8,7 @@ export const revalidate = 3600;
 /** Sitemap: feste Seiten und Titel, von denen mindestens ein Exemplar öffentlich angeboten wird */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = env.appUrl;
-  const fixed = ["", "/suche", "/hilfe", "/regeln", "/nutzungsbedingungen", "/datenschutz"].map((p) => ({ url: `${base}${p}`, changeFrequency: "weekly" as const }));
+  const fixed = ["", "/suche", "/hilfe", "/regeln", "/nutzungsbedingungen", "/datenschutz", "/impressum"].map((p) => ({ url: `${base}${p}`, changeFrequency: "weekly" as const }));
   try {
     const works = await sql<{ id: string; updated: Date }[]>`
       select e.work_id as id, max(c.created_at) as updated

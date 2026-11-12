@@ -49,6 +49,11 @@ export function AppShell({ user, unread, children }: { user: SessionUser; unread
             <Link href="/einstellungen" className="inline-flex items-center gap-1.5 hover:text-ink"><IconSettings width={15} height={15} /> Einstellungen</Link>
             <span className="inline-flex items-center gap-1"><kbd className="font-sans border border-line-strong rounded-[4px] px-1.5 leading-5">/</kbd> Suche</span>
           </div>
+          <nav aria-label="Rechtliches" className="flex flex-wrap gap-x-3 gap-y-1 px-2 mt-3 text-[11.5px] text-muted">
+            <Link href="/hilfe" className="hover:text-ink">Hilfe</Link>
+            <Link href="/datenschutz" className="hover:text-ink">Datenschutz</Link>
+            <Link href="/impressum" className="hover:text-ink">Impressum</Link>
+          </nav>
         </div>
       </aside>
 
@@ -67,6 +72,7 @@ export function AppShell({ user, unread, children }: { user: SessionUser; unread
               { href: "/einstellungen", label: "Einstellungen" },
               ...(mod ? [{ href: "/moderation", label: "Moderation" }] : []),
               { href: "/hilfe", label: "Hilfe" },
+              { href: "/impressum", label: "Impressum" },
             ]} />
           </div>
         </header>
@@ -113,7 +119,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
           </div>
           <FooterCol title="Entdecken" links={[["/suche", "Bücher finden"], ["/anmelden?next=/regal/neu", "Buch einstellen"], ["/anmelden?next=/kreise/neu", "Kreis gründen"]]} />
           <FooterCol title="Hilfe" links={[["/hilfe", "So funktioniert es"], ["/hilfe#schaden", "Schaden und Verlust"], ["/regeln", "Regeln"]]} />
-          <FooterCol title="Rechtliches" links={[["/nutzungsbedingungen", "Nutzungsbedingungen"], ["/datenschutz", "Datenschutz"]]} />
+          <FooterCol title="Rechtliches" links={[["/nutzungsbedingungen", "Nutzungsbedingungen"], ["/datenschutz", "Datenschutz"], ["/impressum", "Impressum"]]} />
         </div>
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 pb-8 text-[13px] text-night-muted flex flex-wrap gap-x-6 gap-y-1 border-t border-night-line pt-6">
           <span>Leihregal · Beta Zürich und Zürcher Unterland</span>
