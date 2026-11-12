@@ -245,3 +245,12 @@
 body:has(.landing-stage) .public-header { background: color-mix(in srgb, var(--night) 92%, transparent); color: var(--night-ink); border-color: var(--night-line); }
 body:has(.landing-stage) .public-header a[href="/anmelden"] { background: var(--night-ink); color: var(--night); }
 body:has(.landing-stage) .public-header a:not([href="/anmelden"]):hover { background: var(--night-2); }
+
+/* ----------------------------------------------------------- Logo: hell/dunkel */
+.logo-dark { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .logo-light { visibility: hidden; }
+  :root:not([data-theme="light"]) .logo-dark { display: block; }
+}
+:root[data-theme="dark"] .logo-light { visibility: hidden; }
+:root[data-theme="dark"] .logo-dark { display: block; }

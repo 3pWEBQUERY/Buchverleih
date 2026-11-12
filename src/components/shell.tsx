@@ -100,7 +100,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       <footer className="surface-night">
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 py-14 grid gap-10 md:grid-cols-[1.3fr_1fr_1fr_1fr]">
           <div>
-            <div className="flex items-center gap-2.5 text-night-ink"><LogoMark /><span className="text-[21px] font-[620] leading-none tracking-[-0.04em]">Leihregal</span></div>
+            <div className="flex items-center gap-2.5 text-night-ink"><LogoMark onDark size={30} /><span className="text-[21px] font-[620] leading-none tracking-[-0.04em]">Leihregal</span></div>
             <p className="text-night-muted mt-4 max-w-xs text-[15px]">Bücher aus Regalen in deiner Nähe. Kostenlos unter Privatpersonen, mit festen Fristen und einer Bestätigung bei jeder Übergabe.</p>
           </div>
           <FooterCol title="Entdecken" links={[["/suche", "Bücher finden"], ["/anmelden?next=/regal/neu", "Buch einstellen"], ["/anmelden?next=/kreise/neu", "Kreis gründen"]]} />

@@ -1,22 +1,26 @@
 import Link from "next/link";
 import { cx } from "./ui";
 
-/** Bildmarke: drei Buchrücken, der letzte lehnt sich an – einer davon in der Akzentfarbe. */
-export function LogoMark({ size = 28, className }: { size?: number; className?: string }) {
+/**
+ * Bildmarke: das «B» mit dem offenen Buch. Im Light Mode schwarz mit oranger Seite,
+ * im Dark Mode weiss mit oranger Seite. Auf dunklen Flächen (`onDark`) immer die helle Variante.
+ */
+export function LogoMark({ size = 28, className, onDark }: { size?: number; className?: string; onDark?: boolean }) {
+  /* eslint-disable @next/next/no-img-element */
+  if (onDark) return <img src="/brand/logo-dark.png" alt="" aria-hidden width={size} height={size} className={cx("block flex-none", className)} />;
   return (
-    <svg viewBox="0 0 32 32" width={size} height={size} aria-hidden className={className}>
-      <rect x="4" y="7" width="5.5" height="21" rx="1" fill="currentColor" />
-      <rect x="11" y="4" width="5.5" height="24" rx="1" fill="var(--accent)" />
-      <rect x="20.2" y="7.4" width="5.5" height="21" rx="1" fill="currentColor" transform="rotate(14 23 28)" />
-      <rect x="2" y="28.5" width="28" height="1.8" rx="0.9" fill="currentColor" />
-    </svg>
+    <span aria-hidden className={cx("relative inline-block flex-none", className)} style={{ width: size, height: size }}>
+      <img src="/brand/logo-light.png" alt="" width={size} height={size} className="logo-light block" />
+      <img src="/brand/logo-dark.png" alt="" width={size} height={size} className="logo-dark absolute inset-0" />
+    </span>
   );
+  /* eslint-enable @next/next/no-img-element */
 }
 
 export function Wordmark({ className = "", href = "/" }: { className?: string; href?: string }) {
   return (
     <Link href={href} className={cx("inline-flex items-center gap-2.5 group", className)} aria-label="Leihregal, Start">
-      <LogoMark className="transition-transform duration-300 ease-[var(--ease-spring)] group-hover:-rotate-6" />
+      <LogoMark size={30} className="transition-transform duration-300 ease-[var(--ease-spring)] group-hover:-rotate-6" />
       <span className="text-[21px] font-[620] leading-none tracking-[-0.04em]">Leihregal</span>
     </Link>
   );
