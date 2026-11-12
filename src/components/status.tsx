@@ -1,6 +1,8 @@
 import { cx } from "./ui";
 import { fmtDay, dueDay, dayToDate } from "@/lib/dates";
 import type { ShelfStatus } from "@/lib/copies";
+import type { Locale } from "@/lib/i18n/locale";
+import { LOANS } from "@/lib/i18n/messages/loans";
 
 /** Status ist Text, nicht nur Farbe (PRD 8.3, Punkt 5) */
 export type Tone = "ok" | "lent" | "late" | "wait" | "done" | "accent";
@@ -23,24 +25,24 @@ export function StatusText({ tone, children, className }: { tone: Tone; children
   );
 }
 
-export function shelfStatusText(s: { status: ShelfStatus; lent_until: Date | null; next_start: string | null; open_requests: number }): { tone: Tone; text: string } {
+export function shelfStatusText(s: { status: ShelfStatus; lent_until: Date | null; next_start: string | null; open_requests: number }, l: Locale = "de"): { tone: Tone; text: string } {
+  const t = LOANS[l].shelf;
   switch (s.status) {
     case "lent": {
-      if (!s.lent_until) return { tone: "lent", text: "Ausgeliehen" };
+      if (!s.lent_until) return { tone: "lent", text: t.lent };
       const late = new Date(s.lent_until) < new Date();
-      return late
-        ? { tone: "late", text: `Überfällig seit ${fmtDay(dayToDate(dueDay(s.lent_until)))}` }
-        : { tone: "lent", text: `Ausgeliehen bis ${fmtDay(dayToDate(dueDay(s.lent_until)))}` };
+      const day = fmtDay(dayToDate(dueDay(s.lent_until)), l);
+      return late ? { tone: "late", text: t.overdueSince(day) } : { tone: "lent", text: t.lentUntil(day) };
     }
     case "reserved":
-      return { tone: "wait", text: s.next_start ? `Gebucht ab ${fmtDay(dayToDate(s.next_start))}` : "Reserviert" };
+      return { tone: "wait", text: s.next_start ? t.bookedFrom(fmtDay(dayToDate(s.next_start), l)) : t.reserved };
     case "requested":
-      return { tone: "accent", text: s.open_requests === 1 ? "1 Anfrage" : `${s.open_requests} Anfragen` };
+      return { tone: "accent", text: t.requests(s.open_requests) };
     case "paused":
-      return { tone: "done", text: "Regal pausiert" };
+      return { tone: "done", text: t.paused };
     case "not_offered":
-      return { tone: "done", text: "Nicht angeboten" };
+      return { tone: "done", text: t.notOffered };
     default:
-      return { tone: "ok", text: "Verfügbar" };
+      return { tone: "ok", text: t.available };
   }
 }

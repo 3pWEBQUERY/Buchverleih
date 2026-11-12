@@ -5,6 +5,9 @@ import { ago, fmtDayTime } from "@/lib/dates";
 import { Button, Input, cx } from "@/components/ui";
 import { useToast } from "@/components/toast";
 import { IconCalendar, IconCheck, IconFlag } from "@/components/icons";
+import { useLocale } from "@/components/locale-provider";
+import { htmlLang } from "@/lib/i18n/locale";
+import { CHAT } from "@/lib/i18n/messages/loans-chat";
 
 /**
  * Chat im Vorgang bzw. Übergabe-Chat (PRD 4.10, 7.4). Terminvorschläge sind antippbare Karten
@@ -33,6 +36,8 @@ export function Chat({
   const [when, setWhen] = useState("");
   const list = useRef<HTMLOListElement>(null);
   const toast = useToast();
+  const l = useLocale();
+  const t = CHAT[l].chat;
   const qs = thread.loan ? `loan=${thread.loan}` : `chat=${thread.chat}`;
 
   const refresh = useCallback(async () => {
@@ -92,7 +97,7 @@ export function Chat({
   async function report(id: string) {
     try {
       await api("/reports", { body: { targetType: "message", targetId: id, reason: "harassment" } });
-      toast.show({ text: "Gemeldet. Die Moderation sieht es sich an." });
+      toast.show({ text: t.reported });
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -105,9 +110,9 @@ export function Chat({
   const dayKey = (d: string) => new Date(d).toDateString();
   const dayLabel = (d: string) => {
     const k = dayKey(d);
-    if (k === new Date().toDateString()) return "Heute";
-    if (k === new Date(Date.now() - 86400_000).toDateString()) return "Gestern";
-    return new Intl.DateTimeFormat("de-CH", { weekday: "long", day: "numeric", month: "long" }).format(new Date(d));
+    if (k === new Date().toDateString()) return t.today;
+    if (k === new Date(Date.now() - 86400_000).toDateString()) return t.yesterday;
+    return new Intl.DateTimeFormat(htmlLang[l], { weekday: "long", day: "numeric", month: "long" }).format(new Date(d));
   };
 
   return (
@@ -115,10 +120,10 @@ export function Chat({
       {msgs.length === 0 ? (
         <div className="px-5 md:px-6 py-10 text-center">
           <span aria-hidden className="mx-auto h-11 w-11 rounded-full bg-paper-2 grid place-items-center text-ink-2"><IconCalendar /></span>
-          <p className="text-ink-2 text-[15px] mt-3 max-w-xs mx-auto">Noch keine Nachrichten. Schlag einen Termin vor, das geht am schnellsten.</p>
+          <p className="text-ink-2 text-[15px] mt-3 max-w-xs mx-auto">{t.empty}</p>
         </div>
       ) : (
-        <ol ref={list} className="px-4 md:px-6 py-5 space-y-1 max-h-[62vh] overflow-y-auto overscroll-contain" role="log" aria-live="polite" aria-label="Nachrichten">
+        <ol ref={list} className="px-4 md:px-6 py-5 space-y-1 max-h-[62vh] overflow-y-auto overscroll-contain" role="log" aria-live="polite" aria-label={t.messages}>
           {msgs.map((m, i) => {
             const mine = m.sender_id === me;
             const prev = msgs[i - 1];
@@ -136,33 +141,33 @@ export function Chat({
             }
             return [sep, (
               <li key={m.id} className={cx("group flex flex-col max-w-[85%] md:max-w-[75%] anim-rise", mine ? "ml-auto items-end" : "items-start", firstOfGroup && !newDay && "pt-3", m.pending && "opacity-60")}>
-                {firstOfGroup && <span className="text-[12px] text-muted mb-1 px-1">{mine ? "Du" : m.sender_name}</span>}
+                {firstOfGroup && <span className="text-[12px] text-muted mb-1 px-1">{mine ? t.you : m.sender_name}</span>}
                 {m.proposal_at && (
                   <div className={cx(
                     "rounded-[12px] w-72 max-w-full overflow-hidden border transition-colors",
                     m.proposal_status === "accepted" ? "border-ok bg-paper" : m.proposal_status === "countered" ? "border-line bg-paper opacity-60" : "border-accent/50 bg-paper",
                   )}>
                     <div className="px-4 pt-3.5 pb-3">
-                      <p className="eyebrow flex items-center gap-1.5"><IconCalendar width={14} height={14} /> Terminvorschlag</p>
-                      <p className={cx("font-[520] tracking-[-0.035em] text-[24px] leading-tight mt-2 tnum", m.proposal_status === "countered" && "line-through decoration-1")}>{fmtDayTime(m.proposal_at)}</p>
+                      <p className="eyebrow flex items-center gap-1.5"><IconCalendar width={14} height={14} /> {t.proposal}</p>
+                      <p className={cx("font-[520] tracking-[-0.035em] text-[24px] leading-tight mt-2 tnum", m.proposal_status === "countered" && "line-through decoration-1")}>{fmtDayTime(m.proposal_at, l)}</p>
                       {m.proposal_place && <p className="text-[14.5px] text-ink-2 mt-0.5">{m.proposal_place}</p>}
                     </div>
                     <div className={cx("px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13.5px] border-t", m.proposal_status === "accepted" ? "border-ok/40 bg-ok/[0.07]" : "border-line bg-paper-2")}>
                       {m.proposal_status === "accepted" && (
                         <>
-                          <span className="text-ok font-semibold inline-flex items-center gap-1"><IconCheck width={15} height={15} /> Vereinbart</span>
-                          <a href={`/api/v1/messages/${m.id}/ics`} className="ml-auto font-medium underline underline-offset-4">In den Kalender</a>
+                          <span className="text-ok font-semibold inline-flex items-center gap-1"><IconCheck width={15} height={15} /> {t.agreed}</span>
+                          <a href={`/api/v1/messages/${m.id}/ics`} className="ml-auto font-medium underline underline-offset-4">{t.toCalendar}</a>
                         </>
                       )}
-                      {m.proposal_status === "countered" && <span className="text-muted">Ersetzt durch einen neuen Vorschlag</span>}
+                      {m.proposal_status === "countered" && <span className="text-muted">{t.replaced}</span>}
                       {m.proposal_status === "open" && !m.proposal_accepted_by.includes(me) && !readOnly && (
                         <>
-                          <Button size="sm" variant="secondary" onClick={() => accept(m.id)}>Annehmen</Button>
-                          <button className="font-medium underline underline-offset-4 min-h-9" onClick={() => { setProposing(true); setPlace(m.proposal_place ?? ""); }}>Gegenvorschlag</button>
+                          <Button size="sm" variant="secondary" onClick={() => accept(m.id)}>{t.accept}</Button>
+                          <button className="font-medium underline underline-offset-4 min-h-9" onClick={() => { setProposing(true); setPlace(m.proposal_place ?? ""); }}>{t.counter}</button>
                         </>
                       )}
                       {m.proposal_status === "open" && m.proposal_accepted_by.includes(me) && (
-                        <span className="text-muted inline-flex items-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait live-dot" />{memberCount > 2 ? `${m.proposal_accepted_by.length} von ${memberCount} haben angenommen` : "Wartet auf Antwort"}</span>
+                        <span className="text-muted inline-flex items-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait live-dot" />{memberCount > 2 ? t.acceptedOf(m.proposal_accepted_by.length, memberCount) : t.waiting}</span>
                       )}
                     </div>
                   </div>
@@ -175,10 +180,10 @@ export function Chat({
                   )}>{m.body}</p>
                 )}
                 <span className="flex items-center gap-2 mt-1 px-1 text-[11.5px] text-muted">
-                  <time dateTime={m.created_at}>{m.pending ? "wird gesendet" : ago(m.created_at)}</time>
+                  <time dateTime={m.created_at}>{m.pending ? t.sending : ago(m.created_at, l)}</time>
                   {!mine && !m.pending && (
                     <button onClick={() => report(m.id)} className="opacity-0 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100 inline-flex items-center gap-1 min-h-8 hover:text-ink transition-opacity">
-                      <IconFlag width={12} height={12} /> Melden
+                      <IconFlag width={12} height={12} /> {t.report}
                     </button>
                   )}
                 </span>
@@ -189,32 +194,32 @@ export function Chat({
       )}
 
       {readOnly ? (
-        <p className="text-sm text-muted border-t border-line px-5 md:px-6 py-4">Dieser Chat ist geschlossen.</p>
+        <p className="text-sm text-muted border-t border-line px-5 md:px-6 py-4">{t.closed}</p>
       ) : (
         <form onSubmit={send} className="border-t border-line px-3 md:px-4 pt-3 pb-3">
           {proposing && (
             <div className="grid sm:grid-cols-2 gap-3 mb-3 p-3 rounded-[8px] bg-paper-2 anim-rise">
               <label className="block">
-                <span className="block text-[13px] font-semibold mb-1.5">Datum und Zeit</span>
+                <span className="block text-[13px] font-semibold mb-1.5">{t.dateTime}</span>
                 <Input type="datetime-local" required min={minLocal} value={when} onChange={(e) => setWhen(e.target.value)} />
               </label>
               <label className="block">
-                <span className="block text-[13px] font-semibold mb-1.5">Ort</span>
-                <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="z. B. Bahnhof, beim Kiosk" maxLength={120} />
+                <span className="block text-[13px] font-semibold mb-1.5">{t.place}</span>
+                <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder={t.placePlaceholder} maxLength={120} />
               </label>
             </div>
           )}
           <div className="flex items-center gap-1.5 rounded-[8px] border border-line-strong bg-paper p-1 focus-within:border-accent transition-[border-color]">
             <button type="button" onClick={() => setProposing((p) => !p)} aria-pressed={proposing}
               className={cx("h-10 w-10 flex-none grid place-items-center rounded-[6px] transition-colors", proposing ? "bg-accent text-accent-ink" : "text-ink-2 hover:bg-paper-2")}
-              aria-label="Termin vorschlagen" title="Termin vorschlagen">
+              aria-label={t.propose} title={t.propose}>
               <IconCalendar />
             </button>
-            <input value={text} onChange={(e) => setText(e.target.value)} placeholder={proposing ? "Notiz zum Termin (freiwillig)" : "Nachricht"} maxLength={2000} aria-label="Nachricht"
+            <input value={text} onChange={(e) => setText(e.target.value)} placeholder={proposing ? t.note : t.message} maxLength={2000} aria-label={t.message}
               className="flex-1 min-w-0 h-10 bg-transparent px-1.5 text-[16px] placeholder:text-muted/70 focus:outline-none focus-visible:outline-none" />
-            <Button type="submit" variant="secondary" className="h-10 px-4 flex-none">{proposing ? "Vorschlagen" : "Senden"}</Button>
+            <Button type="submit" variant="secondary" className="h-10 px-4 flex-none">{proposing ? t.submitPropose : t.send}</Button>
           </div>
-          <p className="text-[12px] text-muted mt-2 px-2">Treffpunkte an öffentlichen Orten sind die sicherste Wahl. Telefonnummer und Adresse teilst du nur, wenn du willst.</p>
+          <p className="text-[12px] text-muted mt-2 px-2">{t.safety}</p>
         </form>
       )}
     </div>

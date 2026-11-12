@@ -4,7 +4,9 @@ import { Cover } from "@/components/cover";
 import { type Tone } from "@/components/status";
 import { IconArrowRight } from "@/components/icons";
 import { cx } from "@/components/ui";
-import { statusLabel, offerNoun } from "@/lib/i18n/de-CH";
+import { labels } from "@/lib/i18n/labels";
+import type { Locale } from "@/lib/i18n/locale";
+import { LOANS } from "@/lib/i18n/messages/loans";
 import { deadline, dueDay, parseRange, relHours, fmtRange, fmtDay, fmtDayTime, dayToDate, relDays, diffDays, isoDay, todayCH, addDays } from "@/lib/dates";
 import { Monogram } from "@/components/person/monogram";
 
@@ -41,27 +43,29 @@ export function loanProgress(status: LoanListItem["status"], kind: LoanListItem[
 }
 
 /** Frist als Datum und Dauer, passend zum Status */
-function whenText(loan: LoanListItem) {
+function whenText(loan: LoanListItem, l: Locale) {
+  const t = LOANS[l].row;
   const r = parseRange(loan.wanted);
   const overdue = loan.status === "active" && loan.due_at && new Date(loan.due_at) < new Date();
   let when: string | null = null;
-  if (loan.status === "requested") when = `Antwort ${relHours(loan.respond_by)}`;
-  else if (loan.status === "accepted" && r) when = loan.kind === "lend" ? fmtRange(r) : null;
+  if (loan.status === "requested") when = t.answer(relHours(loan.respond_by, l));
+  else if (loan.status === "accepted" && r) when = loan.kind === "lend" ? fmtRange(r, l) : null;
   else if ((loan.status === "active" || loan.status === "disputed") && loan.due_at) {
     const d = dueDay(loan.due_at);
-    when = overdue ? `Fällig war ${fmtDay(dayToDate(d))} (${relDays(d)})` : deadline(d);
+    when = overdue ? t.wasDue(fmtDay(dayToDate(d), l), relDays(d, todayCH(), l)) : deadline(d, undefined, l);
   }
   return { when, overdue: Boolean(overdue) };
 }
 
 
 /** Restzeit als Zahl und Einheit: «26 Tage», «41 Std.», «25 Min.» */
-function leftOf(until: Date | string): { n: string; unit: string; ms: number } {
+function leftOf(until: Date | string, l: Locale): { n: string; unit: string; ms: number } {
+  const t = LOANS[l].meter;
   const ms = new Date(until).getTime() - Date.now();
   const h = Math.floor(Math.max(0, ms) / 3_600_000);
-  if (h >= 48) { const d = Math.round(h / 24); return { n: String(d), unit: d === 1 ? "Tag" : "Tage", ms }; }
-  if (h >= 1) return { n: String(h), unit: "Std.", ms };
-  return { n: String(Math.max(1, Math.round(Math.max(0, ms) / 60_000))), unit: "Min.", ms };
+  if (h >= 48) { const d = Math.round(h / 24); return { n: String(d), unit: t.day(d), ms }; }
+  if (h >= 1) return { n: String(h), unit: t.hours, ms };
+  return { n: String(Math.max(1, Math.round(Math.max(0, ms) / 60_000))), unit: t.minutes, ms };
 }
 
 const clamp = (x: number) => Math.min(1, Math.max(0, x));
@@ -76,6 +80,8 @@ type Meter = {
   pct: number | null;
   foot: [string, string] | null;
   tone: "accent" | "late" | "plain";
+  /** Die Marke geht direkt in die Zahl über («Rückgabe in 26 Tagen») statt «Frist: 26 Tage» */
+  flow?: boolean;
 };
 
 /**
@@ -84,7 +90,8 @@ type Meter = {
  */
 export type MeterInput = Pick<LoanListItem, "status" | "kind" | "role" | "other_name" | "wanted" | "due_at" | "respond_by" | "requested_at" | "handed_over_at" | "handover_by" | "returned_at" | "inspection_until">;
 
-export function timeMeter(loan: MeterInput): Meter | null {
+export function timeMeter(loan: MeterInput, l: Locale = "de"): Meter | null {
+  const t = LOANS[l].meter;
   const today = todayCH();
   const r = parseRange(loan.wanted);
   const owner = loan.role === "owner";
@@ -95,27 +102,27 @@ export function timeMeter(loan: MeterInput): Meter | null {
     const total = Math.max(1, diffDays(start, end) + 1);
     const day = Math.min(total, Math.max(1, diffDays(start, today) + 1));
     const left = diffDays(today, end);
-    const foot: [string, string] = [`Seit ${fmtDay(dayToDate(start))}`, left < 0 ? `${total} ${total === 1 ? "Tag" : "Tage"} Leihfrist` : `Tag ${day} von ${total}`];
+    const foot: [string, string] = [t.since(fmtDay(dayToDate(start), l)), left < 0 ? t.loanDays(total) : t.dayOf(day, total)];
     if (left < 0) {
-      return { eyebrow: "Überfällig seit", value: String(-left), unit: -left === 1 ? "Tag" : "Tagen", sideLabel: "War fällig", side: fmtDay(dayToDate(end)), pct: 1, foot, tone: "late" };
+      return { eyebrow: t.overdueSince, value: String(-left), unit: t.dayDat(-left), sideLabel: t.wasDue, side: fmtDay(dayToDate(end), l), pct: 1, foot, tone: "late", flow: true };
     }
-    const eyebrow = owner ? `Zurück von ${loan.other_name} in` : "Rückgabe in";
-    if (left === 0) return { eyebrow: owner ? "Kommt zurück" : "Rückgabe", value: "Heute", unit: "", sideLabel: "Letzter Tag", side: fmtDay(dayToDate(end)), pct: 1, foot, tone: "accent" };
+    const eyebrow = owner ? t.backFrom(loan.other_name) : t.returnIn;
+    if (left === 0) return { eyebrow: owner ? t.comesBack : t.returnWord, value: t.today, unit: "", sideLabel: t.lastDay, side: fmtDay(dayToDate(end), l), pct: 1, foot, tone: "accent" };
     return {
-      eyebrow, value: String(left), unit: left === 1 ? "Tag" : "Tagen", sideLabel: "Rückgabe bis", side: fmtDay(dayToDate(end)),
-      pct: clamp(day / total), foot, tone: left <= 2 ? "accent" : "plain",
+      eyebrow, value: String(left), unit: t.dayDat(left), sideLabel: t.returnBy, side: fmtDay(dayToDate(end), l),
+      pct: clamp(day / total), foot, tone: left <= 2 ? "accent" : "plain", flow: true,
     };
   }
 
   if (loan.status === "requested") {
-    const l = leftOf(loan.respond_by);
+    const x = leftOf(loan.respond_by, l);
     const len = r?.end ? diffDays(r.start, r.end) : null;
     return {
-      eyebrow: owner ? "Zeit für deine Antwort" : "Antwortfrist noch",
-      value: l.n, unit: l.unit, sideLabel: "Frist", side: fmtDayTime(loan.respond_by),
+      eyebrow: owner ? t.yourAnswer : t.answerLeft,
+      value: x.n, unit: x.unit, sideLabel: t.deadline, side: fmtDayTime(loan.respond_by, l),
       pct: span(loan.requested_at, loan.respond_by),
-      foot: r && loan.kind === "lend" ? [`Gewünscht ${fmtRange(r)}`, len ? `${len} ${len === 1 ? "Tag" : "Tage"}` : ""] : null,
-      tone: l.ms < 12 * 3_600_000 ? "late" : "accent",
+      foot: r && loan.kind === "lend" ? [t.wanted(fmtRange(r, l)), len ? t.nDays(len) : ""] : null,
+      tone: x.ms < 12 * 3_600_000 ? "late" : "accent", flow: !owner,
     };
   }
 
@@ -124,27 +131,27 @@ export function timeMeter(loan: MeterInput): Meter | null {
       const n = diffDays(today, r.start);
       const len = r.end ? diffDays(r.start, r.end) : null;
       return {
-        eyebrow: "Leihe beginnt in", value: n === 1 ? "1" : String(n), unit: n === 1 ? "Tag" : "Tagen",
-        sideLabel: "Zeitraum", side: fmtRange(r), pct: null,
-        foot: [len ? `${len} ${len === 1 ? "Tag" : "Tage"} Leihfrist` : "Leihfrist offen", r.end ? `Rückgabe ${fmtDay(dayToDate(addDays(r.end, -1)))}` : ""], tone: "plain",
+        eyebrow: t.startsIn, value: n === 1 ? "1" : String(n), unit: t.dayDat(n),
+        sideLabel: t.period, side: fmtRange(r, l), pct: null,
+        foot: [len ? t.loanDays(len) : t.periodOpen, r.end ? t.returnOn(fmtDay(dayToDate(addDays(r.end, -1)), l)) : ""], tone: "plain", flow: true,
       };
     }
     if (loan.handover_by) {
-      const l = leftOf(loan.handover_by);
+      const x = leftOf(loan.handover_by, l);
       return {
-        eyebrow: "Zeit für die Übergabe", value: l.n, unit: l.unit, sideLabel: "Übergabe bis", side: fmtDayTime(loan.handover_by),
-        pct: null, foot: r && loan.kind === "lend" ? [`Zeitraum ${fmtRange(r)}`, ""] : null, tone: l.ms < 24 * 3_600_000 ? "late" : "accent",
+        eyebrow: t.handoverTime, value: x.n, unit: x.unit, sideLabel: t.handoverBy, side: fmtDayTime(loan.handover_by, l),
+        pct: null, foot: r && loan.kind === "lend" ? [t.periodX(fmtRange(r, l)), ""] : null, tone: x.ms < 24 * 3_600_000 ? "late" : "accent",
       };
     }
     return null;
   }
 
   if (loan.status === "returned" && loan.inspection_until) {
-    const l = leftOf(loan.inspection_until);
+    const x = leftOf(loan.inspection_until, l);
     return {
-      eyebrow: owner ? "Zeit, den Zustand zu prüfen" : "Prüfung läuft noch", value: l.n, unit: l.unit, sideLabel: "Frist", side: fmtDayTime(loan.inspection_until),
+      eyebrow: owner ? t.inspectOwner : t.inspectBorrower, value: x.n, unit: x.unit, sideLabel: t.deadline, side: fmtDayTime(loan.inspection_until, l),
       pct: loan.returned_at ? span(loan.returned_at, loan.inspection_until) : null,
-      foot: owner ? ["Danach gilt das Buch als zurück in gutem Zustand.", ""] : null, tone: "plain",
+      foot: owner ? [t.inspectNote, ""] : null, tone: "plain", flow: !owner,
     };
   }
   return null;
@@ -181,19 +188,19 @@ export function TimeMeter({ m, className }: { m: Meter; className?: string }) {
 }
 
 const coverOf = (loan: LoanListItem) => ({ title: loan.title, authors: loan.authors, photoKey: loan.photo_key, photoW: loan.photo_w, photoH: loan.photo_h, coverKey: loan.cover_key, seed: loan.work_id });
-const who = (loan: LoanListItem) => `${offerNoun[loan.kind]} · ${loan.role === "owner" ? `an ${loan.other_name}` : `von ${loan.other_name}`}`;
+const who = (loan: LoanListItem, l: Locale) => `${labels(l).offerNoun[loan.kind]} · ${loan.role === "owner" ? LOANS[l].row.to(loan.other_name) : LOANS[l].row.from(loan.other_name)}`;
 
-function Unread({ n }: { n: number }) {
+function Unread({ n, l }: { n: number; l: Locale }) {
   if (n <= 0) return null;
-  return <span className="inline-flex items-center h-6 px-2 rounded-[6px] bg-accent-soft text-accent-hover text-[12px] font-semibold tnum flex-none">{n} neu</span>;
+  return <span className="inline-flex items-center h-6 px-2 rounded-[6px] bg-accent-soft text-accent-hover text-[12px] font-semibold tnum flex-none">{LOANS[l].row.unread(n)}</span>;
 }
 
 /** Fortschritt als schmale Segmente, der laufende Schritt in der Markenfarbe */
-function Progress({ loan, trouble }: { loan: LoanListItem; trouble: boolean }) {
+function Progress({ loan, trouble, l }: { loan: LoanListItem; trouble: boolean; l: Locale }) {
   const p = loanProgress(loan.status, loan.kind);
   if (p.ended) return null;
   return (
-    <div className="flex items-center gap-3" aria-label={`Schritt ${Math.min(p.done + 1, p.total)} von ${p.total}`}>
+    <div className="flex items-center gap-3" aria-label={LOANS[l].row.step(Math.min(p.done + 1, p.total), p.total)}>
       <span aria-hidden className="grid flex-1 gap-1" style={{ gridTemplateColumns: `repeat(${p.total}, minmax(0, 1fr))` }}>
         {Array.from({ length: p.total }).map((_, i) => (
           <span key={i} className={cx("h-1 rounded-full", i < p.done ? "bg-ink-2" : i === p.done ? (trouble ? "bg-late" : "bg-accent") : "bg-paper-3")} />
@@ -208,8 +215,10 @@ function Progress({ loan, trouble }: { loan: LoanListItem; trouble: boolean }) {
  * Ein Vorgang als Karte. `action`: du bist am Zug (Akzent-Knopf mit dem nächsten Schritt),
  * `running`: die andere Seite ist am Zug, `done`: abgeschlossen, ruhig als Tabellenzeile.
  */
-export function LoanRow({ loan, variant, i = 0 }: { loan: LoanListItem; variant?: "action" | "running" | "done"; i?: number }) {
-  const { when, overdue } = whenText(loan);
+export function LoanRow({ loan, variant, i = 0, l = "de" }: { loan: LoanListItem; variant?: "action" | "running" | "done"; i?: number; l?: Locale }) {
+  const t = LOANS[l].row;
+  const L = labels(l);
+  const { when, overdue } = whenText(loan, l);
   const mine = loan.turn === "me" && loan.step;
   const v = variant ?? (mine ? "action" : "running");
   const tone = overdue ? "late" : loanTone(loan.status, loan.due_at);
@@ -221,21 +230,21 @@ export function LoanRow({ loan, variant, i = 0 }: { loan: LoanListItem; variant?
           <Cover data={coverOf(loan)} width={32} height={48} uniform />
           <div className="min-w-0">
             <p className="font-serif text-[16.5px] leading-tight truncate group-hover:underline underline-offset-4 decoration-1">{loan.title}</p>
-            <p className="text-[13px] text-muted truncate mt-0.5"><span className="md:hidden">{who(loan)}</span><span className="hidden md:inline">{loan.authors.join(", ")}</span></p>
+            <p className="text-[13px] text-muted truncate mt-0.5"><span className="md:hidden">{who(loan, l)}</span><span className="hidden md:inline">{loan.authors.join(", ")}</span></p>
           </div>
-          <span className="hidden md:block text-[13.5px] text-ink-2">{offerNoun[loan.kind]}</span>
-          <span className="hidden md:block text-[13.5px] text-ink-2 truncate">{loan.role === "owner" ? "an " : "von "}{loan.other_name}</span>
+          <span className="hidden md:block text-[13.5px] text-ink-2">{L.offerNoun[loan.kind]}</span>
+          <span className="hidden md:block text-[13.5px] text-ink-2 truncate">{loan.role === "owner" ? t.toShort : t.fromShort}{loan.other_name}</span>
           <span className="text-[13px] text-right inline-flex items-center justify-end gap-2 text-muted tnum">
             <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none", toneDot(loanTone(loan.status, loan.due_at)))} />
-            <span className="text-ink-2">{statusLabel[loan.status]}</span>
-            {loan.closed_at && <span className="hidden sm:inline">{fmtDay(loan.closed_at)}</span>}
+            <span className="text-ink-2">{L.statusLabel[loan.status]}</span>
+            {loan.closed_at && <span className="hidden sm:inline">{fmtDay(loan.closed_at, l)}</span>}
           </span>
         </Link>
       </li>
     );
   }
 
-  const meter = timeMeter(loan);
+  const meter = timeMeter(loan, l);
   const p = loanProgress(loan.status, loan.kind);
   return (
     <li className="anim-rise min-w-0" style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
@@ -248,13 +257,13 @@ export function LoanRow({ loan, variant, i = 0 }: { loan: LoanListItem; variant?
             <div className="flex items-center justify-between gap-3">
               <p className="text-[12.5px] text-muted truncate inline-flex items-center gap-2 min-w-0">
                 <Monogram name={loan.other_name} seed={loan.other_id} size={20} photo={loan.other_avatar} />
-                <span className="truncate">{who(loan)}</span>
+                <span className="truncate">{who(loan, l)}</span>
               </p>
-              <Unread n={loan.unread} />
+              <Unread n={loan.unread} l={l} />
             </div>
             <p className="font-serif text-[19px] md:text-[20px] leading-[1.15] mt-1.5 line-clamp-2 group-hover:underline underline-offset-4 decoration-1">{loan.title}</p>
             {loan.authors[0] && <p className="text-[13px] text-muted truncate mt-0.5">{loan.authors.join(", ")}</p>}
-            {!p.ended && <div className="mt-auto pt-3"><Progress loan={loan} trouble={tone === "late"} /></div>}
+            {!p.ended && <div className="mt-auto pt-3"><Progress loan={loan} trouble={tone === "late"} l={l} /></div>}
           </div>
         </div>
 
@@ -267,14 +276,14 @@ export function LoanRow({ loan, variant, i = 0 }: { loan: LoanListItem; variant?
         <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <span className="inline-flex items-center gap-1.5 text-[13px] text-ink-2 min-w-0">
             <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none", toneDot(tone))} />
-            <span className="truncate">{v === "action" ? "Du bist am Zug" : (loan.waitingText ?? statusLabel[loan.status])}</span>
+            <span className="truncate">{v === "action" ? t.yourTurn : (loan.waitingText ?? L.statusLabel[loan.status])}</span>
           </span>
           {v === "action" ? (
             <span className="h-9 px-3.5 rounded-[6px] bg-accent text-accent-ink text-[13.5px] font-medium inline-flex items-center gap-1.5 whitespace-nowrap group-hover:bg-accent-hover transition-colors">
               {loan.step!.label} <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
             </span>
           ) : (
-            <span className="text-[13px] font-medium text-accent-hover inline-flex items-center gap-1">Öffnen <IconArrowRight width={14} height={14} /></span>
+            <span className="text-[13px] font-medium text-accent-hover inline-flex items-center gap-1">{t.open} <IconArrowRight width={14} height={14} /></span>
           )}
         </div>
       </Link>
@@ -285,7 +294,7 @@ export function LoanRow({ loan, variant, i = 0 }: { loan: LoanListItem; variant?
 /** Restzeit in einer Zeile, z. B. in der Benachrichtigungsliste: Marke, Frist und kurzer Balken */
 export function TimeMeterInline({ m, className }: { m: Meter; className?: string }) {
   const late = m.tone === "late";
-  const joined = /\b(in|seit|noch)$/.test(m.eyebrow) ? `${m.eyebrow} ${m.value}${m.unit ? ` ${m.unit}` : ""}` : `${m.eyebrow}: ${m.value}${m.unit ? ` ${m.unit}` : ""}`;
+  const joined = m.flow ? `${m.eyebrow} ${m.value}${m.unit ? ` ${m.unit}` : ""}` : `${m.eyebrow}: ${m.value}${m.unit ? ` ${m.unit}` : ""}`;
   return (
     <span className={cx("flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12.5px] tnum", className)}>
       <span className={cx("inline-flex items-center gap-1.5 h-6 px-2 rounded-[6px] font-semibold",

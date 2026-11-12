@@ -1,58 +1,16 @@
 import { fmtDayTime } from "@/lib/dates";
-import { statusLabel } from "@/lib/i18n/de-CH";
+import { labels } from "@/lib/i18n/labels";
+import type { Locale } from "@/lib/i18n/locale";
+import { LOANS } from "@/lib/i18n/messages/loans";
 import type { LoanStatus } from "@/lib/loans/machine";
 
-/** Lückenloser Verlauf (PRD 9.1: loan_events) – lesbar formuliert */
-const ACTION: Record<string, string> = {
-  request: "hat angefragt",
-  accept: "hat angenommen",
-  auto_accept: "Im Kreis automatisch angenommen",
-  decline: "hat abgelehnt",
-  withdraw: "hat die Anfrage zurückgezogen",
-  expire_request: "Anfrage nach 72 Stunden verfallen",
-  cancel: "hat storniert",
-  expire_handover: "Keine Übergabe innert 7 Tagen, verfallen",
-  report_handover: "hat die Übergabe gemeldet",
-  dropoff: "hat das Buch in der Ablage hinterlegt",
-  object_handover: "hat der Übergabemeldung widersprochen",
-  handover: "Übergabe per Code bestätigt",
-  confirm_handover: "hat die Übergabe bestätigt",
-  handover_report_lapse: "Übergabe gilt nach 48 Stunden ohne Einspruch",
-  swap_scan: "hat den Tauschcode gescannt",
-  condition_note: "hat den Zustand festgehalten",
-  extend: "hat verlängert",
-  request_extension: "hat um Verlängerung gebeten",
-  grant_extension: "hat die Verlängerung gewährt",
-  recall: "hat das Buch zurückgerufen",
-  offer_swap: "bietet einen Tausch an",
-  convert_to_swap: "Leihe als Tausch abgeschlossen",
-  return: "Rückgabe per Code bestätigt",
-  report_return: "hat die Rückgabe gemeldet",
-  confirm_return: "hat die Rückgabe bestätigt",
-  object_return: "hat der Rückgabemeldung widersprochen",
-  return_report_lapse: "Rückgabe gilt nach 48 Stunden ohne Einspruch",
-  pass_on: "hat direkt weitergegeben",
-  complete: "Abgeschlossen",
-  report_damage: "hat einen Schaden gemeldet",
-  open_case: "hat einen Fall eröffnet",
-  auto_open_case: "Fall nach 21 Tagen automatisch eröffnet",
-  resolve_case: "Fall gelöst",
-  mark_lost: "Als verloren geschlossen",
-  clear_loss: "Verlust bereinigt",
-  pass_on_consent: "hat der direkten Weitergabe zugestimmt",
-  pass_on_declined: "hat die direkte Weitergabe abgelehnt",
-  pass_on_agreed: "Direkte Weitergabe vereinbart",
-  pass_on_broken: "Weitergabe geplatzt, Frist um 3 Tage verlängert",
-  start_earlier: "beginnt früher",
-  reschedule: "hat den Zeitraum verschoben",
-  copy_removed: "Buch wurde aus dem Regal genommen",
-};
-
-export function History({ events }: { events: { id: number; action: string; to_status: string; actor_name: string | null; actor_id: string | null; created_at: Date }[] }) {
+/** Lückenloser Verlauf (PRD 9.1: loan_events) – lesbar formuliert, in der Sprache der Person */
+export function History({ events, l = "de" }: { events: { id: number; action: string; to_status: string; actor_name: string | null; actor_id: string | null; created_at: Date }[]; l?: Locale }) {
+  const h = LOANS[l].history;
   return (
     <ol className="relative">
       {events.map((e, i) => {
-        const text = ACTION[e.action] ?? statusLabel[e.to_status as LoanStatus];
+        const text = h.actions[e.action] ?? labels(l).statusLabel[e.to_status as LoanStatus];
         const system = !e.actor_id;
         const last = i === events.length - 1;
         return (
@@ -61,9 +19,9 @@ export function History({ events }: { events: { id: number; action: string; to_s
             <span aria-hidden className={`mt-[7px] h-[9px] w-[9px] ml-[4px] rounded-full ${system ? "border border-line-strong bg-paper" : "bg-accent"}`} />
             <div className="min-w-0">
               <p className="text-[15px] leading-snug">
-                {system || /^[A-ZÜÄÖ]/.test(text) ? text : <><span className="font-medium">{e.actor_name}</span> {text}</>}
+                {system || /^[A-ZÜÄÖÉÈ]/.test(text) ? text : <><span className="font-medium">{e.actor_name}</span> {text}</>}
               </p>
-              <p className="text-[12.5px] text-muted tnum mt-0.5">{fmtDayTime(e.created_at)}{system ? " · automatisch" : ""}</p>
+              <p className="text-[12.5px] text-muted tnum mt-0.5">{fmtDayTime(e.created_at, l)}{system ? h.auto : ""}</p>
             </div>
           </li>
         );
