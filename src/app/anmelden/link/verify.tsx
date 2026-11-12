@@ -8,7 +8,12 @@ import { IconArrowRight } from "@/components/icons";
 import { useLocale } from "@/components/locale-provider";
 import { ONBOARDING } from "@/lib/i18n/messages/onboarding";
 
-export function VerifyLink({ token, next }: { token: string; next: string | null }) {
+/** Öffnet die iOS-App mit demselben Token; dort wird es per client=api eingelöst */
+function appHref(token: string) {
+  return `leihregal://anmelden/link?token=${encodeURIComponent(token)}`;
+}
+
+export function VerifyLink({ token, next, app = false }: { token: string; next: string | null; app?: boolean }) {
   const router = useRouter();
   const t = ONBOARDING[useLocale()].link;
   const [error, setError] = useState<string | null>(null);
@@ -34,9 +39,16 @@ export function VerifyLink({ token, next }: { token: string; next: string | null
     );
   return (
     <div className="anim-rise" style={{ animationDelay: "60ms" }}>
-      <p className="text-ink-2 text-[17px] mb-8">{t.oneTap}</p>
-      <Button variant="primary" size="lg" className="w-full" onClick={go} disabled={busy || !token} autoFocus>
-        {busy ? t.moment : <>{t.go} <IconArrowRight width={18} height={18} /></>}
+      <p className="text-ink-2 text-[17px] mb-8">{app && token ? t.appLead : t.oneTap}</p>
+      {app && token && (
+        // Eigenes Schema statt Link-Komponente: führt aus dem Browser in die App
+        <a href={appHref(token)}
+          className="mb-3 h-12 px-6 w-full rounded-[6px] bg-accent text-accent-ink hover:bg-accent-hover font-medium text-[15.5px] tracking-[-0.012em] inline-flex items-center justify-center gap-2 transition-colors duration-150">
+          {t.openApp} <IconArrowRight width={18} height={18} />
+        </a>
+      )}
+      <Button variant={app && token ? "ghost" : "primary"} size="lg" className="w-full" onClick={go} disabled={busy || !token} autoFocus={!app}>
+        {busy ? t.moment : app && token ? t.inBrowser : <>{t.go} <IconArrowRight width={18} height={18} /></>}
       </Button>
       {!token && <p className="text-sm text-late mt-4">{t.missing}</p>}
       <p className="text-sm text-muted mt-8">{t.otherAddress}<a href="/anmelden" className="underline underline-offset-4 hover:text-ink">{t.newLink}</a></p>

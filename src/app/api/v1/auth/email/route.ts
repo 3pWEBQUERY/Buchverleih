@@ -11,7 +11,7 @@ export const POST = route(async (req) => {
   await rateLimit(`loginip:${clientIp(req)}`, 20, 3600);
   // Gesamtdeckel: schützt den Ruf der Absenderadresse, auch bei vielen IPs
   await rateLimit("login:global", 500, 3600);
-  const b = await body(req, z.object({ email: z.string().min(3).max(200), next: z.string().max(300).nullish() }));
-  const r = await requestEmailLink(b.email, b.next, await getLocale());
+  const b = await body(req, z.object({ email: z.string().min(3).max(200), next: z.string().max(300).nullish(), app: z.boolean().optional() }));
+  const r = await requestEmailLink(b.email, b.next, await getLocale(), b.app === true);
   return { ok: true, ...r };
 });

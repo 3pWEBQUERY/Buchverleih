@@ -15,7 +15,7 @@ const bool = { type: "boolean" };
 const int = { type: "integer" };
 
 const ops: Op[] = [
-  { method: "post", path: "/auth/email", tag: "Anmeldung", summary: "Anmeldelink per E-Mail anfordern", body: S({ email: str, next: str }, ["email"]), auth: false },
+  { method: "post", path: "/auth/email", tag: "Anmeldung", summary: "Anmeldelink per E-Mail anfordern (app=true: Link öffnet die iOS-App)", body: S({ email: str, next: str, app: bool }, ["email"]), auth: false },
   { method: "post", path: "/auth/email/verify", tag: "Anmeldung", summary: "Link einlösen. client=api liefert ein Bearer-Token", body: S({ token: str, client: { enum: ["web", "api"] } }, ["token"]), auth: false },
   { method: "post", path: "/auth/passkey/options", tag: "Anmeldung", summary: "Passkey-Anmeldung vorbereiten", auth: false },
   { method: "post", path: "/auth/passkey/verify", tag: "Anmeldung", summary: "Passkey-Anmeldung abschliessen", body: S({ challengeId: uuid, response: { type: "object" }, client: { enum: ["web", "api"] } }), auth: false },

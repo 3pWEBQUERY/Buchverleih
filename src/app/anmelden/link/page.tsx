@@ -9,14 +9,14 @@ export async function generateMetadata() {
 }
 
 /** Der Link wird erst per Knopfdruck eingelöst, damit Vorschauen von Mailprogrammen ihn nicht verbrauchen. */
-export default async function Page({ searchParams }: { searchParams: Promise<{ token?: string; next?: string }> }) {
-  const { token, next: rawNext } = await searchParams;
+export default async function Page({ searchParams }: { searchParams: Promise<{ token?: string; next?: string; app?: string }> }) {
+  const { token, next: rawNext, app } = await searchParams;
   const next = safeNext(rawNext) || null;
   const t = ONBOARDING[await getLocale()].link;
   return (
     <AuthStage eyebrow={t.eyebrow} title={<>{t.heading[0]}<em>{t.heading[1]}</em></>} lead={t.lead}>
       <AuthHead eyebrow={t.headEyebrow} title={<>{t.headTitle[0]}<em>{t.headTitle[1]}</em></>} />
-      <VerifyLink token={token ?? ""} next={next ?? null} />
+      <VerifyLink token={token ?? ""} next={next ?? null} app={app === "1"} />
     </AuthStage>
   );
 }
