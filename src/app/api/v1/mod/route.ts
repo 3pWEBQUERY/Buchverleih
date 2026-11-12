@@ -30,6 +30,7 @@ export const POST = route(async (req) => {
       z.object({ action: z.literal("correction"), id: z.string().uuid(), apply: z.boolean() }),
       z.object({ action: z.literal("flag"), key: z.string().max(40), regionId: z.string().max(40), enabled: z.boolean() }),
       z.object({ action: z.literal("role"), userId: z.string().uuid(), role: z.enum(["member", "moderator"]) }),
+      z.object({ action: z.literal("temp_password"), userId: z.string().uuid() }),
     ]),
   );
   switch (b.action) {
@@ -41,6 +42,7 @@ export const POST = route(async (req) => {
     case "correction": await mod.applyCorrection(m, b.id, b.apply); break;
     case "flag": await mod.setFlag(m, b.key, b.regionId, b.enabled); break;
     case "role": await mod.setRole(m, b.userId, b.role); break;
+    case "temp_password": return { ok: true, password: await mod.temporaryPassword(m, b.userId) };
   }
   return { ok: true };
 });

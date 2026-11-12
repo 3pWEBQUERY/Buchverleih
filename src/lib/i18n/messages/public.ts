@@ -98,7 +98,7 @@ const de = {
     submitLogin: "Anmelden",
     submitRegister: "Konto anlegen",
     busy: "Einen Moment …",
-    linkInstead: "Lieber einen Anmeldelink per E-Mail",
+    linkInstead: "Passwort vergessen oder noch keins? Anmeldelink per E-Mail",
     passwordInstead: "Mit Passwort anmelden",
   },
 };
@@ -201,7 +201,7 @@ const fr: M = {
     submitLogin: "Se connecter",
     submitRegister: "Créer un compte",
     busy: "Un instant …",
-    linkInstead: "Plutôt un lien de connexion par e-mail",
+    linkInstead: "Mot de passe oublié ou pas encore ? Lien de connexion par e-mail",
     passwordInstead: "Se connecter avec un mot de passe",
   },
 };
@@ -303,7 +303,7 @@ const it: M = {
     submitLogin: "Accedi",
     submitRegister: "Crea un conto",
     busy: "Un momento …",
-    linkInstead: "Preferisco un link di accesso via e-mail",
+    linkInstead: "Password dimenticata o non ancora impostata? Link di accesso via e-mail",
     passwordInstead: "Accedi con la password",
   },
 };

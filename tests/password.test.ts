@@ -68,3 +68,23 @@ describe("Registrieren und Anmelden mit Passwort", () => {
     await expect(loginWithPassword("besetzt@example.org", "fremdes-passwort")).rejects.toThrow(/stimmt nicht/);
   });
 });
+
+describe("Einmal-Passwort durch Admins", () => {
+  it("nur Admins erzeugen es; danach klappt die Anmeldung damit", async () => {
+    const { makeUser } = await import("./helpers");
+    const { temporaryPassword } = await import("@/lib/moderation");
+    const admin = await makeUser("Ada");
+    const moderator = await makeUser("Mo");
+    const alt = await makeUser("Alt");
+    await sql`update users set role = 'admin' where id = ${admin.id}`;
+    await sql`update users set role = 'moderator' where id = ${moderator.id}`;
+    const [{ email }] = await sql<{ email: string }[]>`select email from users where id = ${alt.id}`;
+
+    await expect(temporaryPassword({ ...moderator, role: "moderator" }, alt.id)).rejects.toThrow(/nur Admins/);
+    const pw = await temporaryPassword({ ...admin, role: "admin" }, alt.id);
+    expect(pw).toMatch(/^[a-z2-9]{4}-[a-z2-9]{4}-[a-z2-9]{4}$/);
+    expect((await loginWithPassword(email, pw)).userId).toBe(alt.id);
+    const [l] = await sql<{ n: number }[]>`select count(*)::int as n from moderation_log where action = 'temp_password' and target_id = ${alt.id}`;
+    expect(l.n).toBe(1);
+  });
+});

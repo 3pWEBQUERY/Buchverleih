@@ -11,7 +11,7 @@ import { getLocale } from "@/lib/i18n/server";
 import { MOD } from "@/lib/i18n/messages/moderation";
 import { Notice, cx } from "@/components/ui";
 import { BackLink, Chip, ModHead, Quiet, StatTile } from "@/components/moderation/ui";
-import { BanControls, RemoveAvatar, RoleControl, SuspendSwitch } from "@/components/moderation/actions";
+import { BanControls, RemoveAvatar, RoleControl, SuspendSwitch, TempPasswordControl } from "@/components/moderation/actions";
 import { modLabels } from "../../labels";
 
 export async function generateMetadata() {
@@ -90,6 +90,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               {mod.role === "admin" && u.role !== "admin" && (
                 <div className="px-5 md:px-6 py-4">
                   <RoleControl userId={u.id} role={u.role} name={u.first_name || t.thisPerson} />
+                </div>
+              )}
+              {mod.role === "admin" && (
+                <div className="px-5 md:px-6 py-4">
+                  <TempPasswordControl userId={u.id} />
                 </div>
               )}
               <div className="px-5 md:px-6">

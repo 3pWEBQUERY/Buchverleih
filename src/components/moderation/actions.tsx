@@ -228,3 +228,35 @@ export function RoleControl({ userId, role, name }: { userId: string; role: stri
     </div>
   );
 }
+
+/** Admins: Einmal-Passwort für Konten ohne Passwort. Wird nur einmal angezeigt und protokolliert. */
+export function TempPasswordControl({ userId }: { userId: string }) {
+  const t = useT();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const [password, setPassword] = useState<string | null>(null);
+  async function create() {
+    setBusy(true);
+    try {
+      const r = await mod({ action: "temp_password", userId }) as { password: string };
+      setPassword(r.password);
+    } catch (e) {
+      toast.error(msg(e, t));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="min-w-0 max-w-md">
+        <p className="font-medium text-[15px]">{t.pwTitle}</p>
+        <p className="text-[13px] text-muted mt-0.5">{password ? t.pwShown : t.pwHint}</p>
+      </div>
+      {password ? (
+        <code className="font-mono text-[17px] tracking-wide rounded-[6px] bg-paper-2 px-3 py-2 select-all">{password}</code>
+      ) : (
+        <Button variant="secondary" size="sm" disabled={busy} onClick={create}>{t.pwCreate}</Button>
+      )}
+    </div>
+  );
+}

@@ -323,3 +323,46 @@ export function PasskeyList({ passkeys }: { passkeys: { id: string; name: string
   );
 }
 
+
+/** Passwort setzen oder ändern (POST /me/password) – auch für Konten, die bisher nur den E-Mail-Link kannten */
+export function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
+  const T = useT();
+  const t = T.password;
+  const router = useRouter();
+  const toast = useToast();
+  const [pw, setPw] = useState("");
+  const [show, setShow] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await api("/me/password", { body: { password: pw } });
+      setPw("");
+      toast.show({ text: t.saved });
+      router.refresh();
+    } catch (e) {
+      setError(msg(e, T));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <form onSubmit={save} className="space-y-3">
+      <p className="text-[14px] text-ink-2">{hasPassword ? t.set : t.none}</p>
+      <Field label={t.label} hint={t.hint} error={error}>
+        <div className="relative">
+          <Input type={show ? "text" : "password"} autoComplete="new-password" minLength={8} maxLength={200} required
+            value={pw} onChange={(e) => setPw(e.target.value)} className="pr-24" />
+          <button type="button" onClick={() => setShow((v) => !v)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-9 px-3 text-[13px] font-medium text-muted hover:text-ink rounded-[6px]">
+            {show ? t.hide : t.show}
+          </button>
+        </div>
+      </Field>
+      <Button type="submit" variant="secondary" disabled={busy || pw.length < 8}>{busy ? T.saving : t.save}</Button>
+    </form>
+  );
+}

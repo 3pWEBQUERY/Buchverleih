@@ -113,6 +113,22 @@ export async function setRole(mod: SessionUser, userId: string, role: "member" |
   await log(mod.id, role === "moderator" ? "role_moderator" : "role_member", "user", userId);
 }
 
+/**
+ * Admins: Einmal-Passwort für ein Konto erzeugen (z. B. Konten aus der Zeit vor der Passwort-Anmeldung,
+ * solange kein Mailversand läuft). Wird nur einmal angezeigt und protokolliert; die Person ändert es danach.
+ */
+export async function temporaryPassword(mod: SessionUser, userId: string) {
+  if (mod.role !== "admin") throw err.forbidden("Einmal-Passwörter vergeben nur Admins.");
+  const [t] = await sql<{ deleted_at: Date | null }[]>`select deleted_at from users where id = ${userId}`;
+  if (!t || t.deleted_at) throw err.notFound();
+  const { shortCode } = await import("@/lib/crypto");
+  const { setPassword } = await import("@/lib/auth/flows");
+  const password = `${shortCode(4)}-${shortCode(4)}-${shortCode(4)}`;
+  await setPassword(userId, password);
+  await log(mod.id, "temp_password", "user", userId);
+  return password;
+}
+
 export async function setSuspension(mod: SessionUser, userId: string, suspended: boolean) {
   await assertOutranks(mod, userId);
   await sql`update users set lending_suspended_at = ${suspended ? sql`now()` : null} where id = ${userId}`;

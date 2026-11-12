@@ -11,7 +11,7 @@ import { PageTitle, cx } from "@/components/ui";
 import { StepSection } from "@/components/step-section";
 import { Monogram } from "@/components/person/monogram";
 import {
-  AvatarEditor, BlockList, DeleteAccount, EmailPrefs, ExportData, Logout, PasskeyList, PhoneSection, ProfileForm, PushSettings, ShelfPause, SpotList, ThemeChoice,
+  AvatarEditor, BlockList, DeleteAccount, EmailPrefs, ExportData, Logout, PasskeyList, PasswordSection, PhoneSection, ProfileForm, PushSettings, ShelfPause, SpotList, ThemeChoice,
 } from "./sections";
 import { SettingsNav, type NavGroup } from "./settings-nav";
 import { LanguageChoice } from "@/components/language-switch";
@@ -26,7 +26,7 @@ function nav(l: Locale): NavGroup[] {
   const n = SETTINGS[l].nav;
   const items = (ids: (keyof typeof n)[]) => ids.map((id) => ({ id, label: n[id] }));
   return [
-    { title: g.account, items: items(["profilbild", "profil", "mobilnummer", "passkeys"]) },
+    { title: g.account, items: items(["profilbild", "profil", "mobilnummer", "passwort", "passkeys"]) },
     { title: g.lending, items: items(["uebergabeorte", "ferienmodus", "blockiert"]) },
     { title: g.general, items: items(["sprache", "push", "benachrichtigungen", "darstellung", "daten"]) },
     { title: g.danger, danger: true, items: [{ id: "konto-loeschen", label: n.kontoLoeschen }] },
@@ -38,14 +38,16 @@ export default async function Page() {
   const l = await getLocale();
   const m = SETTINGS[l];
   const r = m.rows;
-  const [spots, passkeys, blocks] = await Promise.all([
+  const [spots, passkeys, blocks, [pw]] = await Promise.all([
     listSpots(user.id),
     sql<{ id: string; name: string; created_at: Date; last_used_at: Date | null }[]>`
       select id, name, created_at, last_used_at from passkeys where user_id = ${user.id} order by created_at`,
     sql<{ blocked_id: string; first_name: string; created_at: Date }[]>`
       select b.blocked_id, u.first_name, b.created_at from blocks b join users u on u.id = b.blocked_id
        where b.blocker_id = ${user.id} order by b.created_at desc`,
+    sql<{ has: boolean }[]>`select password_hash is not null as has from users where id = ${user.id}`,
   ]);
+  const hasPassword = Boolean(pw?.has);
   const categories = Object.keys(EMAIL_CATEGORIES).map((key) => ({
     key,
     label: m.emailCategories[key] ?? key,
@@ -81,6 +83,9 @@ export default async function Page() {
               </Row>
               <Row id="mobilnummer" t={r.mobilnummer}>
                 <PhoneSection phone={user.phone_e164} verifiedAt={user.phone_verified_at ? fmtDay(user.phone_verified_at, l) : null} />
+              </Row>
+              <Row id="passwort" t={r.passwort}>
+                <PasswordSection hasPassword={hasPassword} />
               </Row>
               <Row id="passkeys" t={r.passkeys}>
                 <PasskeyList passkeys={passkeys.map((p) => ({

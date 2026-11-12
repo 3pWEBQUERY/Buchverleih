@@ -33,6 +33,7 @@ export const ERRORS: Record<string, FrIt> = {
   "Nur Fotos (JPEG, PNG, WebP, HEIC)": ["Seulement des photos (JPEG, PNG, WebP, HEIC)", "Solo foto (JPEG, PNG, WebP, HEIC)"],
 
   // Anmeldung, Konto, Telefon
+  "Einmal-Passwörter vergeben nur Admins.": ["Seuls les admins créent des mots de passe à usage unique.", "Solo gli admin creano password monouso."],
   "Das Passwort braucht mindestens 8 Zeichen.": ["Le mot de passe doit comporter au moins 8 caractères.", "La password deve avere almeno 8 caratteri."],
   "Das Passwort ist zu lang.": ["Le mot de passe est trop long.", "La password è troppo lunga."],
   "Zu dieser E-Mail-Adresse gibt es schon ein Konto. Melde dich an.": ["Un compte existe déjà pour cette adresse e-mail. Connecte-toi.", "Esiste già un conto per questo indirizzo e-mail. Accedi."],
