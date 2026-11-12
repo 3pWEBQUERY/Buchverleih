@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies, headers } from "next/headers";
 import { sql } from "@/lib/db";
 import { hashToken, randomToken } from "@/lib/crypto";
@@ -62,14 +63,21 @@ async function readToken(): Promise<string | null> {
   return c.get(SESSION_COOKIE)?.value ?? null;
 }
 
-export async function getUser(): Promise<SessionUser | null> {
+/**
+ * Angemeldete Person zur Sitzung. Pro Anfrage nur einmal abgefragt (React cache);
+ * «zuletzt gesehen» wird höchstens alle 5 Minuten geschrieben statt bei jedem Aufruf.
+ */
+export const getUser = cache(async (): Promise<SessionUser | null> => {
   const token = await readToken();
   if (!token) return null;
   const rows = await sql<SessionUser[]>`
     with s as (
-      update sessions set last_seen_at = now()
+      select id, user_id, last_seen_at from sessions
        where token_hash = ${hashToken(token)} and expires_at > now()
-       returning id, user_id
+    ), touch as (
+      update sessions set last_seen_at = now()
+       where id = (select id from s) and (select last_seen_at from s) < now() - interval '5 minutes'
+       returning 1
     )
     select u.id, u.email, u.first_name, u.role, u.trust_level, u.plz, u.municipality,
            u.home_lat, u.home_lng, u.email_verified_at, u.phone_verified_at, u.phone_e164,
@@ -78,7 +86,7 @@ export async function getUser(): Promise<SessionUser | null> {
       from s join users u on u.id = s.user_id
      where u.deleted_at is null`;
   return rows[0] ?? null;
-}
+});
 
 export async function requireUser(): Promise<SessionUser> {
   const u = await getUser();

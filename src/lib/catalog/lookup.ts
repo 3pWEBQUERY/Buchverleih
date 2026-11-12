@@ -138,6 +138,7 @@ export async function lookupExternal(isbn: string, opts: { covers: boolean }): P
   }
 
   let rec: CatalogRecord | null = null;
+  let failures = 0;
   const sources = [() => fromDnb(isbn), () => fromOpenLibrary(isbn, opts.covers), () => fromGoogle(isbn)];
   for (const src of sources) {
     try {
@@ -154,9 +155,13 @@ export async function lookupExternal(isbn: string, opts: { covers: boolean }): P
       }
       if (rec.language && rec.authors.length && (rec.coverUrl || !opts.covers)) break;
     } catch (e) {
+      failures++;
       console.warn("[catalog]", (e as Error).message);
     }
   }
+
+  // Waren Quellen nicht erreichbar, ist «nicht gefunden» nicht sicher: nichts speichern, beim nächsten Mal neu fragen
+  if (!rec && failures > 0) return null;
 
   await sql`
     insert into catalog_lookups (isbn13, found, source, payload, fetched_at)
