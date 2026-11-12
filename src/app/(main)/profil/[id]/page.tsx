@@ -93,8 +93,6 @@ export default async function ProfilPage({ params }: Params) {
     : p.median_response_hours < 24 ? `ca. ${Math.round(p.median_response_hours)} Std.`
     : `ca. ${Math.round(p.median_response_hours / 24)} ${Math.round(p.median_response_hours / 24) === 1 ? "Tag" : "Tage"}`;
   const facts: [string, string][] = [
-    ["Gemeinde", p.municipality ?? "–"],
-    ["Mitglied seit", since],
     ...(response ? [["Antwortet meist", `innert ${response}`] as [string, string]] : []),
     ["Bücher im Regal", String(shelf.length)],
   ];
@@ -104,25 +102,24 @@ export default async function ProfilPage({ params }: Params) {
     <div className="grid lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)] gap-10 xl:gap-16 items-start">
       {/* ------------------------------------------------ Personenblatt */}
       <aside className="lg:sticky lg:top-8 space-y-5 min-w-0">
-        <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-5 items-center lg:block lg:space-y-5">
-          <div className="lg:rounded-[12px] lg:bg-paper-2 lg:border lg:border-line lg:py-10 flex justify-center anim-pop">
-            <span className="lg:hidden"><Monogram name={p.first_name} seed={p.id} size={88} photo={p.avatar_key} /></span>
-            <span className="hidden lg:block"><Monogram name={p.first_name} seed={p.id} size={136} photo={p.avatar_key} /></span>
+        {/* Eine Karte: Bild, Name, Ort, Stufe – darunter die Angaben */}
+        <div className="rounded-[12px] border border-line overflow-hidden anim-rise">
+          <div className="bg-paper-2 px-5 py-5 lg:px-6 lg:pt-9 lg:pb-7 flex items-center gap-4 lg:flex-col lg:text-center lg:gap-0">
+            <span className="lg:hidden flex-none"><Monogram name={p.first_name} seed={p.id} size={76} photo={p.avatar_key} className="ring-4 ring-paper" /></span>
+            <span className="hidden lg:block"><Monogram name={p.first_name} seed={p.id} size={128} photo={p.avatar_key} className="ring-[6px] ring-paper" /></span>
+            <div className="min-w-0 lg:mt-5">
+              <h1 className="text-[24px] md:text-[28px] font-[560] tracking-[-0.03em] leading-tight break-words">{p.first_name}</h1>
+              <p className="text-[13.5px] text-muted mt-1">{[p.municipality, `seit ${since}`].filter(Boolean).join(" · ")}</p>
+              <p className={cx("mt-3 inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[6px] text-[12.5px] font-semibold",
+                p.trust_level >= 2 ? "bg-ok/10 text-ok" : p.trust_level === 1 ? "bg-wait/10 text-ink-2" : "bg-paper text-ink-2")}>
+                <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", p.trust_level >= 2 ? "bg-ok" : p.trust_level === 1 ? "bg-wait" : "bg-done")} />
+                Stufe {level}
+              </p>
+            </div>
           </div>
-          <div className="anim-rise min-w-0">
-            <h1 className="text-[26px] md:text-[30px] font-[560] tracking-[-0.03em] leading-tight break-words">{p.first_name}</h1>
-            <p className="text-[14px] text-muted mt-1">{[p.municipality, `seit ${since}`].filter(Boolean).join(" · ")}</p>
-          </div>
-        </div>
 
-        <div className="rounded-[10px] border border-line divide-y divide-line">
-          <div className="px-4 py-3.5">
-            <p className="inline-flex items-center gap-2 text-[14px] font-medium">
-              <span aria-hidden className={cx("h-2 w-2 rounded-full", p.trust_level >= 2 ? "bg-ok" : p.trust_level === 1 ? "bg-wait" : "bg-done")} />
-              Stufe {level}
-            </p>
-            <p className="text-[13px] text-muted mt-1 leading-snug">{LEVEL_HINT[p.trust_level] ?? LEVEL_HINT[0]}</p>
-          </div>
+          <div className="divide-y divide-line border-t border-line">
+          <p className="px-4 py-3 text-[13px] text-muted leading-snug">{level}: {LEVEL_HINT[p.trust_level] ?? LEVEL_HINT[0]}.</p>
           <dl className="px-4 py-3 text-[13.5px] grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
             {facts.map(([k, v]) => (
               <div key={k} className="contents"><dt className="text-muted">{k}</dt><dd className="text-right tnum truncate">{v}</dd></div>
@@ -142,6 +139,7 @@ export default async function ProfilPage({ params }: Params) {
               </ul>
             </div>
           )}
+          </div>
         </div>
 
         {own ? (
