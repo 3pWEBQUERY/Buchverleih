@@ -4,7 +4,7 @@ import { myCircles } from "@/lib/circles";
 import { circlePreviews } from "@/lib/kreise-queries";
 import { LinkButton, cx } from "@/components/ui";
 import { Cover } from "@/components/cover";
-import { monogramColors } from "@/lib/monogram-colors";
+import { CircleMark } from "@/components/kreise/circle-mark";
 import { Faces } from "@/components/kreise/faces";
 import { StatTile, StepSection } from "@/components/step-section";
 import { IconArrowRight, IconPlus } from "@/components/icons";
@@ -86,18 +86,6 @@ export default async function Page() {
 
 type CircleRow = Awaited<ReturnType<typeof myCircles>>[number];
 type Preview = Awaited<ReturnType<typeof circlePreviews>>[string];
-
-/** Zeichen des Kreises: Anfangsbuchstaben auf Buchleinen-Farbe, aus der Id abgeleitet */
-function CircleMark({ id, name, size = 48 }: { id: string; name: string; size?: number }) {
-  const [bg, fg] = monogramColors(id);
-  const letters = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-  return (
-    <span aria-hidden className="grid place-items-center rounded-[10px] flex-none font-serif leading-none"
-      style={{ width: size, height: size, background: bg, color: fg, fontSize: Math.round(size * (letters.length > 1 ? 0.4 : 0.5)) }}>
-      {letters || "?"}
-    </span>
-  );
-}
 
 /** Eine Karte pro Kreis: Zeichen, Name, Kennzahlen, die neuesten Bücher auf dem Brett, Mitglieder */
 function CircleCard({ c, p, i }: { c: CircleRow; p: Preview | undefined; i: number }) {

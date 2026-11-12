@@ -10,6 +10,8 @@ import { Faces } from "@/components/kreise/faces";
 import { LinkButton } from "@/components/ui";
 import { StatTile, StepSection } from "@/components/step-section";
 import { IconArrowLeft } from "@/components/icons";
+import { CircleMark } from "@/components/kreise/circle-mark";
+import { dayToDate, dueDay, fmtDay } from "@/lib/dates";
 import { InviteBox, LeaveCircle, MemberList, CircleSettings } from "./circle-client";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -61,11 +63,14 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   const active = members.filter((m) => m.status === "active");
   const pendingCount = members.filter((m) => m.status === "pending").length;
-  const rules: [string, string][] = [
-    ["Leihfrist", `${circle.loan_days} Tage für alle Bücher im Kreis`],
-    ["Annahme", circle.auto_accept ? "Automatisch, wenn der Kalender frei ist" : "Wer verleiht, nimmt Anfragen selbst an"],
-    ["Übergabeort", circle.fixed_spot ?? "Wird pro Leihe vereinbart"],
-    ["Beitritt", circle.join_mode === "link" ? "Mit dem Einladungslink sofort" : "Mit Freigabe durch einen Admin"],
+  const lent = copies.filter((c) => c.lent_until).length;
+  const free = copies.length - lent;
+  const mine = copies.filter((c) => c.owner_id === user.id).length;
+  const rules: [string, string, string][] = [
+    ["Leihfrist", `${circle.loan_days} Tage`, "Gilt für alle Bücher im Kreis."],
+    ["Annahme", circle.auto_accept ? "Automatisch" : "Von Hand", circle.auto_accept ? "Ist der Kalender frei, gilt die Anfrage sofort als angenommen." : "Wer verleiht, nimmt jede Anfrage selbst an."],
+    ["Übergabeort", circle.fixed_spot ?? "Pro Leihe", circle.fixed_spot ? "Übergaben finden immer hier statt." : "Den Ort vereinbart ihr im Chat der Leihe."],
+    ["Beitritt", circle.join_mode === "link" ? "Per Link" : "Mit Freigabe", circle.join_mode === "link" ? "Wer den Einladungslink hat, ist sofort Mitglied." : "Ein Admin gibt neue Mitglieder frei."],
   ];
   let n = 0;
 
@@ -76,16 +81,29 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       </Link>
 
       <header className="mb-10 md:mb-12 flex flex-wrap items-end justify-between gap-x-10 gap-y-8">
-        <div className="min-w-0 anim-rise">
-          <p className="eyebrow">Kreis{admin ? " · du bist Admin" : ""}</p>
-          <h1 className="display text-[32px] md:text-[44px] mt-2 break-words">{circle.name}<em>.</em></h1>
-          {circle.description && <p className="text-[15.5px] md:text-[16px] text-ink-2 mt-3 leading-relaxed leading-relaxed max-w-2xl">{circle.description}</p>}
-          <p className="sr-only">{settingsText(circle)}</p>
+        <div className="min-w-0 flex items-start gap-4 md:gap-6 anim-rise">
+          <span className="hidden sm:block"><CircleMark id={circle.id} name={circle.name} size={84} /></span>
+          <span className="sm:hidden"><CircleMark id={circle.id} name={circle.name} size={56} /></span>
+          <div className="min-w-0">
+            <p className="eyebrow flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span>{admin ? "Du bist Admin" : "Mitglied"}</span><span aria-hidden>·</span>
+              <span>{circle.join_mode === "link" ? "Beitritt per Link" : "Beitritt mit Freigabe"}</span>
+              {admin && pendingCount > 0 && (
+                <a href="#mitglieder" className="inline-flex items-center gap-1.5 h-6 px-2 rounded-[6px] bg-accent-soft text-accent-hover text-[12px] font-semibold normal-case tracking-normal">
+                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent live-dot" />{pendingCount === 1 ? "1 Beitrittsanfrage" : `${pendingCount} Beitrittsanfragen`}
+                </a>
+              )}
+            </p>
+            <h1 className="display text-[32px] md:text-[44px] mt-2 break-words">{circle.name}<em>.</em></h1>
+            {circle.description && <p className="text-[15.5px] md:text-[16px] text-ink-2 mt-3 leading-relaxed max-w-2xl">{circle.description}</p>}
+            <p className="sr-only">{settingsText(circle)}</p>
+          </div>
         </div>
-        <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
+        <dl className="grid grid-cols-4 gap-2 w-full lg:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
           <StatTile n={circle.member_count} label={circle.member_count === 1 ? "Mitglied" : "Mitglieder"} href="#mitglieder" live={admin && pendingCount > 0} />
           <StatTile n={circle.copy_count} label={circle.copy_count === 1 ? "Buch" : "Bücher"} href="#regal" />
-          <StatTile n={circle.loan_days} label="Tage Leihfrist" href="#regeln" />
+          <StatTile n={free} label="jetzt frei" href="#regal" />
+          <StatTile n={circle.loan_days} label="Tage Frist" href="#regeln" />
         </dl>
       </header>
 
@@ -95,8 +113,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <div>
             <p className="text-[12.5px] text-night-muted">{copies.length} {copies.length === 1 ? "Buch" : "Bücher"} von {active.length} {active.length === 1 ? "Person" : "Personen"}</p>
             <h2 id="regal-t" className="text-[26px] md:text-[32px] font-[560] tracking-[-0.03em] leading-none mt-2">Gemeinsames Regal</h2>
+            {copies.length > 0 && (
+              <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-night-muted tnum">
+                <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#8fd09a]" />{free} frei</span>
+                {lent > 0 && <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#f0c060]" />{lent} ausgeliehen</span>}
+                {mine > 0 && <span>{mine === 1 ? "1 Buch von dir" : `${mine} Bücher von dir`}</span>}
+              </p>
+            )}
           </div>
-          <Faces names={active.slice(0, 5).map((m) => m.first_name)} total={active.length} ring="ring-night" night />
+          <Faces names={active.slice(0, 5).map((m) => m.first_name)} seeds={active.slice(0, 5).map((m) => m.user_id)} photos={active.slice(0, 5).map((m) => m.avatar_key)} total={active.length} ring="ring-night" />
         </div>
         {copies.length === 0 ? (
           <div className="mt-6 mb-2 rounded-[8px] border border-night-line p-6 flex flex-wrap items-center justify-between gap-4">
@@ -110,7 +135,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             items={copies.map((c) => ({
               ...c,
               href: `/exemplar/${c.id}`,
-              note: { tone: c.lent_until ? "lent" : "ok", text: `${c.owner_id === user.id ? "Dein Buch" : c.owner_name}${c.lent_until ? " · ausgeliehen" : ""}` },
+              note: { tone: c.lent_until ? "lent" : "ok", text: `${c.lent_until ? `bis ${fmtDay(dayToDate(dueDay(c.lent_until)))}` : "frei"} · ${c.owner_id === user.id ? "dein Buch" : c.owner_name}` },
             }))}
           />
         )}
@@ -124,11 +149,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           </StepSection>
 
           <StepSection id="regeln" n={++n} title="Regeln im Kreis" desc="Gelten für alle Leihen zwischen Mitgliedern.">
-            <dl className="rounded-[10px] border border-line divide-y divide-line">
-              {rules.map(([k, v]) => (
-                <div key={k} className="grid sm:grid-cols-[160px_minmax(0,1fr)] gap-x-6 gap-y-0.5 px-4 md:px-5 py-3.5 text-[14.5px]">
-                  <dt className="text-muted">{k}</dt>
-                  <dd>{v}</dd>
+            <dl className="grid sm:grid-cols-2 gap-2">
+              {rules.map(([k, v, d]) => (
+                <div key={k} className="rounded-[10px] border border-line px-4 md:px-5 py-4 flex flex-col">
+                  <dt className="text-[12.5px] text-muted">{k}</dt>
+                  <dd className="text-[19px] font-[560] tracking-[-0.025em] mt-1 leading-tight break-words">{v}</dd>
+                  <dd className="text-[13.5px] text-muted mt-1 leading-snug">{d}</dd>
                 </div>
               ))}
             </dl>

@@ -122,8 +122,11 @@ export async function setMember(userId: string, circleId: string, memberId: stri
 }
 
 export async function circleMembers(circleId: string) {
-  return sql<{ user_id: string; first_name: string; avatar_key: string | null; role: string; status: string; trust_level: number; municipality: string | null }[]>`
-    select m.user_id, u.first_name, u.avatar_key, m.role, m.status, u.trust_level, u.municipality
+  return sql<{ user_id: string; first_name: string; avatar_key: string | null; role: string; status: string; trust_level: number; municipality: string | null; joined_at: string; books: number }[]>`
+    select m.user_id, u.first_name, u.avatar_key, m.role, m.status, u.trust_level, u.municipality,
+           to_json(m.joined_at) #>> '{}' as joined_at,
+           (select count(*)::int from circle_copies cc join copies c on c.id = cc.copy_id and c.removed_at is null
+             where cc.circle_id = m.circle_id and c.owner_id = m.user_id) as books
       from circle_members m join users u on u.id = m.user_id
      where m.circle_id = ${circleId} order by m.status desc, m.role, u.first_name`;
 }

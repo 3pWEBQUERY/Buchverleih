@@ -8,8 +8,9 @@ import { useToast } from "@/components/toast";
 import { Button, cx } from "@/components/ui";
 import { Avatar } from "@/components/kreise/faces";
 import { CircleFields, type CircleValues } from "../circle-form";
+const monthShort = new Intl.DateTimeFormat("de-CH", { month: "short", year: "numeric", timeZone: "Europe/Zurich" });
 
-type Member = { user_id: string; first_name: string; avatar_key: string | null; role: string; status: string; trust_level: number; municipality: string | null };
+type Member = { user_id: string; first_name: string; avatar_key: string | null; role: string; status: string; trust_level: number; municipality: string | null; joined_at: string; books: number };
 
 /** Sofort ausführen, aber erst nach der Rückgängig-Frist an die API senden (PRD 8.2). */
 function useLater() {
@@ -137,20 +138,33 @@ export function MemberList({ circleId, me, admin, members }: { circleId: string;
         </section>
       )}
 
-      <ul className="rounded-[10px] border border-line divide-y divide-line overflow-hidden" aria-label="Mitglieder">
-        {active.map((m) => (
-          <li key={m.user_id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-x-6 gap-y-2 px-4 md:px-5 py-3.5">
-            <Person m={m} me={m.user_id === me} />
-            {admin && m.user_id !== me && (
-              <div className="flex items-center gap-4 pl-[54px] sm:pl-0">
-                {m.role !== "admin" && (
-                  <Button variant="quiet" className="text-sm" disabled={busy === m.user_id} onClick={() => act(m, "make_admin")}>Zum Admin machen</Button>
-                )}
-                <Button variant="danger" className="text-sm" onClick={() => remove(m)}>Entfernen</Button>
-              </div>
-            )}
-          </li>
-        ))}
+      <ul className="grid sm:grid-cols-2 gap-2" aria-label="Mitglieder">
+        {active.map((m, i) => {
+          const self = m.user_id === me;
+          return (
+            <li key={m.user_id} className={cx("rounded-[10px] border p-4 flex flex-col gap-3 anim-rise", self ? "border-line-strong" : "border-line")} style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
+              <Person m={m} me={self} />
+              <dl className="grid grid-cols-2 gap-1.5 text-[12.5px]">
+                <div className="rounded-[6px] bg-paper-2 px-2.5 py-2">
+                  <dt className="text-muted">Im Kreis-Regal</dt>
+                  <dd className="font-[560] text-[15px] tnum mt-0.5">{m.books === 1 ? "1 Buch" : `${m.books} Bücher`}</dd>
+                </div>
+                <div className="rounded-[6px] bg-paper-2 px-2.5 py-2">
+                  <dt className="text-muted">Dabei seit</dt>
+                  <dd className="font-[560] text-[15px] mt-0.5">{monthShort.format(new Date(m.joined_at))}</dd>
+                </div>
+              </dl>
+              {admin && !self && (
+                <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-line">
+                  {m.role !== "admin" ? (
+                    <Button variant="quiet" className="text-[13px] min-h-8 -ml-1" disabled={busy === m.user_id} onClick={() => act(m, "make_admin")}>Zum Admin machen</Button>
+                  ) : <span className="text-[12.5px] text-muted">Verwaltet den Kreis mit</span>}
+                  <Button variant="danger" className="text-[13px] min-h-8" onClick={() => remove(m)}>Entfernen</Button>
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -159,7 +173,7 @@ export function MemberList({ circleId, me, admin, members }: { circleId: string;
 function Person({ m, me }: { m: Member; me?: boolean }) {
   return (
     <div className="min-w-0 flex items-center gap-3.5">
-      <Avatar name={m.first_name} seed={m.user_id} size={40} photo={m.avatar_key} />
+      <Avatar name={m.first_name} seed={m.user_id} size={44} photo={m.avatar_key} />
       <div className="min-w-0">
         <p className="text-[15px] flex flex-wrap items-center gap-x-2 gap-y-1">
           <Link href={`/profil/${m.user_id}`} className="font-medium hover:underline underline-offset-4">{m.first_name}</Link>
