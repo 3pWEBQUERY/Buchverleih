@@ -161,9 +161,9 @@ export type ShelfCopy = {
   next_start: string | null;
   open_requests: number;
   loan_id: string | null;
-  /** bei laufender Leihe: wer das Buch hat und seit wann */
-  lent_to: string | null;
-  lent_since: Date | null;
+  /** bei laufender Leihe: wer das Buch hat und seit wann – nur für die Besitzerin oder den Besitzer */
+  lent_to?: string | null;
+  lent_since?: Date | null;
   owner_id: string;
   created_at: Date;
 };
@@ -171,7 +171,7 @@ export type ShelfCopy = {
 const SHELF_SELECT = sql`
   c.id, c.edition_id, e.work_id, w.title, w.authors, c.condition, c.offers, c.visibility, c.owner_id, c.created_at, e.cover_key,
   ph.key as photo_key, ph.width as photo_w, ph.height as photo_h,
-  cur.id as loan_id, cur.due_at as lent_until, cur.borrower_name as lent_to, cur.handed_over_at as lent_since,
+  cur.id as loan_id, cur.due_at as lent_until,
   (select lower(b.period)::text from copy_bookings b join loans n on n.id = b.loan_id
     where b.copy_id = c.id and n.status = 'accepted' order by lower(b.period) limit 1) as next_start,
   (select count(*)::int from loans r where r.copy_id = c.id and r.status = 'requested') as open_requests,
@@ -195,7 +195,7 @@ const SHELF_FROM = sql`
 
 export async function listShelf(ownerId: string): Promise<ShelfCopy[]> {
   return sql<ShelfCopy[]>`
-    select ${SHELF_SELECT} from ${SHELF_FROM}
+    select ${SHELF_SELECT}, cur.borrower_name as lent_to, cur.handed_over_at as lent_since from ${SHELF_FROM}
      where c.owner_id = ${ownerId} and c.removed_at is null
      order by c.created_at desc`;
 }
@@ -258,6 +258,8 @@ export type CopyDetail = ShelfCopy & {
 export async function copyDetail(copyId: string, viewerId: string | null, origin: { lat: number; lng: number } | null) {
   const [c] = await sql<CopyDetail[]>`
     select ${SHELF_SELECT},
+           case when c.owner_id = ${viewerId}::uuid then cur.borrower_name end as lent_to,
+           case when c.owner_id = ${viewerId}::uuid then cur.handed_over_at end as lent_since,
            c.condition_note, c.loan_days, c.auto_extend, c.max_extensions, c.horizon_days, c.buffer_days,
            c.max_future_bookings, c.pass_on, c.chain_max, c.dropoff_allowed, c.precious, c.transfer_locked_until,
            e.isbn13, e.publisher, e.year, e.language, e.binding, e.pages,

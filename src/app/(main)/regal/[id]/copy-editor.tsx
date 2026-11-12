@@ -135,7 +135,7 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
   const people = new Set(handed.map((h) => h.borrower_id)).size;
   const meter = copy.lent_until
     ? timeMeter({ status: "active", kind: "lend", role: "owner", other_name: copy.lent_to ?? "der Person", wanted: "", due_at: copy.lent_until, respond_by: new Date(), requested_at: new Date(),
-        handed_over_at: copy.lent_since, handover_by: null, returned_at: null, inspection_until: null })
+        handed_over_at: copy.lent_since ?? null, handover_by: null, returned_at: null, inspection_until: null })
     : null;
 
   return (

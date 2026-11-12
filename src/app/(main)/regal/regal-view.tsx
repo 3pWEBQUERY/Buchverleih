@@ -203,7 +203,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
               <ul className="grid xl:grid-cols-2 gap-3">
                 {lentCopies.map((c, i) => {
                   const m = c.lent_until ? timeMeter({ status: "active", kind: "lend", role: "owner", other_name: c.lent_to ?? "der Person", wanted: "", due_at: c.lent_until,
-                    respond_by: new Date(), requested_at: new Date(), handed_over_at: c.lent_since, handover_by: null, returned_at: null, inspection_until: null }) : null;
+                    respond_by: new Date(), requested_at: new Date(), handed_over_at: c.lent_since ?? null, handover_by: null, returned_at: null, inspection_until: null }) : null;
                   return (
                     <li key={c.id} className="anim-rise min-w-0" style={{ animationDelay: `${i * 40}ms` }}>
                       <Link href={c.loan_id ? `/vorgaenge/${c.loan_id}` : `/regal/${c.id}`}
