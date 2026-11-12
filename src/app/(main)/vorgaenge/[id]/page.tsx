@@ -13,7 +13,7 @@ import { NextStep } from "@/components/loan/next-step";
 import { Monogram } from "@/components/person/monogram";
 import { StepSection } from "@/components/step-section";
 import { LiveChat } from "./live";
-import { loanTone, toneDot } from "@/components/loan/loan-row";
+import { loanTone, toneDot, timeMeter, TimeMeter } from "@/components/loan/loan-row";
 import { IconArrowLeft, IconArrowRight } from "@/components/icons";
 import { offerNoun, statusLabel, trustLabel } from "@/lib/i18n/de-CH";
 import { dayToDate, deadline, dueDay, fmtDay, fmtMonthYear, fmtRange } from "@/lib/dates";
@@ -49,6 +49,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const tone = overdue ? "late" : loanTone(loan.status, t.due_at);
   const cover = { title: loan.title, authors: loan.authors, photoKey: loan.photo?.key, photoW: loan.photo?.w, photoH: loan.photo?.h, coverKey: loan.coverKey, seed: loan.workId };
   const chatClosed = ["declined", "withdrawn", "expired", "cancelled"].includes(loan.status);
+  const meter = timeMeter({
+    status: loan.status, kind: loan.kind, role: loan.role, other_name: other?.first_name ?? "der anderen Seite",
+    wanted: loan.wanted ? `[${loan.wanted.start},${loan.wanted.end ?? ""})` : "",
+    due_at: t.due_at, respond_by: t.respond_by, requested_at: t.requested_at, handed_over_at: t.handed_over_at,
+    handover_by: t.handover_by, returned_at: t.returned_at, inspection_until: t.inspection_until,
+  });
   const status = overdue ? `Überfällig seit ${fmtDay(dayToDate(dueDay(t.due_at!)))}` : statusLabel[loan.status];
 
   const details: [string, ReactNode][] = [
@@ -140,7 +146,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <h2 className="display text-[28px] md:text-[38px] mt-2">{headline(loan)} <em>{overdue ? "Überfällig." : `${statusLabel[loan.status]}.`}</em></h2>
           </header>
 
-          <div className="mt-8 rounded-[10px] border border-line p-5 md:p-6 anim-rise" style={{ animationDelay: "60ms" }}>
+          {meter && <div className="mt-8 anim-rise" style={{ animationDelay: "40ms" }}><TimeMeter m={meter} className="md:px-6 md:py-5" /></div>}
+
+          <div className={cx(meter ? "mt-4" : "mt-8", "rounded-[10px] border border-line p-5 md:p-6 anim-rise")} style={{ animationDelay: "60ms" }}>
             <Timeline loan={loan} />
           </div>
 

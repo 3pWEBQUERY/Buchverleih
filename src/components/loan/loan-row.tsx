@@ -82,7 +82,9 @@ type Meter = {
  * Wie viel Zeit bleibt? Je nach Status: Leihzeit bis zur Rückgabe, Antwortfrist,
  * Beginn der Leihe, Übergabe oder Prüffrist nach der Rückgabe.
  */
-export function timeMeter(loan: LoanListItem): Meter | null {
+export type MeterInput = Pick<LoanListItem, "status" | "kind" | "role" | "other_name" | "wanted" | "due_at" | "respond_by" | "requested_at" | "handed_over_at" | "handover_by" | "returned_at" | "inspection_until">;
+
+export function timeMeter(loan: MeterInput): Meter | null {
   const today = todayCH();
   const r = parseRange(loan.wanted);
   const owner = loan.role === "owner";
@@ -149,10 +151,10 @@ export function timeMeter(loan: LoanListItem): Meter | null {
 }
 
 /** Restzeit gross, darunter der Balken mit der verstrichenen Zeit */
-function TimeMeter({ m }: { m: Meter }) {
+export function TimeMeter({ m, className }: { m: Meter; className?: string }) {
   const late = m.tone === "late";
   return (
-    <div className={cx("rounded-[8px] px-4 py-3.5", late ? "bg-late/[0.07]" : "bg-paper-2")}>
+    <div className={cx("rounded-[8px] px-4 py-3.5", late ? "bg-late/[0.07]" : "bg-paper-2", className)}>
       <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 items-end">
         <p className={cx("text-[12px]", late ? "text-late" : "text-muted")}>{m.eyebrow}</p>
         <p className="text-[12px] text-muted text-right">{m.sideLabel}</p>
