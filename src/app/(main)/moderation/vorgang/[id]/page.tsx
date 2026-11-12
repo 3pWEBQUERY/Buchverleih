@@ -111,7 +111,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                       <div className="flex gap-3 mt-5 overflow-x-auto pb-1">
                         {photos.map((k) => (
                           <a key={k} href={imageUrl(k, false)} target="_blank" rel="noreferrer" className="flex-none">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            { }
                             <img src={imageUrl(k)} alt="Foto zum Fall" className="h-36 w-auto rounded-[8px] outline outline-1 outline-line hover:outline-ink transition-[outline-color]" />
                           </a>
                         ))}
@@ -175,13 +175,13 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               <div className="flex gap-3 mt-4 overflow-x-auto pb-1">
                 {conditionPhotos.map((k) => (
                   <a key={k} href={imageUrl(k, false)} target="_blank" rel="noreferrer" className="flex-none">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    { }
                     <img src={imageUrl(k)} alt="Zustandsfoto bei Übergabe" className="h-24 w-auto rounded-[8px] outline outline-1 outline-line" />
                   </a>
                 ))}
                 {loan.dropoff_photo_key && (
                   <a href={imageUrl(loan.dropoff_photo_key, false)} target="_blank" rel="noreferrer" className="flex-none">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    { }
                     <img src={imageUrl(loan.dropoff_photo_key)} alt="Foto der Ablage" className="h-24 w-auto rounded-[8px] outline outline-1 outline-line" />
                   </a>
                 )}

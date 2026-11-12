@@ -14,7 +14,7 @@ function hash(s: string) {
 export function Avatar({ name, seed, size = 40, className, night, photo }: { name: string; seed?: string; size?: number; className?: string; night?: boolean; photo?: string | null }) {
   const [bg, fg] = monogramColors(seed ?? name);
   if (photo) {
-    // eslint-disable-next-line @next/next/no-img-element
+     
     return <img src={`/api/v1/images/${photo}?w=480`} alt="" aria-hidden width={size} height={size} loading="lazy" className={cx("rounded-full flex-none object-cover", className)} style={{ width: size, height: size }} />;
   }
   return (

@@ -85,7 +85,7 @@ export function AvatarEditor({ userId, name, avatarKey }: { userId: string; name
     <div className="flex flex-wrap items-center gap-5">
       <span className={cx("relative flex-none", busy === "upload" && "opacity-60")}>
         {preview
-          // eslint-disable-next-line @next/next/no-img-element
+           
           ? <img src={preview} alt="" className="h-20 w-20 rounded-full object-cover" />
           : <Monogram name={name || "?"} seed={userId} size={80} photo={avatarKey} />}
       </span>

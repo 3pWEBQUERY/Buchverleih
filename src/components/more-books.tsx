@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Related, RelatedCopy } from "@/lib/copies";
+import { relatedForCopy, type Related, type RelatedCopy } from "@/lib/copies";
 import { fmtDistance } from "@/lib/geo";
 import { BookRow } from "@/components/regal/book-row";
 import { IconArrowRight } from "@/components/icons";
@@ -70,4 +70,17 @@ export function MoreBooks({ related, ownerName, ownerId, workId, title, hasOrigi
       </div>
     </section>
   );
+}
+
+/**
+ * Lädt «Weiterstöbern» selbst – gedacht für <Suspense>, damit die Seite nicht auf diese
+ * zusätzlichen Abfragen wartet und der Datenbank-Pool nicht auf einmal ausgeschöpft wird.
+ */
+export async function MoreBooksLoader({ copyId, viewerId, origin, ...rest }: {
+  copyId: string; viewerId: string | null; origin: { lat: number; lng: number } | null;
+  ownerName: string; ownerId: string; workId: string; title: string; hasOrigin: boolean; skip?: ShelfKey[];
+}) {
+  const related = await relatedForCopy(copyId, viewerId, origin).catch(() => null);
+  if (!related) return null;
+  return <MoreBooks related={related} {...rest} />;
 }

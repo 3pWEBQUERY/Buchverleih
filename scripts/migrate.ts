@@ -28,6 +28,9 @@ async function main() {
       const body = await readFile(path.join(dir, file), "utf8");
       process.stdout.write(`migrate ${file} … `);
       await sql.begin(async (tx) => {
+        // Nicht ewig auf Sperren warten (laufende App): lieber abbrechen und den Deploy wiederholen
+        await tx`set local lock_timeout = '15s'`;
+        await tx`set local statement_timeout = '10min'`;
         await tx.unsafe(body);
         await tx`insert into schema_migrations (name) values (${file})`;
       });

@@ -198,7 +198,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                 {loan.dropoffPhotoKey && (
                   <div className="rounded-[10px] border border-line p-5">
                     <p className="font-medium text-[15px] mb-3">Foto der Ablage</p>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    { }
                     <a href={imageUrl(loan.dropoffPhotoKey, false)} target="_blank"><img src={imageUrl(loan.dropoffPhotoKey)} alt="Foto der Ablage" className="w-full rounded-[8px]" /></a>
                   </div>
                 )}
@@ -244,7 +244,7 @@ function Thumbs({ keys, alt }: { keys: string[]; alt: string }) {
     <div className="flex gap-2 mt-3 flex-wrap">
       {keys.map((k) => (
         <a key={k} href={imageUrl(k, false)} target="_blank" className="block rounded-[8px] overflow-hidden border border-line hover:border-ink-2 transition-colors">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+          { }
           <img src={imageUrl(k)} alt={alt} className="h-16 w-16 object-cover" />
         </a>
       ))}

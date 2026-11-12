@@ -11,7 +11,7 @@ export function Monogram({ name, seed, size = 48, className, photo }: { name: st
   const [broken, setBroken] = useState(false);
   if (photo && !broken) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
+       
       <img src={`/api/v1/images/${photo}${size <= 160 ? "?w=480" : ""}`} alt="" aria-hidden width={size} height={size} loading="lazy" decoding="async"
         className={cx("rounded-full flex-none object-cover select-none", className)} style={{ width: size, height: size, background: bg }}
         onError={() => setBroken(true)} />

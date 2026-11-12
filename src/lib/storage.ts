@@ -45,6 +45,21 @@ export async function signedGetUrl(key: string, seconds = 3600) {
   return getSignedUrl(s3(), new GetObjectCommand({ Bucket: env.s3.bucket, Key: key }), { expiresIn: seconds });
 }
 
+/** Zeitfenster für stabile Signaturen: innerhalb von 6 Stunden ist die URL gleich und damit cachebar */
+export const SIGN_WINDOW_MS = 6 * 3600_000;
+
+/**
+ * Signierte URL mit festem Zeitfenster: gleiche URL für alle Aufrufe im selben 6-Stunden-Fenster.
+ * So können Browser das Bild (und die Weiterleitung) zwischenspeichern statt jedes Mal neu zu laden.
+ */
+export async function stableSignedUrl(key: string) {
+  const start = Math.floor(Date.now() / SIGN_WINDOW_MS) * SIGN_WINDOW_MS;
+  return getSignedUrl(s3(), new GetObjectCommand({ Bucket: env.s3.bucket, Key: key }), {
+    signingDate: new Date(start),
+    expiresIn: Math.round((2 * SIGN_WINDOW_MS) / 1000), // gültig bis Ende des nächsten Fensters
+  });
+}
+
 export async function getObjectBytes(key: string) {
   const res = await s3().send(new GetObjectCommand({ Bucket: env.s3.bucket, Key: key }));
   const bytes = await res.Body!.transformToByteArray();

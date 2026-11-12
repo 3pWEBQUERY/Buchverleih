@@ -329,7 +329,7 @@ function PhotoPicker({ loanId, purpose, keys, setKeys, max = 6 }: { loanId: stri
   return (
     <div className="flex flex-wrap items-center gap-3">
       {keys.map((k) => (
-        // eslint-disable-next-line @next/next/no-img-element
+         
         <img key={k} src={`/api/v1/images/${k}?w=480`} alt="Hochgeladenes Foto" className="h-20 w-20 object-cover rounded-[10px] outline outline-1 -outline-offset-1 outline-black/10 anim-pop" />
       ))}
       {keys.length < max && (

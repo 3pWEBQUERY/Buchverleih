@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState } from "react";
 import { safeNext } from "@/lib/safe-next";
 import { useRouter } from "next/navigation";
@@ -66,7 +67,7 @@ export function Onboarding({ initialStep, next, firstName, devCodes }: { initial
               <li className="grid grid-cols-[20px_1fr] gap-3"><IconCalendar width={18} height={18} className="mt-0.5" /><span>Für ein eigenes Konto brauchst du mindestens 16 Jahre. Gespeichert wird nur, dass du alt genug bist.</span></li>
             </ul>
             {error && <p className="text-late" role="alert">{error}</p>}
-            {closed && <p className="text-sm"><a href="/" className="font-medium text-accent-hover hover:underline underline-offset-4">Zur Startseite und auf die Warteliste</a></p>}
+            {closed && <p className="text-sm"><Link href="/" className="font-medium text-accent-hover hover:underline underline-offset-4">Zur Startseite und auf die Warteliste</Link></p>}
             <Button type="submit" variant="primary" size="lg" className="w-full sm:w-auto" disabled={busy}>Weiter <IconArrowRight width={18} height={18} /></Button>
           </div>
         </form>

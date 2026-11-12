@@ -518,7 +518,7 @@ function Photos({ copy }: { copy: CopyDetail }) {
     <ul className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
       {photos.map((p) => (
         <li key={p.id} className="relative aspect-[3/4] group">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+          { }
           <img src={imageUrl(p.key)} alt={`Foto von ${copy.title}`} className="h-full w-full object-cover rounded-[8px] outline outline-1 -outline-offset-1 outline-black/10" />
           <button type="button" onClick={() => remove(p.id)} aria-label="Foto entfernen"
             className="absolute top-2 right-2 h-7 w-7 grid place-items-center rounded-[6px] bg-paper/95 border border-line text-muted hover:text-late hover:border-late transition-colors">

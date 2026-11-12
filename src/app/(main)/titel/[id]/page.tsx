@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 import { getUser } from "@/lib/auth/session";
 import { origin as originOf } from "@/lib/page";
 import { plzInfo } from "@/lib/account";
-import { copiesOfWork, relatedForCopy } from "@/lib/copies";
-import { MoreBooks } from "@/components/more-books";
+import { copiesOfWork } from "@/lib/copies";
+import { Suspense } from "react";
+import { MoreBooksLoader } from "@/components/more-books";
 import { dayToDate, dueDay, fmtDay } from "@/lib/dates";
 import { workById, wishFor } from "@/lib/title-queries";
 import { fmtDistance } from "@/lib/geo";
@@ -65,7 +66,6 @@ export default async function TitelPage({ params, searchParams }: Params) {
   const nextId = others.find((c) => c.free_now)?.id;
   const nextPath = `/titel/${work.id}`;
   const nearest = others.find((c) => c.dist != null)?.dist ?? null;
-  const related = others[0] ? await relatedForCopy(others[0].id, viewer?.id ?? null, o).catch(() => null) : null;
   const withDist = others.filter((c) => c.dist != null);
   const maxDist = Math.max(1000, ...withDist.map((c) => c.dist!));
 
@@ -262,9 +262,12 @@ export default async function TitelPage({ params, searchParams }: Params) {
         </StepSection>
       </div>
 
-      {related && (
+      {others[0] && (
         <div className="lg:col-span-2">
-          <MoreBooks related={related} ownerName={others[0].owner_name} ownerId={others[0].owner_id} workId={work.id} title={work.title} hasOrigin={Boolean(o)} skip={["regal", "titel"]} />
+          <Suspense fallback={null}>
+            <MoreBooksLoader copyId={others[0].id} viewerId={viewer?.id ?? null} origin={o}
+              ownerName={others[0].owner_name} ownerId={others[0].owner_id} workId={work.id} title={work.title} hasOrigin={Boolean(o)} skip={["regal", "titel"]} />
+          </Suspense>
         </div>
       )}
     </div>

@@ -562,7 +562,7 @@ function ManualTab({ prefill, ask, onAsked, add }: {
           <label className={cx("relative grid place-items-center w-[96px] sm:w-full aspect-[2/3] rounded-[8px] cursor-pointer overflow-hidden transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--focus)]",
             preview ? "border border-line" : "border border-dashed border-line-strong hover:border-accent text-muted hover:text-accent-hover bg-paper-2/50")}>
             {preview ? (
-              // eslint-disable-next-line @next/next/no-img-element
+               
               <img src={preview} alt="Vorschau des Fotos" className="absolute inset-0 h-full w-full object-cover" />
             ) : (
               <span className="flex flex-col items-center gap-1.5 text-[12.5px] font-medium text-center px-2"><IconCamera width={22} height={22} /> Foto aufnehmen</span>

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getUser } from "@/lib/auth/session";
 import { sql } from "@/lib/db";
-import { copyDetail, relatedForCopy } from "@/lib/copies";
+import { copyDetail } from "@/lib/copies";
+import { Suspense } from "react";
 import { getCalendar } from "@/lib/loans/calendar";
 import { origin } from "@/lib/page";
 import { publicProfile } from "@/lib/profile";
@@ -16,7 +17,7 @@ import { fmtDistance } from "@/lib/geo";
 import { dayToDate, fmtDay, fmtMonthYear } from "@/lib/dates";
 import { IconArrowLeft, IconArrowRight } from "@/components/icons";
 import { CalendarView } from "@/components/calendar";
-import { MoreBooks } from "@/components/more-books";
+import { MoreBooksLoader } from "@/components/more-books";
 import { RequestPanel } from "./request-panel";
 import { CorrectionForm } from "./correction";
 
@@ -44,7 +45,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const copy = await copyDetail(id, user?.id ?? null, origin(user));
   if (!copy) notFound();
   const own = user?.id === copy.owner_id;
-  const [rawCal, blocker, myOffers, circles, owner, related] = await Promise.all([
+  const [rawCal, blocker, myOffers, circles, owner, [sameWork]] = await Promise.all([
     getCalendar(sql, id, user?.id ?? null),
     user ? requestBlocker(sql, user) : Promise.resolve(null),
     user && copy.offers.includes("swap")
@@ -56,7 +57,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     user ? sql<{ loan_days: number; name: string }[]>`
       select ci.loan_days, ci.name from circles ci where ci.id = shared_circle_for_copy(${user.id}, ${id})` : Promise.resolve([]),
     publicProfile(copy.owner_id, user?.id ?? null),
-    relatedForCopy(id, user?.id ?? null, origin(user)).catch(() => null),
+    // Wie viele andere sichtbare Exemplare desselben Titels es gibt (für den Knopf zur Titelseite)
+    sql<{ n: number }[]>`
+      select count(*)::int as n from copies c2 join editions e2 on e2.id = c2.edition_id
+       where e2.work_id = ${copy.work_id} and c2.id <> ${id} and c2.removed_at is null and cardinality(c2.offers) > 0
+         and (${user?.id ?? null}::uuid is null or c2.owner_id <> ${user?.id ?? null}::uuid)
+         and copy_visible_to(c2.id, ${user?.id ?? null}::uuid)`,
   ]);
   const st = shelfStatusText(copy);
   const photo = copy.photos[0];
@@ -109,7 +115,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               {extraPhotos.slice(0, 4).map((p) => (
                 <li key={p.id} className="aspect-[3/4]">
                   <a href={imageUrl(p.key, false)} target="_blank" className="block h-full rounded-[8px] overflow-hidden border border-line hover:border-ink-2 transition-colors">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    { }
                     <img src={imageUrl(p.key)} alt={`Foto von ${copy.title}`} className="h-full w-full object-cover" />
                   </a>
                 </li>
@@ -151,7 +157,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               </Link>
             )}
             <Link href={`/titel/${copy.work_id}`} className="h-11 rounded-[6px] border border-line-strong font-medium text-[14.5px] inline-flex items-center justify-center gap-2 hover:border-accent hover:text-accent-hover transition-colors">
-              {related && related.sameWork.length > 0 ? `${related.sameWork.length} ${related.sameWork.length === 1 ? "weiteres Exemplar" : "weitere Exemplare"} vergleichen` : "Zur Titelseite"} <IconArrowRight width={16} height={16} />
+              {sameWork.n > 0 ? `${sameWork.n} ${sameWork.n === 1 ? "weiteres Exemplar" : "weitere Exemplare"} vergleichen` : "Zur Titelseite"} <IconArrowRight width={16} height={16} />
             </Link>
           </div>
           <CorrectionForm editionId={copy.edition_id} loggedIn={Boolean(user)} />
@@ -269,7 +275,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </div>
       </div>
 
-      {related && <MoreBooks related={related} ownerName={copy.owner_name} ownerId={copy.owner_id} workId={copy.work_id} title={copy.title} hasOrigin={Boolean(origin(user))} />}
+      <Suspense fallback={null}>
+        <MoreBooksLoader copyId={copy.id} viewerId={user?.id ?? null} origin={origin(user)}
+          ownerName={copy.owner_name} ownerId={copy.owner_id} workId={copy.work_id} title={copy.title} hasOrigin={Boolean(origin(user))} />
+      </Suspense>
     </div>
   );
 }

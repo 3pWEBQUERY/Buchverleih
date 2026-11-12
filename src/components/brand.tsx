@@ -6,7 +6,7 @@ import { cx } from "./ui";
  * im Dark Mode weiss mit oranger Seite. Auf dunklen Flächen (`onDark`) immer die helle Variante.
  */
 export function LogoMark({ size = 28, className, onDark }: { size?: number; className?: string; onDark?: boolean }) {
-  /* eslint-disable @next/next/no-img-element */
+   
   if (onDark) return <img src="/brand/logo-dark.png" alt="" aria-hidden width={size} height={size} className={cx("block flex-none", className)} />;
   return (
     <span aria-hidden className={cx("relative inline-block flex-none", className)} style={{ width: size, height: size }}>
@@ -14,7 +14,7 @@ export function LogoMark({ size = 28, className, onDark }: { size?: number; clas
       <img src="/brand/logo-dark.png" alt="" width={size} height={size} className="logo-dark absolute inset-0" />
     </span>
   );
-  /* eslint-enable @next/next/no-img-element */
+   
 }
 
 export function Wordmark({ className = "", href = "/" }: { className?: string; href?: string }) {
