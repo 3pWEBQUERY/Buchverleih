@@ -66,6 +66,8 @@ export default async function SuchePage({ searchParams }: { searchParams: Promis
       initialPlace={place}
       initialFilters={filters}
       initialResults={initial}
+      initialCenter={o ? { lat: Math.round(o.lat * 100) / 100, lng: Math.round(o.lng * 100) / 100 } : null}
+      initialView={pick(sp.ansicht) === "karte" ? "map" : "list"}
     />
   );
 }

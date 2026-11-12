@@ -35,5 +35,7 @@ export const GET = route(async (req) => {
     maxCondition: q.condition,
   });
   if (q.q && q.q.length >= 2) logSearch(u?.id ?? null, q.q, hits).catch(() => {});
-  return { results: hits };
+  // Kartenmitte nur grob (0.01°), nicht der gespeicherte Wohnort
+  const center = origin ? { lat: Math.round(origin.lat * 100) / 100, lng: Math.round(origin.lng * 100) / 100 } : null;
+  return { results: hits, center };
 });

@@ -28,6 +28,8 @@ export type WorkHit = {
   nearest_m: number | null;
   cover: { copy_id: string; photo_key: string | null; photo_w: number | null; photo_h: number | null; cover_key: string | null } | null;
   offers: OfferKind[];
+  /** Orte der Exemplare, auf rund 1 km vergröbert: [Breite, Länge, davon jetzt frei] */
+  cells: [number, number, number][];
 };
 
 export async function searchWorks(viewerId: string | null, origin: Origin, f: SearchFilters): Promise<WorkHit[]> {
@@ -60,6 +62,8 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
              (select p.width from copy_photos p where p.copy_id = c.id order by p.position limit 1) as photo_w,
              (select p.height from copy_photos p where p.copy_id = c.id order by p.position limit 1) as photo_h,
              w.title, w.authors, w.genre,
+             -- Für die Karte nur grobe Zellen (0.01° ≈ 1.1 km × 0.75 km), nie den Anzeigeort selbst
+             round(o.display_lat::numeric, 2)::float8 as cell_lat, round(o.display_lng::numeric, 2)::float8 as cell_lng,
              ${q ? sql`word_similarity(lower(f_unaccent(${q})), w.search_text)` : sql`0`} as score
         from copies c
         join editions e on e.id = c.edition_id
@@ -75,8 +79,17 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
          ${f.language ? sql`and e.language = ${f.language}` : sql``}
          ${f.genre ? sql`and w.genre = ${f.genre}` : sql``}
          ${f.maxCondition ? sql`and c.condition <= ${f.maxCondition}` : sql``}
+    ), hit as (
+      select * from cand
+       where (${lat}::float8 is null or dist <= ${radiusM})
+         ${f.availableNow ? sql`and free_now` : sql``}
+    ), cell as (
+      select work_id, json_agg(json_build_array(cell_lat, cell_lng, free) order by cell_lat, cell_lng) as cells
+        from (select work_id, cell_lat, cell_lng, count(*) filter (where free_now)::int as free
+                from hit where cell_lat is not null group by 1, 2, 3) x
+       group by work_id
     )
-    select work_id, title, authors, genre,
+    select hit.work_id, title, authors, genre,
            count(*)::int as copies,
            count(*) filter (where free_now)::int as available_now,
            min(dist) as nearest_m,
@@ -84,11 +97,10 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
                       order by (photo_key is null and cover_key is null), (photo_key is null), dist nulls last))[1] as cover,
            bool_or('lend' = any(offers)) as o_lend,
            bool_or('swap' = any(offers)) as o_swap,
-           bool_or('gift' = any(offers)) as o_gift
-      from cand
-     where (${lat}::float8 is null or dist <= ${radiusM})
-       ${f.availableNow ? sql`and free_now` : sql``}
-     group by work_id, title, authors, genre
+           bool_or('gift' = any(offers)) as o_gift,
+           coalesce(max(cell.cells::text), '[]')::json as cells
+      from hit left join cell using (work_id)
+     group by hit.work_id, title, authors, genre
      order by ${q ? sql`max(score) desc,` : sql``} min(dist) nulls last, min(median_response_seconds) nulls last, title
      limit ${f.limit ?? 150}`;
   return rows.map(({ o_lend, o_swap, o_gift, ...r }) => ({

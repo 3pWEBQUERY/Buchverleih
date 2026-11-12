@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Cover } from "@/components/cover";
@@ -12,6 +13,14 @@ import { api } from "@/lib/client";
 import { fmtDistance } from "@/lib/geo";
 import { genres, languageLabel, offerLabel, conditionLabel } from "@/lib/i18n/de-CH";
 import type { WorkHit } from "@/lib/search";
+import type { Center } from "./search-map";
+
+// Leaflet nur laden, wenn jemand die Karte öffnet
+const SearchMap = dynamic(() => import("./search-map"), {
+  ssr: false,
+  loading: () => <div className="skeleton rounded-[12px] h-[62vh] min-h-[420px] max-h-[680px]" />,
+});
+type View = "list" | "map";
 
 export type Filters = {
   radius: number;
@@ -24,6 +33,13 @@ export type Filters = {
 
 const DEFAULTS: Filters = { radius: 25, offer: "", available: false, language: "", genre: "", condition: 0 };
 const RADII = [1, 2, 5, 10, 25];
+
+function urlOf(key: string, view: View) {
+  const p = new URLSearchParams(key);
+  if (view === "map") p.set("ansicht", "karte");
+  const s = p.toString();
+  return s ? `/suche?${s}` : "/suche";
+}
 
 function paramsOf(q: string, f: Filters, plz: string) {
   const p = new URLSearchParams();
@@ -60,7 +76,7 @@ const coverOf = (h: WorkHit) => ({
 });
 
 export function SearchClient({
-  loggedIn, autoFocus, initialQ, initialPlz, initialPlace, initialFilters, initialResults,
+  loggedIn, autoFocus, initialQ, initialPlz, initialPlace, initialFilters, initialResults, initialCenter, initialView,
 }: {
   loggedIn: boolean;
   autoFocus: boolean;
@@ -69,6 +85,8 @@ export function SearchClient({
   initialPlace: string | null;
   initialFilters: Filters;
   initialResults: WorkHit[] | null;
+  initialCenter: Center | null;
+  initialView: View;
 }) {
   const router = useRouter();
   const [q, setQ] = useState(initialQ);
@@ -79,6 +97,9 @@ export function SearchClient({
   const [resultsFor, setResultsFor] = useState(initialQ.trim());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [center, setCenter] = useState<Center | null>(initialCenter);
+  const [view, setView] = useState<View>(initialView);
+  const viewRef = useRef(view);
   const inputRef = useRef<HTMLInputElement>(null);
   const first = useRef(true);
   const lastQ = useRef(initialQ);
@@ -97,7 +118,7 @@ export function SearchClient({
     }
     const qChanged = lastQ.current !== q;
     lastQ.current = q;
-    const target = key ? `/suche?${key}` : "/suche";
+    const target = urlOf(key, viewRef.current);
     if (window.location.pathname === "/suche" && window.location.pathname + window.location.search !== target) {
       window.history.replaceState(window.history.state, "", target);
     }
@@ -114,8 +135,9 @@ export function SearchClient({
         p.set("radius", String(f.radius));
         const r = await fetch(`/api/v1/search?${p}`, { signal: ctrl.signal, credentials: "same-origin" });
         if (!r.ok) throw new Error();
-        const data = (await r.json()) as { results: WorkHit[] };
+        const data = (await r.json()) as { results: WorkHit[]; center?: Center | null };
         setResults(data.results);
+        if (data.center !== undefined) setCenter(data.center);
         setResultsFor(q.trim());
         setError(null);
       } catch (e) {
@@ -130,6 +152,12 @@ export function SearchClient({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
+
+  function switchView(v: View) {
+    setView(v);
+    viewRef.current = v;
+    if (window.location.pathname === "/suche") window.history.replaceState(window.history.state, "", urlOf(key, v));
+  }
 
   const set = <K extends keyof Filters>(k: K, v: Filters[K]) => setF((x) => ({ ...x, [k]: v }));
   const n = activeCount(f);
@@ -207,16 +235,27 @@ export function SearchClient({
         <p className="sr-only" aria-live="polite">{summary ?? ""}</p>
         {error && <p role="alert" className="rounded-[10px] bg-late/[0.06] text-late px-5 py-4 mb-5">{error}</p>}
 
+        {results !== null && results.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6 md:mb-8">
+            <p className="text-[14px] text-muted" aria-hidden>{summary}</p>
+            <ViewSwitch view={view} onChange={switchView} />
+          </div>
+        )}
+
         {results === null && loading && <ResultSkeleton />}
 
-        {stage.length > 0 && (
+        {view === "map" && results && results.length > 0 && (
+          <SearchMap hits={results} center={center} radiusKm={f.radius} href={href} loading={loading} />
+        )}
+
+        {view === "list" && stage.length > 0 && (
           <StepSection id="frei" n={1} first title="Gleich um die Ecke" desc={`Jetzt frei, bis ${f.radius} km${where}. Ein Tippen zeigt alle Exemplare des Titels.`}
             aside={`${stage.length} Titel`}>
             <Stage hits={stage} href={href} />
           </StepSection>
         )}
 
-        {results && rest.length > 0 && (
+        {view === "list" && results && rest.length > 0 && (
           <StepSection id="treffer" n={stage.length > 0 ? 2 : 1} first={stage.length === 0}
             title={resultsFor ? <>Treffer für «{resultsFor}»</> : stage.length > 0 ? "Alles im Umkreis" : "Im Umkreis"}
             desc={summary ?? undefined}
@@ -234,6 +273,24 @@ export function SearchClient({
             widen={() => set("radius", 25)} reset={() => setF({ ...DEFAULTS, radius: f.radius })} />
         )}
       </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------ Liste/Karte */
+
+function ViewSwitch({ view, onChange }: { view: View; onChange: (v: View) => void }) {
+  const opt = (v: View, label: string, icon: React.ReactNode) => (
+    <button type="button" role="radio" aria-checked={view === v} onClick={() => onChange(v)}
+      className={cx("h-8 px-3 rounded-[5px] inline-flex items-center gap-1.5 text-[13.5px] font-medium transition-colors duration-150",
+        view === v ? "bg-paper text-ink border border-line" : "text-ink-2 hover:text-ink border border-transparent")}>
+      {icon}{label}
+    </button>
+  );
+  return (
+    <div role="radiogroup" aria-label="Darstellung" className="inline-flex items-center gap-0.5 p-0.5 rounded-[7px] bg-paper-2">
+      {opt("list", "Liste", <svg aria-hidden viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5.5 4h8M5.5 8h8M5.5 12h8" /><circle cx="2.5" cy="4" r=".6" fill="currentColor" /><circle cx="2.5" cy="8" r=".6" fill="currentColor" /><circle cx="2.5" cy="12" r=".6" fill="currentColor" /></svg>)}
+      {opt("map", "Karte", <svg aria-hidden viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M1.5 3.5l4-1.5 5 2 4-1.5v10l-4 1.5-5-2-4 1.5z" /><path d="M5.5 2v10M10.5 4v10" /></svg>)}
     </div>
   );
 }

@@ -91,6 +91,11 @@ export default function Page() {
           Für Titeldaten fragen wir Bibliothekskataloge und Buchverzeichnisse ab (Deutsche Nationalbibliothek, Open Library, Google Books).
           Dabei übermitteln wir nur die ISBN oder den Suchbegriff, keine Angaben zu dir.
         </p>
+        <p>
+          Öffnest du in der Suche die Karte, lädt dein Browser die Kartenbilder direkt vom Bundesamt für Landestopografie swisstopo
+          (ersatzweise von OpenStreetMap). Diese sehen dabei deine IP-Adresse und den Kartenausschnitt, aber weder deinen Namen noch deine Suche.
+          Ohne Klick auf «Karte» wird nichts geladen.
+        </p>
         <p>Andere Mitglieder sehen deinen Vornamen, dein Profilbild (falls du eines hochlädst), deine Gemeinde, dein Regal, deine Stufe und deine Zahlen. Mobilnummer und E-Mail-Adresse sehen sie nie.</p>
       </DocSection>
 

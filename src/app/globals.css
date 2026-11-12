@@ -265,3 +265,30 @@ body:has(.landing-stage) .public-header a:not([href="/anmelden"]):hover { backgr
 
 /* Fokusring auf dunklen Flächen: hell statt dunkel, sonst unsichtbar */
 .surface-night { --focus: var(--night-ink); }
+
+/* ---------------------------------------------------------------- Karte (Suche) */
+.search-map.leaflet-container { background: var(--paper-2); font-family: inherit; }
+.search-map .leaflet-control-attribution { background: color-mix(in srgb, var(--paper) 88%, transparent); color: var(--muted); font-size: 11px; padding: 1px 6px; border-top-left-radius: 4px; }
+.search-map .leaflet-control-attribution a { color: var(--ink-2); }
+.search-map .leaflet-bar { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; box-shadow: none; }
+.search-map .leaflet-bar a { width: 36px; height: 36px; line-height: 34px; background: var(--paper); color: var(--ink); border-bottom-color: var(--line); font-weight: 400; }
+.search-map .leaflet-bar a:hover { background: var(--paper-2); }
+.search-map .leaflet-bar a.leaflet-disabled { color: var(--line-strong); background: var(--paper); }
+.search-map .map-tiles { filter: saturate(0.6) contrast(0.96); }
+.map-ring { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 6; fill: var(--accent); fill-opacity: 0.035; }
+.map-home { display: block; width: 18px; height: 18px; border-radius: 999px; background: var(--ink); border: 4px solid var(--paper); outline: 1px solid var(--line-strong); }
+.map-pin {
+  display: grid; place-items: center; border-radius: 999px; cursor: pointer;
+  background: var(--paper); color: var(--ink); border: 2px solid var(--ink-2);
+  font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1;
+  transition: transform 150ms ease, background-color 150ms ease;
+}
+.map-pin.is-free { background: var(--accent); color: var(--accent-ink); border-color: var(--paper); }
+.map-pin:hover { transform: scale(1.08); }
+.map-pin.is-on { outline: 3px solid var(--ink); outline-offset: 2px; transform: scale(1.1); }
+.leaflet-marker-icon:focus-visible { outline: none; }
+.leaflet-marker-icon:focus-visible .map-pin { outline: 3px solid var(--focus); outline-offset: 2px; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .search-map .map-tiles { filter: invert(1) hue-rotate(180deg) brightness(0.82) contrast(0.92) saturate(0.4); }
+}
+:root[data-theme="dark"] .search-map .map-tiles { filter: invert(1) hue-rotate(180deg) brightness(0.82) contrast(0.92) saturate(0.4); }
