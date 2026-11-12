@@ -1,13 +1,18 @@
 import { cx } from "@/components/ui";
-import { addDays, fmtDay, fmtDayTime, dueDay, deadline, relHours, dayToDate } from "@/lib/dates";
+import { addDays, fmtDay, fmtDayTime, fmtTime, dueDay, relHours, relDays, dayToDate, diffDays, todayCH } from "@/lib/dates";
+import { IconCheck } from "@/components/icons";
 import type { LoanView } from "@/lib/loans/queries";
 import { statusLabel } from "@/lib/i18n/de-CH";
 
 /**
- * Zeitachse oben auf der Vorgangsseite (PRD 8.4) als Fortschritt in Segmenten.
- * Erreichte Schritte in Tinte mit Datum, der laufende Schritt in Akzent mit Frist als Datum und Dauer.
+ * Zeitachse oben auf der Vorgangsseite (PRD 8.4) als Schrittfolge: erreichte Schritte mit Häkchen
+ * und Zeitpunkt, der laufende Schritt in Akzent mit Frist und Restzeit als Marke.
+ * Desktop waagrecht, mobil senkrecht.
  */
-type Step = { key: string; label: string; done: boolean; note?: string | null };
+type Step = { key: string; label: string; done: boolean; note?: string | null; time?: string | null; chip?: string | null; late?: boolean };
+
+/** Zeitpunkt eines erreichten Schritts: Datum, darunter die Uhrzeit */
+const at = (d: Date | string) => ({ note: fmtDay(d), time: fmtTime(d) });
 
 export function Timeline({ loan }: { loan: LoanView }) {
   const t = loan.times;
@@ -25,19 +30,30 @@ export function Timeline({ loan }: { loan: LoanView }) {
   const ended = ["declined", "withdrawn", "expired", "cancelled"].includes(s);
   const overdue = s === "active" && t.due_at && new Date(t.due_at) < new Date();
 
+  const dueChip = (() => {
+    if (!t.due_at) return null;
+    const d = dueDay(t.due_at);
+    const n = diffDays(todayCH(), d);
+    if (n < 0) return `${-n} ${-n === 1 ? "Tag" : "Tage"} überfällig`;
+    return n === 0 ? "heute" : relDays(d);
+  })();
+
   const steps: Step[] = [
-    { key: "requested", label: "Angefragt", done: true, note: fmtDay(t.requested_at) },
+    { key: "requested", label: "Angefragt", done: true, ...at(t.requested_at) },
     {
       key: "accepted",
       label: "Angenommen",
       done: idx >= 1 && !ended,
-      note: t.accepted_at ? fmtDay(t.accepted_at) : idx === 0 && !ended ? `Antwort bis ${fmtDayTime(t.respond_by)} (${relHours(t.respond_by)})` : null,
+      ...(t.accepted_at ? { ...at(t.accepted_at) }
+        : idx === 0 && !ended ? { note: `Antwort bis ${fmtDayTime(t.respond_by)}`, chip: relHours(t.respond_by) } : {}),
     },
     {
       key: "active",
       label: lend ? "Übergeben" : "Übergeben, Besitz gewechselt",
       done: idx >= 2,
-      note: t.handed_over_at ? fmtDay(t.handed_over_at) : idx === 1 && t.handover_by ? `spätestens ${fmtDay(new Date(new Date(t.handover_by).getTime() - 1000))}` : null,
+      ...(t.handed_over_at ? { ...at(t.handed_over_at) }
+        : idx === 1 && t.handover_by ? { note: `Spätestens ${fmtDay(new Date(new Date(t.handover_by).getTime() - 1000))}`, chip: relHours(t.handover_by) }
+        : idx === 1 && loan.wanted && lend ? { note: `Ab ${fmtDay(dayToDate(loan.wanted.start))}`, chip: relDays(loan.wanted.start) } : {}),
     },
   ];
   if (lend) {
@@ -46,13 +62,16 @@ export function Timeline({ loan }: { loan: LoanView }) {
         key: "returned",
         label: "Zurück",
         done: idx >= 3,
-        note: t.returned_at ? fmtDay(t.returned_at) : t.due_at ? deadline(dueDay(t.due_at)) : loan.wanted?.end ? `bis ${fmtDay(dayToDate(addDays(loan.wanted.end, -1)))}` : null,
+        ...(t.returned_at ? { ...at(t.returned_at) }
+          : t.due_at ? { note: `Bis ${fmtDay(dayToDate(dueDay(t.due_at)))}`, chip: dueChip, late: Boolean(overdue) }
+          : loan.wanted?.end ? { note: `Bis ${fmtDay(dayToDate(addDays(loan.wanted.end, -1)))}` } : {}),
       },
       {
         key: "completed",
         label: "Abgeschlossen",
         done: idx >= 4,
-        note: t.closed_at && s === "completed" ? fmtDay(t.closed_at) : t.inspection_until && s === "returned" ? `Prüfung ${relHours(t.inspection_until)}` : null,
+        ...(t.closed_at && s === "completed" ? { ...at(t.closed_at) }
+          : t.inspection_until && s === "returned" ? { note: `Prüfung bis ${fmtDayTime(t.inspection_until)}`, chip: relHours(t.inspection_until) } : {}),
       },
     );
   }
@@ -65,44 +84,52 @@ export function Timeline({ loan }: { loan: LoanView }) {
 
   return (
     <div>
-      <div className="flex items-baseline justify-between gap-4 mb-3">
+      <div className="flex items-baseline justify-between gap-4 mb-5">
         <p className="eyebrow">Ablauf</p>
         <p className="text-[12.5px] text-muted tnum">
           {ended ? "Beendet" : current ? `Schritt ${cur + 1} von ${steps.length}` : `${reached} von ${steps.length} erledigt`}
         </p>
       </div>
-      <ol className="grid gap-1.5 md:gap-2" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }} aria-label="Ablauf des Vorgangs">
+      <ol className="flex flex-col md:grid" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }} aria-label="Ablauf des Vorgangs">
         {steps.map((st, i) => {
           const isCur = i === cur;
+          const last = i === steps.length - 1;
+          const bad = isCur && (trouble || st.late);
           return (
-            <li key={st.key} className="min-w-0" aria-current={isCur ? "step" : undefined}>
-              <span aria-hidden className={cx(
-                "block h-1.5 rounded-full origin-left anim-rise",
-                st.done ? "bg-ink-2" : isCur ? (trouble ? "bg-late" : "bg-accent") : ended ? "bg-paper-3 opacity-60" : "bg-paper-3",
-              )} style={{ animationDelay: `${i * 60}ms` }} />
-              <span className={cx("sr-only md:not-sr-only md:flex items-center gap-1.5 mt-3 text-[13.5px] font-semibold leading-tight", !st.done && !isCur && "text-muted font-medium")}>
-                {isCur && <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full live-dot flex-none", trouble ? "bg-late" : "bg-accent")} />}
-                {st.label}
-                {!st.done && !isCur && <span className="sr-only"> (offen)</span>}
-              </span>
-              {st.note && (
-                <span className={cx("hidden md:block text-[12.5px] mt-1 leading-snug tnum", isCur && trouble ? "text-late" : isCur ? "text-ink-2" : "text-muted")}>{st.note}</span>
-              )}
+            <li key={st.key} className="min-w-0 flex md:flex-col gap-3.5 md:gap-0 anim-rise" style={{ animationDelay: `${i * 50}ms` }} aria-current={isCur ? "step" : undefined}>
+              {/* Knoten und Verbindung zum nächsten Schritt */}
+              <div aria-hidden className="flex flex-col md:flex-row items-center flex-none">
+                <span className={cx(
+                  "relative h-7 w-7 rounded-full grid place-items-center flex-none text-[12px] font-semibold tnum transition-colors",
+                  st.done ? "bg-ink-2 text-paper"
+                    : isCur ? (bad ? "bg-late text-white" : "bg-accent text-accent-ink")
+                    : ended ? "border border-line text-muted/60" : "border-[1.5px] border-line-strong text-muted",
+                )}>
+                  {st.done ? <IconCheck width={14} height={14} /> : i + 1}
+                  {isCur && <span className={cx("absolute -inset-1 rounded-full border-2", bad ? "border-late/30" : "border-accent/30")} />}
+                </span>
+                {!last && (
+                  <span className={cx("flex-1 w-[2px] min-h-6 my-1.5 md:my-0 md:mx-2.5 md:h-[2px] md:w-auto md:min-h-0 rounded-full",
+                    st.done && (steps[i + 1].done || i + 1 === cur) ? "bg-ink-2" : "bg-line")} />
+                )}
+              </div>
+              <div className={cx("min-w-0 pt-0.5 md:pt-3.5 md:pr-4", !last && "pb-5 md:pb-0")}>
+                <p className={cx("text-[14px] leading-tight", st.done || isCur ? "font-semibold text-ink" : "font-medium text-muted")}>
+                  {st.label}
+                  {!st.done && !isCur && <span className="sr-only"> (offen)</span>}
+                </p>
+                {st.note && <p className={cx("text-[12.5px] mt-1 leading-snug tnum", bad ? "text-late" : isCur ? "text-ink-2" : "text-muted")}>{st.note}{st.time && <span className="md:block"><span className="md:hidden">, </span>{st.time} Uhr</span>}</p>}
+                {isCur && st.chip && (
+                  <span className={cx("inline-flex items-center gap-1.5 mt-2 h-6 px-2 rounded-[6px] text-[12px] font-semibold tnum",
+                    bad ? "bg-late/10 text-late" : "bg-accent-soft text-accent-hover")}>
+                    <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full live-dot", bad ? "bg-late" : "bg-accent")} />{st.chip}
+                  </span>
+                )}
+              </div>
             </li>
           );
         })}
       </ol>
-
-      {/* Mobil: nur der laufende Schritt, ausgeschrieben */}
-      {current && (
-        <p className="md:hidden mt-3 text-[14px] leading-snug">
-          <span className="font-semibold inline-flex items-center gap-1.5">
-            <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full live-dot", trouble ? "bg-late" : "bg-accent")} />
-            {current.label}
-          </span>
-          {current.note && <span className={cx("tnum", trouble ? "text-late" : "text-muted")}> · {current.note}</span>}
-        </p>
-      )}
 
       {(ended || s === "lost" || s === "disputed") && (
         <p className={cx("mt-3 text-[14px]", s === "lost" || s === "disputed" ? "text-late" : "text-muted")}>
