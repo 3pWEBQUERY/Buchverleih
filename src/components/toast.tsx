@@ -1,5 +1,7 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { useLocale } from "./locale-provider";
+import { COMMON } from "@/lib/i18n/messages/common";
 
 /**
  * Keine Bestätigungsdialoge für umkehrbare Aktionen (PRD 8.2): sofort ausführen
@@ -23,6 +25,7 @@ export function useToast() {
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const undoLabel = COMMON[useLocale()].undo;
   const [toasts, setToasts] = useState<Toast[]>([]);
   const seq = useRef(0);
   const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
@@ -66,7 +69,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <span>{t.text}</span>
             {t.undo && (
               <button className="font-semibold text-accent-hover underline underline-offset-4 flex-none min-h-9" onClick={async () => { await t.undo?.(); dismiss(t.id); }}>
-                Rückgängig
+                {undoLabel}
               </button>
             )}
           </div>

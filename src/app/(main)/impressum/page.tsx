@@ -17,7 +17,7 @@ const TOC: TocItem[] = [
 
 export default function Page() {
   return (
-    <DocPage eyebrow="Rechtliches" title={<>Impressum. <em>Wer hinter Leihregal steht.</em></>} toc={TOC} updated="12. November 2026"
+    <DocPage germanOnly eyebrow="Rechtliches" title={<>Impressum. <em>Wer hinter Leihregal steht.</em></>} toc={TOC} updated="12. November 2026"
       lead="Leihregal ist eine kostenlose Plattform, auf der Privatpersonen einander Bücher leihen, tauschen und verschenken.">
 
       <DocSection id="betreiber" title="Betreiber">

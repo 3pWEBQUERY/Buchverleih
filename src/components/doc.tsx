@@ -2,6 +2,9 @@ import type { ReactNode } from "react";
 import { cx } from "./ui";
 import { DocToc } from "./doc-toc";
 import { IconArrowRight } from "./icons";
+import { getLocale } from "@/lib/i18n/server";
+import { htmlLang } from "@/lib/i18n/locale";
+import { COMMON } from "@/lib/i18n/messages/common";
 
 /**
  * Lesetexte (Hilfe, Regeln, Nutzungsbedingungen, Datenschutz) wie eine gut gesetzte
@@ -10,30 +13,43 @@ import { IconArrowRight } from "./icons";
  */
 export type TocItem = [id: string, label: string];
 
-export function DocPage({ eyebrow, title, lead, draft, toc, updated, intro, children }: {
+export async function DocPage({ eyebrow, title, lead, draft, toc, updated, intro, germanOnly, children }: {
   eyebrow: string; title: ReactNode; lead?: ReactNode; draft?: boolean; toc: TocItem[]; updated?: string;
   /** Block über volle Breite zwischen Kopf und Text, z. B. ein Schnellstart */
   intro?: ReactNode;
+  /** Rechtstext, der nur auf Deutsch verbindlich ist: in FR/IT mit Hinweis */
+  germanOnly?: boolean;
   children: ReactNode;
 }) {
+  const l = await getLocale();
+  // Rechtstexte bleiben samt Rahmen deutsch; nur der Hinweis und der Entwurfsvermerk folgen der Sprache
+  const t = germanOnly ? COMMON.de.doc : COMMON[l].doc;
+  const local = COMMON[l].doc;
+  const textLang = germanOnly ? "de-CH" : htmlLang[l];
   const long = typeof title === "string" && title.length > 14;
   return (
     <div>
       <header className="anim-rise">
         <p className="eyebrow">{eyebrow}</p>
-        <h1 lang="de-CH" className={cx("display mt-2 hyphens-auto break-words", long ? "text-[30px] md:text-[38px]" : "text-[32px] md:text-[44px]")}>{title}</h1>
+        <h1 lang={textLang} className={cx("display mt-2 hyphens-auto break-words", long ? "text-[30px] md:text-[38px]" : "text-[32px] md:text-[44px]")}>{title}</h1>
         {lead && <p className="text-[15.5px] md:text-[16px] text-ink-2 leading-relaxed max-w-2xl mt-3">{lead}</p>}
         <div className="flex flex-wrap items-center gap-2 mt-5 text-[12.5px]">
-          <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[6px] bg-paper-2 text-ink-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" /> {toc.length} Abschnitte</span>
-          {updated && <span className={cx("inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[6px]", draft ? "bg-lent/10 text-lent" : "bg-paper-2 text-ink-2")}><span className={cx("h-1.5 w-1.5 rounded-full", draft ? "bg-lent" : "bg-done")} /> Stand: {updated}</span>}
+          <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[6px] bg-paper-2 text-ink-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" /> {t.sections(toc.length)}</span>
+          {updated && <span className={cx("inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[6px]", draft ? "bg-lent/10 text-lent" : "bg-paper-2 text-ink-2")}><span className={cx("h-1.5 w-1.5 rounded-full", draft ? "bg-lent" : "bg-done")} /> {t.updated}{updated}</span>}
         </div>
       </header>
+
+      {germanOnly && local.germanOnly && (
+        <p role="note" className="mt-6 inline-flex items-center gap-2 rounded-[6px] bg-paper-2 px-3.5 py-2 text-[14px] text-ink-2">
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent" /> {local.germanOnly}
+        </p>
+      )}
 
       {draft && (
         <div role="note" className="mt-8 rounded-[10px] bg-lent/[0.07] px-5 py-4 md:px-6 flex gap-4 items-start border-l-[3px] border-lent">
           <div>
-            <p className="font-medium">Entwurf – Prüfung durch eine Fachperson ausstehend</p>
-            <p className="text-sm text-ink-2 mt-1">Dieser Text ist noch nicht rechtlich geprüft und gilt erst nach der Prüfung. Stellen in eckigen Klammern werden vorher ergänzt.</p>
+            <p className="font-medium">{local.draftTitle}</p>
+            <p className="text-sm text-ink-2 mt-1">{local.draftText}</p>
           </div>
         </div>
       )}
@@ -42,13 +58,13 @@ export function DocPage({ eyebrow, title, lead, draft, toc, updated, intro, chil
 
       <div className="mt-10 md:mt-12 pt-10 md:pt-12 border-t border-line lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-x-14 xl:gap-x-20">
         <aside className="hidden lg:block">
-          <DocToc toc={toc} />
+          <DocToc toc={toc} label={t.toc} />
         </aside>
 
-        <article className="min-w-0 max-w-[68ch]">
+        <article className="min-w-0 max-w-[68ch]" lang={textLang}>
           <details className="lg:hidden mb-10 rounded-[10px] border border-line group">
             <summary className="px-5 h-14 cursor-pointer list-none flex items-center justify-between text-[15px] font-medium [&::-webkit-details-marker]:hidden">
-              <span className="flex items-center gap-2.5">Inhalt <span className="text-[13px] font-medium text-muted tnum">{toc.length} Abschnitte</span></span>
+              <span className="flex items-center gap-2.5">{t.toc} <span className="text-[13px] font-medium text-muted tnum">{t.sections(toc.length)}</span></span>
               <span aria-hidden className="h-8 w-8 rounded-[6px] bg-accent-soft text-accent-hover grid place-items-center text-lg leading-none transition-transform duration-200 group-open:rotate-45">+</span>
             </summary>
             <ol className="px-5 pb-4 flex flex-col text-[15px] border-t border-line pt-2">
@@ -152,7 +168,8 @@ export function DocCompare({ left, right }: { left: { title: string; items: Reac
 }
 
 /** Kurzfassung über dem Text: die wichtigsten Punkte als Karten mit Sprung zum Abschnitt */
-export function DocSummary({ eyebrow, title, items, note }: { eyebrow: string; title: string; items: [title: string, text: string, href: string][]; note?: string }) {
+export async function DocSummary({ eyebrow, title, items, note, germanOnly }: { eyebrow: string; title: string; items: [title: string, text: string, href: string][]; note?: string; germanOnly?: boolean }) {
+  const more = COMMON[germanOnly ? "de" : await getLocale()].doc.more;
   return (
     <section aria-labelledby="kurzfassung">
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 mb-5 md:mb-6">
@@ -170,7 +187,7 @@ export function DocSummary({ eyebrow, title, items, note }: { eyebrow: string; t
               <span className="font-medium text-[17px] mt-3">{t}</span>
               <span className="text-muted text-[14px] mt-1.5 leading-relaxed">{text}</span>
               <span className="mt-auto pt-4 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-accent-hover">
-                Mehr dazu <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-1" />
+                {more} <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-1" />
               </span>
             </a>
           </li>

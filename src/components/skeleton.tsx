@@ -1,14 +1,18 @@
 import type { ReactNode } from "react";
 import { cx } from "./ui";
+import { getLocale } from "@/lib/i18n/server";
+import { COMMON } from "@/lib/i18n/messages/common";
 
 /**
  * Lade-Skelette im Stil der fertigen Seiten: Titel mit Kennzahlen, nummerierte Abschnitte,
  * Karten, dunkles Regal und Produktblatt. Für Screenreader als Status mit Text angekündigt.
  */
-export function SkPage({ label, children }: { label: string; children: ReactNode }) {
+export async function SkPage({ label, children }: { label: string; children: ReactNode }) {
+  // Die Beschriftungen der Ladeseiten sind deutsch; in FR/IT genügt ein allgemeines «Lädt …»
+  const l = await getLocale();
   return (
     <div role="status" aria-live="polite">
-      <span className="sr-only">{label}</span>
+      <span className="sr-only">{l === "de" ? label : COMMON[l].loading}</span>
       <div aria-hidden>{children}</div>
     </div>
   );

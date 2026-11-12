@@ -1,20 +1,21 @@
 import { AuthHead, AuthStage } from "@/components/auth/stage";
 import { safeNext } from "@/lib/safe-next";
 import { VerifyLink } from "./verify";
+import { getLocale } from "@/lib/i18n/server";
+import { ONBOARDING } from "@/lib/i18n/messages/onboarding";
 
-export const metadata = { title: "Anmelden" };
+export async function generateMetadata() {
+  return { title: ONBOARDING[await getLocale()].link.title };
+}
 
 /** Der Link wird erst per Knopfdruck eingelöst, damit Vorschauen von Mailprogrammen ihn nicht verbrauchen. */
 export default async function Page({ searchParams }: { searchParams: Promise<{ token?: string; next?: string }> }) {
   const { token, next: rawNext } = await searchParams;
   const next = safeNext(rawNext) || null;
+  const t = ONBOARDING[await getLocale()].link;
   return (
-    <AuthStage
-      eyebrow="Anmeldelink"
-      title={<>Schön, dass du <em>da bist.</em></>}
-      lead="Der Link aus deiner E-Mail gilt 20 Minuten und nur einmal. Erst dein Tipp löst ihn ein – so verbraucht ihn keine Vorschau im Mailprogramm."
-    >
-      <AuthHead eyebrow="Fast geschafft" title={<>Willkommen <em>zurück.</em></>} />
+    <AuthStage eyebrow={t.eyebrow} title={<>{t.heading[0]}<em>{t.heading[1]}</em></>} lead={t.lead}>
+      <AuthHead eyebrow={t.headEyebrow} title={<>{t.headTitle[0]}<em>{t.headTitle[1]}</em></>} />
       <VerifyLink token={token ?? ""} next={next ?? null} />
     </AuthStage>
   );

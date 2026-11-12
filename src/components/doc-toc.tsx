@@ -2,9 +2,13 @@
 import { useEffect, useState } from "react";
 import { cx } from "./ui";
 import type { TocItem } from "./doc";
+import { useLocale } from "./locale-provider";
+import { COMMON } from "@/lib/i18n/messages/common";
 
 /** Mitlaufendes Inhaltsverzeichnis: hebt den Abschnitt hervor, der gerade gelesen wird. */
-export function DocToc({ toc }: { toc: TocItem[] }) {
+export function DocToc({ toc, label: given }: { toc: TocItem[]; label?: string }) {
+  const local = COMMON[useLocale()].doc.toc;
+  const label = given ?? local;
   const [active, setActive] = useState<string | null>(null);
 
   useEffect(() => {
@@ -25,9 +29,9 @@ export function DocToc({ toc }: { toc: TocItem[] }) {
   const progress = toc.length > 1 ? (idx / (toc.length - 1)) * 100 : 100;
 
   return (
-    <nav aria-label="Inhalt" className="sticky top-24">
+    <nav aria-label={label} className="sticky top-24">
       <div className="flex items-center justify-between mb-4">
-        <p className="eyebrow">Inhalt</p>
+        <p className="eyebrow">{label}</p>
         <span className="text-[12px] text-muted tnum">{idx + 1} / {toc.length}</span>
       </div>
       <div className="relative">

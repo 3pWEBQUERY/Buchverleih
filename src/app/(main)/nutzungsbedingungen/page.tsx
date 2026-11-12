@@ -25,8 +25,8 @@ const TOC: TocItem[] = [
 
 export default function Page() {
   return (
-    <DocPage eyebrow="Rechtliches" title="Nutzungsbedingungen" toc={TOC} draft updated="Entwurf, November 2026"
-      intro={<DocSummary eyebrow="Das Wichtigste in Kürze" title="Vier Punkte vorab" note="Die Kurzfassung erleichtert das Lesen. Massgebend ist der vollständige Text." items={[
+    <DocPage germanOnly eyebrow="Rechtliches" title="Nutzungsbedingungen" toc={TOC} draft updated="Entwurf, November 2026"
+      intro={<DocSummary germanOnly eyebrow="Das Wichtigste in Kürze" title="Vier Punkte vorab" note="Die Kurzfassung erleichtert das Lesen. Massgebend ist der vollständige Text." items={[
         ["Leihregal vermittelt", "Jede Leihe, jeder Tausch und jedes Geschenk ist eine Vereinbarung zwischen Mitgliedern.", "#plattform"],
         ["Gebrauchsleihe", "Unentgeltlich nach Obligationenrecht. Rückgabe bis Fristende, Ersatz bei Verlust oder Schaden.", "#leihe"],
         ["Kein Geld", "Keine Leihgebühr, keine Kaution, kein Verkauf zwischen Mitgliedern.", "#unentgeltlich"],

@@ -89,7 +89,7 @@ export async function AuthStage({ eyebrow, title, lead, steps, children }: { eye
           <div className="mt-auto px-4 md:px-10 xl:px-16 pt-10 pb-10 lg:pb-14">
             <div className="surface-night rounded-[12px] px-5 md:px-6 pt-5 pb-3 anim-rise" style={{ animationDelay: "220ms" }}>
               <p className="text-[12.5px] text-night-muted mb-1">{a.inShelves}</p>
-              <BookRow items={books} height={138} label={a.inShelvesAria} />
+              <BookRow l={l} items={books} height={138} label={a.inShelvesAria} />
             </div>
           </div>
         )}

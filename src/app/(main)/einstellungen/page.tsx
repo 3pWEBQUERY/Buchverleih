@@ -4,7 +4,9 @@ import { sql } from "@/lib/db";
 import { listSpots } from "@/lib/copies";
 import { EMAIL_CATEGORIES } from "@/lib/notify";
 import { fmtDay } from "@/lib/dates";
-import { trustLabel } from "@/lib/i18n/de-CH";
+import { labels } from "@/lib/i18n/labels";
+import { SETTINGS } from "@/lib/i18n/messages/settings";
+import type { Locale } from "@/lib/i18n/locale";
 import { PageTitle, cx } from "@/components/ui";
 import { StepSection } from "@/components/step-section";
 import { Monogram } from "@/components/person/monogram";
@@ -15,24 +17,27 @@ import { SettingsNav, type NavGroup } from "./settings-nav";
 import { LanguageChoice } from "@/components/language-switch";
 import { getLocale } from "@/lib/i18n/server";
 
-const LANG_ROW = {
-  de: ["Sprache", "Gilt für die App in diesem Browser sowie für deine E-Mails und Push-Mitteilungen."],
-  fr: ["Langue", "S’applique à l’application dans ce navigateur ainsi qu’à tes e-mails et notifications push."],
-  it: ["Lingua", "Vale per l’app in questo browser e per le tue e-mail e notifiche push."],
-} as const;
+export async function generateMetadata() {
+  return { title: SETTINGS[await getLocale()].title };
+}
 
-export const metadata = { title: "Einstellungen" };
-
-const NAV: NavGroup[] = [
-  { title: "Konto", items: [{ id: "profilbild", label: "Profilbild" }, { id: "profil", label: "Profil" }, { id: "mobilnummer", label: "Mobilnummer" }, { id: "passkeys", label: "Passkeys" }] },
-  { title: "Leihen", items: [{ id: "uebergabeorte", label: "Übergabeorte" }, { id: "ferienmodus", label: "Ferienmodus" }, { id: "blockiert", label: "Blockiert" }] },
-  { title: "Allgemein", items: [{ id: "sprache", label: "Sprache" }, { id: "push", label: "Push" }, { id: "benachrichtigungen", label: "E-Mail" }, { id: "darstellung", label: "Darstellung" }, { id: "daten", label: "Daten" }] },
-  { title: "Gefahrenzone", danger: true, items: [{ id: "konto-loeschen", label: "Konto löschen" }] },
-];
+function nav(l: Locale): NavGroup[] {
+  const g = SETTINGS[l].groups;
+  const n = SETTINGS[l].nav;
+  const items = (ids: (keyof typeof n)[]) => ids.map((id) => ({ id, label: n[id] }));
+  return [
+    { title: g.account, items: items(["profilbild", "profil", "mobilnummer", "passkeys"]) },
+    { title: g.lending, items: items(["uebergabeorte", "ferienmodus", "blockiert"]) },
+    { title: g.general, items: items(["sprache", "push", "benachrichtigungen", "darstellung", "daten"]) },
+    { title: g.danger, danger: true, items: [{ id: "konto-loeschen", label: n.kontoLoeschen }] },
+  ];
+}
 
 export default async function Page() {
   const user = await pageUser("/einstellungen");
-  const lang = LANG_ROW[await getLocale()];
+  const l = await getLocale();
+  const m = SETTINGS[l];
+  const r = m.rows;
   const [spots, passkeys, blocks] = await Promise.all([
     listSpots(user.id),
     sql<{ id: string; name: string; created_at: Date; last_used_at: Date | null }[]>`
@@ -41,91 +46,91 @@ export default async function Page() {
       select b.blocked_id, u.first_name, b.created_at from blocks b join users u on u.id = b.blocked_id
        where b.blocker_id = ${user.id} order by b.created_at desc`,
   ]);
-  const categories = Object.entries(EMAIL_CATEGORIES).map(([key, label]) => ({
+  const categories = Object.keys(EMAIL_CATEGORIES).map((key) => ({
     key,
-    label: label.replace(/\s*\(immer aktiv\)/, ""),
+    label: m.emailCategories[key] ?? key,
     locked: key === "cases",
   }));
 
   return (
     <div>
-      <PageTitle eyebrow="Konto und Vorlieben" sub="Profil, Anmeldung, Übergabeorte und Benachrichtigungen. Änderungen gelten sofort."
+      <PageTitle eyebrow={m.eyebrow} sub={m.sub}
         aside={
           <div className="rounded-[10px] border border-line flex items-center gap-3.5 pl-3 pr-5 py-3 anim-rise min-w-0 max-w-full" style={{ animationDelay: "60ms" }}>
             <Monogram name={user.first_name || "?"} seed={user.id} size={44} photo={user.avatar_key} />
             <span className="min-w-0 leading-tight">
-              <span className="block font-medium truncate">{user.first_name} <span className="text-muted font-normal">· {trustLabel[user.trust_level]}</span></span>
+              <span className="block font-medium truncate">{user.first_name} <span className="text-muted font-normal">· {labels(l).trustLabel[user.trust_level]}</span></span>
               <span className="block text-[13px] text-muted truncate mt-0.5">{user.email}</span>
             </span>
           </div>
         }>
-        Einstellungen.
+        {m.heading}
       </PageTitle>
 
       <div className="lg:grid lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-12 xl:gap-16">
-        <SettingsNav groups={NAV} />
+        <SettingsNav groups={nav(l)} label={m.sectionsAria} />
 
         <div className="min-w-0">
-          <StepSection n={1} first title="Konto" desc="Was andere von dir sehen und wie du dich anmeldest.">
+          <StepSection n={1} first title={m.account.title} desc={m.account.desc}>
             <Card>
-              <Row id="profilbild" label="Profilbild" text="Ein Bild von dir, freiwillig. Keine anderen Personen, keine Werbung.">
+              <Row id="profilbild" t={r.profilbild}>
                 <AvatarEditor userId={user.id} name={user.first_name} avatarKey={user.avatar_key} />
               </Row>
-              <Row id="profil" label="Profil" text="Andere sehen deinen Vornamen und deine Gemeinde, nie deine Adresse.">
+              <Row id="profil" t={r.profil}>
                 <ProfileForm firstName={user.first_name} plz={user.plz ?? ""} municipality={user.municipality} />
               </Row>
-              <Row id="mobilnummer" label="Mobilnummer" text="Nötig vor der ersten Anfrage. Eine Nummer, ein Konto. Andere Mitglieder sehen sie nie.">
-                <PhoneSection phone={user.phone_e164} verifiedAt={user.phone_verified_at ? fmtDay(user.phone_verified_at) : null} />
+              <Row id="mobilnummer" t={r.mobilnummer}>
+                <PhoneSection phone={user.phone_e164} verifiedAt={user.phone_verified_at ? fmtDay(user.phone_verified_at, l) : null} />
               </Row>
-              <Row id="passkeys" label="Passkeys" text="Melde dich mit Fingerabdruck, Gesicht oder Geräte-PIN an, ohne E-Mail-Link.">
+              <Row id="passkeys" t={r.passkeys}>
                 <PasskeyList passkeys={passkeys.map((p) => ({
                   id: p.id,
                   name: p.name,
-                  created: fmtDay(p.created_at),
-                  lastUsed: p.last_used_at ? fmtDay(p.last_used_at) : null,
+                  created: fmtDay(p.created_at, l),
+                  lastUsed: p.last_used_at ? fmtDay(p.last_used_at, l) : null,
                 }))} />
               </Row>
             </Card>
           </StepSection>
 
-          <StepSection n={2} title="Leihen" desc="Wo du Bücher übergibst und wer dich anfragen kann.">
+          <StepSection n={2} title={m.lending.title} desc={m.lending.desc}>
             <Card>
-              <Row id="uebergabeorte" label="Übergabeorte" text="Höchstens drei. Wer anfragt, sieht nur die Bezeichnung. Den genauen Ort zeigen wir erst nach deiner Annahme.">
+              <Row id="uebergabeorte" t={r.uebergabeorte}>
                 <SpotList spots={spots} />
               </Row>
-              <Row id="ferienmodus" label="Ferienmodus" text="Dein Regal bleibt sichtbar, aber niemand kann anfragen. Laufende Leihen sind nicht betroffen.">
+              <Row id="ferienmodus" t={r.ferienmodus}>
                 <ShelfPause paused={user.shelf_paused} />
               </Row>
-              <Row id="blockiert" label="Blockierte Personen" text="Blockierte Personen sehen dein Regal nicht und können dich nicht anfragen.">
-                <BlockList blocks={blocks.map((b) => ({ id: b.blocked_id, name: b.first_name, since: fmtDay(b.created_at) }))} />
+              <Row id="blockiert" t={r.blockiert}>
+                <BlockList blocks={blocks.map((b) => ({ id: b.blocked_id, name: b.first_name, since: fmtDay(b.created_at, l) }))} />
               </Row>
             </Card>
           </StepSection>
 
-          <StepSection n={3} title="Allgemein" desc="Mitteilungen, Aussehen und deine Daten.">
+          <StepSection n={3} title={m.general.title} desc={m.general.desc}>
             <Card>
-              <Row id="sprache" label={lang[0]} text={lang[1]}>
+              <Row id="sprache" t={r.sprache}>
                 <LanguageChoice />
               </Row>
-              <Row id="push" label="Push-Mitteilungen" text="Neues sofort aufs Handy oder den Computer, auch wenn Leihregal geschlossen ist. Pro Gerät einzeln.">
+              <Row id="push" t={r.push}>
                 <PushSettings />
               </Row>
-              <Row id="benachrichtigungen" label="E-Mail-Benachrichtigungen" text="In der App siehst du immer alles. Hier legst du fest, was zusätzlich per E-Mail kommt.">
+              <Row id="benachrichtigungen" t={r.benachrichtigungen}>
                 <EmailPrefs categories={categories} prefs={user.email_prefs ?? {}} />
               </Row>
-              <Row id="darstellung" label="Darstellung" text="Hell, dunkel oder wie dein System. Gilt für diesen Browser.">
+              <Row id="darstellung" t={r.darstellung}>
                 <ThemeChoice />
               </Row>
-              <Row id="daten" label="Datenexport" text="Alles, was wir zu dir gespeichert haben, als JSON-Datei.">
+              <Row id="daten" t={r.daten}>
                 <ExportData />
               </Row>
-              <Row id="abmelden" label="Abmelden" text="Beendet die Sitzung auf diesem Gerät. Andere Geräte bleiben angemeldet.">
+              <Row id="abmelden" t={r.abmelden}>
                 <Logout />
               </Row>
             </Card>
           </StepSection>
 
-          <StepSection id="konto-loeschen" n={4} title={<span className="text-late">Konto löschen</span>} desc="Möglich, sobald kein Vorgang mehr offen ist. Lässt sich nicht rückgängig machen.">
+          <StepSection id="konto-loeschen" n={4} title={<span className="text-late">{m.danger.title}</span>} desc={m.danger.desc}>
             <div className="rounded-[10px] border border-late/35 bg-late/[0.03] p-5 md:p-6">
               <DeleteAccount />
             </div>
@@ -140,7 +145,7 @@ function Card({ children }: { children: ReactNode }) {
   return <div className="rounded-[10px] border border-line divide-y divide-line">{children}</div>;
 }
 
-function Row({ id, label, text, children, className }: { id: string; label: string; text: string; children: ReactNode; className?: string }) {
+function Row({ id, t: [label, text], children, className }: { id: string; t: [string, string]; children: ReactNode; className?: string }) {
   return (
     <div id={id} className={cx("scroll-mt-32 md:scroll-mt-20 lg:scroll-mt-10 p-5 md:p-6 2xl:grid 2xl:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] 2xl:gap-10", className)}>
       <div className="mb-4 2xl:mb-0">

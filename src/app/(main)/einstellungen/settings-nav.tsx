@@ -8,7 +8,7 @@ export type NavGroup = { title: string; danger?: boolean; items: { id: string; l
  * Abschnittsnavigation der Einstellungen. Desktop: sticky Liste links.
  * Mobil: sticky Pillenleiste unter dem Kopf. Der sichtbare Abschnitt wird hervorgehoben.
  */
-export function SettingsNav({ groups }: { groups: NavGroup[] }) {
+export function SettingsNav({ groups, label = "Abschnitte" }: { groups: NavGroup[]; label?: string }) {
   const ids = groups.flatMap((g) => g.items.map((i) => i.id));
   const [active, setActive] = useState(ids[0]);
   const bar = useRef<HTMLDivElement>(null);
@@ -57,7 +57,7 @@ export function SettingsNav({ groups }: { groups: NavGroup[] }) {
       </div>
 
       {/* Desktop */}
-      <nav aria-label="Abschnitte" className="hidden lg:block sticky top-10 self-start pt-2">
+      <nav aria-label={label} className="hidden lg:block sticky top-10 self-start pt-2">
         {groups.map((g) => (
           <div key={g.title} className="mb-6">
             <p className={cx("eyebrow mb-2 px-3", g.danger && "!text-late")}>{g.title}</p>

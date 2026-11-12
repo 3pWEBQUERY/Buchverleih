@@ -2,6 +2,8 @@
 import type { ReactNode } from "react";
 import { cx } from "./ui";
 import { IconCheck, IconPlus } from "./icons";
+import { useLocale } from "./locale-provider";
+import { COMMON } from "@/lib/i18n/messages/common";
 
 /**
  * Gemeinsame Bedienelemente für Formularseiten (Buch bearbeiten, Exemplar anfragen):
@@ -29,14 +31,15 @@ export function OptionCard({ on, title, desc, icon, multi, compact, descDesktopO
 
 /** Zahl mit Minus/Plus statt langer Segmentleiste */
 export function Stepper({ value, min, max, format, onChange, label, full }: { value: number; min: number; max: number; format: (n: number) => string; onChange: (n: number) => void; label: string; full?: boolean }) {
+  const t = COMMON[useLocale()];
   const btn = "h-10 w-10 grid place-items-center rounded-[6px] border border-line-strong text-ink-2 hover:border-accent hover:text-accent-hover transition-colors disabled:opacity-30 disabled:pointer-events-none";
   return (
     <div className={cx("items-center gap-2", full ? "flex w-full justify-between" : "inline-flex")} role="group" aria-label={label}>
-      <button type="button" className={btn} disabled={value <= min} onClick={() => onChange(value - 1)} aria-label={`${label} verringern`}>
+      <button type="button" className={btn} disabled={value <= min} onClick={() => onChange(value - 1)} aria-label={t.stepDown(label)}>
         <svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden><path d="M6 12h12" /></svg>
       </button>
       <output className="min-w-[64px] flex-1 text-center text-[15px] font-medium tnum" aria-live="polite">{format(value)}</output>
-      <button type="button" className={btn} disabled={value >= max} onClick={() => onChange(value + 1)} aria-label={`${label} erhöhen`}>
+      <button type="button" className={btn} disabled={value >= max} onClick={() => onChange(value + 1)} aria-label={t.stepUp(label)}>
         <IconPlus width={16} height={16} />
       </button>
     </div>

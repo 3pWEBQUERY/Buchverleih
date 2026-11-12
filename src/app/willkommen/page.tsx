@@ -5,8 +5,12 @@ import { AuthStage } from "@/components/auth/stage";
 import { Onboarding } from "./onboarding";
 import { env } from "@/lib/env";
 import { requirePhone } from "@/lib/trust";
+import { getLocale } from "@/lib/i18n/server";
+import { ONBOARDING } from "@/lib/i18n/messages/onboarding";
 
-export const metadata = { title: "Willkommen" };
+export async function generateMetadata() {
+  return { title: ONBOARDING[await getLocale()].welcome.title };
+}
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next: rawNext } = await searchParams;
@@ -15,17 +19,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
   if (!u) redirect("/anmelden");
   const step = !u.onboarded_at ? "profile" : requirePhone() && !u.phone_verified_at ? "phone" : "done";
   if (step === "done") redirect(next || "/");
+  const w = ONBOARDING[await getLocale()].welcome;
   return (
-    <AuthStage
-      eyebrow="Konto einrichten"
-      title={<>Zwei Schritte, dann <em>leihst du.</em></>}
-      lead="Danach siehst du, was in den Regalen rund um dich steht, und kannst selbst verleihen. Das Einrichten dauert keine zwei Minuten."
-      steps={[
-        ["Profil", "Vorname, Postleitzahl und Bestätigung, dass du mindestens 16 bist."],
-        ["Mobilnummer", "Eine Nummer, ein Konto. Andere Mitglieder sehen sie nie."],
-        ["Loslegen", "Bücher in der Nähe anfragen oder das erste eigene Buch erfassen."],
-      ]}
-    >
+    <AuthStage eyebrow={w.eyebrow} title={<>{w.heading[0]}<em>{w.heading[1]}</em></>} lead={w.lead} steps={w.steps}>
       <Onboarding initialStep={step} next={next ?? "/"} firstName={u.first_name} devCodes={env.showCodes} />
     </AuthStage>
   );

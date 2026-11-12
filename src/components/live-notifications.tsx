@@ -5,6 +5,8 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { api } from "@/lib/client";
 import { cx } from "./ui";
 import { IconBell, IconClose } from "./icons";
+import { useLocale } from "./locale-provider";
+import { COMMON } from "@/lib/i18n/messages/common";
 
 type Item = { id: string; type: string; title: string; body: string; href: string | null; loanId: string | null; createdAt: string };
 type Ctx = { unread: number; bump: number };
@@ -21,6 +23,7 @@ const TOAST_MS = 8000;
  * fragt die Seite jede Minute nach.
  */
 export function LiveNotifications({ initial, children }: { initial: number; children: ReactNode }) {
+  const t = COMMON[useLocale()].live;
   const [unread, setUnread] = useState(initial);
   const [bump, setBump] = useState(0);
   const [toasts, setToasts] = useState<Item[]>([]);
@@ -101,7 +104,7 @@ export function LiveNotifications({ initial, children }: { initial: number; chil
     <LiveCtx.Provider value={{ unread, bump }}>
       {children}
       {/* Ansage für Screenreader getrennt von den klickbaren Hinweisen */}
-      <p className="sr-only" role="status" aria-live="polite">{toasts[0] ? `Neue Benachrichtigung: ${toasts[0].title}` : ""}</p>
+      <p className="sr-only" role="status" aria-live="polite">{toasts[0] ? t.srNew(toasts[0].title) : ""}</p>
       <div
         className="fixed z-50 inset-x-3 top-[64px] md:top-auto md:inset-x-auto md:bottom-6 md:right-6 flex flex-col gap-2 md:w-[380px] pointer-events-none">
         {toasts.map((t) => <Toast key={t.id} item={t} onClose={() => dismiss(t.id)} />)}
@@ -111,6 +114,7 @@ export function LiveNotifications({ initial, children }: { initial: number; chil
 }
 
 function Toast({ item, onClose }: { item: Item; onClose: () => void }) {
+  const t = COMMON[useLocale()].live;
   const [paused, setPaused] = useState(false);
   const left = useRef(TOAST_MS);
   useEffect(() => {
@@ -127,13 +131,13 @@ function Toast({ item, onClose }: { item: Item; onClose: () => void }) {
         <span aria-hidden className="h-9 w-9 rounded-full bg-accent-soft text-accent-hover grid place-items-center"><IconBell width={17} height={17} /></span>
         <Link href={href} onClick={onClose} className="min-w-0 group">
           <p className="text-[12px] text-muted flex items-center gap-1.5">
-            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent" /> Neue Benachrichtigung · gerade eben
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent" /> {t.newNow}
           </p>
           <p className="text-[14.5px] font-medium leading-snug mt-1 group-hover:underline underline-offset-2 decoration-1">{item.title}</p>
           {item.body && <p className="text-[13.5px] text-muted leading-snug mt-1 line-clamp-2">{item.body}</p>}
-          <p className="text-[13px] font-medium text-accent-hover mt-2">{item.href ? "Ansehen" : "Alle Benachrichtigungen"} →</p>
+          <p className="text-[13px] font-medium text-accent-hover mt-2">{item.href ? t.view : t.all} →</p>
         </Link>
-        <button type="button" onClick={onClose} aria-label="Hinweis schliessen"
+        <button type="button" onClick={onClose} aria-label={t.close}
           className="h-9 w-9 -mt-1 rounded-[6px] text-muted hover:text-ink hover:bg-paper-3 grid place-items-center transition-colors">
           <IconClose width={16} height={16} />
         </button>
@@ -159,8 +163,9 @@ export function LiveBell({ size = 20 }: { size?: number }) {
 /** Anzahl ungelesener Benachrichtigungen als Marke (Seitenleiste) oder Punkt (Kopfzeile mobil) */
 export function UnreadBadge({ compact }: { compact?: boolean }) {
   const { unread, bump } = useUnread();
+  const t = COMMON[useLocale()].live;
   if (!unread) return null;
-  const label = `${unread} ungelesen`;
+  const label = t.unread(unread);
   if (compact) return <span key={bump} className="block h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-paper anim-pop"><span className="sr-only">, {label}</span></span>;
   return (
     <span key={bump} className="min-w-6 h-6 px-1.5 rounded-[6px] bg-accent text-accent-ink text-[12px] font-bold tnum grid place-items-center anim-pop">

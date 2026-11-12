@@ -69,7 +69,7 @@ export function MoreBooks({ related, ownerName, ownerId, workId, title, hasOrigi
               )}
             </div>
             <div className="surface-night rounded-[12px] px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5 -mx-1 md:mx-0 flex-1">
-              <BookRow label={s.title} height={165} hrefBase="/exemplar/"
+              <BookRow l={l} label={s.title} height={165} hrefBase="/exemplar/"
                 items={s.withNote ? s.items.map((c) => ({ ...c, note: note(c) })) : s.items} />
             </div>
           </div>

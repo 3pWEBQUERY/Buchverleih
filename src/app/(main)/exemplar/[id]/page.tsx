@@ -12,6 +12,7 @@ import { Cover, imageUrl } from "@/components/cover";
 import { cx } from "@/components/ui";
 import { shelfStatusLocal } from "@/lib/i18n/messages/shelf-status";
 import { getLocale } from "@/lib/i18n/server";
+import { translateError } from "@/lib/i18n/messages/errors";
 import { labels } from "@/lib/i18n/labels";
 import { EXEMPLAR } from "@/lib/i18n/messages/exemplar";
 import { responseText } from "@/lib/response-time";
@@ -263,7 +264,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               offers={copy.offers}
               calendar={cal}
               loggedIn={Boolean(user)}
-              blocker={blocker}
+              blocker={blocker && translateError(blocker, l)}
               paused={copy.owner_paused}
               myOffers={myOffers}
               loanDays={loanDays}

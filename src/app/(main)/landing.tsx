@@ -8,6 +8,7 @@ import { demoCalendar } from "@/lib/loans/calendar-demo";
 import { addDays, todayCH } from "@/lib/dates";
 import { getLocale } from "@/lib/i18n/server";
 import { PUBLIC } from "@/lib/i18n/messages/public";
+import type { Locale } from "@/lib/i18n/locale";
 
 type LM = (typeof PUBLIC)["de"]["landing"];
 
@@ -27,7 +28,8 @@ const CLASSICS: [string, string][] = [
 
 export async function Landing() {
   const today = todayCH();
-  const m = PUBLIC[await getLocale()].landing;
+  const loc = await getLocale();
+  const m = PUBLIC[loc].landing;
   const [[stats], titles] = await Promise.all([
     sql<{ copies: number; members: number; places: number }[]>`
       select (select count(*)::int from copies c join users u on u.id = c.owner_id where c.removed_at is null and cardinality(c.offers) > 0 and c.visibility = 'all' and u.deleted_at is null) as copies,
@@ -95,7 +97,7 @@ export async function Landing() {
         </div>
         <ol className="grid grid-flow-col auto-cols-[82%] sm:auto-cols-[48%] lg:grid-flow-row lg:grid-cols-4 gap-4 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 lg:mx-0 lg:px-0 pb-2" style={{ scrollbarWidth: "none" }}>
           <Step n="01" title={m.steps[0][0]} text={m.steps[0][1]}>
-            <MiniCalendar today={today} />
+            <MiniCalendar today={today} loc={loc} />
           </Step>
           <Step n="02" title={m.steps[1][0]} text={m.steps[1][1]}>
             <MiniQr hint={m.orDigits} />
@@ -128,7 +130,7 @@ export async function Landing() {
             <div className="mt-auto pt-8">
               {/* Derselbe Verleihkalender wie in der App, mit Beispieldaten */}
               <div className="rounded-[10px] bg-paper text-ink p-4 md:p-5" aria-label={m.calAria}>
-                <CalendarView cal={demoCalendar(today)} fit />
+                <CalendarView cal={demoCalendar(today, loc)} fit />
               </div>
             </div>
           </article>
@@ -253,10 +255,10 @@ function Step({ n, title, text, children }: { n: string; title: string; text: st
 }
 
 /** Vorschau im Schritt «Anfragen»: derselbe Kalender wie in der App, mit gewähltem Zeitraum */
-function MiniCalendar({ today }: { today: string }) {
+function MiniCalendar({ today, loc }: { today: string; loc: Locale }) {
   return (
     <div aria-hidden className="rounded-[8px] bg-paper p-3 -mx-1">
-      <CalendarView cal={demoCalendar(today)} compact fit showLegend={false} selection={{ start: addDays(today, 66), end: addDays(today, 80), ok: true }} />
+      <CalendarView cal={demoCalendar(today, loc)} compact fit showLegend={false} selection={{ start: addDays(today, 66), end: addDays(today, 80), ok: true }} />
     </div>
   );
 }
