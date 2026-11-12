@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cx } from "./ui";
-import { IconSearch } from "./icons";
+import { IconDots, IconSearch } from "./icons";
 
 export function NavLink({ href, icon, children, exact, tab }: { href: string; icon: ReactNode; children: ReactNode; exact?: boolean; tab?: boolean }) {
   const path = usePathname();
@@ -66,4 +66,41 @@ export function Shortcuts() {
     return () => window.removeEventListener("keydown", onKey);
   }, [router]);
   return null;
+}
+
+/** Mobil: «Mehr»-Menü für Seiten, die nicht in der unteren Leiste stehen (Kreise, Wunschliste …) */
+export function MobileMore({ links }: { links: { href: string; label: string }[] }) {
+  const [open, setOpen] = useState(false);
+  const path = usePathname();
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => setOpen(false), [path]);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" aria-expanded={open} aria-haspopup="true" aria-label="Weitere Seiten" onClick={() => setOpen((o) => !o)}
+        className="h-11 w-11 grid place-items-center rounded-[6px] hover:bg-paper-3 transition-colors">
+        <IconDots />
+      </button>
+      {open && (
+        <nav aria-label="Weitere Seiten" className="absolute right-0 top-12 w-56 rounded-[10px] border border-line-strong bg-paper py-1.5 anim-sheet">
+          {links.map((l) => {
+            const active = path === l.href || path.startsWith(l.href + "/");
+            return (
+              <Link key={l.href} href={l.href} aria-current={active ? "page" : undefined}
+                className={cx("flex items-center h-11 px-4 text-[15px] transition-colors", active ? "text-accent-hover font-medium bg-accent-soft/30" : "hover:bg-paper-2")}>
+                {l.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
+    </div>
+  );
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Monogram } from "@/components/person/monogram";
 import type { SessionUser } from "@/lib/auth/session";
-import { NavLink, SearchTrigger, Shortcuts } from "./shell-client";
+import { MobileMore, NavLink, SearchTrigger, Shortcuts } from "./shell-client";
 import { LiveBell, LiveNotifications, UnreadBadge } from "./live-notifications";
 import { Wordmark, LogoMark } from "./brand";
 import { IconBell, IconBookmark, IconCircles, IconHome, IconLoans, IconScan, IconSearch, IconSettings, IconShelf, IconShield } from "./icons";
@@ -56,10 +56,18 @@ export function AppShell({ user, unread, children }: { user: SessionUser; unread
         <header className="md:hidden sticky top-0 z-30 bg-paper/90 backdrop-blur-md border-b border-line h-14 px-4 flex items-center justify-between">
           <Wordmark />
           <div className="flex items-center">
-            <Link href="/suche" className="p-2.5" aria-label="Suche"><IconSearch /></Link>
-            <Link href="/benachrichtigungen" className="relative p-2.5" aria-label="Benachrichtigungen">
+            <Link href="/suche" className="h-11 w-11 grid place-items-center" aria-label="Suche"><IconSearch /></Link>
+            <Link href="/benachrichtigungen" className="relative h-11 w-11 grid place-items-center" aria-label="Benachrichtigungen">
               <IconBell /> <span className="absolute top-2 right-2"><UnreadBadge compact /></span>
             </Link>
+            <MobileMore links={[
+              { href: "/kreise", label: "Kreise" },
+              { href: "/wunschliste", label: "Wunschliste" },
+              { href: "/regal/kalender", label: "Verleihkalender" },
+              { href: "/einstellungen", label: "Einstellungen" },
+              ...(mod ? [{ href: "/moderation", label: "Moderation" }] : []),
+              { href: "/hilfe", label: "Hilfe" },
+            ]} />
           </div>
         </header>
         <main id="inhalt" className="flex-1 px-4 md:px-12 lg:px-16 pt-7 md:pt-14 pb-32 md:pb-20 w-full max-w-[1240px]">{children}</main>

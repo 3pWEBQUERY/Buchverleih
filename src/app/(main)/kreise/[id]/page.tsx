@@ -103,7 +103,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <StatTile n={circle.member_count} label={circle.member_count === 1 ? "Mitglied" : "Mitglieder"} href="#mitglieder" live={admin && pendingCount > 0} />
           <StatTile n={circle.copy_count} label={circle.copy_count === 1 ? "Buch" : "Bücher"} href="#regal" />
           <StatTile n={free} label="jetzt frei" href="#regal" />
-          <StatTile n={circle.loan_days} label="Tage Frist" href="#regeln" />
+          <StatTile n={circle.loan_days} label="Tage Leihfrist" href="#regeln" />
         </dl>
       </header>
 

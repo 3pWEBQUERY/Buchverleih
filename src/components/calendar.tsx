@@ -20,9 +20,9 @@ function barTone(b: CalendarBar) {
   if (b.kind === "block") return "text-muted border border-line-strong bg-paper";
   if (b.paused) return "bg-paper-3 text-muted border border-dashed border-line-strong";
   if (!b.status) return "bg-ink-2/55 text-paper";
-  if (b.status === "active" || b.status === "return_reported") return "bg-lent text-white";
-  if (b.status === "disputed") return "bg-late text-white";
-  return "bg-wait text-white";
+  if (b.status === "active" || b.status === "return_reported") return "bg-lent text-paper";
+  if (b.status === "disputed") return "bg-late text-paper";
+  return "bg-wait text-paper";
 }
 
 /** Wochentag 0 = Montag */
@@ -127,7 +127,7 @@ export function CalendarView({
             return onPick ? (
               <button key={f.start} type="button" onClick={() => onPick(f, f.start)}
                 className="absolute group rounded-[6px] border border-dashed border-ok/50 bg-ok/[0.06] hover:bg-ok/[0.14] hover:border-ok focus-visible:border-ok transition-colors flex items-center gap-1 px-1.5 text-[11.5px] font-medium text-ok overflow-hidden whitespace-nowrap"
-                style={style} aria-label={`Frei ab ${fmtDay(dayToDate(f.start))}, ${f.days > 400 ? "unbegrenzt" : `${f.days} Tage`}. Zeitraum wählen`}>
+                style={style} aria-label={`Frei ab ${fmtDay(dayToDate(f.start))}, ${f.days > 400 ? "unbegrenzt" : `${f.days} ${f.days === 1 ? "Tag" : "Tage"}`}. Zeitraum wählen`}>
                 <IconPlus width={12} height={12} className="flex-none" /><span className="truncate">{label}</span>
               </button>
             ) : (
@@ -152,7 +152,7 @@ export function CalendarView({
                   {!compact && b.end && <span className="opacity-75 min-w-0 truncate tnum hidden md:inline">{range}</span>}
                 </div>
                 {bufEnd && b.bufferDays > 0 && (
-                  <span aria-hidden className="absolute rounded-r-[4px]" title={`Puffer ${b.bufferDays} Tage`}
+                  <span aria-hidden className="absolute rounded-r-[4px]" title={`Puffer ${b.bufferDays} ${b.bufferDays === 1 ? "Tag" : "Tage"}`}
                     style={{ top: top + 2, height: trackH - 4, left: `${pct(b.end!)}%`, width: `${span(b.end!, bufEnd)}%`, backgroundImage: HATCH }} />
                 )}
                 {b.handoverChatId && bufEnd && (
@@ -169,7 +169,7 @@ export function CalendarView({
           {selection && (
             <div aria-hidden className={cx("absolute rounded-[7px] border-2 pointer-events-none transition-[left,width] duration-200", selection.ok ? "border-accent bg-accent/[0.12]" : "border-late bg-late/10")}
               style={{ top: top - 2, height: trackH + 4, left: `${pct(selection.start)}%`, width: `${Math.max(0.8, span(selection.start, selection.end))}%` }}>
-              <span className={cx("absolute left-0 whitespace-nowrap text-[11px] font-medium px-1.5 h-[18px] inline-flex items-center rounded-[4px]", selection.ok ? "bg-accent text-accent-ink" : "bg-late text-white")}
+              <span className={cx("absolute left-0 whitespace-nowrap text-[11px] font-medium px-1.5 h-[18px] inline-flex items-center rounded-[4px]", selection.ok ? "bg-accent text-accent-ink" : "bg-late text-paper")}
                 style={{ top: trackH + 6 }}>
                 {selection.ok ? "deine Anfrage" : "belegt"}
               </span>

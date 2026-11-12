@@ -102,7 +102,7 @@ export function Timeline({ loan }: { loan: LoanView }) {
                 <span className={cx(
                   "relative h-7 w-7 rounded-full grid place-items-center flex-none text-[12px] font-semibold tnum transition-colors",
                   st.done ? "bg-ink-2 text-paper"
-                    : isCur ? (bad ? "bg-late text-white" : "bg-accent text-accent-ink")
+                    : isCur ? (bad ? "bg-late text-paper" : "bg-accent text-accent-ink")
                     : ended ? "border border-line text-muted/60" : "border-[1.5px] border-line-strong text-muted",
                 )}>
                   {st.done ? <IconCheck width={14} height={14} /> : i + 1}

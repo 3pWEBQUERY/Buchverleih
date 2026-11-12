@@ -138,7 +138,7 @@ export function RequestPanel({
       </Section>
 
       {/* Zusammenfassung mit dem einzigen Akzent-Knopf */}
-      <div className="sticky bottom-[84px] md:bottom-6 z-20 mt-10 anim-rise">
+      <div className="sticky bottom-[calc(84px+env(safe-area-inset-bottom))] md:bottom-6 z-20 mt-10 anim-rise">
         <div className="rounded-[12px] border border-line-strong bg-paper/95 backdrop-blur-md p-3 pl-4 md:p-5 flex items-center justify-between gap-3 md:gap-4">
           <div className="min-w-0" aria-live="polite">
             {kind === "lend" ? (

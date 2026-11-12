@@ -155,7 +155,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
             <p className="eyebrow !text-accent-ink/75">Dein Regal ist noch leer</p>
             <h2 className="display text-[28px] md:text-[38px] mt-3 max-w-[14ch]">Ein Buch einstellen dauert <em>unter 20 Sekunden.</em></h2>
           </div>
-          <Link href="/regal/neu" className="h-14 px-7 rounded-[6px] bg-paper text-accent-hover font-semibold inline-flex items-center gap-2 justify-center"><IconScan width={20} height={20} /> Erstes Buch scannen</Link>
+          <Link href="/regal/neu" className="h-14 px-7 rounded-[6px] bg-night-ink text-accent-hover font-semibold inline-flex items-center gap-2 justify-center"><IconScan width={20} height={20} /> Erstes Buch scannen</Link>
         </section>
       </div>
     );

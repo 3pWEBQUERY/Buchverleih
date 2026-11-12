@@ -39,7 +39,7 @@ export function StatTile({ n, label, href, live }: { n: ReactNode; label: string
   );
   // Innerhalb einer <dl>: dt/dd bleiben direkte Kinder des div, der Link liegt als Fläche darüber
   return (
-    <div className={cx("relative rounded-[8px] bg-paper-2 px-4 py-3 min-w-[92px] flex flex-col-reverse justify-end", href && "hover:bg-paper-3 transition-colors")}>
+    <div className={cx("relative rounded-[8px] bg-paper-2 px-3 sm:px-4 py-3 min-w-0 sm:min-w-[92px] flex flex-col-reverse justify-end", href && "hover:bg-paper-3 transition-colors")}>
       {inner}
       {href && <a href={href} className="absolute inset-0 rounded-[8px]" aria-label={`${n} ${label}`} />}
     </div>

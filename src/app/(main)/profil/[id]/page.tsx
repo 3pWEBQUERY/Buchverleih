@@ -89,11 +89,11 @@ export default async function ProfilPage({ params }: Params) {
 
   const since = sinceFmt.format(new Date(p.member_since));
   const response = p.median_response_hours == null ? null
-    : p.median_response_hours < 1 ? "unter 1 Stunde"
-    : p.median_response_hours < 24 ? `ca. ${Math.round(p.median_response_hours)} Std.`
-    : `ca. ${Math.round(p.median_response_hours / 24)} ${Math.round(p.median_response_hours / 24) === 1 ? "Tag" : "Tage"}`;
+    : p.median_response_hours < 1 ? "in weniger als einer Stunde"
+    : p.median_response_hours < 24 ? `innert ca. ${Math.round(p.median_response_hours)} Std.`
+    : Math.round(p.median_response_hours / 24) === 1 ? "innert eines Tages" : `innert ca. ${Math.round(p.median_response_hours / 24)} Tagen`;
   const facts: [string, string][] = [
-    ...(response ? [["Antwortet meist", `innert ${response}`] as [string, string]] : []),
+    ...(response ? [["Antwortet meist", response] as [string, string]] : []),
     ["Bücher im Regal", String(shelf.length)],
   ];
   const levels = [0, 1, 2];
@@ -225,7 +225,7 @@ export default async function ProfilPage({ params }: Params) {
             </div>
             <div className="rounded-[10px] border border-line p-4 flex flex-col">
               <p className="text-[13px] text-muted">Antwortet meist</p>
-              <p className="text-[20px] font-[560] tracking-[-0.03em] leading-tight mt-auto pt-3">{response ? `innert ${response}` : "–"}</p>
+              <p className="text-[20px] font-[560] tracking-[-0.03em] leading-tight mt-auto pt-3">{response ?? "–"}</p>
               <p className="text-[12.5px] text-muted mt-1">auf Anfragen</p>
             </div>
           </div>

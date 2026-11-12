@@ -46,7 +46,7 @@ export async function Home({ user }: { user: SessionUser }) {
   const summary = [
     mine.length ? `${mine.length === 1 ? "Ein Vorgang wartet" : `${mine.length} Vorgänge warten`} auf dich.` : "Gerade wartet nichts auf dich.",
     counts.lent ? `${counts.lent === 1 ? "Ein Buch ist" : `${counts.lent} Bücher sind`} verliehen.` : null,
-    nearby.length ? `${nearby.length} neue ${nearby.length === 1 ? "Buch" : "Bücher"} im Umkreis von 10 km.` : null,
+    nearby.length ? `${nearby.length === 1 ? "Ein neues Buch" : `${nearby.length} neue Bücher`} im Umkreis von 10 km.` : null,
   ].filter(Boolean).join(" ");
   let n = 0;
 
@@ -116,7 +116,7 @@ export async function Home({ user }: { user: SessionUser }) {
           </ul>
         )}
         {mine.length > 4 && (
-          <p className="text-[13.5px] text-muted mt-4"><Link href="/vorgaenge" className="font-medium text-accent-hover hover:underline underline-offset-4">{mine.length - 4} weitere warten auf dich</Link></p>
+          <p className="text-[13.5px] text-muted mt-4"><Link href="/vorgaenge" className="font-medium text-accent-hover hover:underline underline-offset-4">{mine.length - 4 === 1 ? "Ein weiterer Vorgang wartet" : `${mine.length - 4} weitere Vorgänge warten`} auf dich</Link></p>
         )}
 
         {running.length > 0 && (

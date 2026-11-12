@@ -254,3 +254,6 @@ body:has(.landing-stage) .public-header a:not([href="/anmelden"]):hover { backgr
 }
 :root[data-theme="dark"] .logo-light { visibility: hidden; }
 :root[data-theme="dark"] .logo-dark { display: block; }
+
+/* Fokusring auf dunklen Flächen: hell statt dunkel, sonst unsichtbar */
+.surface-night { --focus: var(--night-ink); }

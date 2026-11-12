@@ -616,7 +616,7 @@ function BlockForm({ copyId, calendar }: { copyId: string; calendar: Calendar })
             <Button type="submit" variant="primary" disabled={busy}>Sperrzeit eintragen</Button>
             <Button type="button" variant="quiet" onClick={() => setOpen(false)}>Abbrechen</Button>
             {start && last >= start && (
-              <span className="text-[13px] text-muted ml-auto">{fmtDay(dayToDate(start))} bis {fmtDay(dayToDate(last))} · {Math.round((dayToDate(last).getTime() - dayToDate(start).getTime()) / 86_400_000) + 1} Tage</span>
+              <span className="text-[13px] text-muted ml-auto">{fmtDay(dayToDate(start))} bis {fmtDay(dayToDate(last))} · {(() => { const n = Math.round((dayToDate(last).getTime() - dayToDate(start).getTime()) / 86_400_000) + 1; return `${n} ${n === 1 ? "Tag" : "Tage"}`; })()}</span>
             )}
           </div>
         </form>

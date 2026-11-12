@@ -59,7 +59,7 @@ function whenText(loan: LoanListItem) {
 function leftOf(until: Date | string): { n: string; unit: string; ms: number } {
   const ms = new Date(until).getTime() - Date.now();
   const h = Math.floor(Math.max(0, ms) / 3_600_000);
-  if (h >= 48) { const d = Math.round(h / 24); return { n: String(d), unit: "Tage", ms }; }
+  if (h >= 48) { const d = Math.round(h / 24); return { n: String(d), unit: d === 1 ? "Tag" : "Tage", ms }; }
   if (h >= 1) return { n: String(h), unit: "Std.", ms };
   return { n: String(Math.max(1, Math.round(Math.max(0, ms) / 60_000))), unit: "Min.", ms };
 }
@@ -95,7 +95,7 @@ export function timeMeter(loan: MeterInput): Meter | null {
     const total = Math.max(1, diffDays(start, end) + 1);
     const day = Math.min(total, Math.max(1, diffDays(start, today) + 1));
     const left = diffDays(today, end);
-    const foot: [string, string] = [`Seit ${fmtDay(dayToDate(start))}`, left < 0 ? `${total} Tage Leihzeit` : `Tag ${day} von ${total}`];
+    const foot: [string, string] = [`Seit ${fmtDay(dayToDate(start))}`, left < 0 ? `${total} ${total === 1 ? "Tag" : "Tage"} Leihfrist` : `Tag ${day} von ${total}`];
     if (left < 0) {
       return { eyebrow: "Überfällig seit", value: String(-left), unit: -left === 1 ? "Tag" : "Tagen", sideLabel: "War fällig", side: fmtDay(dayToDate(end)), pct: 1, foot, tone: "late" };
     }
@@ -114,7 +114,7 @@ export function timeMeter(loan: MeterInput): Meter | null {
       eyebrow: owner ? "Zeit für deine Antwort" : "Antwortfrist noch",
       value: l.n, unit: l.unit, sideLabel: "Frist", side: fmtDayTime(loan.respond_by),
       pct: span(loan.requested_at, loan.respond_by),
-      foot: r && loan.kind === "lend" ? [`Gewünscht ${fmtRange(r)}`, len ? `${len} Tage` : ""] : null,
+      foot: r && loan.kind === "lend" ? [`Gewünscht ${fmtRange(r)}`, len ? `${len} ${len === 1 ? "Tag" : "Tage"}` : ""] : null,
       tone: l.ms < 12 * 3_600_000 ? "late" : "accent",
     };
   }
@@ -125,15 +125,15 @@ export function timeMeter(loan: MeterInput): Meter | null {
       const len = r.end ? diffDays(r.start, r.end) : null;
       return {
         eyebrow: "Leihe beginnt in", value: n === 1 ? "1" : String(n), unit: n === 1 ? "Tag" : "Tagen",
-        sideLabel: "Leihzeit", side: fmtRange(r), pct: null,
-        foot: [len ? `${len} Tage Leihzeit` : "Leihzeit offen", r.end ? `Rückgabe ${fmtDay(dayToDate(addDays(r.end, -1)))}` : ""], tone: "plain",
+        sideLabel: "Zeitraum", side: fmtRange(r), pct: null,
+        foot: [len ? `${len} ${len === 1 ? "Tag" : "Tage"} Leihfrist` : "Leihfrist offen", r.end ? `Rückgabe ${fmtDay(dayToDate(addDays(r.end, -1)))}` : ""], tone: "plain",
       };
     }
     if (loan.handover_by) {
       const l = leftOf(loan.handover_by);
       return {
         eyebrow: "Zeit für die Übergabe", value: l.n, unit: l.unit, sideLabel: "Übergabe bis", side: fmtDayTime(loan.handover_by),
-        pct: null, foot: r && loan.kind === "lend" ? [`Leihzeit ${fmtRange(r)}`, ""] : null, tone: l.ms < 24 * 3_600_000 ? "late" : "accent",
+        pct: null, foot: r && loan.kind === "lend" ? [`Zeitraum ${fmtRange(r)}`, ""] : null, tone: l.ms < 24 * 3_600_000 ? "late" : "accent",
       };
     }
     return null;

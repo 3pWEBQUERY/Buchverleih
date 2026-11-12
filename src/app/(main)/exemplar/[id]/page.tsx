@@ -65,7 +65,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const freeFrom = cal?.free[0]?.start ?? null;
   const freeNow = freeFrom != null && cal != null && freeFrom === cal.today;
   const respond = owner?.median_response_hours;
-  const respondText = respond == null ? null : respond < 1 ? "Antwortet meist innert einer Stunde" : respond < 24 ? `Antwortet meist innert ${Math.ceil(respond)} Std.` : `Antwortet meist innert ${Math.ceil(respond / 24)} Tagen`;
+  const respondText = respond == null ? null : respond < 1 ? "Antwortet meist innert einer Stunde" : respond < 24 ? `Antwortet meist innert ${Math.ceil(respond)} Std.` : (Math.ceil(respond / 24) === 1 ? "Antwortet meist innert eines Tages" : `Antwortet meist innert ${Math.ceil(respond / 24)} Tagen`);
   const quick: { text: string; tone: "ok" | "wait" | "plain" }[] = [
     ...(copy.offers.includes("lend") && cal ? [{ text: freeNow ? "Jetzt frei" : freeFrom ? `Frei ab ${fmtDay(dayToDate(freeFrom))}` : "Gerade nicht buchbar", tone: freeNow ? "ok" as const : "wait" as const }] : []),
     ...(copy.offers.includes("lend") ? [{ text: `Bis ${loanDays} Tage`, tone: "plain" as const }] : []),
@@ -203,7 +203,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           {owner && !own && (owner.shared_circles.length > 0 || owner.good_ratings > 0) && (
             <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 px-1 text-[13px] text-muted">
               {owner.shared_circles.length > 0 && <li>Gemeinsam in <span className="text-ink-2 font-medium">{owner.shared_circles.join(", ")}</span></li>}
-              {owner.good_ratings > 0 && <li><span className="text-ink-2 font-medium tnum">{owner.good_ratings}</span> gute Bewertungen</li>}
+              {owner.good_ratings > 0 && <li><span className="text-ink-2 font-medium tnum">{owner.good_ratings}</span> {owner.good_ratings === 1 ? "gute Bewertung" : "gute Bewertungen"}</li>}
             </ul>
           )}
 
