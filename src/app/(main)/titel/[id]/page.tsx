@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { getUser } from "@/lib/auth/session";
 import { origin as originOf } from "@/lib/page";
 import { plzInfo } from "@/lib/account";
-import { copiesOfWork } from "@/lib/copies";
+import { copiesOfWork, relatedForCopy } from "@/lib/copies";
+import { MoreBooks } from "@/components/more-books";
+import { dayToDate, dueDay, fmtDay } from "@/lib/dates";
 import { workById, wishFor } from "@/lib/title-queries";
 import { fmtDistance } from "@/lib/geo";
 import { conditionLabel, languageLabel, offerLabel, trustLabel } from "@/lib/i18n/de-CH";
@@ -63,6 +65,9 @@ export default async function TitelPage({ params, searchParams }: Params) {
   const nextId = others.find((c) => c.free_now)?.id;
   const nextPath = `/titel/${work.id}`;
   const nearest = others.find((c) => c.dist != null)?.dist ?? null;
+  const related = others[0] ? await relatedForCopy(others[0].id, viewer?.id ?? null, o).catch(() => null) : null;
+  const withDist = others.filter((c) => c.dist != null);
+  const maxDist = Math.max(1000, ...withDist.map((c) => c.dist!));
 
   const cover = {
     title: work.title,
@@ -132,6 +137,12 @@ export default async function TitelPage({ params, searchParams }: Params) {
             <h2 className="display text-[28px] md:text-[38px] mt-2">
               {freeCount ? <>Leih dir <em>dieses Buch.</em></> : others.length ? <>Gerade vergeben. <em>Vormerken geht.</em></> : <>Noch nicht <em>in der Nähe.</em></>}
             </h2>
+            {others.length > 0 && (
+              <p className="text-[15.5px] text-ink-2 mt-3 max-w-xl leading-relaxed">
+                {others.length === 1 ? "Ein Exemplar" : `${others.length} Exemplare`} {place ? `rund um ${place}` : "in der Nähe"}
+                {nextId ? <>, das nächste freie {fmtDistance(others.find((c) => c.id === nextId)!.dist) ? `${fmtDistance(others.find((c) => c.id === nextId)!.dist)} entfernt ` : ""}bei {others.find((c) => c.id === nextId)!.owner_name}.</> : ". Alle sind gerade unterwegs, vormerken geht trotzdem."}
+              </p>
+            )}
           </div>
           <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto">
             <StatTile n={others.length} label={others.length === 1 ? "Exemplar" : "Exemplare"} />
@@ -160,52 +171,83 @@ export default async function TitelPage({ params, searchParams }: Params) {
               <LinkButton href="/suche" variant="secondary">Weiter suchen</LinkButton>
             </div>
           ) : (
-            <ul className="space-y-3">
-              {others.map((c, i) => {
-                const st = c.free_now ? { tone: "ok" as const, text: "Jetzt frei" } : shelfStatusText(c);
-                const binding = c.binding === "hardcover" ? "Gebunden" : c.binding === "paperback" ? "Taschenbuch" : null;
-                const edition = [c.year, c.publisher, binding, c.language ? languageLabel[c.language] ?? c.language : null].filter(Boolean).join(" · ");
-                const dist = fmtDistance(c.dist);
-                const next = c.id === nextId;
-                const resp = responseHint(c.median_response_seconds);
-                return (
-                  <li key={c.id} className="anim-rise" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
-                    <div className={cx(
-                      "rounded-[10px] border p-4 md:p-5 grid grid-cols-[minmax(0,1fr)_auto] 2xl:grid-cols-[minmax(0,1fr)_minmax(0,220px)_auto] gap-x-5 gap-y-4 items-center transition-colors duration-150",
-                      next ? "border-accent bg-accent-soft/20" : "border-line hover:border-ink-2",
-                    )}>
-                      <div className="min-w-0 col-span-2 2xl:col-span-1">
-                        {next && <p className="text-[12.5px] font-medium text-accent-hover mb-1.5">Nächstes freies Exemplar</p>}
-                        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                          <Link href={`/exemplar/${c.id}`} className="text-[20px] md:text-[22px] font-[560] tracking-[-0.025em] leading-tight hover:underline underline-offset-4 decoration-1">{conditionLabel[c.condition]}</Link>
-                          {dist && <span className="text-[14px] font-medium tnum text-ink-2">{dist}</span>}
-                        </div>
-                        {edition && <p className="text-[13.5px] text-muted mt-1">{edition}</p>}
-                        <p className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
-                          <span className={cx("inline-flex items-center gap-1.5 font-medium", st.tone === "ok" ? "text-ok" : "text-ink-2")}>
-                            <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", toneDot[st.tone])} />{st.text}
-                          </span>
-                          <span className="text-muted">{c.offers.map((x) => offerLabel[x]).join(" · ")}</span>
-                        </p>
-                      </div>
+            <>
+              {/* Wo die Exemplare stehen: eine Achse von dir aus */}
+              {withDist.length > 1 && (
+                <div className="rounded-[10px] bg-paper-2 px-5 pt-4 pb-5 mb-4" aria-label="Entfernungen der Exemplare">
+                  <div className="flex items-baseline justify-between gap-4 text-[12.5px] text-muted">
+                    <span>Wo sie stehen</span>
+                    <span className="inline-flex items-center gap-3">
+                      <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2 w-2 rounded-full bg-ok" />frei</span>
+                      <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2 w-2 rounded-full bg-lent" />vergeben</span>
+                    </span>
+                  </div>
+                  <div className="relative mt-7 mb-6 mx-2 h-[2px] bg-line-strong rounded-full">
+                    <span className="absolute -left-2 -top-[5px] h-3 w-3 rounded-full bg-ink-2 ring-4 ring-paper-2" title="Du" />
+                    <span className="absolute -left-2 top-3 text-[11.5px] font-medium text-ink-2">Du</span>
+                    {withDist.map((c, i) => (
+                      <a key={c.id} href={`#ex-${c.id}`} title={`${c.owner_name}, ${fmtDistance(c.dist)}`}
+                        className={cx("absolute -top-[7px] h-4 w-4 -ml-2 rounded-full ring-[3px] ring-paper-2 hover:scale-125 transition-transform", c.free_now ? "bg-ok" : "bg-lent", c.id === nextId && "ring-accent/60")}
+                        style={{ left: `${Math.max(3, (c.dist! / maxDist) * 100)}%`, zIndex: 10 - i }}>
+                        <span className="sr-only">{c.owner_name}, {fmtDistance(c.dist)}</span>
+                      </a>
+                    ))}
+                    <span className="absolute right-0 top-3 text-[11.5px] text-muted tnum">{fmtDistance(maxDist)?.replace(/^ca\. /, "")}</span>
+                  </div>
+                </div>
+              )}
 
-                      <div className="min-w-0 flex items-center gap-3">
-                        <Monogram name={c.owner_name} seed={c.owner_id} size={38} photo={c.owner_avatar} />
-                        <div className="min-w-0 leading-tight">
-                          <Link href={`/profil/${c.owner_id}`} className="font-medium hover:underline underline-offset-4">{c.owner_name}</Link>
-                          <span className="text-[13px] text-muted"> · {trustLabel[c.owner_trust] ?? "Neu"}</span>
-                          {resp && <p className="text-[12.5px] text-muted mt-0.5 truncate">{resp}</p>}
+              <ul className="space-y-3">
+                {others.map((c, i) => {
+                  const st = c.free_now ? { tone: "ok" as const, text: "Jetzt frei" } : shelfStatusText(c);
+                  const binding = c.binding === "hardcover" ? "Gebunden" : c.binding === "paperback" ? "Taschenbuch" : null;
+                  const edition = [c.year, c.publisher, binding, c.language ? languageLabel[c.language] ?? c.language : null].filter(Boolean).join(" · ");
+                  const dist = fmtDistance(c.dist);
+                  const next = c.id === nextId;
+                  const resp = responseHint(c.median_response_seconds);
+                  const freeAgain = !c.free_now && c.lent_until ? `Ausgeliehen bis ${fmtDay(dayToDate(dueDay(c.lent_until)))}` : null;
+                  return (
+                    <li key={c.id} id={`ex-${c.id}`} className="anim-rise scroll-mt-28" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
+                      <div className={cx(
+                        "rounded-[10px] border p-4 md:p-5 grid grid-cols-[56px_minmax(0,1fr)] md:grid-cols-[56px_minmax(0,1fr)_auto] gap-x-4 md:gap-x-5 gap-y-4 items-start transition-colors duration-150",
+                        next ? "border-accent bg-accent-soft/20" : "border-line hover:border-ink-2",
+                      )}>
+                        <Link href={`/exemplar/${c.id}`} tabIndex={-1} aria-hidden className="book self-start">
+                          <span className="book-face block"><Cover data={{ title: work.title, authors: work.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: work.id }} width={56} height={84} uniform /></span>
+                        </Link>
+                        <div className="min-w-0">
+                          {next && <p className="text-[12.5px] font-medium text-accent-hover mb-1">Nächstes freies Exemplar</p>}
+                          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            <Link href={`/exemplar/${c.id}`} className="text-[19px] md:text-[21px] font-[560] tracking-[-0.025em] leading-tight hover:underline underline-offset-4 decoration-1">{conditionLabel[c.condition]}</Link>
+                            {dist && <span className="text-[14px] font-medium tnum text-ink-2">{dist}</span>}
+                          </div>
+                          <div aria-hidden className="mt-1.5 grid grid-cols-4 gap-0.5 w-24">
+                            {[1, 2, 3, 4].map((k) => <span key={k} className={cx("h-1 rounded-full", k <= c.condition ? (k === c.condition ? "bg-accent" : "bg-ink-2/60") : "bg-paper-3")} />)}
+                          </div>
+                          {edition && <p className="text-[13px] text-muted mt-2">{edition}</p>}
+                          <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
+                            <span className={cx("inline-flex items-center gap-1.5 font-medium", st.tone === "ok" ? "text-ok" : "text-ink-2")}>
+                              <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", toneDot[st.tone])} />{freeAgain ?? st.text}
+                            </span>
+                            <span className="text-muted">{c.offers.map((x) => offerLabel[x]).join(" · ")}{c.offers.includes("lend") ? ` · ${c.loan_days} Tage` : ""}</span>
+                          </p>
+                          <div className="mt-3 flex items-center gap-2.5 min-w-0">
+                            <Monogram name={c.owner_name} seed={c.owner_id} size={28} photo={c.owner_avatar} />
+                            <p className="text-[13px] min-w-0 truncate">
+                              <Link href={`/profil/${c.owner_id}`} className="font-medium hover:underline underline-offset-4">{c.owner_name}</Link>
+                              <span className="text-muted"> · {trustLabel[c.owner_trust] ?? "Neu"}{resp ? ` · ${resp}` : ""}</span>
+                            </p>
+                          </div>
                         </div>
+                        <LinkButton href={`/exemplar/${c.id}`} variant={next ? "primary" : "secondary"} className="col-span-2 md:col-span-1 md:self-center justify-center">
+                          {c.free_now ? "Anfragen" : "Vormerken"}
+                        </LinkButton>
                       </div>
-
-                      <LinkButton href={`/exemplar/${c.id}`} variant={next ? "primary" : "secondary"} className="justify-self-end">
-                        Anfragen
-                      </LinkButton>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
           )}
 
           <div className="mt-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
@@ -219,6 +261,12 @@ export default async function TitelPage({ params, searchParams }: Params) {
           </div>
         </StepSection>
       </div>
+
+      {related && (
+        <div className="lg:col-span-2">
+          <MoreBooks related={related} ownerName={others[0].owner_name} ownerId={others[0].owner_id} workId={work.id} title={work.title} hasOrigin={Boolean(o)} skip={["regal", "titel"]} />
+        </div>
+      )}
     </div>
   );
 }

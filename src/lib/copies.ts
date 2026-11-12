@@ -276,8 +276,8 @@ export async function copyDetail(copyId: string, viewerId: string | null, origin
 
 /** Exemplare eines Werks in der Nähe (Titelseite, PRD 8.4) */
 export async function copiesOfWork(workId: string, viewerId: string | null, origin: { lat: number; lng: number } | null) {
-  return sql<(ShelfCopy & { dist: number | null; owner_name: string; owner_avatar: string | null; owner_trust: number; year: number | null; publisher: string | null; binding: string | null; language: string | null; median_response_seconds: number | null; free_now: boolean })[]>`
-    select ${SHELF_SELECT}, o.first_name as owner_name, o.avatar_key as owner_avatar, o.trust_level as owner_trust,
+  return sql<(ShelfCopy & { dist: number | null; owner_name: string; owner_avatar: string | null; owner_trust: number; year: number | null; publisher: string | null; binding: string | null; language: string | null; median_response_seconds: number | null; free_now: boolean; loan_days: number })[]>`
+    select ${SHELF_SELECT}, c.loan_days, o.first_name as owner_name, o.avatar_key as owner_avatar, o.trust_level as owner_trust,
            e.year, e.publisher, e.binding, e.language, st.median_response_seconds,
            (not o.shelf_paused and not exists (select 1 from copy_bookings b where b.copy_id = c.id
               and daterange(lower(b.period), upper(b.period) + b.buffer_days) @> today_ch())) as free_now,
