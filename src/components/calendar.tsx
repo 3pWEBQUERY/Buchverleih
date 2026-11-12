@@ -212,7 +212,7 @@ export function CalendarView({
       {/* Textfassung für Screenreader und schnelles Lesen */}
       <ul className="sr-only">
         {cal.bars.map((b) => (
-          <li key={b.id}>{b.kind === "block" ? t.srBlocked : t.srTaken}: {fmtRange({ start: b.start, end: b.end }, l)}</li>
+          <li key={b.id}>{b.kind === "block" ? t.srBlocked : t.srTaken}{l === "fr" ? " : " : ": "}{fmtRange({ start: b.start, end: b.end }, l)}</li>
         ))}
         {free.map((f) => <li key={f.start}>{t.srFreeFrom} {fmtDay(dayToDate(f.start), l)}</li>)}
       </ul>

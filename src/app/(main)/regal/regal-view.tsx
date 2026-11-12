@@ -222,7 +222,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
                         <div className="min-w-0">
                           <p className="text-[12.5px] text-muted">{t.at(c.lent_to ?? null)}</p>
                           <p className="font-serif text-[18px] leading-[1.15] mt-0.5 line-clamp-2 group-hover:underline underline-offset-4 decoration-1">{c.title}</p>
-                          {m && <TimeMeterInline m={m} className="mt-2.5" />}
+                          {m && <TimeMeterInline m={m} className="mt-2.5" l={l} />}
                         </div>
                         <IconArrowRight width={16} height={16} className="text-accent-hover mt-1 transition-transform group-hover:translate-x-0.5" />
                       </Link>

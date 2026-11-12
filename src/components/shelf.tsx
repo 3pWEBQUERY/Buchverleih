@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Cover, type CoverData } from "./cover";
 import { cx } from "./ui";
+import type { Locale } from "@/lib/i18n/locale";
 
 /**
  * Regale als horizontale Reihen wie im Büchergestell (PRD 8.1). Die Cover stehen
@@ -15,7 +16,7 @@ export type ShelfItem = {
   meta?: ReactNode;
 };
 
-export function Shelf({ items, height = 176, className, label }: { items: ShelfItem[]; height?: number; className?: string; label: string }) {
+export function Shelf({ items, height = 176, className, label, l = "de" }: { items: ShelfItem[]; height?: number; className?: string; label: string; l?: Locale }) {
   return (
     <div className={cx("relative", className)}>
       <ul className="shelf" aria-label={label}>
@@ -26,7 +27,7 @@ export function Shelf({ items, height = 176, className, label }: { items: ShelfI
               <Link href={it.href} className="book block group">
                 <div className="flex items-end" style={{ height }}>
                   <div className="book-face">
-                    <Cover data={it.cover} width={w} height={height} uniform />
+                    <Cover l={l} data={it.cover} width={w} height={height} uniform />
                   </div>
                 </div>
                 <div className="shelf-board" />

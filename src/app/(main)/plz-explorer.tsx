@@ -98,7 +98,7 @@ export function PlzExplorer() {
                 return (
                   <li key={c.id} style={{ width: w, animationDelay: `${i * 35}ms` }} className="anim-rise">
                     <Link href={`/titel/${c.work_id}`} className="book block group">
-                      <div className="flex items-end" style={{ height: 176 }}><div className="book-face"><Cover data={cover} width={110} height={165} uniform /></div></div>
+                      <div className="flex items-end" style={{ height: 176 }}><div className="book-face"><Cover l={l} data={cover} width={110} height={165} uniform /></div></div>
                       <div className="h-[3px] bg-night-ink/90 rounded-full" />
                       <p className="pt-2.5 text-[13.5px] font-medium leading-snug line-clamp-2 group-hover:underline">{c.title}</p>
                       <p className="text-[12px] text-night-muted mt-0.5">{c.owner_name} · {fmtDistance(c.dist, l)}</p>

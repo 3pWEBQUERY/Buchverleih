@@ -45,9 +45,10 @@ export function BookRow({ items, height = 168, hrefBase = "/regal/", label, wrap
               <div className="pt-[13px] pr-2 flex-1 flex flex-col">
                 <p className="text-[13.5px] font-medium leading-snug line-clamp-2 group-hover:underline underline-offset-2">{c.title}</p>
                 {st ? (
-                  <p className="text-[12px] text-night-muted mt-auto pt-1 flex items-center gap-1.5">
-                    <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none", NIGHT_DOT[st.tone])} />
-                    <span className="truncate">{st.text}</span>
+                  <p className="text-[12px] leading-snug text-night-muted mt-auto pt-1 flex items-start gap-1.5" title={st.text}>
+                    <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none mt-[5px]", NIGHT_DOT[st.tone])} />
+                    {/* Längere Angaben (FR/IT) dürfen auf zwei Zeilen umbrechen statt abgeschnitten zu werden */}
+                    <span className="line-clamp-2 min-w-0">{st.text}</span>
                   </p>
                 ) : null}
               </div>

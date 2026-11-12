@@ -83,8 +83,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-5 items-end lg:block lg:space-y-5">
             <div className="lg:rounded-[12px] lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center anim-cover">
               <Link href={`/exemplar/${h.copy_id}`} className="book block" aria-label={D.viewCopy(h.title)}>
-                <span className="book-face block lg:hidden"><Cover priority data={cover} width={104} height={156} uniform /></span>
-                <span className="book-face hidden lg:block"><Cover priority large data={cover} width={220} height={330} uniform /></span>
+                <span className="book-face block lg:hidden"><Cover l={l} priority data={cover} width={104} height={156} uniform /></span>
+                <span className="book-face hidden lg:block"><Cover l={l} priority large data={cover} width={220} height={330} uniform /></span>
               </Link>
             </div>
             <div className="anim-rise min-w-0">

@@ -4,18 +4,15 @@
  * Anzeigen in der Sprache der Person zusammengesetzt. d.text bleibt als deutscher Rückfall erhalten.
  */
 import type { Locale } from "@/lib/i18n/locale";
+import { fmtDistance } from "@/lib/geo";
 
 type Args = Record<string, string | number>;
 type Fn = (a: Args) => string;
 
-/** Entfernung wie fmtDistance, aber je Sprache: «ca. 900 m» / «env. 900 m», «1,4 km», «12 km» */
+/** Entfernung genau wie überall sonst (fmtDistance): «ca. 900 m» / «env. 900 m» / «circa 900 m», «1,4 km», «12 km» */
 function dist(m: unknown, l: Locale) {
   const n = Number(m);
-  if (!Number.isFinite(n)) return "";
-  const about = { de: "ca.", fr: "env.", it: "ca." }[l];
-  if (n < 1000) return `${about} ${Math.max(100, Math.round(n / 100) * 100)} m`;
-  if (n < 9_950) return `${(n / 1000).toFixed(1).replace(".", ",")} km`;
-  return `${Math.round(n / 1000)} km`;
+  return Number.isFinite(n) ? fmtDistance(n, l) ?? "" : "";
 }
 
 const de: Record<string, Fn> = {
@@ -78,4 +75,33 @@ export function systemText(key: SystemTextKey, args: Args = {}) {
 export function renderSystemText(key: string, args: Args | undefined, l: Locale): string | undefined {
   const fn = (ALL[l] ?? de)[key] ?? de[key];
   return fn ? fn(args ?? {}) : undefined;
+}
+
+/** «ca. 700 m» / «1,4 km» / «12 km» zurück in Meter (für alte Benachrichtigungen ohne Schlüssel) */
+function metersOf(s: string): number | null {
+  const m = /^(?:ca\. )?(\d+(?:,\d+)?) (m|km)$/.exec(s.trim());
+  if (!m) return null;
+  const n = Number(m[1].replace(",", "."));
+  return m[2] === "km" ? Math.round(n * 1000) : n;
+}
+
+/** Ältere Benachrichtigungen (vor textKey) tragen nur den deutschen Systemtext: bekannte Texte übersetzen */
+const LEGACY: [RegExp, SystemTextKey, (m: RegExpExecArray) => Args | null][] = [
+  [/^Ein Exemplar ist (.+) entfernt frei\.$/, "title_alarm_free", (m) => { const n = metersOf(m[1]); return n == null ? null : { meters: n }; }],
+  [/^Direkt von (.+) an (.+) weitergeben\?$/, "pass_on_owner", (m) => ({ from: m[1], to: m[2] })],
+  [/^Gibst du das Buch direkt an (.+) weiter\? Das spart euch zwei Treffen\.$/, "pass_on_prev", (m) => ({ name: m[1] })],
+  [/^Kreis «(.+)»$/, "circle_name", (m) => ({ name: m[1] })],
+];
+
+export function legacySystemText(text: string, l: Locale): string | undefined {
+  if (l === "de") return undefined;
+  for (const [key, fn] of Object.entries(de)) {
+    if (fn.length === 0 && fn({}) === text) return renderSystemText(key, {}, l);
+  }
+  for (const [re, key, args] of LEGACY) {
+    const m = re.exec(text);
+    const a = m && args(m);
+    if (a) return renderSystemText(key, a, l);
+  }
+  return undefined;
 }

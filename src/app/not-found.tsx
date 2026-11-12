@@ -1,6 +1,7 @@
 import { StandaloneShell } from "@/components/auth/standalone";
 import { LinkButton } from "@/components/ui";
 import { getLocale } from "@/lib/i18n/server";
+import { SHELL } from "@/lib/i18n/messages/shell";
 import { COMMON } from "@/lib/i18n/messages/common";
 
 export async function generateMetadata() {
@@ -11,7 +12,7 @@ export async function generateMetadata() {
 export default async function NotFound() {
   const t = COMMON[await getLocale()].notFound;
   return (
-    <StandaloneShell motif={{ label: t.motif, gap: 6 }}>
+    <StandaloneShell homeLabel={SHELL[await getLocale()].home} motif={{ label: t.motif, gap: 6 }}>
       <p className="eyebrow anim-rise">{t.eyebrow}</p>
       <h1 className="display text-[32px] md:text-[44px] mt-4 anim-rise" style={{ animationDelay: "40ms" }}>{t.heading[0]}<em>{t.heading[1]}</em></h1>
       <p className="text-ink-2 text-[17px] md:text-[19px] leading-relaxed mt-6 max-w-prose anim-rise" style={{ animationDelay: "80ms" }}>{t.text}</p>

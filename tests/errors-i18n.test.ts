@@ -95,7 +95,9 @@ describe("Systemtexte in Benachrichtigungen", () => {
     expect(renderNotification("title_alarm", d, "de").body).toBe("Ein Exemplar ist 1,4 km entfernt frei.");
     expect(renderNotification("title_alarm", d, "fr").body).toBe("Un exemplaire est libre à 1,4 km.");
     expect(renderNotification("pass_on_ask", { title: "X", ...systemText("pass_on_owner", { from: "Lea", to: "Jonas" }) }, "it").body).toBe("Passare direttamente da Lea a Jonas?");
-    // Alte Einträge ohne Schlüssel: Text wie gespeichert
-    expect(renderNotification("case_resolved", { title: "X", text: "Das Buch ist zurück." }, "fr").body).toBe("Das Buch ist zurück.");
+    // Alte Einträge ohne Schlüssel: bekannte Systemtexte werden übersetzt, alles andere bleibt wie gespeichert
+    expect(renderNotification("case_resolved", { title: "X", text: "Das Buch ist zurück." }, "fr").body).toBe("Le livre est rendu.");
+    expect(renderNotification("case_resolved", { title: "X", text: "Freitext von Marc" }, "fr").body).toBe("Freitext von Marc");
+    expect(renderNotification("case_resolved", { title: "X", text: "Das Buch ist zurück." }, "de").body).toBe("Das Buch ist zurück.");
   });
 });

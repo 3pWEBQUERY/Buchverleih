@@ -63,6 +63,8 @@ export default async function SuchePage({ searchParams }: { searchParams: Promis
 
   return (
     <SearchClient
+      // Navigation innerhalb von /suche (z. B. ?fokus=1 aus der Seitenleiste) startet mit frischem Zustand
+      key={JSON.stringify([q, plz, filters, pick(sp.ansicht), pick(sp.fokus)])}
       loggedIn={loggedIn}
       autoFocus={pick(sp.fokus) === "1"}
       initialQ={q}

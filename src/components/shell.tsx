@@ -26,7 +26,7 @@ export async function AppShell({ user, unread, children }: { user: SessionUser; 
     <div className="min-h-dvh md:grid md:grid-cols-[256px_1fr]">
       <Shortcuts />
       <aside className="hidden md:flex flex-col sticky top-0 h-dvh border-r border-line bg-paper-2/60 px-4 py-6">
-        <Wordmark className="px-2 mb-8" />
+        <Wordmark className="px-2 mb-8" label={m.home} />
         <SearchTrigger />
         <Link href="/regal/neu" className="mt-3 mb-7 h-11 rounded-[6px] bg-accent text-accent-ink font-medium text-[15px] flex items-center justify-center gap-2 hover:bg-accent-hover transition-colors">
           <IconScan width={18} height={18} /> {m.addBook}
@@ -68,7 +68,7 @@ export async function AppShell({ user, unread, children }: { user: SessionUser; 
 
       <div className="min-w-0 flex flex-col">
         <header className="md:hidden sticky top-0 z-30 bg-paper/90 backdrop-blur-md border-b border-line h-14 px-4 flex items-center justify-between">
-          <Wordmark />
+          <Wordmark label={m.home} />
           <div className="flex items-center">
             <Link href="/suche" className="h-11 w-11 grid place-items-center" aria-label={n.search}><IconSearch /></Link>
             <Link href="/benachrichtigungen" className="relative h-11 w-11 grid place-items-center">
@@ -114,7 +114,7 @@ export async function PublicShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-dvh flex flex-col">
       <header className="public-header sticky top-0 z-30 bg-paper/85 backdrop-blur-md border-b border-line transition-colors">
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 h-16 flex items-center justify-between">
-          <Wordmark />
+          <Wordmark label={m.home} />
           <nav className="flex items-center gap-1 md:gap-2 text-[15px] font-medium">
             <Link href="/suche" className="hidden sm:inline-flex px-3 h-10 items-center rounded-[6px] hover:bg-paper-2">{m.publicNav.find}</Link>
             <Link href="/hilfe" className="hidden lg:inline-flex px-3 h-10 items-center rounded-[6px] hover:bg-paper-2">{m.publicNav.how}</Link>

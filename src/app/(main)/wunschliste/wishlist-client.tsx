@@ -145,7 +145,7 @@ function WishCard({ it, i, onRadius, onAlarm, onRemove }: { it: WishItem; i: num
         {/* Buch */}
         <div className="grid grid-cols-[64px_minmax(0,1fr)_auto] gap-4">
           <Link href={`/titel/${it.work_id}`} tabIndex={-1} aria-hidden className="book self-start">
-            <span className="book-face block"><Cover data={cover} width={64} height={96} uniform /></span>
+            <span className="book-face block"><Cover l={l} data={cover} width={64} height={96} uniform /></span>
           </Link>
           <div className="min-w-0">
             <p className="text-[12.5px] text-muted flex items-center gap-2 flex-wrap">
@@ -250,7 +250,8 @@ function AddTitle({ onList, autoFocus }: { onList: Set<string>; autoFocus: boole
   const [hits, setHits] = useState<Edition[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const ref = useRef<HTMLInputElement>(null);
-  const w = WISHLIST[useLocale()];
+  const l = useLocale();
+  const w = WISHLIST[l];
   const a = w.addTitle;
 
   useEffect(() => {
@@ -312,7 +313,7 @@ function AddTitle({ onList, autoFocus }: { onList: Set<string>; autoFocus: boole
                 const on = onList.has(e.work_id);
                 return (
                   <li key={e.work_id} className="px-4 md:px-5 py-3 grid grid-cols-[36px_minmax(0,1fr)_auto] gap-4 items-center">
-                    <Cover data={{ title: e.title, authors: e.authors, coverKey: e.cover_key, seed: e.work_id }} width={36} height={54} uniform />
+                    <Cover l={l} data={{ title: e.title, authors: e.authors, coverKey: e.cover_key, seed: e.work_id }} width={36} height={54} uniform />
                     <div className="min-w-0">
                       <div className="font-serif text-[17px] leading-tight truncate">{e.title}</div>
                       <div className="text-sm text-muted truncate">{e.authors.join(", ")}</div>

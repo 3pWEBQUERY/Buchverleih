@@ -170,7 +170,7 @@ function List({ items, unread, l }: { items: Item[]; unread?: boolean; l: Locale
                 {unread && <span className="sr-only">{NOTIF[l].newSr}</span>}{n.title}
               </span>
               {n.body && <span className="block text-[13.5px] text-muted mt-0.5 leading-snug">{n.body}</span>}
-              {n.meter && <TimeMeterInline m={n.meter} className="mt-2.5" />}
+              {n.meter && <TimeMeterInline m={n.meter} className="mt-2.5" l={l} />}
             </span>
             <span className="flex flex-col items-end gap-2 pt-0.5">
               <time dateTime={new Date(n.created_at).toISOString()} title={fmtDayTime(n.created_at, l)} className="text-[12.5px] text-muted whitespace-nowrap tnum flex items-center gap-1.5">

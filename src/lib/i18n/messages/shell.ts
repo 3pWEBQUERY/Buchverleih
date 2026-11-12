@@ -2,6 +2,7 @@ import type { Locale } from "../locale";
 
 const de = {
   skip: "Zum Inhalt",
+  home: "Leihregal, Start",
   description: "Bücher aus Regalen in deiner Nähe leihen, tauschen und verschenken. Kostenlos unter Privatpersonen.",
   addBook: "Buch erfassen",
   nav: { main: "Hauptnavigation", start: "Start", loans: "Vorgänge", shelf: "Mein Regal", shelfShort: "Regal", circles: "Kreise", wishlist: "Wunschliste", notifications: "Benachrichtigungen", moderation: "Moderation", profile: "Profil", search: "Suche", calendar: "Verleihkalender", settings: "Einstellungen", help: "Hilfe", privacy: "Datenschutz", imprint: "Impressum", legal: "Rechtliches", more: "Weitere Seiten" },
@@ -20,6 +21,7 @@ type M = typeof de;
 
 const fr: M = {
   skip: "Aller au contenu",
+  home: "Leihregal, accueil",
   description: "Emprunter, échanger et donner des livres des étagères près de chez toi. Gratuit entre particuliers.",
   addBook: "Ajouter un livre",
   nav: { main: "Navigation principale", start: "Accueil", loans: "Transactions", shelf: "Mon étagère", shelfShort: "Étagère", circles: "Cercles", wishlist: "Liste d’envies", notifications: "Notifications", moderation: "Modération", profile: "Profil", search: "Recherche", calendar: "Calendrier des prêts", settings: "Paramètres", help: "Aide", privacy: "Confidentialité", imprint: "Mentions légales", legal: "Informations légales", more: "Autres pages" },
@@ -37,6 +39,7 @@ const fr: M = {
 
 const it: M = {
   skip: "Vai al contenuto",
+  home: "Leihregal, home",
   description: "Prendere in prestito, scambiare e regalare libri dagli scaffali vicino a te. Gratis tra privati.",
   addBook: "Aggiungi libro",
   nav: { main: "Navigazione principale", start: "Home", loans: "Pratiche", shelf: "Il mio scaffale", shelfShort: "Scaffale", circles: "Cerchie", wishlist: "Lista dei desideri", notifications: "Notifiche", moderation: "Moderazione", profile: "Profilo", search: "Ricerca", calendar: "Calendario dei prestiti", settings: "Impostazioni", help: "Aiuto", privacy: "Privacy", imprint: "Note legali", legal: "Informazioni legali", more: "Altre pagine" },

@@ -47,7 +47,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     [t.numbers.borrowed, String(u.borrowed_count)],
     [t.numbers.punctual, punctual === null ? "–" : `${punctual} %`],
     [t.numbers.losses, String(u.visible_losses)],
-    [t.numbers.response, responseH === null ? "–" : responseH < 1 ? `${Math.max(1, Math.round(responseH * 60))}${t.min}` : `${responseH.toLocaleString("de-CH", { maximumFractionDigits: 1 })}${t.hours}`],
+    [t.numbers.response, responseH === null ? "–" : responseH < 1 ? `${Math.max(1, Math.round(responseH * 60))}${t.min}` : `${responseH.toLocaleString("de-CH", { maximumFractionDigits: 1 }).replace(".", ",")}${t.hours}`],
   ];
   const self = u.id === mod.id;
 

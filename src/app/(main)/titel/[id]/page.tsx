@@ -99,8 +99,8 @@ export default async function TitelPage({ params, searchParams }: Params) {
       <aside className="lg:sticky lg:top-8 space-y-5 min-w-0">
         <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-5 items-end lg:block lg:space-y-5">
           <div className="lg:rounded-[12px] lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center anim-cover">
-            <span className="block lg:hidden"><Cover priority data={cover} width={104} height={156} uniform /></span>
-            <span className="hidden lg:block"><Cover priority large data={cover} width={220} height={330} uniform /></span>
+            <span className="block lg:hidden"><Cover l={l} priority data={cover} width={104} height={156} uniform /></span>
+            <span className="hidden lg:block"><Cover l={l} priority large data={cover} width={220} height={330} uniform /></span>
           </div>
           <div className="anim-rise min-w-0">
             <h1 lang="de" className="font-serif text-[24px] md:text-[32px] leading-[1.1] hyphens-auto break-words">{work.title}</h1>
@@ -222,7 +222,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
                         next ? "border-accent bg-accent-soft/20" : "border-line hover:border-ink-2",
                       )}>
                         <Link href={`/exemplar/${c.id}`} tabIndex={-1} aria-hidden className="book self-start">
-                          <span className="book-face block"><Cover data={{ title: work.title, authors: work.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: work.id }} width={56} height={84} uniform /></span>
+                          <span className="book-face block"><Cover l={l} data={{ title: work.title, authors: work.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: work.id }} width={56} height={84} uniform /></span>
                         </Link>
                         <div className="min-w-0">
                           {next && <p className="text-[12.5px] font-medium text-accent-hover mb-1">{t.nextFreeCopy}</p>}

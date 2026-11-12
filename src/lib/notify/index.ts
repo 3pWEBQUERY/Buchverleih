@@ -3,7 +3,7 @@ import { enqueue } from "@/lib/jobs";
 import { deadline, dueDay, fmtDay, fmtDayTime, dayToDate } from "@/lib/dates";
 import type { Locale } from "@/lib/i18n/locale";
 import { TEXTS, quote, verb } from "./texts";
-import { renderSystemText } from "./system-texts";
+import { legacySystemText, renderSystemText } from "./system-texts";
 
 /**
  * Benachrichtigungen (PRD 7.6). In der Web-App immer, per E-Mail für Anfragen,
@@ -156,7 +156,9 @@ export function renderNotification(type: NotificationType, d: NotifyData, l: Loc
     verb: verb[l](d.kind),
     due: d.due ? deadline(dueDay(d.due), undefined, l) : "",
     day: d.day ? fmtDay(dayToDate(d.day), l) : "",
-    d: d.textKey ? { ...d, text: renderSystemText(d.textKey, d.textArgs, l) ?? d.text } : d,
+    d: d.textKey ? { ...d, text: renderSystemText(d.textKey, d.textArgs, l) ?? d.text }
+      : d.text && l !== "de" ? { ...d, text: legacySystemText(d.text, l) ?? d.text }
+      : d,
   });
   return { title, body };
 }

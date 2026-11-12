@@ -289,7 +289,7 @@ export default async function ProfilPage({ params }: Params) {
               {together.map((tg) => (
                 <li key={tg.id}>
                   <Link href={`/vorgaenge/${tg.id}`} className="group grid grid-cols-[32px_minmax(0,1fr)_auto] gap-4 items-center px-4 md:px-5 py-3 hover:bg-paper-2 transition-colors">
-                    <Cover data={{ title: tg.title, authors: tg.authors, coverKey: tg.cover_key, seed: tg.work_id }} width={32} height={48} uniform />
+                    <Cover l={l} data={{ title: tg.title, authors: tg.authors, coverKey: tg.cover_key, seed: tg.work_id }} width={32} height={48} uniform />
                     <div className="min-w-0">
                       <p className="font-serif text-[16.5px] leading-tight truncate group-hover:underline underline-offset-4 decoration-1">{tg.title}</p>
                       <p className="text-[13px] text-muted mt-0.5 truncate">{L.offerNoun[tg.kind]} · {tg.mine ? t.youTo(p.first_name) : t.toYou(p.first_name)} · {fmtDay(tg.at, l)}</p>

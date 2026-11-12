@@ -13,11 +13,11 @@ const SHELF: [string, string][] = [
   ["Buddenbrooks", "Thomas Mann"], ["Der grüne Heinrich", "Gottfried Keller"],
 ];
 
-export function StandaloneShell({ children, motif }: { children: ReactNode; motif: { label: string; gap?: number } }) {
+export function StandaloneShell({ children, motif, homeLabel }: { children: ReactNode; motif: { label: ReactNode; gap?: number }; homeLabel?: string }) {
   return (
     <div className="min-h-dvh flex flex-col">
       <header className="h-16 flex items-center border-b border-line">
-        <div className="w-full max-w-[1320px] mx-auto px-4 md:px-10"><Wordmark /></div>
+        <div className="w-full max-w-[1320px] mx-auto px-4 md:px-10"><Wordmark label={homeLabel} /></div>
       </header>
       <main id="inhalt" className="flex-1 w-full max-w-[1320px] mx-auto px-4 md:px-10 py-8 md:py-16 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-16 content-start lg:content-center lg:items-center">
         <div className="order-2 lg:order-1 max-w-xl">{children}</div>
@@ -28,7 +28,7 @@ export function StandaloneShell({ children, motif }: { children: ReactNode; moti
 }
 
 /** Dunkle Bühne mit einem Regal aus Buchrücken; optional mit einer Lücke im Regal */
-function Motif({ label, gap }: { label: string; gap?: number }) {
+function Motif({ label, gap }: { label: ReactNode; gap?: number }) {
   return (
     <div className="order-1 lg:order-2 surface-night rounded-[12px] overflow-hidden flex flex-col h-[148px] lg:h-[460px] anim-rise" aria-hidden>
       <p className="eyebrow !text-night-muted px-5 pt-4 lg:px-9 lg:pt-8">{label}</p>

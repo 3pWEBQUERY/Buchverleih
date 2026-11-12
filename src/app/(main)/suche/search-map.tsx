@@ -285,7 +285,7 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
                 <li key={h.work_id}>
                   <Link href={href(h)} className="book group flex gap-3.5 px-4 py-3 hover:bg-paper-2 transition-colors">
                     <span className="book-face flex-none">
-                      <Cover data={{ title: h.title, authors: h.authors, photoKey: h.cover?.photo_key, photoW: h.cover?.photo_w, photoH: h.cover?.photo_h, coverKey: h.cover?.cover_key, seed: h.work_id }} width={44} height={66} uniform />
+                      <Cover l={l} data={{ title: h.title, authors: h.authors, photoKey: h.cover?.photo_key, photoW: h.cover?.photo_w, photoH: h.cover?.photo_h, coverKey: h.cover?.cover_key, seed: h.work_id }} width={44} height={66} uniform />
                     </span>
                     <span className="min-w-0 flex flex-col">
                       <span className="font-serif text-[16.5px] leading-[1.2] line-clamp-2 group-hover:text-accent-hover transition-colors">{h.title}</span>

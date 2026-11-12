@@ -5,6 +5,7 @@ import { StandaloneShell } from "@/components/auth/standalone";
 import { LinkButton } from "@/components/ui";
 import { LogoutButton } from "./logout";
 import { getLocale } from "@/lib/i18n/server";
+import { SHELL } from "@/lib/i18n/messages/shell";
 import { ONBOARDING } from "@/lib/i18n/messages/onboarding";
 
 export async function generateMetadata() {
@@ -22,7 +23,7 @@ export default async function Page() {
   const t = ONBOARDING[await getLocale()].banned;
 
   return (
-    <StandaloneShell motif={{ label: t.motif, gap: 5 }}>
+    <StandaloneShell homeLabel={SHELL[await getLocale()].home} motif={{ label: t.motif, gap: 5 }}>
       <p className="eyebrow anim-rise">{t.eyebrow}</p>
       <h1 className="display text-[32px] md:text-[44px] mt-4 anim-rise" style={{ animationDelay: "40ms" }}>{t.heading[0]}<em>{t.heading[1]}</em></h1>
       {reason && (

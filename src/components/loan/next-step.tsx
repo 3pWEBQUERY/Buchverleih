@@ -46,13 +46,24 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
     }
   }
 
-  /** Nicht umkehrbare Wechsel werden kurz verzögert und lassen sich bis dahin rückgängig machen. */
+  /** Nicht umkehrbare Wechsel werden kurz verzögert und lassen sich bis dahin rückgängig machen. Dieselbe Aktion nur einmal einreihen. */
+  const [queued, setQueued] = useState<string | null>(null);
   function deferred(text: string, body: Record<string, unknown>) {
+    const key = String(body.action);
+    if (queued === key || busy) return;
+    setQueued(key);
     toast.deferred(text, async () => {
-      await api(`/loans/${loan.id}/actions`, { body });
-      refresh();
+      try {
+        await api(`/loans/${loan.id}/actions`, { body });
+        refresh();
+      } finally {
+        setQueued(null);
+      }
     });
+    // Rückgängig gemacht: nach Ablauf der Frist wieder freigeben
+    setTimeout(() => setQueued((q) => (q === key ? null : q)), 5500);
   }
+  const off = busy || queued !== null;
 
   const step = loan.step;
   const t = loan.times;
@@ -78,7 +89,7 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
     switch (step.key) {
       case "respond":
         context = loan.kind === "swap" ? m.respondSwap : m.respondLend;
-        main = <AcceptForm loan={loan} busy={busy} onAccept={(b) => act({ action: "accept", ...b }, m.accepted)} onDecline={() => deferred(m.declined, { action: "decline" })} />;
+        main = <AcceptForm loan={loan} busy={off} onAccept={(b) => act({ action: "accept", ...b }, m.accepted)} onDecline={() => deferred(m.declined, { action: "decline" })} />;
         break;
       case "show_code":
         context = loan.kind === "swap" ? m.showCodeSwap : m.showCodeLend(loan.other?.first_name ?? "");
@@ -178,22 +189,22 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
   // ---------------------------------------------------------------- Sekundäre Handlungen
   const can = (a: string) => loan.actions.includes(a as never);
   const secondary: React.ReactNode[] = [];
-  if (can("withdraw")) secondary.push(<Button key="w" variant="quiet" onClick={() => deferred(m.withdrawn, { action: "withdraw" })}>{m.withdraw}</Button>);
-  if (can("cancel")) secondary.push(<Button key="c" variant="quiet" onClick={() => deferred(m.cancelled, { action: "cancel" })}>{m.cancel}</Button>);
+  if (can("withdraw")) secondary.push(<Button key="w" variant="quiet" disabled={off} onClick={() => deferred(m.withdrawn, { action: "withdraw" })}>{m.withdraw}</Button>);
+  if (can("cancel")) secondary.push(<Button key="c" variant="quiet" disabled={off} onClick={() => deferred(m.cancelled, { action: "cancel" })}>{m.cancel}</Button>);
   if (loan.status === "accepted" && !loan.handoverReportedBy && loan.kind !== "swap" && !loan.received_from_loan_id) {
     secondary.push(<Button key="rh" variant="quiet" onClick={() => setPanel(panel === "report" ? null : "report")}>{m.reportHandoverBtn}</Button>);
   }
   if (loan.status === "active" && !owner) {
     if (!loan.extensionRequested && loan.extensionsUsed < loan.copySettings.max_extensions && !t.recalled_at)
-      secondary.push(<Button key="e" variant="quiet" disabled={busy} onClick={() => act({ action: "extend" }, loan.copySettings.auto_extend ? m.extended : m.extensionAsked)}>{loan.copySettings.auto_extend ? m.extendAuto : m.extendAsk}</Button>);
-    secondary.push(<Button key="rr" variant="quiet" onClick={() => act({ action: "report_return" }, m.returnReported)}>{m.reportReturnBtn}</Button>);
+      secondary.push(<Button key="e" variant="quiet" disabled={off} onClick={() => act({ action: "extend" }, loan.copySettings.auto_extend ? m.extended : m.extensionAsked)}>{loan.copySettings.auto_extend ? m.extendAuto : m.extendAsk}</Button>);
+    secondary.push(<Button key="rr" variant="quiet" disabled={off} onClick={() => act({ action: "report_return" }, m.returnReported)}>{m.reportReturnBtn}</Button>);
     if (loan.myOfferable.length) secondary.push(<Button key="os" variant="quiet" onClick={() => setPanel(panel === "swap" ? null : "swap")}>{m.offerSwapBtn}</Button>);
   }
   if (loan.status === "active" && owner) {
     if (!t.recalled_at && t.handed_over_at && Date.now() - new Date(t.handed_over_at).getTime() > 14 * 86400_000)
-      secondary.push(<Button key="rc" variant="quiet" onClick={() => deferred(m.recalled, { action: "recall" })}>{m.recall}</Button>);
+      secondary.push(<Button key="rc" variant="quiet" disabled={off} onClick={() => deferred(m.recalled, { action: "recall" })}>{m.recall}</Button>);
     if (t.due_at && new Date(t.due_at) < new Date(Date.now() - 3 * 86400_000))
-      secondary.push(<Button key="oc" variant="quiet" onClick={() => act({ action: "open_case" }, m.caseOpened)}>{m.openCase}</Button>);
+      secondary.push(<Button key="oc" variant="quiet" disabled={off} onClick={() => act({ action: "open_case" }, m.caseOpened)}>{m.openCase}</Button>);
     if (step?.key !== "scan_return") secondary.push(<Button key="ro" variant="quiet" onClick={() => setOverlay({ kind: "scan", label: m.scanReturn })}>{m.scanReturn}</Button>);
   }
   if (loan.status === "accepted" && !owner && loan.kind === "lend" && loan.wanted && loan.wanted.start > new Date().toISOString().slice(0, 10)) {

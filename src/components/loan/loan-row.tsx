@@ -227,7 +227,7 @@ export function LoanRow({ loan, variant, i = 0, l = "de" }: { loan: LoanListItem
     return (
       <li className="anim-rise" style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
         <Link href={`/vorgaenge/${loan.id}`} className="group grid grid-cols-[32px_minmax(0,1fr)_auto] md:grid-cols-[32px_minmax(0,1fr)_120px_120px_170px] gap-4 md:gap-6 items-center px-4 md:px-5 py-3 hover:bg-paper-2 transition-colors">
-          <Cover data={coverOf(loan)} width={32} height={48} uniform />
+          <Cover l={l} data={coverOf(loan)} width={32} height={48} uniform />
           <div className="min-w-0">
             <p className="font-serif text-[16.5px] leading-tight truncate group-hover:underline underline-offset-4 decoration-1">{loan.title}</p>
             <p className="text-[13px] text-muted truncate mt-0.5"><span className="md:hidden">{who(loan, l)}</span><span className="hidden md:inline">{loan.authors.join(", ")}</span></p>
@@ -252,7 +252,7 @@ export function LoanRow({ loan, variant, i = 0, l = "de" }: { loan: LoanListItem
         className={cx("group flex flex-col gap-4 rounded-[10px] border p-4 md:p-5 h-full transition-colors",
           tone === "late" ? "border-late/50 hover:border-late" : v === "action" ? "border-line-strong hover:border-accent" : "border-line hover:border-ink-2")}>
         <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-4">
-          <span className="book self-start"><span className="book-face block"><Cover data={coverOf(loan)} width={64} height={96} uniform /></span></span>
+          <span className="book self-start"><span className="book-face block"><Cover l={l} data={coverOf(loan)} width={64} height={96} uniform /></span></span>
           <div className="min-w-0 flex flex-col">
             <div className="flex items-center justify-between gap-3">
               <p className="text-[12.5px] text-muted truncate inline-flex items-center gap-2 min-w-0">
@@ -292,9 +292,10 @@ export function LoanRow({ loan, variant, i = 0, l = "de" }: { loan: LoanListItem
 }
 
 /** Restzeit in einer Zeile, z. B. in der Benachrichtigungsliste: Marke, Frist und kurzer Balken */
-export function TimeMeterInline({ m, className }: { m: Meter; className?: string }) {
+export function TimeMeterInline({ m, className, l = "de" }: { m: Meter; className?: string; l?: Locale }) {
   const late = m.tone === "late";
-  const joined = m.flow ? `${m.eyebrow} ${m.value}${m.unit ? ` ${m.unit}` : ""}` : `${m.eyebrow}: ${m.value}${m.unit ? ` ${m.unit}` : ""}`;
+  // Französisch mit Leerzeichen vor dem Doppelpunkt
+  const joined = m.flow ? `${m.eyebrow} ${m.value}${m.unit ? ` ${m.unit}` : ""}` : `${m.eyebrow}${l === "fr" ? " : " : ": "}${m.value}${m.unit ? ` ${m.unit}` : ""}`;
   return (
     <span className={cx("flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12.5px] tnum", className)}>
       <span className={cx("inline-flex items-center gap-1.5 h-6 px-2 rounded-[6px] font-semibold",

@@ -165,7 +165,7 @@ function CircleCard({ c, p, i, l }: { c: CircleRow; p: Preview | undefined; i: n
           <div className="flex items-end gap-2 h-[72px] overflow-hidden">
             {pv.books.map((b) => (
               <span key={b.id} className="flex-none">
-                <Cover width={46} height={69} uniform
+                <Cover l={l} width={46} height={69} uniform
                   data={{ title: b.title, authors: b.authors, coverKey: b.cover_key, photoKey: b.photo_key, photoW: b.photo_w, photoH: b.photo_h, seed: b.work_id }} />
               </span>
             ))}

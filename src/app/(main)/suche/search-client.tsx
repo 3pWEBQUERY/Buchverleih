@@ -407,8 +407,8 @@ function ResultCard({ h, href, i }: { h: WorkHit; href: string; i: number }) {
     <li className="anim-rise min-w-0" style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
       <Link href={href} className="book group rounded-[10px] border border-line h-full grid grid-cols-[64px_minmax(0,1fr)] md:grid-cols-[72px_minmax(0,1fr)] gap-4 md:gap-5 p-4 md:p-5 hover:border-accent transition-colors duration-150">
         <span className="self-start">
-          <span className="book-face block md:hidden"><Cover data={coverOf(h)} width={64} height={96} uniform /></span>
-          <span className="book-face hidden md:block"><Cover data={coverOf(h)} width={72} height={108} uniform /></span>
+          <span className="book-face block md:hidden"><Cover l={l} data={coverOf(h)} width={64} height={96} uniform /></span>
+          <span className="book-face hidden md:block"><Cover l={l} data={coverOf(h)} width={72} height={108} uniform /></span>
         </span>
         <div className="min-w-0 flex flex-col">
           <div className="flex items-start justify-between gap-3">
