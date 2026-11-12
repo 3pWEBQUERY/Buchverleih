@@ -20,10 +20,17 @@ import { sendSms } from "@/lib/notify/sms";
 import { normalizePhone } from "./phone";
 import { safeNext } from "@/lib/safe-next";
 import type { SessionUser } from "./session";
+import type { Locale } from "@/lib/i18n/locale";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-export async function requestEmailLink(rawEmail: string, next?: string | null) {
+const LOGIN_MAIL: Record<Locale, [string, string, string]> = {
+  de: ["Dein Anmeldelink", "Mit diesem Link meldest du dich bei Leihregal an. Er ist 20 Minuten gültig und funktioniert einmal.", "Anmelden"],
+  fr: ["Ton lien de connexion", "Ce lien te connecte à Leihregal. Il est valable 20 minutes et ne fonctionne qu’une fois.", "Se connecter"],
+  it: ["Il tuo link di accesso", "Con questo link accedi a Leihregal. È valido 20 minuti e funziona una sola volta.", "Accedi"],
+};
+
+export async function requestEmailLink(rawEmail: string, next?: string | null, l: Locale = "de") {
   const email = rawEmail.trim().toLowerCase();
   if (!EMAIL_RE.test(email)) throw err.invalid("Diese E-Mail-Adresse sieht unvollständig aus.");
   await rateLimit(`login:${email}`, 5, 900);
@@ -31,15 +38,13 @@ export async function requestEmailLink(rawEmail: string, next?: string | null) {
   await sql`insert into login_tokens (email, token_hash, expires_at) values (${email}, ${hashToken(token)}, now() + interval '20 minutes')`;
   const safe = safeNext(next);
   const link = `${env.appUrl}/anmelden/link?token=${token}${safe ? `&next=${encodeURIComponent(safe)}` : ""}`;
-  await sendMail(email, "Dein Anmeldelink", "Mit diesem Link meldest du dich bei Leihregal an. Er ist 20 Minuten gültig und funktioniert einmal.", {
-    href: link,
-    label: "Anmelden",
-  });
+  const [subject, text, label] = LOGIN_MAIL[l] ?? LOGIN_MAIL.de;
+  await sendMail(email, subject, text, { href: link, label }, l);
   return { devLink: env.showCodes ? link : undefined };
 }
 
 /** Löst den Link ein. Neue Adressen erhalten dabei ein Konto. */
-export async function verifyEmailLink(token: string) {
+export async function verifyEmailLink(token: string, l: Locale = "de") {
   return sql.begin(async (tx) => {
     const [t] = await tx<{ email: string }[]>`
       update login_tokens set used_at = now()
@@ -52,7 +57,7 @@ export async function verifyEmailLink(token: string) {
       await tx`update users set email_verified_at = coalesce(email_verified_at, now()) where id = ${existing.id}`;
       return { userId: existing.id, created: false };
     }
-    const [u] = await tx<{ id: string }[]>`insert into users (email, email_verified_at) values (${t.email}, now()) returning id`;
+    const [u] = await tx<{ id: string }[]>`insert into users (email, email_verified_at, locale) values (${t.email}, now(), ${l}) returning id`;
     return { userId: u.id, created: true };
   });
 }

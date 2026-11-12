@@ -4,8 +4,12 @@ import { origin as originOf } from "@/lib/page";
 import { searchWorks, type WorkHit } from "@/lib/search";
 import { plzInfo } from "@/lib/account";
 import { SearchClient, type Filters } from "./search-client";
+import { getLocale } from "@/lib/i18n/server";
+import { SEARCH } from "@/lib/i18n/messages/search";
 
-export const metadata: Metadata = { title: "Suche" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: SEARCH[await getLocale()].title };
+}
 
 const RADII = [1, 2, 5, 10, 25];
 const pick = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";

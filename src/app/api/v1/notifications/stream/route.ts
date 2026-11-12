@@ -1,3 +1,4 @@
+import { getLocale } from "@/lib/i18n/server";
 import { getUser } from "@/lib/auth/session";
 import { sql } from "@/lib/db";
 import { acquireStream, subscribe } from "@/lib/live";
@@ -15,6 +16,7 @@ export async function GET(req: Request) {
   const release = acquireStream(u.id);
   if (!release) return new Response(null, { status: 429 });
   const userId = u.id;
+  const locale = await getLocale();
 
   const unread = async () => {
     const [r] = await sql<{ n: number }[]>`select count(*)::int as n from notifications where user_id = ${userId} and channel = 'app' and read_at is null`;
@@ -48,7 +50,7 @@ export async function GET(req: Request) {
               const [r] = await sql<{ id: string; type: NotificationType; payload: NotifyData; loan_id: string | null; created_at: Date }[]>`
                 select id, type, payload, loan_id, created_at from notifications where id = ${msg.id} and user_id = ${userId}`;
               if (!r) return;
-              const text = renderNotification(r.type, r.payload ?? {});
+              const text = renderNotification(r.type, r.payload ?? {}, locale);
               send("notification", {
                 unread: await unread(),
                 item: { id: r.id, type: r.type, title: text.title, body: text.body, href: r.loan_id ? `/vorgaenge/${r.loan_id}` : r.payload?.href ?? null, loanId: r.loan_id, createdAt: r.created_at },

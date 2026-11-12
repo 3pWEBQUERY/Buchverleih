@@ -1,6 +1,8 @@
 import type { Tx } from "@/lib/db";
 import { enqueue } from "@/lib/jobs";
 import { deadline, dueDay, fmtDay, fmtDayTime, dayToDate } from "@/lib/dates";
+import type { Locale } from "@/lib/i18n/locale";
+import { TEXTS, quote, verb } from "./texts";
 
 /**
  * Benachrichtigungen (PRD 7.6). In der Web-App immer, per E-Mail für Anfragen,
@@ -139,93 +141,18 @@ export async function notify(
   }
 }
 
-const q = (t?: string) => (t ? `«${t}»` : "das Buch");
-const noun = (k?: string) => (k === "swap" ? "tauschen" : k === "gift" ? "geschenkt bekommen" : "leihen");
-
-/** Titel und Text einer Benachrichtigung */
-export function renderNotification(type: NotificationType, d: NotifyData): { title: string; body: string } {
-  const t = q(d.title);
-  const due = d.due ? deadline(dueDay(d.due)) : "";
-  switch (type) {
-    case "request_new":
-      return { title: `${d.name} möchte ${t} ${noun(d.kind)}`, body: d.text ?? "Du hast 72 Stunden Zeit für eine Antwort. Danach verfällt die Anfrage." };
-    case "request_accepted":
-      return { title: `${d.name} hat angenommen`, body: `${t}: Übergabeort und Termin stehen im Vorgang.` };
-    case "request_auto_accepted":
-      return { title: `Im Kreis angenommen`, body: `${t} ist für dich reserviert. Sprich die Übergabe im Vorgang ab.` };
-    case "request_declined":
-      return { title: `Anfrage für ${t} abgelehnt`, body: "Es gibt vielleicht ein anderes Exemplar in deiner Nähe." };
-    case "request_expired":
-      return { title: `Anfrage für ${t} verfallen`, body: "Innert 72 Stunden kam keine Antwort. Der Zeitraum ist wieder frei." };
-    case "cancelled":
-      return { title: `${t}: Vorgang storniert`, body: `${d.name ?? "Die andere Seite"} hat storniert. Der Zeitraum ist wieder frei.` };
-    case "handover_reported":
-      return { title: `Bitte bestätige die Übergabe von ${t}`, body: "Ohne Einspruch gilt die Meldung nach 48 Stunden." };
-    case "handover_done":
-      return { title: `${t} ist übergeben`, body: d.due ? due : "Der Vorgang ist abgeschlossen." };
-    case "handover_expired":
-      return { title: `${t}: keine Übergabe`, body: "7 Tage nach dem geplanten Beginn gab es keine Übergabe. Der Vorgang ist verfallen." };
-    case "due_soon":
-      return { title: `${t} ist bald fällig`, body: `${due}. Verlängern oder Rückgabe planen geht im Vorgang.` };
-    case "due_tomorrow":
-      return { title: `${t} ist morgen fällig`, body: "Plane die Rückgabe im Vorgang." };
-    case "overdue":
-      return { title: `${t} ist überfällig`, body: "Schlag im Chat einen Termin für die Rückgabe vor." };
-    case "overdue_late":
-      return { title: `${t}: 3 Tage überfällig`, body: "Die Kulanz ist vorbei, die Leihe zählt als unpünktlich. Bitte gib das Buch so bald wie möglich zurück." };
-    case "overdue_case_possible":
-      return { title: `${t}: 7 Tage überfällig`, body: "Neue Anfragen sind erst nach der Rückgabe wieder möglich." };
-    case "extended":
-      return { title: `${t} verlängert`, body: due };
-    case "extension_requested":
-      return { title: `${d.name} möchte ${t} länger behalten`, body: "Entscheide im Vorgang." };
-    case "recalled":
-      return { title: `${d.name} ruft ${t} zurück`, body: `Bitte gib das Buch innert 7 Tagen zurück. ${due}` };
-    case "return_reported":
-      return { title: `Hast du ${t} zurückbekommen?`, body: "Bestätige die Rückgabe. Ohne Einspruch gilt sie nach 48 Stunden." };
-    case "returned":
-      return { title: `Rückgabe von ${t} bestätigt`, body: "Danke. Die Leihe wird nach der Prüfung abgeschlossen." };
-    case "completed":
-      return { title: `${t}: abgeschlossen`, body: "Wie war es? Eine Antwort reicht: «Gerne wieder» oder «Es gab Probleme»." };
-    case "damage_reported":
-      return { title: `Schaden an ${t} gemeldet`, body: "Wähle im Fall eine von drei Antworten." };
-    case "case_opened":
-      return { title: `Fall zu ${t} eröffnet`, body: "Nenne einen Rückgabetermin, biete Ersatz an oder schlage einen Tausch vor." };
-    case "case_reminder":
-      return { title: `Zweite Aufforderung: ${t}`, body: "Ohne Reaktion wird dein Konto in 7 Tagen für Leihen und Tauschen gesperrt." };
-    case "case_suspended":
-      return { title: "Leihen und Tauschen gesperrt", body: `Der Fall zu ${t} ist weiter offen. Die Moderation prüft ihn.` };
-    case "case_lost":
-      return { title: `${t} gilt als verloren`, body: "Eine spätere Rückgabe oder ein Ersatz bereinigt den Eintrag." };
-    case "case_response":
-      return { title: `Antwort im Fall zu ${t}`, body: d.text ?? "Die andere Seite hat geantwortet. Details stehen im Vorgang." };
-    case "case_resolved":
-      return { title: `Fall zu ${t} gelöst`, body: d.text ?? "Der Vorgang ist abgeschlossen." };
-    case "pass_on_ask":
-      return { title: `Direkt weitergeben: ${t}`, body: d.text ?? "Stimmst du zu, dass das Buch direkt weitergegeben wird?" };
-    case "pass_on_agreed":
-      return { title: `${t} geht direkt weiter`, body: "Alle drei haben zugestimmt. Sprecht Ort und Zeit im Übergabe-Chat ab." };
-    case "handover_chat":
-      return { title: `Übergabe-Chat zu ${t}`, body: "Zwei Leihen folgen aufeinander. Sprecht den Wechsel ab." };
-    case "start_earlier":
-      return { title: `${t} ist früher zurück`, body: d.day ? `Du kannst ab ${fmtDay(dayToDate(d.day))} beginnen.` : "Du kannst früher beginnen." };
-    case "bookings_paused":
-      return { title: `Buchung für ${t} pausiert`, body: "Zum Exemplar ist ein Fall offen. Du kannst ohne Nachteil stornieren." };
-    case "someone_waiting":
-      return { title: `${d.name} wartet auf ${t}`, body: d.day ? `Ab ${fmtDay(dayToDate(d.day))}. Bitte gib das Buch zurück.` : "Bitte gib das Buch zurück." };
-    case "swap_offer":
-      return { title: `${d.name} möchte ${t} behalten`, body: "und bietet dir dafür ein eigenes Buch an." };
-    case "title_alarm":
-      return { title: `${t} ist verfügbar`, body: d.text ?? "Ein Exemplar in deinem Umkreis ist frei." };
-    case "swap_match":
-      return { title: "Tauschtreffer", body: `${d.name} hat ${t} von deiner Wunschliste, und du hast eines von ${d.name}s.` };
-    case "message":
-      return { title: `${d.name}: ${t}`, body: d.text ?? "Neue Nachricht" };
-    case "invite_own_books":
-      return { title: "Dein Regal ist noch leer", body: "Wer leiht, verleiht oft auch. Ein Buch einstellen dauert unter 20 Sekunden." };
-    case "circle_join_request":
-      return { title: `${d.name} möchte beitreten`, body: d.text ?? "Gib die Anfrage im Kreis frei." };
-    default:
-      return { title: "Leihregal", body: d.at ? fmtDayTime(d.at) : "" };
-  }
+/** Titel und Text einer Benachrichtigung in der Sprache der Person */
+export function renderNotification(type: NotificationType, d: NotifyData, l: Locale = "de"): { title: string; body: string } {
+  const table = TEXTS[l] ?? TEXTS.de;
+  const fn = table[type];
+  if (!fn) return { title: "Leihregal", body: d.at ? fmtDayTime(d.at, l) : "" };
+  const [title, body] = fn({
+    t: quote[l](d.title),
+    name: d.name ?? "",
+    verb: verb[l](d.kind),
+    due: d.due ? deadline(dueDay(d.due), undefined, l) : "",
+    day: d.day ? fmtDay(dayToDate(d.day), l) : "",
+    d,
+  });
+  return { title, body };
 }

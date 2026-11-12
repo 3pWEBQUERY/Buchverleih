@@ -1,3 +1,4 @@
+import { getLocale } from "@/lib/i18n/server";
 import { z } from "zod";
 import { body, route } from "@/lib/api";
 import { verifyEmailLink } from "@/lib/auth/flows";
@@ -9,7 +10,7 @@ import { createSession, setSessionCookie } from "@/lib/auth/session";
  */
 export const POST = route(async (req) => {
   const b = await body(req, z.object({ token: z.string().min(20), client: z.enum(["web", "api"]).default("web") }));
-  const { userId, created } = await verifyEmailLink(b.token);
+  const { userId, created } = await verifyEmailLink(b.token, await getLocale());
   const s = await createSession(userId, b.client);
   if (b.client === "web") {
     await setSessionCookie(s.token, s.maxAge);

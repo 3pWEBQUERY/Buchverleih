@@ -9,6 +9,10 @@ import { deleteObject, getObjectBytes, keys, putObject } from "@/lib/storage";
 import { coverCandidates, fetchImage } from "@/lib/catalog/covers";
 import { removeDemo, seedDemo } from "./seed-demo";
 import { pushToUser } from "@/lib/push";
+import { MAIL } from "@/lib/notify/texts";
+import { isLocale, type Locale } from "@/lib/i18n/locale";
+
+const loc = (x: unknown): Locale => (isLocale(x) ? x : "de");
 
 type Job = { id: number; kind: string; payload: Record<string, unknown>; attempts: number };
 
@@ -61,44 +65,46 @@ const handlers: Record<string, (p: Record<string, unknown>) => Promise<void>> = 
   },
 
   async send_email(p) {
-    const [n] = await sql<{ id: string; type: NotificationType; payload: NotifyData; loan_id: string | null; email: string; sent_at: Date | null; deleted_at: Date | null }[]>`
-      select n.id, n.type, n.payload, n.loan_id, u.email, n.sent_at, u.deleted_at
+    const [n] = await sql<{ id: string; type: NotificationType; payload: NotifyData; loan_id: string | null; email: string; sent_at: Date | null; deleted_at: Date | null; locale: string }[]>`
+      select n.id, n.type, n.payload, n.loan_id, u.email, n.sent_at, u.deleted_at, u.locale
         from notifications n join users u on u.id = n.user_id where n.id = ${p.notificationId as string}`;
     if (!n || n.sent_at || n.deleted_at) return;
-    const { title, body } = renderNotification(n.type, n.payload);
+    const l = loc(n.locale);
+    const { title, body } = renderNotification(n.type, n.payload, l);
     const href = n.payload.href ? `${env.appUrl}${n.payload.href}` : n.loan_id ? `${env.appUrl}/vorgaenge/${n.loan_id}` : `${env.appUrl}/`;
-    await sendMail(n.email, title, body, { href, label: n.loan_id ? "Zum Vorgang" : "Öffnen" });
+    await sendMail(n.email, title, body, { href, label: n.loan_id ? MAIL[l].toLoan : MAIL[l].open }, l);
     await sql`update notifications set sent_at = now() where id = ${n.id}`;
   },
 
   /** Push an alle Geräte. Schon gelesene Benachrichtigungen (live in der App gesehen) nicht mehr schicken. */
   async send_push(p) {
-    const [n] = await sql<{ id: string; user_id: string; type: NotificationType; payload: NotifyData; loan_id: string | null; read_at: Date | null; created_at: Date }[]>`
-      select n.id, n.user_id, n.type, n.payload, n.loan_id, n.read_at, n.created_at
+    const [n] = await sql<{ id: string; user_id: string; type: NotificationType; payload: NotifyData; loan_id: string | null; read_at: Date | null; created_at: Date; locale: string }[]>`
+      select n.id, n.user_id, n.type, n.payload, n.loan_id, n.read_at, n.created_at, u.locale
         from notifications n join users u on u.id = n.user_id
        where n.id = ${p.notificationId as string} and u.deleted_at is null and u.banned_at is null`;
     if (!n || n.read_at) return;
     // Nach einem Ausfall keine veralteten Hinweise nachschieben
     if (Date.now() - n.created_at.getTime() > 24 * 3600_000) return;
-    const { title, body } = renderNotification(n.type, n.payload);
+    const { title, body } = renderNotification(n.type, n.payload, loc(n.locale));
     const href = n.payload.href ?? (n.loan_id ? `/vorgaenge/${n.loan_id}` : "/benachrichtigungen");
     await pushToUser(n.user_id, { title, body, href, tag: n.loan_id ? `loan-${n.loan_id}` : n.id });
   },
 
   async send_push_test(p) {
-    await pushToUser(p.userId as string, {
-      title: "Push ist eingerichtet",
-      body: "So erscheinen Anfragen, Zusagen und Fristen auf diesem Gerät.",
-      href: "/einstellungen#push",
-      tag: "test",
-    });
+    const [u] = await sql<{ locale: string }[]>`select locale from users where id = ${p.userId as string}`;
+    const text = {
+      de: ["Push ist eingerichtet", "So erscheinen Anfragen, Zusagen und Fristen auf diesem Gerät."],
+      fr: ["Les notifications push sont activées", "Les demandes, réponses et échéances s’afficheront ainsi sur cet appareil."],
+      it: ["Le notifiche push sono attive", "Richieste, conferme e scadenze appariranno così su questo dispositivo."],
+    }[loc(u?.locale)];
+    await pushToUser(p.userId as string, { title: text[0], body: text[1], href: "/einstellungen#push", tag: "test" });
   },
 
   async send_sms(p) {
-    const [n] = await sql<{ id: string; type: NotificationType; payload: NotifyData; phone: string | null; sent_at: Date | null }[]>`
-      select n.id, n.type, n.payload, u.phone_e164 as phone, n.sent_at from notifications n join users u on u.id = n.user_id where n.id = ${p.notificationId as string}`;
+    const [n] = await sql<{ id: string; type: NotificationType; payload: NotifyData; phone: string | null; sent_at: Date | null; locale: string }[]>`
+      select n.id, n.type, n.payload, u.phone_e164 as phone, n.sent_at, u.locale from notifications n join users u on u.id = n.user_id where n.id = ${p.notificationId as string}`;
     if (!n?.phone || n.sent_at) return;
-    const { title } = renderNotification(n.type, n.payload);
+    const { title } = renderNotification(n.type, n.payload, loc(n.locale));
     await sendSms(n.phone, `Leihregal: ${title}. ${env.appUrl}`);
     await sql`update notifications set sent_at = now() where id = ${n.id}`;
   },

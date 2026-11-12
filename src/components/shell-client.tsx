@@ -4,6 +4,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cx } from "./ui";
 import { IconDots, IconSearch } from "./icons";
+import { useLocale } from "./locale-provider";
+import { SHELL } from "@/lib/i18n/messages/shell";
 
 export function NavLink({ href, icon, children, exact, tab }: { href: string; icon: ReactNode; children: ReactNode; exact?: boolean; tab?: boolean }) {
   const path = usePathname();
@@ -28,10 +30,11 @@ export function NavLink({ href, icon, children, exact, tab }: { href: string; ic
 
 /** Suchfeld-Attrappe in der Seitenleiste: öffnet die Suche, Taste «/» */
 export function SearchTrigger() {
+  const l = useLocale();
   return (
     <Link href="/suche?fokus=1" className="h-11 px-4 rounded-[6px] border border-line-strong bg-paper flex items-center gap-2.5 text-muted hover:border-ink transition-colors text-[15px]">
       <IconSearch width={18} height={18} />
-      <span className="flex-1">Titel, Autorin, ISBN</span>
+      <span className="flex-1">{SHELL[l].searchPlaceholder}</span>
       <kbd className="font-sans text-[12px] border border-line-strong rounded-[4px] px-1.5 leading-5">/</kbd>
     </Link>
   );
@@ -69,7 +72,7 @@ export function Shortcuts() {
 }
 
 /** Mobil: «Mehr»-Menü für Seiten, die nicht in der unteren Leiste stehen (Kreise, Wunschliste …) */
-export function MobileMore({ links }: { links: { href: string; label: string }[] }) {
+export function MobileMore({ links, label = "Weitere Seiten" }: { links: { href: string; label: string }[]; label?: string }) {
   const [open, setOpen] = useState(false);
   const path = usePathname();
   const ref = useRef<HTMLDivElement>(null);
@@ -84,12 +87,12 @@ export function MobileMore({ links }: { links: { href: string; label: string }[]
   }, [open]);
   return (
     <div ref={ref} className="relative">
-      <button type="button" aria-expanded={open} aria-haspopup="true" aria-label="Weitere Seiten" onClick={() => setOpen((o) => !o)}
+      <button type="button" aria-expanded={open} aria-haspopup="true" aria-label={label} onClick={() => setOpen((o) => !o)}
         className="h-11 w-11 grid place-items-center rounded-[6px] hover:bg-paper-3 transition-colors">
         <IconDots />
       </button>
       {open && (
-        <nav aria-label="Weitere Seiten" className="absolute right-0 top-12 w-56 rounded-[10px] border border-line-strong bg-paper py-1.5 anim-sheet">
+        <nav aria-label={label} className="absolute right-0 top-12 w-56 rounded-[10px] border border-line-strong bg-paper py-1.5 anim-sheet">
           {links.map((l) => {
             const active = path === l.href || path.startsWith(l.href + "/");
             return (

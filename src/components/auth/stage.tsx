@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { getLocale } from "@/lib/i18n/server";
+import { PUBLIC } from "@/lib/i18n/messages/public";
 import { sql } from "@/lib/db";
 import { BookRow, type BookRowItem } from "@/components/regal/book-row";
 
@@ -46,8 +48,11 @@ async function stageData(): Promise<{ books: BookRowItem[]; copies: number; memb
   }
 }
 
-export async function AuthStage({ eyebrow, title, lead, steps = STEPS, children }: { eyebrow: string; title: ReactNode; lead: ReactNode; steps?: [string, string][]; children: ReactNode }) {
+export async function AuthStage({ eyebrow, title, lead, steps, children }: { eyebrow: string; title: ReactNode; lead: ReactNode; steps?: [string, string][]; children: ReactNode }) {
   const { books, copies, members } = await stageData();
+  const l = await getLocale();
+  const a = PUBLIC[l].auth;
+  steps ??= l === "de" ? STEPS : a.steps;
 
   return (
     <div className="full-bleed -mt-10 md:-mt-16 -mb-10 md:-mb-16 flex flex-col lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:min-h-[calc(100dvh-4rem)]">
@@ -71,7 +76,7 @@ export async function AuthStage({ eyebrow, title, lead, steps = STEPS, children 
           </ol>
 
           <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-3 anim-rise" style={{ animationDelay: "180ms" }}>
-            {([[copies, "Bücher im Umlauf"], [members, "Mitglieder"], ["0.–", "Gebühr pro Leihe"]] as const).map(([n, l]) => (
+            {([[copies, a.stats.books], [members, a.stats.members], ["0.–", a.stats.fee]] as const).map(([n, l]) => (
               <div key={l} className="flex flex-col-reverse">
                 <dt className="text-[12.5px] text-muted mt-1">{l}</dt>
                 <dd className="text-[26px] font-[560] tracking-[-0.04em] leading-none tnum">{n}</dd>
@@ -83,8 +88,8 @@ export async function AuthStage({ eyebrow, title, lead, steps = STEPS, children 
         {books.length > 0 && (
           <div className="mt-auto px-4 md:px-10 xl:px-16 pt-10 pb-10 lg:pb-14">
             <div className="surface-night rounded-[12px] px-5 md:px-6 pt-5 pb-3 anim-rise" style={{ animationDelay: "220ms" }}>
-              <p className="text-[12.5px] text-night-muted mb-1">Gerade in den Regalen</p>
-              <BookRow items={books} height={138} label="Bücher, die gerade in Regalen stehen" />
+              <p className="text-[12.5px] text-night-muted mb-1">{a.inShelves}</p>
+              <BookRow items={books} height={138} label={a.inShelvesAria} />
             </div>
           </div>
         )}

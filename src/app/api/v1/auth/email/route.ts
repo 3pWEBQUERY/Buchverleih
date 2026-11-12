@@ -1,3 +1,4 @@
+import { getLocale } from "@/lib/i18n/server";
 import { z } from "zod";
 import { body, route } from "@/lib/api";
 import { requestEmailLink } from "@/lib/auth/flows";
@@ -9,6 +10,6 @@ export const POST = route(async (req) => {
   const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || req.headers.get("x-real-ip") || "unbekannt";
   await rateLimit(`loginip:${ip}`, 20, 3600);
   const b = await body(req, z.object({ email: z.string().min(3).max(200), next: z.string().max(300).nullish() }));
-  const r = await requestEmailLink(b.email, b.next);
+  const r = await requestEmailLink(b.email, b.next, await getLocale());
   return { ok: true, ...r };
 });

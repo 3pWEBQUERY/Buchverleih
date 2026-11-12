@@ -12,18 +12,27 @@ import {
   AvatarEditor, BlockList, DeleteAccount, EmailPrefs, ExportData, Logout, PasskeyList, PhoneSection, ProfileForm, PushSettings, ShelfPause, SpotList, ThemeChoice,
 } from "./sections";
 import { SettingsNav, type NavGroup } from "./settings-nav";
+import { LanguageChoice } from "@/components/language-switch";
+import { getLocale } from "@/lib/i18n/server";
+
+const LANG_ROW = {
+  de: ["Sprache", "Gilt für die App in diesem Browser sowie für deine E-Mails und Push-Mitteilungen."],
+  fr: ["Langue", "S’applique à l’application dans ce navigateur ainsi qu’à tes e-mails et notifications push."],
+  it: ["Lingua", "Vale per l’app in questo browser e per le tue e-mail e notifiche push."],
+} as const;
 
 export const metadata = { title: "Einstellungen" };
 
 const NAV: NavGroup[] = [
   { title: "Konto", items: [{ id: "profilbild", label: "Profilbild" }, { id: "profil", label: "Profil" }, { id: "mobilnummer", label: "Mobilnummer" }, { id: "passkeys", label: "Passkeys" }] },
   { title: "Leihen", items: [{ id: "uebergabeorte", label: "Übergabeorte" }, { id: "ferienmodus", label: "Ferienmodus" }, { id: "blockiert", label: "Blockiert" }] },
-  { title: "Allgemein", items: [{ id: "push", label: "Push" }, { id: "benachrichtigungen", label: "E-Mail" }, { id: "darstellung", label: "Darstellung" }, { id: "daten", label: "Daten" }] },
+  { title: "Allgemein", items: [{ id: "sprache", label: "Sprache" }, { id: "push", label: "Push" }, { id: "benachrichtigungen", label: "E-Mail" }, { id: "darstellung", label: "Darstellung" }, { id: "daten", label: "Daten" }] },
   { title: "Gefahrenzone", danger: true, items: [{ id: "konto-loeschen", label: "Konto löschen" }] },
 ];
 
 export default async function Page() {
   const user = await pageUser("/einstellungen");
+  const lang = LANG_ROW[await getLocale()];
   const [spots, passkeys, blocks] = await Promise.all([
     listSpots(user.id),
     sql<{ id: string; name: string; created_at: Date; last_used_at: Date | null }[]>`
@@ -95,6 +104,9 @@ export default async function Page() {
 
           <StepSection n={3} title="Allgemein" desc="Mitteilungen, Aussehen und deine Daten.">
             <Card>
+              <Row id="sprache" label={lang[0]} text={lang[1]}>
+                <LanguageChoice />
+              </Row>
               <Row id="push" label="Push-Mitteilungen" text="Neues sofort aufs Handy oder den Computer, auch wenn Leihregal geschlossen ist. Pro Gerät einzeln.">
                 <PushSettings />
               </Row>

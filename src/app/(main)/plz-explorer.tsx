@@ -4,12 +4,15 @@ import { useState } from "react";
 import { Cover } from "@/components/cover";
 import { fmtDistance } from "@/lib/geo";
 import { IconArrowRight, IconSearch } from "@/components/icons";
+import { useLocale } from "@/components/locale-provider";
+import { PUBLIC } from "@/lib/i18n/messages/public";
 
 type Copy = { id: string; title: string; authors: string[]; photo_key: string | null; photo_w: number | null; photo_h: number | null; cover_key: string | null; dist: number; owner_name: string; work_id: string; status: string };
 type Res = { known: boolean; open: boolean; municipality?: string; region?: string; copies: Copy[] };
 
 /** Postleitzahl eingeben und echten Bestand sehen (PRD 8.4) – auf der dunklen Bühne. */
 export function PlzExplorer() {
+  const t = PUBLIC[useLocale()].plz;
   const [plz, setPlz] = useState("");
   const [res, setRes] = useState<Res | null>(null);
   const [loading, setLoading] = useState(false);
@@ -38,17 +41,17 @@ export function PlzExplorer() {
     <div>
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-end">
         <div className="min-w-0">
-          <p className="text-[13px] font-medium text-night-muted">Was steht in deiner Nähe?</p>
-          <p className="text-[30px] md:text-[40px] font-[560] tracking-[-0.035em] leading-tight mt-2">Postleitzahl eingeben, Bestand sehen.</p>
+          <p className="text-[13px] font-medium text-night-muted">{t.ask}</p>
+          <p className="text-[30px] md:text-[40px] font-[560] tracking-[-0.035em] leading-tight mt-2">{t.title}</p>
         </div>
         <form onSubmit={look} className="min-w-0 flex items-center gap-2 p-1.5 pl-5 rounded-[6px] bg-night-2 border border-night-line focus-within:border-night-ink transition-colors w-full md:w-[420px]">
           <IconSearch width={20} height={20} className="text-night-muted flex-none" />
-          <input inputMode="numeric" autoComplete="postal-code" maxLength={4} size={6} placeholder="z. B. 8180" value={plz} aria-label="Postleitzahl"
+          <input inputMode="numeric" autoComplete="postal-code" maxLength={4} size={6} placeholder={t.placeholder} value={plz} aria-label={t.aria}
             onChange={(e) => setPlz(e.target.value.replace(/\D/g, ""))}
             className="flex-1 min-w-0 bg-transparent h-12 text-[20px] tnum tracking-[0.06em] placeholder:text-night-muted/60 focus:outline-none" />
           <button type="submit" disabled={plz.length !== 4}
             className="h-12 px-6 flex-none rounded-[6px] bg-accent text-accent-ink font-semibold disabled:opacity-40 hover:bg-accent-hover transition-colors active:scale-[0.97]">
-            Ansehen
+            {t.look}
           </button>
         </form>
       </div>
@@ -59,35 +62,35 @@ export function PlzExplorer() {
             {Array.from({ length: 7 }).map((_, i) => <div key={i} className="w-[110px] rounded-[4px] bg-night-2 animate-pulse" style={{ height: 150 + (i % 3) * 14 }} />)}
           </div>
         )}
-        {!loading && res && !res.known && <p className="text-night-muted">Diese Postleitzahl kennen wir nicht. Prüfe die vier Ziffern.</p>}
+        {!loading && res && !res.known && <p className="text-night-muted">{t.unknown}</p>}
         {!loading && res?.known && !res.open && (
           <div className="max-w-xl anim-rise">
-            <p className="text-[30px] font-[560] tracking-[-0.035em]">{res.municipality} ist noch nicht offen.</p>
-            <p className="text-night-muted mt-2">Wir öffnen Region für Region, sobald genug Bücher zusammenkommen. Trag dich ein, dann melden wir uns einmal.</p>
+            <p className="text-[30px] font-[560] tracking-[-0.035em]">{t.notOpen(res.municipality ?? "")}</p>
+            <p className="text-night-muted mt-2">{t.notOpenText}</p>
             {joined ? (
-              <p className="mt-5 font-medium">Danke. Wir schreiben dir, wenn {res.municipality} startet.</p>
+              <p className="mt-5 font-medium">{t.thanks(res.municipality ?? "")}</p>
             ) : (
               <form onSubmit={wait} className="mt-5 flex flex-wrap gap-2">
-                <input type="email" required aria-label="E-Mail-Adresse für die Warteliste" placeholder="E-Mail-Adresse" value={email} onChange={(e) => setEmail(e.target.value)}
+                <input type="email" required aria-label={t.emailAria} placeholder={t.emailPlaceholder} value={email} onChange={(e) => setEmail(e.target.value)}
                   className="h-12 px-5 rounded-[6px] bg-night-2 border border-night-line focus:border-night-ink focus:outline-none w-72" />
-                <button className="h-12 px-6 rounded-[6px] bg-accent text-accent-ink font-semibold">Auf die Warteliste</button>
+                <button className="h-12 px-6 rounded-[6px] bg-accent text-accent-ink font-semibold">{t.join}</button>
               </form>
             )}
           </div>
         )}
         {!loading && res?.open && res.copies.length === 0 && (
           <div className="flex flex-wrap items-center gap-4 justify-between rounded-[8px] border border-night-line p-6 anim-rise">
-            <p>Rund um {res.municipality} steht noch nichts im Regal. Stell das erste Buch hinein.</p>
-            <Link href="/anmelden?next=/regal/neu" className="h-11 px-5 rounded-[6px] bg-accent text-accent-ink font-semibold inline-flex items-center">Buch einstellen</Link>
+            <p>{t.empty(res.municipality ?? "")}</p>
+            <Link href="/anmelden?next=/regal/neu" className="h-11 px-5 rounded-[6px] bg-accent text-accent-ink font-semibold inline-flex items-center">{t.addBook}</Link>
           </div>
         )}
         {!loading && res?.open && res.copies.length > 0 && (
           <div className="anim-rise">
             <div className="flex items-baseline justify-between mb-5 gap-4">
-              <p className="text-night-muted">{res.copies.length} neu im Umkreis von 5 km um {res.municipality}</p>
-              <Link href="/anmelden?next=/suche" className="inline-flex items-center gap-1.5 font-semibold link-grow whitespace-nowrap">Anmelden und anfragen <IconArrowRight width={16} height={16} /></Link>
+              <p className="text-night-muted">{t.found(res.copies.length, res.municipality ?? "")}</p>
+              <Link href="/anmelden?next=/suche" className="inline-flex items-center gap-1.5 font-semibold link-grow whitespace-nowrap">{t.loginAsk} <IconArrowRight width={16} height={16} /></Link>
             </div>
-            <ul className="shelf" aria-label={`Bücher bei ${res.municipality}`}>
+            <ul className="shelf" aria-label={t.booksAt(res.municipality ?? "")}>
               {res.copies.map((c, i) => {
                 const cover = { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id };
                 const w = 110;
