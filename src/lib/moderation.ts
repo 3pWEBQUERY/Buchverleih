@@ -7,6 +7,7 @@ import { sql } from "@/lib/db";
 import { err } from "@/lib/errors";
 import type { SessionUser } from "@/lib/auth/session";
 import { markLostTx, resolveCaseTx } from "@/lib/loans/service";
+import { reportContexts, type ReportContext } from "@/lib/moderation-queries";
 
 async function log(modId: string, action: string, targetType: string, targetId: string, note?: string | null) {
   await sql`insert into moderation_log (moderator_id, action, target_type, target_id, note)
@@ -22,10 +23,13 @@ export async function queue() {
       join users o on o.id = l.owner_id join users b on b.id = l.borrower_id
      where c.closed_at is null
      order by (c.response = 'object' or c.stage >= 2) desc, c.opened_at`;
-  const reports = await sql<{ id: string; target_type: string; target_id: string; reason: string; note: string | null; created_at: Date; reporter: string | null }[]>`
+  const open = await sql<{ id: string; target_type: string; target_id: string; reason: string; note: string | null; created_at: Date; reporter: string | null }[]>`
     select r.id, r.target_type, r.target_id, r.reason, r.note, r.created_at, u.first_name as reporter
       from reports r left join users u on u.id = r.reporter_id
      where r.status = 'open' order by r.created_at`;
+  // Gemeldete Zettel, Kommentare und Zettel im Buch mit ihrem Text (nur das gemeldete Stück, kein Umfeld)
+  const ctx = await reportContexts(open);
+  const reports = open.map((r) => ({ ...r, context: (ctx[`${r.target_type}:${r.target_id}`] ?? null) as ReportContext | null }));
   const corrections = await sql<{ id: string; edition_id: string; field: string; suggestion: string; title: string; created_at: Date }[]>`
     select cc.id, cc.edition_id, cc.field, cc.suggestion, e.title, cc.created_at
       from catalog_corrections cc join editions e on e.id = cc.edition_id where cc.status = 'open' order by cc.created_at`;
@@ -70,6 +74,20 @@ export async function decideCase(mod: SessionUser, caseId: string, decision: "re
 export async function handleReport(mod: SessionUser, reportId: string, status: "actioned" | "dismissed", note?: string) {
   await sql`update reports set status = ${status}, handled_by = ${mod.id}, handled_at = now() where id = ${reportId}`;
   await log(mod.id, `report_${status}`, "report", reportId, note);
+}
+
+export const HIDEABLE = ["circle_post", "circle_post_comment", "book_note"] as const;
+export type Hideable = (typeof HIDEABLE)[number];
+
+/** Gemeldeten Inhalt ausblenden oder wieder zeigen (Pinnwand-Zettel, Kommentar, Zettel im Buch) */
+export async function hideContent(mod: SessionUser, targetType: Hideable, targetId: string, hidden: boolean, note?: string) {
+  const set = hidden ? sql`hidden_at = coalesce(hidden_at, now()), hidden_by = ${mod.id}` : sql`hidden_at = null, hidden_by = null`;
+  const rows =
+    targetType === "circle_post" ? await sql`update circle_posts set ${set} where id = ${targetId} returning id`
+    : targetType === "circle_post_comment" ? await sql`update circle_post_comments set ${set} where id = ${targetId} returning id`
+    : await sql`update book_notes set ${set} where id = ${targetId} returning id`;
+  if (!rows.length) throw err.notFound();
+  await log(mod.id, hidden ? "content_hidden" : "content_shown", targetType, targetId, note);
 }
 
 const RANK: Record<string, number> = { member: 0, moderator: 1, admin: 2 };

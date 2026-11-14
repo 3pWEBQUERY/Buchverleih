@@ -58,28 +58,28 @@ export async function AuthStage({ eyebrow, title, lead, steps, children }: { eye
     <div className="full-bleed -mt-10 md:-mt-16 -mb-10 md:-mb-16 flex flex-col lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:min-h-[calc(100dvh-4rem)]">
       {/* ----------------------------------------------------------- Bühne */}
       <aside className="order-2 lg:order-none bg-paper-2 border-t lg:border-t-0 lg:border-r border-line flex flex-col min-w-0" aria-label="Leihregal">
-        <div className="px-4 md:px-10 xl:px-16 pt-10 lg:pt-16 xl:pt-20 max-w-[760px]">
-          <p className="inline-flex items-center gap-2 h-8 px-3 rounded-[6px] bg-paper border border-line text-[13px] font-medium text-ink-2 anim-rise">
+        <div className="px-4 md:px-10 xl:px-16 pt-10 lg:pt-16 xl:pt-20 max-w-[760px] stagger">
+          <p className="inline-flex items-center gap-2 h-8 px-3 rounded-sm bg-paper border border-line text-meta font-medium text-ink-2">
             <span className="h-1.5 w-1.5 rounded-full bg-accent live-dot" /> {eyebrow}
           </p>
-          <p className="display text-[32px] md:text-[44px] xl:text-[52px] mt-6 anim-rise" style={{ animationDelay: "60ms" }}>{title}</p>
-          <p className="mt-4 text-ink-2 text-[16px] leading-relaxed max-w-lg anim-rise" style={{ animationDelay: "100ms" }}>{lead}</p>
+          <p className="display text-display mt-6">{title}</p>
+          <p className="mt-4 text-ink-2 text-body-lg leading-relaxed max-w-lg">{lead}</p>
 
-          <ol className="mt-8 grid sm:grid-cols-3 gap-2 anim-rise" style={{ animationDelay: "140ms" }}>
+          <ol className="mt-8 grid sm:grid-cols-3 gap-2">
             {steps.map(([t, d], i) => (
-              <li key={t} className="rounded-[10px] bg-paper border border-line p-4">
-                <span className="text-[12px] tnum text-accent-hover font-medium">0{i + 1}</span>
-                <p className="font-medium text-[15px] mt-2">{t}</p>
-                <p className="text-[13px] text-muted mt-1 leading-snug">{d}</p>
+              <li key={t} className="rounded-md bg-paper border border-line p-4">
+                <span className="text-caption tnum text-accent-hover font-medium">0{i + 1}</span>
+                <p className="font-medium text-body mt-2">{t}</p>
+                <p className="text-meta text-muted mt-1 leading-snug">{d}</p>
               </li>
             ))}
           </ol>
 
-          <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-3 anim-rise" style={{ animationDelay: "180ms" }}>
+          <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
             {([[copies, a.stats.books], [members, a.stats.members], ["0.–", a.stats.fee]] as const).map(([n, l]) => (
               <div key={l} className="flex flex-col-reverse">
-                <dt className="text-[12.5px] text-muted mt-1">{l}</dt>
-                <dd className="text-[26px] font-[560] tracking-[-0.04em] leading-none tnum">{n}</dd>
+                <dt className="text-meta text-muted mt-1">{l}</dt>
+                <dd className="text-title font-title tracking-display leading-none tnum">{n}</dd>
               </div>
             ))}
           </dl>
@@ -87,8 +87,8 @@ export async function AuthStage({ eyebrow, title, lead, steps, children }: { eye
 
         {books.length > 0 && (
           <div className="mt-auto px-4 md:px-10 xl:px-16 pt-10 pb-10 lg:pb-14">
-            <div className="surface-night rounded-[12px] px-5 md:px-6 pt-5 pb-3 anim-rise" style={{ animationDelay: "220ms" }}>
-              <p className="text-[12.5px] text-night-muted mb-1">{a.inShelves}</p>
+            <div className="surface-night rounded-lg px-5 md:px-6 pt-5 pb-3">
+              <p className="text-meta text-night-muted mb-1">{a.inShelves}</p>
               <BookRow l={l} items={books} height={138} label={a.inShelvesAria} />
             </div>
           </div>

@@ -8,7 +8,7 @@ const B = ({ className }: { className?: string }) => <div className={cx("skeleto
 export default async function Loading() {
   return (
     <SkPage label={TITLE[await getLocale()].loading}>
-      <SkSheet><B className="h-[90px] rounded-[10px]" /><SkSection><SkCards count={2} cols={1} /></SkSection></SkSheet>
+      <SkSheet><B className="h-[90px] rounded-md" /><SkSection><SkCards count={2} cols={1} /></SkSection></SkSheet>
     </SkPage>
   );
 }

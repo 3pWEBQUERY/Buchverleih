@@ -24,23 +24,25 @@ export default async function Page() {
 
   return (
     <StandaloneShell homeLabel={SHELL[await getLocale()].home} motif={{ label: t.motif, gap: 5 }}>
-      <p className="eyebrow anim-rise">{t.eyebrow}</p>
-      <h1 className="display text-[32px] md:text-[44px] mt-4 anim-rise" style={{ animationDelay: "40ms" }}>{t.heading[0]}<em>{t.heading[1]}</em></h1>
+      <div className="stagger">
+      <p className="eyebrow">{t.eyebrow}</p>
+      <h1 className="display text-display mt-4">{t.heading[0]}<em>{t.heading[1]}</em></h1>
       {reason && (
-        <div className="mt-8 rounded-[8px] bg-late/[0.06] border-l-[3px] border-late px-5 py-4 anim-rise" style={{ animationDelay: "80ms" }}>
+        <div className="mt-8 rounded-md bg-late/[0.06] border-l-[3px] border-late px-5 py-4">
           <p className="eyebrow !text-late">{t.reason}</p>
-          <p className="text-[17px] mt-1.5">{reason}</p>
+          <p className="text-lead mt-1.5">{reason}</p>
         </div>
       )}
-      <div className="mt-8 flex flex-col gap-4 text-[16px] md:text-[17px] leading-relaxed text-ink-2 max-w-prose anim-rise" style={{ animationDelay: "120ms" }}>
+      <div className="mt-8 flex flex-col gap-4 text-lead leading-relaxed text-ink-2 max-w-prose">
         <p>{t.p1}</p>
         <p>{t.p2}</p>
       </div>
-      <div className="mt-10 flex flex-wrap items-center gap-2 anim-rise" style={{ animationDelay: "160ms" }}>
+      <div className="mt-10 flex flex-wrap items-center gap-2">
         {user && <LogoutButton label={t.logout} />}
         <LinkButton href="/regeln" variant="ghost" size="sm">{t.rules}</LinkButton>
         <LinkButton href="/nutzungsbedingungen" variant="ghost" size="sm">{t.terms}</LinkButton>
         <LinkButton href="/datenschutz" variant="ghost" size="sm">{t.privacy}</LinkButton>
+      </div>
       </div>
     </StandaloneShell>
   );

@@ -22,7 +22,7 @@ export function ShareButton({ title, text, path, className }: { title: string; t
   }
   return (
     <button type="button" onClick={share}
-      className={cx("h-11 rounded-[6px] border border-line-strong font-medium text-[14.5px] inline-flex items-center justify-center gap-2 hover:border-accent hover:text-accent-hover transition-colors", className)}>
+      className={cx("h-11 rounded-sm border border-field font-medium text-body-sm inline-flex items-center justify-center gap-2 hover:border-accent hover:text-accent-hover transition-colors", className)}>
       <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12" /><path d="m7 8 5-5 5 5" /><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" /></svg>
       {t.label}
     </button>

@@ -47,9 +47,9 @@ export default async function ProfilPage({ params }: Params) {
   if (p.deleted) {
     return (
       <div className="space-y-8">
-        <h1 className="display text-[32px] md:text-[44px] anim-rise">{t.deleted[0]}<em>{t.deleted[1]}</em></h1>
-        <div className="rounded-[10px] border border-dashed border-line-strong px-6 py-8 md:px-8 flex flex-wrap items-center justify-between gap-5">
-          <p className="text-ink-2 text-[16px]">{t.deletedText}</p>
+        <h1 className="display text-display anim-rise">{t.deleted[0]}<em>{t.deleted[1]}</em></h1>
+        <div className="rounded-md border border-dashed border-line-strong px-6 py-8 md:px-8 flex flex-wrap items-center justify-between gap-5">
+          <p className="text-ink-2 text-body-lg">{t.deletedText}</p>
           <LinkButton href="/suche" variant="secondary">{t.searchBooks}</LinkButton>
         </div>
       </div>
@@ -101,14 +101,14 @@ export default async function ProfilPage({ params }: Params) {
       {/* ------------------------------------------------ Personenblatt */}
       <aside className="lg:sticky lg:top-8 space-y-5 min-w-0">
         {/* Eine Karte: Bild, Name, Ort, Stufe – darunter die Angaben */}
-        <div className="rounded-[12px] border border-line overflow-hidden anim-rise">
+        <div className="rounded-lg border border-line overflow-hidden anim-rise">
           <div className="bg-paper-2 px-5 py-5 lg:px-6 lg:pt-9 lg:pb-7 flex items-center gap-4 lg:flex-col lg:text-center lg:gap-0">
             <span className="lg:hidden flex-none"><Monogram name={p.first_name} seed={p.id} size={76} photo={p.avatar_key} className="ring-4 ring-paper" /></span>
             <span className="hidden lg:block"><Monogram name={p.first_name} seed={p.id} size={128} photo={p.avatar_key} className="ring-[6px] ring-paper" /></span>
             <div className="min-w-0 lg:mt-5">
-              <h1 className="text-[24px] md:text-[28px] font-[560] tracking-[-0.03em] leading-tight break-words">{p.first_name}</h1>
-              <p className="text-[13.5px] text-muted mt-1">{[p.municipality, t.since(since)].filter(Boolean).join(" · ")}</p>
-              <p className={cx("mt-3 inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[6px] text-[12.5px] font-semibold",
+              <h1 className="text-title font-title tracking-title leading-tight break-words">{p.first_name}</h1>
+              <p className="text-body-sm text-muted mt-1">{[p.municipality, t.since(since)].filter(Boolean).join(" · ")}</p>
+              <p className={cx("mt-3 inline-flex items-center gap-1.5 h-7 px-2.5 rounded-sm text-meta font-semibold",
                 p.trust_level >= 2 ? "bg-ok/10 text-ok" : p.trust_level === 1 ? "bg-wait/10 text-ink-2" : "bg-paper text-ink-2")}>
                 <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", p.trust_level >= 2 ? "bg-ok" : p.trust_level === 1 ? "bg-wait" : "bg-done")} />
                 {t.level(level)}
@@ -117,20 +117,20 @@ export default async function ProfilPage({ params }: Params) {
           </div>
 
           <div className="divide-y divide-line border-t border-line">
-          <p className="px-4 py-3 text-[13px] text-muted leading-snug">{t.levelLine(level, LEVEL_HINT[p.trust_level] ?? LEVEL_HINT[0])}</p>
-          <dl className="px-4 py-3 text-[13.5px] grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
+          <p className="px-4 py-3 text-meta text-muted leading-snug">{t.levelLine(level, LEVEL_HINT[p.trust_level] ?? LEVEL_HINT[0])}</p>
+          <dl className="px-4 py-3 text-body-sm grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
             {facts.map(([k, v]) => (
               <div key={k} className="contents"><dt className="text-muted">{k}</dt><dd className="text-right tnum truncate">{v}</dd></div>
             ))}
           </dl>
           {genres.length > 0 && (
             <div className="px-4 py-3.5">
-              <p className="text-[13px] text-muted">{t.mostly}</p>
+              <p className="text-meta text-muted">{t.mostly}</p>
               <ul className="mt-2 flex flex-wrap gap-1.5">
                 {genres.map((g) => (
                   <li key={g.genre}>
-                    <Link href={`/suche?genre=${encodeURIComponent(g.genre)}`} className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-1.5 rounded-[6px] bg-paper-2 text-[12.5px] font-medium text-ink-2 hover:bg-accent-soft hover:text-accent-hover transition-colors">
-                      {L.genreLabel[g.genre] ?? g.genre}<span className="text-muted tnum text-[11.5px]">{g.n}</span>
+                    <Link href={`/suche?genre=${encodeURIComponent(g.genre)}`} className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-1.5 rounded-sm bg-paper-2 text-meta font-medium text-ink-2 hover:bg-accent-soft hover:text-accent-hover transition-colors">
+                      {L.genreLabel[g.genre] ?? g.genre}<span className="text-muted tnum text-caption">{g.n}</span>
                     </Link>
                   </li>
                 ))}
@@ -142,10 +142,10 @@ export default async function ProfilPage({ params }: Params) {
 
         {own ? (
           <div className="flex flex-col gap-2">
-            <Link href="/einstellungen#profilbild" className="h-11 rounded-[6px] bg-accent-soft text-accent-hover font-medium text-[14.5px] inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-accent-ink transition-colors">
+            <Link href="/einstellungen#profilbild" className="h-11 rounded-sm bg-accent-soft text-accent-hover font-medium text-body-sm inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-accent-ink transition-colors">
               {t.edit} <IconArrowRight width={16} height={16} />
             </Link>
-            <Link href="/regal" className="h-11 rounded-[6px] border border-line-strong font-medium text-[14.5px] inline-flex items-center justify-center hover:border-ink-2 transition-colors">{t.manageShelf}</Link>
+            <Link href="/regal" className="h-11 rounded-sm border border-field font-medium text-body-sm inline-flex items-center justify-center hover:border-ink-2 transition-colors">{t.manageShelf}</Link>
           </div>
         ) : viewer ? (
           <ProfileActions userId={p.id} name={p.first_name} blocked={p.blocked_by_me} />
@@ -157,7 +157,7 @@ export default async function ProfilPage({ params }: Params) {
         <header className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6 anim-rise">
           <div className="min-w-0">
             <p className="eyebrow">{own ? t.yourProfile : t.profile}</p>
-            <h2 className="display text-[28px] md:text-[38px] mt-2">
+            <h2 className="display text-display mt-2">
               {own ? <>{t.ownHeading[0]}<em>{t.ownHeading[1]}</em></> : <>{otherHeading[0]}<em>{otherHeading[1]}</em></>}
             </h2>
           </div>
@@ -176,26 +176,26 @@ export default async function ProfilPage({ params }: Params) {
           desc={own ? t.ownShelfDesc : t.otherShelfDesc}
           aside={t.books(shelf.length)}>
           {shelf.length === 0 ? (
-            <div className="rounded-[10px] border border-dashed border-line-strong p-6 flex flex-wrap items-center justify-between gap-4">
+            <div className="rounded-md border border-dashed border-line-strong p-6 flex flex-wrap items-center justify-between gap-4">
               {own ? (
                 <>
-                  <p className="text-ink-2 text-[15px]">{t.ownEmpty}</p>
+                  <p className="text-ink-2 text-body">{t.ownEmpty}</p>
                   <LinkButton href="/regal/neu" variant="primary">{t.addBook}</LinkButton>
                 </>
               ) : (
                 <>
-                  <p className="text-ink-2 text-[15px]">{t.otherEmpty(p.first_name)}</p>
+                  <p className="text-ink-2 text-body">{t.otherEmpty(p.first_name)}</p>
                   <LinkButton href="/suche" variant="secondary">{t.searchOn}</LinkButton>
                 </>
               )}
             </div>
           ) : (
-            <div className="surface-night rounded-[12px] px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5">
+            <div className="surface-night rounded-lg px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5">
               {[[t.freeNow, freeShelf], [t.busy, busyShelf]].filter(([, list]) => (list as ShelfCopy[]).length > 0).map(([label, list], gi) => (
                 <section key={label as string} className={cx(gi > 0 && "mt-8")} aria-label={label as string}>
                   <div className="flex items-baseline justify-between gap-4">
-                    <h3 className="text-[19px] md:text-[22px] font-[560] tracking-[-0.03em] leading-none">{label as string}</h3>
-                    <span className="text-[13px] text-night-muted tnum">{t.books((list as ShelfCopy[]).length)}</span>
+                    <h3 className="text-title-sm font-title tracking-title leading-none">{label as string}</h3>
+                    <span className="text-meta text-night-muted tnum">{t.books((list as ShelfCopy[]).length)}</span>
                   </div>
                   <BookRow items={(list as ShelfCopy[]).map((c) => ({ ...c, note: noteFor(c) }))} height={150} hrefBase="/exemplar/" label={`${label as string}: ${t.shelfOf(p.first_name)}`} />
                 </section>
@@ -206,29 +206,29 @@ export default async function ProfilPage({ params }: Params) {
 
         <StepSection id="rueckmeldungen" n={2} title={t.feedback} desc={t.feedbackDesc}>
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
-            <div className="rounded-[10px] border border-line p-4 col-span-2">
+            <div className="rounded-md border border-line p-4 col-span-2">
               <div className="flex items-baseline justify-between gap-3">
-                <p className="text-[13px] text-muted">{t.punctualReturned}</p>
-                <p className="text-[22px] font-[560] tracking-[-0.04em] tnum leading-none">{p.punctual_pct == null ? "–" : `${p.punctual_pct}%`}</p>
+                <p className="text-meta text-muted">{t.punctualReturned}</p>
+                <p className="text-title-sm font-title tracking-display tnum leading-none">{p.punctual_pct == null ? "–" : `${p.punctual_pct}%`}</p>
               </div>
               <div className="mt-3 h-2 rounded-full bg-paper-3 overflow-hidden" aria-hidden>
                 <span className={cx("block h-full rounded-full", (p.punctual_pct ?? 0) >= 90 ? "bg-ok" : (p.punctual_pct ?? 0) >= 70 ? "bg-wait" : "bg-late")} style={{ width: `${p.punctual_pct ?? 0}%` }} />
               </div>
-              <p className="text-[12.5px] text-muted mt-2">{p.punctual_pct == null ? t.noReturns : t.fromAll(own ? null : p.first_name)}</p>
+              <p className="text-meta text-muted mt-2">{p.punctual_pct == null ? t.noReturns : t.fromAll(own ? null : p.first_name)}</p>
             </div>
-            <div className="rounded-[10px] border border-line p-4 flex flex-col">
-              <p className="text-[13px] text-muted">{t.good}</p>
-              <p className="text-[26px] font-[560] tracking-[-0.04em] tnum leading-none mt-auto pt-3 text-ok">{p.good_ratings}</p>
-              <p className="text-[12.5px] text-muted mt-1">{ratings ? t.of(ratings) : t.none}</p>
+            <div className="rounded-md border border-line p-4 flex flex-col">
+              <p className="text-meta text-muted">{t.good}</p>
+              <p className="text-title font-title tracking-display tnum leading-none mt-auto pt-3 text-ok">{p.good_ratings}</p>
+              <p className="text-meta text-muted mt-1">{ratings ? t.of(ratings) : t.none}</p>
             </div>
-            <div className="rounded-[10px] border border-line p-4 flex flex-col">
-              <p className="text-[13px] text-muted">{t.answersUsually}</p>
-              <p className="text-[20px] font-[560] tracking-[-0.03em] leading-tight mt-auto pt-3">{response ?? "–"}</p>
-              <p className="text-[12.5px] text-muted mt-1">{t.onRequests}</p>
+            <div className="rounded-md border border-line p-4 flex flex-col">
+              <p className="text-meta text-muted">{t.answersUsually}</p>
+              <p className="text-title-sm font-title tracking-title leading-tight mt-auto pt-3">{response ?? "–"}</p>
+              <p className="text-meta text-muted mt-1">{t.onRequests}</p>
             </div>
           </div>
           {p.problem_ratings > 0 && (
-            <p className="mt-3 text-[13.5px] text-ink-2 inline-flex items-center gap-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait" />{t.problems(p.problem_ratings)}</p>
+            <p className="mt-3 text-body-sm text-ink-2 inline-flex items-center gap-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait" />{t.problems(p.problem_ratings)}</p>
           )}
         </StepSection>
 
@@ -241,30 +241,30 @@ export default async function ProfilPage({ params }: Params) {
               const isNext = lv === p.trust_level + 1 && nextAt != null;
               const pct = isNext ? Math.min(100, Math.round((done / nextAt!) * 100)) : reached ? 100 : 0;
               return (
-                <li key={lv} className={cx("rounded-[10px] border p-4 flex flex-col", on ? "border-accent bg-accent-soft/30" : "border-line")} aria-current={on ? "step" : undefined}>
+                <li key={lv} className={cx("rounded-md border p-4 flex flex-col", on ? "border-accent bg-accent-soft/30" : "border-line")} aria-current={on ? "step" : undefined}>
                   <p className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-2.5">
-                      <span className={cx("h-6 w-6 rounded-full grid place-items-center text-[12px] font-semibold tnum",
+                      <span className={cx("h-6 w-6 rounded-full grid place-items-center text-caption font-semibold tnum",
                         on ? "bg-accent text-accent-ink" : reached ? "bg-ink-2 text-paper" : "border-[1.5px] border-line-strong text-muted")}>
                         {reached && !on ? <IconCheck width={13} height={13} /> : lv + 1}
                       </span>
-                      <span className={cx("font-medium text-[15px]", !reached && "text-muted")}>{L.trustLabel[lv]}</span>
+                      <span className={cx("font-medium text-body", !reached && "text-muted")}>{L.trustLabel[lv]}</span>
                     </span>
-                    {on && <span className="text-[12px] font-semibold text-accent-hover">{t.current}</span>}
+                    {on && <span className="text-caption font-semibold text-accent-hover">{t.current}</span>}
                   </p>
-                  <p className="text-[13px] text-muted mt-2 leading-snug">{LEVEL_HINT[lv]}</p>
+                  <p className="text-meta text-muted mt-2 leading-snug">{LEVEL_HINT[lv]}</p>
                   <div className="mt-auto pt-3">
                     <div className="h-1 rounded-full bg-paper-3 overflow-hidden" aria-hidden>
                       <span className={cx("block h-full rounded-full", reached ? "bg-ink-2" : "bg-accent")} style={{ width: `${pct}%` }} />
                     </div>
-                    {isNext && <p className="text-[12px] text-muted mt-1.5 tnum">{t.progress(Math.min(done, nextAt!), nextAt!)}</p>}
+                    {isNext && <p className="text-caption text-muted mt-1.5 tnum">{t.progress(Math.min(done, nextAt!), nextAt!)}</p>}
                   </div>
                 </li>
               );
             })}
           </ol>
           {(p.visible_losses > 0 || (!own && p.shared_circles.length > 0)) && (
-            <ul className="mt-3 rounded-[10px] border border-line divide-y divide-line text-[14px]">
+            <ul className="mt-3 rounded-md border border-line divide-y divide-line text-body-sm">
               {p.visible_losses > 0 && (
                 <li className="px-4 py-3 flex items-center gap-2.5 text-late">
                   <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-late" />
@@ -285,16 +285,16 @@ export default async function ProfilPage({ params }: Params) {
 
         {together.length > 0 && (
           <StepSection id="mit-dir" n={4} title={t.together(p.first_name)} desc={t.togetherDesc} aside={t.loans(together.length)}>
-            <ul className="rounded-[10px] border border-line divide-y divide-line overflow-hidden">
+            <ul className="rounded-md border border-line divide-y divide-line overflow-hidden">
               {together.map((tg) => (
                 <li key={tg.id}>
                   <Link href={`/vorgaenge/${tg.id}`} className="group grid grid-cols-[32px_minmax(0,1fr)_auto] gap-4 items-center px-4 md:px-5 py-3 hover:bg-paper-2 transition-colors">
                     <Cover l={l} data={{ title: tg.title, authors: tg.authors, coverKey: tg.cover_key, seed: tg.work_id }} width={32} height={48} uniform />
                     <div className="min-w-0">
-                      <p className="font-serif text-[16.5px] leading-tight truncate group-hover:underline underline-offset-4 decoration-1">{tg.title}</p>
-                      <p className="text-[13px] text-muted mt-0.5 truncate">{L.offerNoun[tg.kind]} · {tg.mine ? t.youTo(p.first_name) : t.toYou(p.first_name)} · {fmtDay(tg.at, l)}</p>
+                      <p className="font-serif text-lead leading-tight truncate group-hover:underline underline-offset-4 decoration-1">{tg.title}</p>
+                      <p className="text-meta text-muted mt-0.5 truncate">{L.offerNoun[tg.kind]} · {tg.mine ? t.youTo(p.first_name) : t.toYou(p.first_name)} · {fmtDay(tg.at, l)}</p>
                     </div>
-                    <span className="text-[13px] text-ink-2 whitespace-nowrap">{L.statusLabel[tg.status] ?? tg.status}</span>
+                    <span className="text-meta text-ink-2 whitespace-nowrap">{L.statusLabel[tg.status] ?? tg.status}</span>
                   </Link>
                 </li>
               ))}

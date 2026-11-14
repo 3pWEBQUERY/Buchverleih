@@ -10,5 +10,5 @@ export const useT = (): SettingsText => SETTINGS_UI[useLocale()];
 export const msg = (e: unknown, t: SettingsText) => (e instanceof Error ? e.message : t.error);
 
 /** Eintrag einer Liste innerhalb einer Einstellungszeile */
-export const itemCls = "rounded-[8px] bg-paper-2 flex items-center justify-between gap-4 pl-4 pr-2 py-2.5 min-h-[60px]";
+export const itemCls = "rounded-md bg-paper-2 flex items-center justify-between gap-4 pl-4 pr-2 py-2.5 min-h-[60px]";
 export const listCls = "space-y-2 mb-5";

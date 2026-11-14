@@ -124,12 +124,12 @@ export async function addPhoto(userId: string, copyId: string, uploadId: string)
   return sql.begin(async (tx) => {
     const [c] = await tx<{ id: string }[]>`select id from copies where id = ${copyId} and owner_id = ${userId}`;
     if (!c) throw err.notFound();
-    const [u] = await tx<{ key: string; width: number | null; height: number | null }[]>`
-      select key, width, height from uploads where id = ${uploadId} and user_id = ${userId} and purpose = 'copy_photo' and status <> 'rejected'`;
+    const [u] = await tx<{ key: string; width: number | null; height: number | null; color: string | null }[]>`
+      select key, width, height, color from uploads where id = ${uploadId} and user_id = ${userId} and purpose = 'copy_photo' and status <> 'rejected'`;
     if (!u?.key) throw err.invalid("Das Foto ist noch nicht hochgeladen.");
     const [p] = await tx<{ id: string }[]>`
-      insert into copy_photos (copy_id, key, width, height, position)
-      values (${copyId}, ${u.key}, ${u.width}, ${u.height}, (select coalesce(max(position) + 1, 0) from copy_photos where copy_id = ${copyId}))
+      insert into copy_photos (copy_id, key, width, height, color, position)
+      values (${copyId}, ${u.key}, ${u.width}, ${u.height}, ${u.color}, (select coalesce(max(position) + 1, 0) from copy_photos where copy_id = ${copyId}))
       returning id`;
     return p.id;
   });
@@ -164,6 +164,9 @@ export type ShelfCopy = {
   photo_w: number | null;
   photo_h: number | null;
   cover_key: string | null;
+  /** dominante Farbe des Fotos bzw. des Originalcovers (#rrggbb), als Hintergrund bis zum Laden */
+  photo_color: string | null;
+  cover_color: string | null;
   status: ShelfStatus;
   lent_until: Date | null;
   next_start: string | null;
@@ -177,8 +180,8 @@ export type ShelfCopy = {
 };
 
 const SHELF_SELECT = sql`
-  c.id, c.edition_id, e.work_id, w.title, w.authors, c.condition, c.offers, c.visibility, c.owner_id, c.created_at, e.cover_key,
-  ph.key as photo_key, ph.width as photo_w, ph.height as photo_h,
+  c.id, c.edition_id, e.work_id, w.title, w.authors, c.condition, c.offers, c.visibility, c.owner_id, c.created_at, e.cover_key, e.cover_color,
+  ph.key as photo_key, ph.width as photo_w, ph.height as photo_h, ph.color as photo_color,
   cur.id as loan_id, cur.due_at as lent_until,
   (select lower(b.period)::text from copy_bookings b join loans n on n.id = b.loan_id
     where b.copy_id = c.id and n.status = 'accepted' order by lower(b.period) limit 1) as next_start,
@@ -197,7 +200,7 @@ const SHELF_FROM = sql`
   join editions e on e.id = c.edition_id
   join works w on w.id = e.work_id
   join users o on o.id = c.owner_id
-  left join lateral (select key, width, height from copy_photos p where p.copy_id = c.id order by position limit 1) ph on true
+  left join lateral (select key, width, height, color from copy_photos p where p.copy_id = c.id order by position limit 1) ph on true
   left join lateral (select l.id, l.due_at, l.handed_over_at, bu.first_name as borrower_name from loans l join users bu on bu.id = l.borrower_id
                       where l.copy_id = c.id and l.status in ('active', 'return_reported', 'disputed') limit 1) cur on true`;
 
@@ -233,6 +236,39 @@ export async function newNearby(viewerId: string | null, origin: { lat: number; 
      limit ${limit}`;
 }
 
+export type NearestFreeCopy = Pick<ShelfCopy, "id" | "work_id" | "title" | "authors" | "photo_key" | "photo_w" | "photo_h" | "photo_color" | "cover_key" | "cover_color"> & {
+  owner_name: string;
+  /** auf 100 m gerundet, in Kilometern */
+  distance_km: number;
+};
+
+/**
+ * Das nächste heute freie Buch im Umkreis – ein echtes Beispiel für leere Zustände.
+ * Nicht das eigene, niemand Blockiertes (copy_visible_to), kein pausiertes Regal. null, wenn nichts in der Nähe frei ist.
+ */
+export async function nearestFreeCopy(userId: string, radiusKm = 25): Promise<NearestFreeCopy | null> {
+  const [r] = await sql<NearestFreeCopy[]>`
+    select c.id, e.work_id, w.title, w.authors, ph.key as photo_key, ph.width as photo_w, ph.height as photo_h, ph.color as photo_color,
+           e.cover_key, e.cover_color, o.first_name as owner_name,
+           (greatest(100, round(earth_distance(ll_to_earth(me.home_lat, me.home_lng), ll_to_earth(o.display_lat, o.display_lng)) / 100) * 100) / 1000)::float8 as distance_km
+      from users me
+      join users o on o.id <> me.id and not o.shelf_paused
+       and earth_box(ll_to_earth(me.home_lat, me.home_lng), ${radiusKm * 1000}) @> ll_to_earth(o.display_lat, o.display_lng)
+      join copies c on c.owner_id = o.id and c.removed_at is null and cardinality(c.offers) > 0
+      join editions e on e.id = c.edition_id
+      join works w on w.id = e.work_id
+      left join lateral (select key, width, height, color from copy_photos p where p.copy_id = c.id order by position limit 1) ph on true
+     where me.id = ${userId} and me.home_lat is not null
+       and earth_distance(ll_to_earth(me.home_lat, me.home_lng), ll_to_earth(o.display_lat, o.display_lng)) <= ${radiusKm * 1000}
+       and copy_visible_to(c.id, me.id)
+       and not exists (select 1 from copy_bookings b where b.copy_id = c.id
+                        and daterange(lower(b.period), upper(b.period) + b.buffer_days) @> today_ch())
+     order by earth_distance(ll_to_earth(me.home_lat, me.home_lng), ll_to_earth(o.display_lat, o.display_lng)),
+              (ph.key is null and e.cover_key is null), c.created_at desc
+     limit 1`;
+  return r ?? null;
+}
+
 export type CopyDetail = ShelfCopy & {
   condition_note: string | null;
   loan_days: number;
@@ -259,7 +295,7 @@ export type CopyDetail = ShelfCopy & {
   owner_paused: boolean;
   owner_since: Date;
   owner_demo: boolean;
-  photos: { id: string; key: string; width: number | null; height: number | null }[];
+  photos: { id: string; key: string; width: number | null; height: number | null; color: string | null }[];
   circle_ids: string[];
   dist: number | null;
 };
@@ -274,7 +310,7 @@ export async function copyDetail(copyId: string, viewerId: string | null, origin
            e.isbn13, e.publisher, e.year, e.language, e.binding, e.pages,
            o.first_name as owner_name, o.avatar_key as owner_avatar, o.trust_level as owner_trust, o.municipality as owner_municipality,
            o.shelf_paused as owner_paused, o.created_at as owner_since, o.is_demo as owner_demo,
-           coalesce((select json_agg(json_build_object('id', p.id, 'key', p.key, 'width', p.width, 'height', p.height) order by p.position)
+           coalesce((select json_agg(json_build_object('id', p.id, 'key', p.key, 'width', p.width, 'height', p.height, 'color', p.color) order by p.position)
                        from copy_photos p where p.copy_id = c.id), '[]') as photos,
            array(select circle_id from circle_copies where copy_id = c.id) as circle_ids,
            case when ${origin?.lat ?? null}::float8 is null then null

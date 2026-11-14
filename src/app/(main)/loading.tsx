@@ -3,7 +3,7 @@ import { SkCards, SkPage, SkSection, SkShelf, SkTitle } from "@/components/skele
 /** Start und alle Seiten ohne eigenes Skelett */
 export default function Loading() {
   return (
-    <SkPage label="Seite wird geladen">
+    <SkPage k="page">
       <SkTitle tiles={3} />
       <SkSection first><SkCards count={2} tall /></SkSection>
       <SkSection><SkShelf /></SkSection>

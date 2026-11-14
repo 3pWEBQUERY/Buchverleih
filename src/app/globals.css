@@ -16,9 +16,10 @@
   --paper-3: #e8e2d7;
   --ink: #141413;
   --ink-2: #3b3934;
-  --muted: #6c665c;
+  --muted: #68625a;
   --line: #e3ddd2;
   --line-strong: #c8c0b1;
+  --field-border: #888070;   /* Rand von Eingabefeldern: mind. 3:1 auf Papier (WCAG 1.4.11) */
   --accent: #d23c1a;
   --accent-hover: #b5310f;
   --accent-ink: #ffffff;
@@ -32,7 +33,7 @@
   --st-lent: #8a5b00;
   --st-late: #b0203f;
   --st-wait: #3f5577;
-  --st-done: #6c665c;
+  --st-done: #68625a;
   --focus: #141413;
   color-scheme: light;
 }
@@ -47,6 +48,7 @@
     --muted: #a39d91;
     --line: #2a2925;
     --line-strong: #46433c;
+    --field-border: #7a7468;
     --accent: #ff6a3d;
     --accent-hover: #ff8660;
     --accent-ink: #140a06;
@@ -74,6 +76,7 @@
   --muted: #a39d91;
   --line: #2a2925;
   --line-strong: #46433c;
+  --field-border: #7a7468;
   --accent: #ff6a3d;
   --accent-hover: #ff8660;
   --accent-ink: #140a06;
@@ -92,6 +95,46 @@
   color-scheme: dark;
 }
 
+/*
+ * Skalen, die nicht vom Farbmodus abhängen: Schrift, Radien, Bewegung.
+ * Einzige Quelle neben src/styles/tokens.json (scripts/tokens-check.ts gleicht beide ab).
+ * Stufen mit zwei Werten (15/16, 24/28 …) wachsen ab 768 px von selbst – kein md:text-… nötig.
+ */
+:root {
+  --fs-caption: 12px;
+  --fs-meta: 13px;
+  --fs-body-sm: 14px;
+  --fs-body: 15px;
+  --fs-body-lg: 16px;      /* Eingabefelder: nie unter 16 px, sonst zoomt iOS */
+  --fs-lead: 17px;
+  --fs-title-sm: 20px;
+  --fs-title: 24px;
+  --fs-display: 32px;
+  --fs-hero: 52px;
+
+  --dur-instant: 90ms;     /* Druck, Hover-Farbe */
+  --dur-fast: 160ms;       /* Chips, Schalter, Austritt kleiner Elemente */
+  --dur-base: 240ms;       /* Eintritt von Flächen, Sheets */
+  --dur-slow: 420ms;       /* Seitenübergang, Cover-Morph */
+  --ease-out-curve: cubic-bezier(0.25, 1, 0.5, 1);   /* Eintritt */
+  --ease-in-curve: cubic-bezier(0.5, 0, 0.75, 0);    /* Austritt */
+  --ease-spring-curve: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+@media (min-width: 768px) {
+  :root {
+    --fs-body: 16px;
+    --fs-title: 28px;
+    --fs-display: 44px;
+    --fs-hero: 68px;
+  }
+}
+/* Echte Feder (Dämpfung 0.62, 8 % Überschwingen); ohne linear() gilt die Bezier-Kurve oben */
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --ease-spring-curve: linear(0, 0.086, 0.279, 0.502, 0.706, 0.868, 0.981, 1.048, 1.078, 1.083, 1.073, 1.055, 1.037, 1.021, 1.008, 1, 0.995, 0.993, 0.993, 0.994, 0.996, 0.997, 0.999, 1, 1);
+  }
+}
+
 @theme inline {
   --color-paper: var(--paper);
   --color-paper-2: var(--paper-2);
@@ -101,6 +144,7 @@
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
+  --color-field: var(--field-border);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-ink: var(--accent-ink);
@@ -125,13 +169,70 @@
   --font-serif: "Literata Variable", "Iowan Old Style", Georgia, serif;
   --font-sans: "Host Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
 
-  --radius-xs: 2px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  /* Schrift: eine Skala mit Rollen. Tailwinds Standardgrössen (text-sm, text-lg …) gibt es nicht mehr. */
+  --text-*: initial;
+  --text-caption: var(--fs-caption);
+  --text-caption--line-height: 1.4;
+  --text-caption--letter-spacing: 0em;
+  --text-meta: var(--fs-meta);
+  --text-meta--line-height: 1.45;
+  --text-meta--letter-spacing: -0.003em;
+  --text-body-sm: var(--fs-body-sm);
+  --text-body-sm--line-height: 1.5;
+  --text-body-sm--letter-spacing: -0.006em;
+  --text-body: var(--fs-body);
+  --text-body--line-height: 1.55;
+  --text-body--letter-spacing: -0.006em;
+  --text-body-lg: var(--fs-body-lg);
+  --text-body-lg--line-height: 1.55;
+  --text-body-lg--letter-spacing: -0.008em;
+  --text-lead: var(--fs-lead);
+  --text-lead--line-height: 1.5;
+  --text-lead--letter-spacing: -0.01em;
+  --text-title-sm: var(--fs-title-sm);
+  --text-title-sm--line-height: 1.25;
+  --text-title-sm--letter-spacing: -0.02em;
+  --text-title: var(--fs-title);
+  --text-title--line-height: 1.15;
+  --text-title--letter-spacing: -0.03em;
+  --text-display: var(--fs-display);
+  --text-display--line-height: 1.04;
+  --text-display--letter-spacing: -0.04em;
+  --text-hero: var(--fs-hero);
+  --text-hero--line-height: 0.98;
+  --text-hero--letter-spacing: -0.045em;
 
-  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
-  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  /* Gewicht der Titel (Host Grotesk, variabel) */
+  --font-weight-title: 560;
+
+  --tracking-*: initial;
+  --tracking-ui: -0.012em;
+  --tracking-title: -0.03em;
+  --tracking-display: -0.04em;
+  --tracking-caps: 0.08em;     /* Versalien in kleinen Bezeichnungen */
+  --tracking-code: 0.3em;      /* Ziffern-Codes */
+
+  --leading-display: 1.04;
+  --leading-title: 1.15;
+
+  --radius-*: initial;
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+
+  /* Bewegung: Dauer und Kurve nur aus diesen Tokens (duration-fast, ease-spring …) */
+  --transition-duration-instant: var(--dur-instant);
+  --transition-duration-fast: var(--dur-fast);
+  --transition-duration-base: var(--dur-base);
+  --transition-duration-slow: var(--dur-slow);
+  --ease-*: initial;
+  --ease-out: var(--ease-out-curve);
+  --ease-in: var(--ease-in-curve);
+  --ease-spring: var(--ease-spring-curve);
+  --default-transition-duration: var(--dur-fast);
+  --default-transition-timing-function: var(--ease-out-curve);
 }
 
 /* ------------------------------------------------------------------ Basis */
@@ -141,11 +242,25 @@
     color: var(--ink);
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
+    /* Fokus darf nicht hinter klebenden Leisten verschwinden (WCAG 2.4.11): mobil Kopfzeile 56 px
+       und Tab-Leiste 68 px + Safe-Area, auf dem Desktop gibt es keine */
+    scroll-padding-top: calc(56px + 16px);
+    scroll-padding-bottom: calc(68px + env(safe-area-inset-bottom) + 28px);
+  }
+  @media (min-width: 768px) {
+    html { scroll-padding-top: 24px; scroll-padding-bottom: 24px; }
+  }
+  /* Öffentliche Seiten: klebende Kopfzeile mit 64 px, keine untere Leiste */
+  html:has(.public-header) { scroll-padding-top: calc(64px + 16px); scroll-padding-bottom: 24px; }
+  /* Klebende Leiste über der Tab-Navigation (Anfrage, nächster Schritt, Auswahl) */
+  html:has([data-sheet]) { scroll-padding-bottom: calc(68px + env(safe-area-inset-bottom) + 132px); }
+  @media (min-width: 768px) {
+    html:has([data-sheet]) { scroll-padding-bottom: 132px; }
   }
   body {
     background: var(--paper);
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: var(--fs-body);
     line-height: 1.55;
     letter-spacing: -0.006em;
     font-feature-settings: "ss01", "cv01";
@@ -153,15 +268,12 @@
     min-height: 100dvh;
     overflow-x: clip; /* full-bleed-Flächen erzeugen keine waagrechte Scrollleiste */
   }
-  @media (min-width: 768px) {
-    body { font-size: 16px; }
-  }
   ::selection { background: var(--ink); color: var(--paper); }
 
   h1, h2, h3 {
     font-family: var(--font-sans);
-    font-weight: 560;
-    letter-spacing: -0.028em;
+    font-weight: var(--font-weight-title);
+    letter-spacing: var(--tracking-title);
     line-height: 1.04;
     text-wrap: balance;
   }
@@ -169,7 +281,7 @@
   /* Literata: Buchtitel mit optischer Grösse */
   .font-serif { font-optical-sizing: auto; letter-spacing: -0.012em; }
   p { text-wrap: pretty; }
-  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--radius-xs); }
   a { text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
   input, textarea, select, button { font: inherit; color: inherit; letter-spacing: inherit; }
   input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator { opacity: 0.6; }
@@ -177,14 +289,14 @@
 
 @layer components {
   /* Grosse Titel: Grotesk, eng gesetzt, zweifarbig statt kursiv */
-  .display { font-family: var(--font-sans); font-weight: 560; letter-spacing: -0.038em; line-height: 1.02; }
+  .display { font-family: var(--font-sans); font-weight: var(--font-weight-title); letter-spacing: var(--tracking-display); line-height: var(--leading-display); }
   .display em, .display i { font-style: normal; color: var(--muted); }
   .surface-night .display em, .surface-night .display i { color: var(--night-muted); }
   .bg-accent .display em { color: inherit; opacity: 0.6; }
   /* Überschriften der Bedienung */
-  .ui-title { font-family: var(--font-sans); font-weight: 600; letter-spacing: -0.025em; line-height: 1.15; }
+  .ui-title { font-family: var(--font-sans); font-weight: 600; letter-spacing: var(--tracking-title); line-height: var(--leading-title); }
   /* Kleine Bezeichnung über Titeln: ruhig, ohne Versalien */
-  .eyebrow { font-family: var(--font-sans); font-size: 13px; letter-spacing: -0.005em; font-weight: 500; color: var(--muted); }
+  .eyebrow { font-family: var(--font-sans); font-size: var(--fs-meta); letter-spacing: -0.003em; font-weight: 500; color: var(--muted); }
   .tnum { font-variant-numeric: tabular-nums; }
   .rule { border-top: 1px solid var(--line); }
 
@@ -196,44 +308,166 @@
   .full-bleed { width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); }
 
   /* Unterstreichung, die beim Hover wächst */
-  .link-grow { background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size 220ms var(--ease-out-quart); }
+  .link-grow { background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size var(--dur-base) var(--ease-out); }
   .link-grow:hover, .link-grow:focus-visible { background-size: 100% 1px; }
 
   /* Status-Chip: Punkt + Text, nie nur Farbe */
-  .chip { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: 4px; font-size: 12.5px; font-weight: 500; border: 1px solid var(--line); background: transparent; color: var(--ink-2); white-space: nowrap; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: var(--radius-xs); font-size: var(--fs-caption); font-weight: 500; border: 1px solid var(--line); background: transparent; color: var(--ink-2); white-space: nowrap; }
   .surface-night .chip { border-color: var(--night-line); color: var(--night-muted); }
+  /* Druck: Knöpfe geben nach, Karten-Links setzen einen Pixel auf (Signatur-Moment 7) */
+  .press { transition-property: background-color, color, border-color, transform; transition-duration: var(--dur-fast); transition-timing-function: var(--ease-out-curve); }
+  .press:active:not(:disabled) { transform: scale(0.98); transition-duration: var(--dur-instant); }
+  .press-card { transition-property: transform, border-color, background-color; transition-duration: var(--dur-fast); transition-timing-function: var(--ease-out-curve); }
+  .press-card:active { transform: translateY(1px); transition-duration: var(--dur-instant); }
 }
 
 /* -------------------------------------------------------------- Bewegung */
+/*
+ * Regeln (README «Designsystem»):
+ *  – animiert werden nur transform, opacity, clip-path und background-size, nie Layout
+ *  – Dauer und Kurve nur aus den Tokens; Austritt ≈ 70 % des Eintritts mit --ease-in
+ *  – jede Bewegung beantwortet: Woher kommt das? Was hat sich geändert? Was ist als Nächstes dran?
+ */
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-@keyframes cover-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes sink { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(10px); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes flash { from { background-color: var(--accent-soft); } to { background-color: transparent; } }
 @keyframes pulse-line { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
 @keyframes scan-line { from { transform: translateY(-40%); } to { transform: translateY(40%); } }
-@keyframes sheet-in { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-@keyframes pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes bell { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(14deg); } 30% { transform: rotate(-12deg); } 45% { transform: rotate(8deg); } 60% { transform: rotate(-5deg); } 75% { transform: rotate(2deg); } }
 @keyframes timer { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+@keyframes grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes grow-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes flip { from { transform: perspective(240px) rotateX(-88deg); opacity: 0; } to { transform: perspective(240px) rotateX(0); opacity: 1; } }
+@keyframes stamp { from { transform: rotate(-9deg) scale(1.7); opacity: 0; } to { transform: rotate(-9deg) scale(1); opacity: 1; } }
+@keyframes roll-up { from { transform: translateY(70%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes roll-down { from { transform: translateY(-70%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes snap { from { transform: scaleX(0.94); } to { transform: scaleX(1); } }
+@keyframes skeleton-in { from { opacity: 0; } to { opacity: 1; } }
 
-.anim-rise { animation: rise 420ms var(--ease-out-quart) both; }
-.anim-cover { animation: cover-in 520ms var(--ease-out-quart) both; }
+/* Eintritt: nur für Inhalte im ersten Sichtbereich oder als Antwort auf eine Handlung */
+.anim-rise { animation: rise var(--dur-base) var(--ease-out-curve) both; }
+.anim-cover { animation: rise var(--dur-slow) var(--ease-out-curve) both; }
+.anim-sheet { animation: rise var(--dur-base) var(--ease-out-curve) both; }
+.anim-pop { animation: pop var(--dur-base) var(--ease-spring-curve) both; }
+/* Austritt: rund 70 % der Eintrittsdauer, beschleunigend */
+.anim-out { animation: sink var(--dur-fast) var(--ease-in-curve) both; pointer-events: none; }
 .anim-flash { animation: flash 900ms ease-out both; }
-.anim-sheet { animation: sheet-in 240ms var(--ease-out-quart) both; }
-.anim-pop { animation: pop 260ms var(--ease-spring) both; }
-.bell-ring { animation: bell 900ms ease-in-out both; transform-origin: 50% 10%; }
-.toast-timer { width: 100%; animation-name: timer; animation-timing-function: linear; animation-fill-mode: both; }
+.bell-ring { animation: bell 900ms ease-out both; transform-origin: 50% 10%; }
 .live-dot { animation: blink 1.6s ease-in-out infinite; }
-.skeleton { background: var(--paper-3); animation: pulse-line 1.4s ease-in-out infinite; border-radius: 4px; }
+
+/*
+ * Staffelung: eine Utility, eine Variable. Höchstens acht Elemente, zusammen höchstens 240 ms
+ * (7 Schritte × 30 ms + Einsatz). Ab dem neunten Kind läuft alles mit dem achten.
+ * --i lässt sich bei Bedarf von aussen setzen (Kalenderbalken in Zeitreihenfolge).
+ */
+.stagger > * { animation: rise var(--dur-base) var(--ease-out-curve) both; animation-delay: calc(min(var(--i, 7), 7) * 30ms); }
+.stagger > :nth-child(1) { --i: 0; }
+.stagger > :nth-child(2) { --i: 1; }
+.stagger > :nth-child(3) { --i: 2; }
+.stagger > :nth-child(4) { --i: 3; }
+.stagger > :nth-child(5) { --i: 4; }
+.stagger > :nth-child(6) { --i: 5; }
+.stagger > :nth-child(7) { --i: 6; }
+
+/*
+ * Unterhalb des ersten Sichtbereichs: an den Bildlauf gebunden statt an die Uhr. Was beim Laden
+ * schon sichtbar ist, steht still; was hereinscrollt, kommt die letzten Pixel von unten.
+ * Ohne Unterstützung: statisch. Kein IntersectionObserver.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
+  }
+}
+
+/* Skelett → Inhalt: Puls erst nach 300 ms, damit schnelle Antworten nicht flackern */
+.skeleton { background: var(--paper-3); border-radius: var(--radius-xs); animation: skeleton-in var(--dur-fast) 300ms both, pulse-line 1.4s ease-in-out 300ms infinite; }
+.skeleton-wait { animation: skeleton-in var(--dur-fast) 300ms both; }
 
 /* Endloses Band der Buchrücken */
 .marquee { display: flex; width: max-content; animation: marquee 60s linear infinite; }
 .marquee-wrap:hover .marquee { animation-play-state: paused; }
 
+/* Rückgängig-Frist im Toast: läuft von voller Breite auf null */
+.toast-timer { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--accent); transform-origin: left; animation: timer linear both; }
+
+/* Zahlen rollen nur bei Live-Änderung (Signatur-Moment 6) */
+.roll { display: inline-flex; overflow: clip; vertical-align: bottom; font-variant-numeric: tabular-nums; }
+.roll > span { display: inline-block; }
+.roll > .roll-up { animation: roll-up var(--dur-base) var(--ease-out-curve) both; }
+.roll > .roll-down { animation: roll-down var(--dur-base) var(--ease-out-curve) both; }
+
+/* Navigation: eine Markierung gleitet zum aktiven Eintrag (Signatur-Moment 4) */
+.nav-rail { position: relative; }
+.nav-marker { position: absolute; top: 0; left: 0; pointer-events: none; opacity: 0; transform: translate(var(--nav-x, 0px), var(--nav-y, 0px)); width: var(--nav-w, 0px); height: var(--nav-h, 0px); }
+.nav-rail[data-ready] .nav-marker { opacity: 1; }
+.nav-rail[data-moving] .nav-marker { transition: transform var(--dur-base) var(--ease-spring-curve); }
+/* Bis die Position gemessen ist, trägt der aktive Eintrag die Fläche selbst */
+.nav-rail:not([data-ready]) .nav-side[aria-current="page"] { background: var(--paper); outline: 1px solid var(--line-strong); }
+.nav-rail:not([data-ready]) .nav-tab[aria-current="page"] .nav-tab-icon { background: var(--paper-3); }
+
+/* Mehr-Menü (Popover): Ein- und Austritt über den diskreten Übergang von display */
+.more-menu { opacity: 0; transform: translateY(-6px); transition: opacity var(--dur-fast) var(--ease-in-curve), transform var(--dur-fast) var(--ease-in-curve), display var(--dur-fast) allow-discrete, overlay var(--dur-fast) allow-discrete; }
+.more-menu:popover-open { opacity: 1; transform: none; transition-timing-function: var(--ease-out-curve); transition-duration: var(--dur-base); }
+@starting-style { .more-menu:popover-open { opacity: 0; transform: translateY(-6px); } }
+
+/* Vollbild-Dialoge: Eintritt von unten, Austritt beim Schliessen */
+dialog.modal { opacity: 0; transform: translateY(18px); transition: opacity var(--dur-fast) var(--ease-in-curve), transform var(--dur-fast) var(--ease-in-curve), display var(--dur-fast) allow-discrete, overlay var(--dur-fast) allow-discrete; }
+dialog.modal[open] { opacity: 1; transform: none; transition-timing-function: var(--ease-out-curve); transition-duration: var(--dur-base); }
+@starting-style { dialog.modal[open] { opacity: 0; transform: translateY(18px); } }
+
+/* ------------------------------------------------------------- Übergabe */
+/* Der einzige feierliche Moment (Signatur-Moment 2): Schritt füllt sich, Chip blättert um, Stempel setzt auf */
+html[data-ceremony] .tl-latest { transform-origin: top; animation: grow-y var(--dur-slow) var(--ease-out-curve) both; }
+@media (min-width: 768px) {
+  html[data-ceremony] .tl-latest { transform-origin: left; animation-name: grow-x; }
+}
+html[data-ceremony] .status-flip { animation: flip var(--dur-base) var(--ease-out-curve) both; transform-origin: 50% 0; backface-visibility: hidden; }
+.stamp { position: absolute; right: -6px; bottom: 10%; padding: 3px 7px 2px; border: 1.5px solid var(--accent); border-radius: var(--radius-xs); background: var(--paper); color: var(--accent-hover);
+  font-size: var(--fs-caption); font-weight: 600; letter-spacing: var(--tracking-caps); text-transform: uppercase; line-height: 1.3; white-space: nowrap; transform: rotate(-9deg); transform-origin: 70% 60%; }
+html[data-ceremony] .stamp { animation: stamp var(--dur-slow) var(--ease-spring-curve) 200ms both; }
+
+/* -------------------------------------------------------------- Kalender */
+/* Balken wachsen beim ersten Zeichnen von links, in Zeitreihenfolge gestaffelt (Signatur-Moment 3) */
+.cal-bar { transform-origin: left; animation: grow-x var(--dur-base) var(--ease-out-curve) both; animation-delay: calc(min(var(--i, 0), 7) * 30ms); }
+.cal-select { transform-origin: left; animation: snap var(--dur-base) var(--ease-spring-curve) both; }
+.cal-today { animation: blink 1.6s ease-in-out infinite; }
+
+/* ------------------------------------------------------ Seitenübergänge */
+/* View Transitions: ohne Unterstützung gibt es schlicht keinen Übergang. */
+::view-transition-old(.page) { animation: fade-out 110ms var(--ease-in-curve) both; }
+::view-transition-new(.page) { animation: fade-in var(--dur-fast) var(--ease-out-curve) both; }
+/* Buch aus dem Regal ziehen (Signatur-Moment 1): das Cover wandert als gemeinsames Element */
+::view-transition-group(.cover-morph) { animation-duration: var(--dur-slow); animation-timing-function: var(--ease-out-curve); z-index: 2; }
+::view-transition-old(.cover-morph), ::view-transition-new(.cover-morph) { height: 100%; width: 100%; object-fit: cover; animation-duration: var(--dur-fast); }
+
+/* ---------------------------------------------------- Weniger Bewegung */
+/*
+ * Nicht pauschal abschalten: Bewegung wird durch eine reine Überblendung (≤ 120 ms) ersetzt,
+ * damit Zustandswechsel weiterhin erkennbar sind. Marquee, Federn, Morphs, Zähler und
+ * Dauerbewegungen entfallen ganz.
+ */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
-  .marquee { animation: none; }
+  html { scroll-behavior: auto !important; }
+  .anim-rise, .anim-cover, .anim-sheet, .anim-pop, .stagger > *, .cal-bar { animation: fade-in 120ms linear both; animation-delay: 0s; }
+  .anim-out { animation: fade-out 80ms linear both; }
+  .cal-select, .roll > .roll-up, .roll > .roll-down, .bell-ring, .marquee, .live-dot, .cal-today, .toast-timer,
+  html[data-ceremony] .tl-latest, html[data-ceremony] .stamp { animation: none; }
+  html[data-ceremony] .status-flip { animation: fade-in 120ms linear both; }
+  .skeleton { animation: skeleton-in 120ms 300ms both; }
+  .more-menu, dialog.modal { transform: none !important; transition-duration: 120ms; }
+  .press:active:not(:disabled), .press-card:active, .book:hover .book-face, .book:focus-visible .book-face, .spine:hover, .spine:focus-visible { transform: none; }
+  .nav-rail[data-moving] .nav-marker { transition: none; }
+  .link-grow { transition-duration: 1ms; }
+  ::view-transition-group(*) { animation: none !important; }
+  ::view-transition-old(*) { animation: fade-out 80ms linear both !important; }
+  ::view-transition-new(*) { animation: fade-in 120ms linear both !important; }
+  *, *::before, *::after { scroll-behavior: auto !important; }
 }
 
 /* ----------------------------------------------------------- Bücherreihe */
@@ -242,11 +476,13 @@
 .shelf > * { scroll-snap-align: start; flex: none; }
 .shelf-board { height: 2px; background: var(--ink); }
 
-.book-face { transition: transform 260ms var(--ease-spring); transform-origin: bottom center; }
+/* Das Buch hebt sich beim Hover aus dem Regal und setzt beim Drücken wieder auf */
+.book-face { transition: transform var(--dur-base) var(--ease-spring-curve); transform-origin: bottom center; }
 .book:hover .book-face, .book:focus-visible .book-face { transform: translateY(-6px); }
+.book:active .book-face { transform: translateY(0); transition-duration: var(--dur-instant); transition-timing-function: var(--ease-out-curve); }
 
 /* Buchrücken (Spine) */
-.spine { transition: transform 260ms var(--ease-spring); transform-origin: bottom center; }
+.spine { transition: transform var(--dur-base) var(--ease-spring-curve); transform-origin: bottom center; }
 .spine:hover, .spine:focus-visible { transform: translateY(-8px); }
 
 /* Startseite: Kopf geht nahtlos in die dunkle Bühne über */
@@ -268,20 +504,20 @@ body:has(.landing-stage) .public-header a:not([href="/anmelden"]):hover { backgr
 
 /* ---------------------------------------------------------------- Karte (Suche) */
 .search-map.leaflet-container { background: var(--paper-2); font-family: inherit; }
-.search-map .leaflet-control-attribution { background: color-mix(in srgb, var(--paper) 88%, transparent); color: var(--muted); font-size: 11px; padding: 1px 6px; border-top-left-radius: 4px; }
+.search-map .leaflet-control-attribution { background: color-mix(in srgb, var(--paper) 88%, transparent); color: var(--muted); font-size: var(--fs-caption); padding: 1px 6px; border-top-left-radius: var(--radius-xs); }
 .search-map .leaflet-control-attribution a { color: var(--ink-2); }
-.search-map .leaflet-bar { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; box-shadow: none; }
+.search-map .leaflet-bar { border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; box-shadow: none; }
 .search-map .leaflet-bar a { width: 36px; height: 36px; line-height: 34px; background: var(--paper); color: var(--ink); border-bottom-color: var(--line); font-weight: 400; }
 .search-map .leaflet-bar a:hover { background: var(--paper-2); }
 .search-map .leaflet-bar a.leaflet-disabled { color: var(--line-strong); background: var(--paper); }
 .search-map .map-tiles { filter: saturate(0.6) contrast(0.96); }
 .map-ring { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 6; fill: var(--accent); fill-opacity: 0.035; }
-.map-home { display: block; width: 18px; height: 18px; border-radius: 999px; background: var(--ink); border: 4px solid var(--paper); outline: 1px solid var(--line-strong); }
+.map-home { display: block; width: 18px; height: 18px; border-radius: var(--radius-pill); background: var(--ink); border: 4px solid var(--paper); outline: 1px solid var(--line-strong); }
 .map-pin {
-  display: grid; place-items: center; border-radius: 999px; cursor: pointer;
+  display: grid; place-items: center; border-radius: var(--radius-pill); cursor: pointer;
   background: var(--paper); color: var(--ink); border: 2px solid var(--ink-2);
-  font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1;
-  transition: transform 150ms ease, background-color 150ms ease;
+  font-size: var(--fs-meta); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1;
+  transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
 }
 .map-pin.is-free { background: var(--accent); color: var(--accent-ink); border-color: var(--paper); }
 .map-pin:hover { transform: scale(1.08); }
@@ -292,3 +528,18 @@ body:has(.landing-stage) .public-header a:not([href="/anmelden"]):hover { backgr
   :root:not([data-theme="light"]) .search-map .map-tiles { filter: invert(1) hue-rotate(180deg) brightness(0.82) contrast(0.92) saturate(0.4); }
 }
 :root[data-theme="dark"] .search-map .map-tiles { filter: invert(1) hue-rotate(180deg) brightness(0.82) contrast(0.92) saturate(0.4); }
+
+/* ===================================================== Befehlspalette (6.1) – Anfang */
+/* Zentrierte Fläche statt Vollbild: kommt kurz von oben, flacher Schleier ohne Unschärfe */
+dialog.palette { opacity: 0; transform: translateY(-8px); transition: opacity var(--dur-fast) var(--ease-in-curve), transform var(--dur-fast) var(--ease-in-curve), display var(--dur-fast) allow-discrete, overlay var(--dur-fast) allow-discrete; }
+dialog.palette[open] { opacity: 1; transform: none; transition-timing-function: var(--ease-out-curve); transition-duration: var(--dur-base); }
+@starting-style { dialog.palette[open] { opacity: 0; transform: translateY(-8px); } }
+dialog.palette::backdrop { background: color-mix(in srgb, var(--night) 45%, transparent); opacity: 0; transition: opacity var(--dur-fast) var(--ease-in-curve), display var(--dur-fast) allow-discrete, overlay var(--dur-fast) allow-discrete; }
+dialog.palette[open]::backdrop { opacity: 1; transition-timing-function: var(--ease-out-curve); transition-duration: var(--dur-base); }
+@starting-style { dialog.palette[open]::backdrop { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  dialog.palette, dialog.palette[open] { transform: none !important; transition-duration: 120ms; }
+  dialog.palette::backdrop, dialog.palette[open]::backdrop { transition-duration: 120ms; }
+  @starting-style { dialog.palette[open] { transform: none; } }
+}
+/* ====================================================== Befehlspalette (6.1) – Ende */

@@ -44,14 +44,14 @@ export default async function Page() {
 
   return (
     <div>
-      <Link href="/regal" className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
+      <Link href="/regal" className="inline-flex items-center gap-1.5 text-body-sm font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
         <IconArrowLeft width={16} height={16} /> {s.title}
       </Link>
       <PageTitle
         eyebrow={s.title}
         sub={t.sub}
         aside={rows.length > 0 && (
-          <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
+          <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise">
             <StatTile n={rows.length} label={s.bookWord(rows.length)} />
             <StatTile n={lentNow} label={t.away} href={busy.length ? "#belegung" : null} />
             <StatTile n={booked} label={t.booked} href={busy.length ? "#belegung" : null} />
@@ -62,10 +62,10 @@ export default async function Page() {
       </PageTitle>
 
       {rows.length === 0 ? (
-        <div className="rounded-[10px] border border-dashed border-line-strong p-6 md:p-8 flex flex-wrap items-center justify-between gap-5">
+        <div className="rounded-md border border-dashed border-line-strong p-6 md:p-8 flex flex-wrap items-center justify-between gap-5">
           <div>
-            <p className="text-[17px] font-medium">{t.empty}</p>
-            <p className="text-[14.5px] text-muted mt-0.5">{t.emptyText}</p>
+            <p className="text-lead font-medium">{t.empty}</p>
+            <p className="text-body-sm text-muted mt-0.5">{t.emptyText}</p>
           </div>
           <LinkButton href="/regal/neu" variant="primary">{t.firstBook}</LinkButton>
         </div>
@@ -74,22 +74,22 @@ export default async function Page() {
           <StepSection id="belegung" n={1} first title={t.usage} aside={t.withDates(busy.length)}
             desc={busy.length ? t.usageDesc : t.usageNone}>
             {busy.length > 0 && (
-              <div className="rounded-[10px] border border-line overflow-hidden">
+              <div className="rounded-md border border-line overflow-hidden">
                 {/* Gemeinsame Achse */}
                 <div className="grid md:grid-cols-[240px_minmax(0,1fr)] md:gap-6 px-4 md:px-5 pt-4 pb-2 bg-paper-2/60 border-b border-line">
-                  <p className="hidden md:block self-end pb-1 text-[12px] text-muted">{t.book}</p>
+                  <p className="hidden md:block self-end pb-1 text-caption text-muted">{t.book}</p>
                   <CalendarAxis start={start} end={end} today={today} />
                 </div>
                 <ul className="divide-y divide-line">
                   {busy.map(({ copy, cal }, i) => {
                     const st = shelfStatusLocal(copy, l);
                     return (
-                      <li key={copy.id} className="px-4 md:px-5 py-3.5 md:grid md:grid-cols-[240px_minmax(0,1fr)] md:gap-6 md:items-center anim-rise" style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
+                      <li key={copy.id} className="px-4 md:px-5 py-3.5 md:grid md:grid-cols-[240px_minmax(0,1fr)] md:gap-6 md:items-center">
                         <Link href={`/regal/${copy.id}`} className="group mb-2.5 md:mb-0 min-w-0 flex items-center gap-3">
-                          <Cover data={{ title: copy.title, authors: copy.authors, photoKey: copy.photo_key, photoW: copy.photo_w, photoH: copy.photo_h, coverKey: copy.cover_key, seed: copy.work_id }} width={32} height={48} uniform l={l} />
+                          <Cover data={{ title: copy.title, authors: copy.authors, photoKey: copy.photo_key, photoColor: copy.photo_color, photoW: copy.photo_w, photoH: copy.photo_h, coverKey: copy.cover_key, coverColor: copy.cover_color, seed: copy.work_id }} width={32} height={48} uniform l={l} />
                           <span className="min-w-0">
-                            <span className="block font-serif text-[16px] leading-tight group-hover:underline underline-offset-4 decoration-1 truncate">{copy.title}</span>
-                            <span className="mt-0.5 flex items-center gap-1.5 text-[12.5px] text-muted truncate">
+                            <span className="block font-serif text-body-lg leading-tight group-hover:underline underline-offset-4 decoration-1 truncate">{copy.title}</span>
+                            <span className="mt-0.5 flex items-center gap-1.5 text-meta text-muted truncate">
                               <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none", DOT[st.tone])} />{st.text}
                             </span>
                           </span>
@@ -101,12 +101,12 @@ export default async function Page() {
                     );
                   })}
                 </ul>
-                <div className="flex flex-wrap gap-x-5 gap-y-1.5 px-4 md:px-5 py-3 border-t border-line bg-paper-2/60 text-[12.5px] text-muted" aria-label={t.legend}>
-                  <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-[3px] bg-lent" /> {lg.lent}</span>
-                  <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-[3px] bg-wait" /> {lg.booked}</span>
-                  <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-[3px] bg-ok/[0.12]" /> {lg.free}</span>
-                  <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-[3px]" style={HATCH} /> {lg.buffer}</span>
-                  <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-[3px] border border-line-strong" style={HATCH} /> {lg.blocked}</span>
+                <div className="flex flex-wrap gap-x-5 gap-y-1.5 px-4 md:px-5 py-3 border-t border-line bg-paper-2/60 text-meta text-muted" aria-label={t.legend}>
+                  <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-xs bg-lent" /> {lg.lent}</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-xs bg-wait" /> {lg.booked}</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-xs bg-ok/[0.12]" /> {lg.free}</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-xs" style={HATCH} /> {lg.buffer}</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-xs border border-line-strong" style={HATCH} /> {lg.blocked}</span>
                   <span className="inline-flex items-center gap-1.5"><span className="h-3 w-[2px] bg-accent" /> {t.today}</span>
                 </div>
               </div>
@@ -119,11 +119,11 @@ export default async function Page() {
               <ul className="grid sm:grid-cols-2 xl:grid-cols-3 gap-2">
                 {idle.map(({ copy, cal }) => (
                   <li key={copy.id}>
-                    <Link href={`/regal/${copy.id}#kalender`} className="group rounded-[10px] border border-line p-3 flex items-center gap-3 hover:border-accent transition-colors">
-                      <Cover data={{ title: copy.title, authors: copy.authors, photoKey: copy.photo_key, photoW: copy.photo_w, photoH: copy.photo_h, coverKey: copy.cover_key, seed: copy.work_id }} width={32} height={48} uniform l={l} />
+                    <Link href={`/regal/${copy.id}#kalender`} className="press-card group rounded-md border border-line p-3 flex items-center gap-3 hover:border-accent">
+                      <Cover data={{ title: copy.title, authors: copy.authors, photoKey: copy.photo_key, photoColor: copy.photo_color, photoW: copy.photo_w, photoH: copy.photo_h, coverKey: copy.cover_key, coverColor: copy.cover_color, seed: copy.work_id }} width={32} height={48} uniform l={l} />
                       <span className="min-w-0 flex-1">
-                        <span className="block font-serif text-[16px] leading-tight truncate">{copy.title}</span>
-                        <span className="mt-0.5 flex items-center gap-1.5 text-[12.5px] text-ok"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok" />{t.freeLoan(cal.loanDays)}</span>
+                        <span className="block font-serif text-body-lg leading-tight truncate">{copy.title}</span>
+                        <span className="mt-0.5 flex items-center gap-1.5 text-meta text-ok"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok" />{t.freeLoan(cal.loanDays)}</span>
                       </span>
                       <IconArrowRight width={15} height={15} className="flex-none text-accent-hover opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-[opacity,transform]" />
                     </Link>

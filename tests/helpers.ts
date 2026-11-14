@@ -3,7 +3,7 @@ import type { SessionUser } from "@/lib/auth/session";
 import { addDays, todayCH } from "@/lib/dates";
 
 export async function reset() {
-  await sql`truncate loan_events, deadline_marks, handover_tokens, messages, handover_chats, ratings, cases, copy_bookings,
+  await sql`truncate circle_post_offers, circle_post_reactions, circle_post_comments, circle_posts, book_notes, thread_reads, app_stats, loan_events, deadline_marks, handover_tokens, messages, handover_chats, ratings, cases, copy_bookings,
             loans, copy_photos, circle_copies, circle_members, circles, copies, pickup_spots, editions, works, notifications,
             jobs, sessions, rate_limits, wishlist_items, swap_matches, reports, blocks, uploads, banned_phones, users cascade`;
 }

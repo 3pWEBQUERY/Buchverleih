@@ -20,7 +20,7 @@ export function Monogram({ name, seed, size = 48, className, photo }: { name: st
   return (
     <span
       aria-hidden
-      className={cx("inline-grid place-items-center rounded-full flex-none font-semibold tracking-[-0.02em] leading-none select-none", className)}
+      className={cx("inline-grid place-items-center rounded-full flex-none font-semibold tracking-ui leading-none select-none", className)}
       style={{ width: size, height: size, background: bg, color: fg, fontSize: Math.round(size * 0.52) }}
     >
       <span style={{ transform: "translateY(4%)" }}>{(name.trim()[0] ?? "?").toUpperCase()}</span>

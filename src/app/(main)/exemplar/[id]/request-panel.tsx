@@ -87,23 +87,23 @@ export function RequestPanel({
 
       {kind === "lend" && (
         <Section n={step()} title={t.period} desc={freeNow ? t.freeNowDesc : t.busyDesc(firstFree ? fmtDay(dayToDate(firstFree.start), l) : "–")}>
-          <div className="rounded-[10px] border border-line p-5 md:p-6">
+          <div className="rounded-md border border-line p-5 md:p-6">
             <CalendarView cal={calendar} selection={{ start, end, ok }} onPick={(s, dd) => { setStart(dd); setDays(Math.min(loanDays, diffDays(dd, s.end))); }} />
           </div>
           <div className="mt-4 grid sm:grid-cols-2 gap-3">
-            <div className="rounded-[10px] border border-line p-4">
-              <label htmlFor="beginn" className="font-medium text-[15px] block">{t.start}</label>
-              <p className="text-[13px] text-muted mt-0.5 mb-3">{t.startHint(diffDays(calendar.today, calendar.horizonEnd) - 1)}</p>
+            <div className="rounded-md border border-line p-4">
+              <label htmlFor="beginn" className="font-medium text-body block">{t.start}</label>
+              <p className="text-meta text-muted mt-0.5 mb-3">{t.startHint(diffDays(calendar.today, calendar.horizonEnd) - 1)}</p>
               <Input id="beginn" type="date" value={start} min={calendar.today} max={addDays(calendar.horizonEnd, -1)} onChange={(e) => e.target.value && setStart(e.target.value)} />
             </div>
-            <div className="rounded-[10px] border border-line p-4">
-              <p className="font-medium text-[15px]">{t.duration}</p>
-              <p className="text-[13px] text-muted mt-0.5 mb-3">{t.durationHint(maxDays)}</p>
+            <div className="rounded-md border border-line p-4">
+              <p className="font-medium text-body">{t.duration}</p>
+              <p className="text-meta text-muted mt-0.5 mb-3">{t.durationHint(maxDays)}</p>
               <Stepper value={d} min={1} max={maxDays} format={(x) => t.dayN(x)} onChange={setDays} label={t.duration} full />
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {[7, 14, 21, maxDays].filter((x, i, a) => x <= maxDays && a.indexOf(x) === i).map((x) => (
                   <button key={x} type="button" onClick={() => setDays(x)}
-                    className={cx("h-8 px-3 rounded-[6px] border text-[13px] font-medium transition-colors", d === x ? "border-accent bg-accent-soft/35 text-accent-hover" : "border-line hover:border-ink-2 text-ink-2")}>
+                    className={cx("h-8 px-3 rounded-sm border text-meta font-medium transition-colors", d === x ? "border-accent bg-accent-soft/35 text-accent-hover" : "border-line hover:border-ink-2 text-ink-2")}>
                     {x === maxDays && x !== 7 && x !== 14 && x !== 21 ? t.max : t.weeks(x / 7)}
                   </button>
                 ))}
@@ -143,31 +143,31 @@ export function RequestPanel({
 
       {/* Zusammenfassung mit dem einzigen Akzent-Knopf */}
       <div className="sticky bottom-[calc(84px+env(safe-area-inset-bottom))] md:bottom-6 z-20 mt-10 anim-rise">
-        <div className="rounded-[12px] border border-line-strong bg-paper/95 backdrop-blur-md p-3 pl-4 md:p-5 flex items-center justify-between gap-3 md:gap-4">
+        <div className="rounded-lg border border-line-strong bg-paper/95 backdrop-blur-md p-3 pl-4 md:p-5 flex items-center justify-between gap-3 md:gap-4">
           <div className="min-w-0" aria-live="polite">
             {kind === "lend" ? (
               ok ? (
                 <>
-                  <p className="hidden md:block text-[13px] text-muted">{t.yourRequest}</p>
-                  <p className="text-[14.5px] md:text-[19px] font-[560] tracking-[-0.02em] tnum leading-snug">
-                    {fmtDay(dayToDate(start), l)} – {fmtDay(dayToDate(addDays(end, -1)), l)} <span className="text-muted font-normal text-[13px] md:text-[15px] whitespace-nowrap">· {t.dayN(d)}</span>
+                  <p className="hidden md:block text-meta text-muted">{t.yourRequest}</p>
+                  <p className="text-body font-title tracking-ui tnum leading-snug">
+                    {fmtDay(dayToDate(start), l)} – {fmtDay(dayToDate(addDays(end, -1)), l)} <span className="text-muted font-normal text-body-sm whitespace-nowrap">· {t.dayN(d)}</span>
                   </p>
                 </>
               ) : (
-                <p className="text-late text-[13.5px] md:text-[14.5px] leading-snug max-w-md">{tooFar ? t.tooFar : t.taken}</p>
+                <p className="text-late text-body-sm leading-snug max-w-md">{tooFar ? t.tooFar : t.taken}</p>
               )
             ) : kind === "swap" ? (
               <>
-                <p className="text-[13px] text-muted">{t.yourRequest}</p>
-                <p className="text-[17px] font-[560] tracking-[-0.02em]">{swapIds.length === 0 ? t.pickOne : t.swapSummary(swapIds.length)}</p>
+                <p className="text-meta text-muted">{t.yourRequest}</p>
+                <p className="text-lead font-title tracking-ui">{swapIds.length === 0 ? t.pickOne : t.swapSummary(swapIds.length)}</p>
               </>
             ) : (
               <>
-                <p className="text-[13px] text-muted">{t.yourRequest}</p>
-                <p className="text-[17px] font-[560] tracking-[-0.02em]">{t.gift2}</p>
+                <p className="text-meta text-muted">{t.yourRequest}</p>
+                <p className="text-lead font-title tracking-ui">{t.gift2}</p>
               </>
             )}
-            <p className="hidden md:block text-[12.5px] text-muted mt-0.5">{t.within72}</p>
+            <p className="hidden md:block text-meta text-muted mt-0.5">{t.within72}</p>
           </div>
           {!loggedIn ? (
             <LinkButton href={`/anmelden?next=/exemplar/${copyId}`} variant="primary" size="lg">{t.login}</LinkButton>
@@ -189,10 +189,10 @@ function Section({ n, title, desc, children }: { n: number; title: string; desc?
   return (
     <section className="pt-10 md:pt-12 mt-10 md:mt-12 border-t border-line" aria-label={title}>
       <div className="grid md:grid-cols-[56px_minmax(0,1fr)] gap-x-4 gap-y-1 mb-6">
-        <span className="text-[13px] tnum text-muted pt-1.5">0{n}</span>
+        <span className="text-meta tnum text-muted pt-1.5">0{n}</span>
         <div>
-          <h3 className="text-[24px] md:text-[28px] font-[560] tracking-[-0.03em]">{title}</h3>
-          {desc && <p className="text-[15px] text-muted mt-1.5 max-w-2xl">{desc}</p>}
+          <h3 className="text-title font-title tracking-title">{title}</h3>
+          {desc && <p className="text-body text-muted mt-1.5 max-w-2xl">{desc}</p>}
         </div>
       </div>
       <div className="md:pl-[72px]">{children}</div>

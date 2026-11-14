@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { WishersHint } from "@/components/book-note";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import type { CopyDetail } from "@/lib/copies";
@@ -11,7 +12,7 @@ import { labels } from "@/lib/i18n/labels";
 import { COPY } from "@/lib/i18n/messages/copy";
 import { shelfStatusLocal } from "@/lib/i18n/messages/shelf-status";
 import { CalendarView } from "@/components/calendar";
-import { Cover } from "@/components/cover";
+import { Cover, CoverMorph, coverVt } from "@/components/cover";
 import { useToast } from "@/components/toast";
 import { useLocale } from "@/components/locale-provider";
 import { Field, Notice, Switch, Textarea, cx } from "@/components/ui";
@@ -50,7 +51,7 @@ export type HistoryRow = {
 
 const SECTIONS = ["angebot", "leihe", "kalender", "weitergabe", "zustand", "verlauf"] as const;
 
-export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDetail; calendar: Calendar; circles: { id: string; name: string; loanDays: number }[]; history: HistoryRow[] }) {
+export function CopyEditor({ copy, calendar, circles, history, wishers = 0 }: { copy: CopyDetail; calendar: Calendar; circles: { id: string; name: string; loanDays: number }[]; history: HistoryRow[]; wishers?: number }) {
   const router = useRouter();
   const toast = useToast();
   const l = useLocale();
@@ -125,7 +126,7 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
   const photo = copy.photos[0];
   const locked = copy.transfer_locked_until && new Date(copy.transfer_locked_until) > new Date() ? copy.transfer_locked_until : null;
   const circleDays = circles.filter((c) => s.circleIds.includes(c.id));
-  const coverData = { title: copy.title, authors: copy.authors, photoKey: photo?.key, photoW: photo?.width, photoH: photo?.height, coverKey: copy.cover_key, seed: copy.work_id };
+  const coverData = { title: copy.title, authors: copy.authors, photoKey: photo?.key, photoW: photo?.width, photoH: photo?.height, coverKey: copy.cover_key, coverColor: copy.cover_color, seed: copy.work_id };
   const dot = { ok: "bg-ok", lent: "bg-lent", late: "bg-late", wait: "bg-wait", done: "bg-done", accent: "bg-accent" }[st.tone];
   const offered = s.offers.length > 0;
   const handed = history.filter((h) => h.handed_over_at);
@@ -138,7 +139,7 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
 
   return (
     <div>
-      <Link href="/regal" className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
+      <Link href="/regal" className="inline-flex items-center gap-1.5 text-body-sm font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
         <IconArrowLeft width={16} height={16} /> {t.myShelf}
       </Link>
 
@@ -146,30 +147,36 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
         {/* ------------------------------------------------ Produktblatt */}
         <aside className="lg:sticky lg:top-8 space-y-5">
           <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-5 items-end lg:block lg:space-y-5">
-            <div className="lg:rounded-[12px] lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center anim-cover">
+            <div className="lg:rounded-lg lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center">
               <Link href={`/exemplar/${copy.id}`} className="book block" aria-label={t.asOthers}>
-                <span className="book-face block lg:hidden"><Cover priority data={coverData} width={104} height={156} uniform l={l} /></span>
-                <span className="book-face hidden lg:block"><Cover priority large data={coverData} width={220} height={330} uniform l={l} /></span>
+                <CoverMorph name={coverVt("copy", copy.id)}>
+                  <span className="block">
+                    <span className="book-face block lg:hidden"><Cover priority data={coverData} width={104} height={156} uniform l={l} /></span>
+                    <span className="book-face hidden lg:block"><Cover priority large data={coverData} width={220} height={330} uniform l={l} /></span>
+                  </span>
+                </CoverMorph>
               </Link>
             </div>
             <div className="anim-rise min-w-0">
-              <h1 lang="de" className="font-serif text-[24px] md:text-[32px] leading-[1.1] hyphens-auto break-words">{copy.title}</h1>
-              <p className="text-[14.5px] md:text-[15px] text-ink-2 mt-1.5">{copy.authors.join(", ")}</p>
+              <h1 lang="de" className="font-serif text-title leading-display hyphens-auto break-words">{copy.title}</h1>
+              <p className="text-body text-ink-2 mt-1.5">{copy.authors.join(", ")}</p>
             </div>
           </div>
 
-          <div className="rounded-[10px] border border-line divide-y divide-line">
+          <WishersHint copyId={copy.id} count={wishers} />
+
+          <div className="rounded-md border border-line divide-y divide-line">
             <div className="px-4 py-3.5 flex items-center justify-between gap-3">
-              <span className="inline-flex items-center gap-2 text-[14px] font-medium"><span aria-hidden className={cx("h-2 w-2 rounded-full", dot)} />{st.text}</span>
+              <span className="inline-flex items-center gap-2 text-body-sm font-medium"><span aria-hidden className={cx("h-2 w-2 rounded-full", dot)} />{st.text}</span>
               {copy.loan_id && (
-                <Link href={`/vorgaenge/${copy.loan_id}`} className="inline-flex items-center gap-1 text-[13px] font-medium text-accent-hover hover:underline underline-offset-4">
+                <Link href={`/vorgaenge/${copy.loan_id}`} className="inline-flex items-center gap-1 text-meta font-medium text-accent-hover hover:underline underline-offset-4">
                   {t.loan} <IconArrowRight width={14} height={14} />
                 </Link>
               )}
             </div>
             {meter && <div className="p-2"><TimeMeter m={meter} /></div>}
             {copy.open_requests > 0 && (
-              <Link href="/vorgaenge?seite=verleihe" className="px-4 py-3 flex items-center justify-between gap-3 text-[13.5px] font-medium text-accent-hover hover:bg-accent-soft/20 transition-colors">
+              <Link href="/vorgaenge?seite=verleihe" className="px-4 py-3 flex items-center justify-between gap-3 text-body-sm font-medium text-accent-hover hover:bg-accent-soft/20 transition-colors">
                 <span className="inline-flex items-center gap-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent live-dot" />{t.openRequests(copy.open_requests)}</span>
                 <IconArrowRight width={14} height={14} />
               </Link>
@@ -177,12 +184,12 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
             <dl className="grid grid-cols-3 divide-x divide-line">
               {([[handed.length, t.statLoans(handed.length)], [daysOut, t.statDays], [people, t.statPeople(people)]] as [number, string][]).map(([n, lab]) => (
                 <div key={lab} className="px-3 py-3 flex flex-col-reverse">
-                  <dt className="text-[11.5px] text-muted mt-1 leading-tight">{lab}</dt>
-                  <dd className="text-[20px] font-[560] tracking-[-0.04em] leading-none tnum">{n}</dd>
+                  <dt className="text-caption text-muted mt-1 leading-tight">{lab}</dt>
+                  <dd className="text-title-sm font-title tracking-display leading-none tnum">{n}</dd>
                 </div>
               ))}
             </dl>
-            <dl className="px-4 py-3 text-[13.5px] grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
+            <dl className="px-4 py-3 text-body-sm grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
               {[
                 [t.edition, [copy.publisher, copy.year, copy.binding === "hardcover" ? t.hardcover : copy.binding === "paperback" ? t.paperback : null].filter(Boolean).join(", ") || "–"],
                 [t.language, copy.language ? L.languageLabel[copy.language] ?? copy.language : "–"],
@@ -195,11 +202,11 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
           </div>
 
           <div className="flex flex-col gap-2">
-            <Link href={`/exemplar/${copy.id}`} className="h-11 rounded-[6px] bg-accent-soft text-accent-hover font-medium text-[14.5px] inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-accent-ink transition-colors">
+            <Link href={`/exemplar/${copy.id}`} className="h-11 rounded-sm bg-accent-soft text-accent-hover font-medium text-body-sm inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-accent-ink transition-colors">
               {t.asOthers} <IconArrowRight width={16} height={16} />
             </Link>
             <button type="button" onClick={remove} disabled={removing}
-              className="h-11 rounded-[6px] text-[14px] font-medium text-late hover:bg-late/[0.07] transition-colors disabled:opacity-40">
+              className="h-11 rounded-sm text-body-sm font-medium text-late hover:bg-late/[0.07] transition-colors disabled:opacity-40">
               {t.removeFromShelf}
             </button>
           </div>
@@ -210,17 +217,17 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
           <header className="flex flex-wrap items-end justify-between gap-4 anim-rise">
             <div>
               <p className="eyebrow">{t.eyebrow}</p>
-              <h2 className="display text-[28px] md:text-[38px] mt-2">{t.heading[0]}<em>{t.heading[1]}</em></h2>
+              <h2 className="display text-display mt-2">{t.heading[0]}<em>{t.heading[1]}</em></h2>
             </div>
             <SaveState state={saving} />
           </header>
 
           <nav aria-label={t.sectionsAria} className="sticky top-14 md:top-0 z-20 -mx-4 px-4 md:mx-0 md:px-0 mt-8 bg-paper/95 backdrop-blur-sm border-b border-line">
-            <ol className="flex gap-6 overflow-x-auto text-[14px] font-medium" style={{ scrollbarWidth: "none" }}>
+            <ol className="flex gap-6 overflow-x-auto text-body-sm font-medium" style={{ scrollbarWidth: "none" }}>
               {SECTIONS.map((id, i) => (
                 <li key={id}>
                   <a href={`#${id}`} className="group flex items-center gap-2 h-12 border-b-2 border-transparent hover:border-accent text-muted hover:text-ink transition-colors whitespace-nowrap">
-                    <span className="tnum text-[12px] text-muted/70 group-hover:text-accent">0{i + 1}</span>{t.sections[id]}
+                    <span className="tnum text-caption text-muted group-hover:text-accent">0{i + 1}</span>{t.sections[id]}
                   </a>
                 </li>
               ))}
@@ -259,7 +266,7 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
 
             <Label title={t.offer.inCircles} hint={t.offer.inCirclesHint} className="mt-10" />
             {circles.length === 0 ? (
-              <p className="text-[15px] text-ink-2">{t.offer.noCircle} <Link href="/kreise/neu" className="font-medium text-accent-hover underline underline-offset-4">{t.offer.newCircle}</Link></p>
+              <p className="text-body text-ink-2">{t.offer.noCircle} <Link href="/kreise/neu" className="font-medium text-accent-hover underline underline-offset-4">{t.offer.newCircle}</Link></p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {circles.map((c) => {
@@ -267,9 +274,9 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
                   return (
                     <button key={c.id} type="button" aria-pressed={on}
                       onClick={() => save({ circleIds: on ? s.circleIds.filter((x) => x !== c.id) : [...s.circleIds, c.id] })}
-                      className={cx("h-11 pl-3 pr-4 rounded-[6px] border inline-flex items-center gap-2.5 text-[14.5px] font-medium transition-colors",
-                        on ? "border-accent bg-accent-soft/35 text-ink" : "border-line-strong hover:border-ink-2")}>
-                      <span className={cx("h-5 w-5 rounded-[4px] grid place-items-center border transition-colors", on ? "bg-accent border-accent text-accent-ink" : "border-line-strong")}>
+                      className={cx("h-11 pl-3 pr-4 rounded-sm border inline-flex items-center gap-2.5 text-body-sm font-medium transition-colors",
+                        on ? "border-accent bg-accent-soft/35 text-ink" : "border-field hover:border-ink-2")}>
+                      <span className={cx("h-5 w-5 rounded-xs grid place-items-center border transition-colors", on ? "bg-accent border-accent text-accent-ink" : "border-field")}>
                         {on && <IconCheck width={13} height={13} strokeWidth={2.4} />}
                       </span>
                       {c.name}
@@ -293,23 +300,23 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
                 const on = s.loanDays === d;
                 return (
                   <button key={d} type="button" aria-pressed={on} onClick={() => save({ loanDays: d })}
-                    className={cx("rounded-[10px] border px-4 py-4 text-left transition-colors", on ? "border-accent bg-accent-soft/35" : "border-line hover:border-ink-2")}>
-                    <span className={cx("block text-[30px] md:text-[36px] font-[560] tracking-[-0.04em] leading-none tnum", on && "text-accent-hover")}>{d}</span>
-                    <span className="block text-[13px] text-muted mt-1.5">{t.lend.days}{d === 28 ? t.lend.standard : ""}</span>
+                    className={cx("rounded-md border px-4 py-4 text-left transition-colors", on ? "border-accent bg-accent-soft/35" : "border-line hover:border-ink-2")}>
+                    <span className={cx("block text-display font-title tracking-display leading-none tnum", on && "text-accent-hover")}>{d}</span>
+                    <span className="block text-meta text-muted mt-1.5">{t.lend.days}{d === 28 ? t.lend.standard : ""}</span>
                   </button>
                 );
               })}
             </div>
 
-            <div className="mt-8 rounded-[10px] border border-line divide-y divide-line">
+            <div className="mt-8 rounded-md border border-line divide-y divide-line">
               <div className="px-5">
                 <Switch checked={s.autoExtend} onChange={(v) => save({ autoExtend: v })} label={<span className="font-medium">{t.lend.autoExtend}</span>}
                   hint={t.lend.autoExtendHint} />
               </div>
               <div className="px-5 py-4 flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <p className="font-medium text-[15px]">{t.lend.maxExt}</p>
-                  <p className="text-[13.5px] text-muted mt-0.5">{s.maxExtensions === 0 ? t.lend.noExt : t.lend.upTo(s.maxExtensions * 14)}</p>
+                  <p className="font-medium text-body">{t.lend.maxExt}</p>
+                  <p className="text-body-sm text-muted mt-0.5">{s.maxExtensions === 0 ? t.lend.noExt : t.lend.upTo(s.maxExtensions * 14)}</p>
                 </div>
                 <Stepper value={s.maxExtensions} min={0} max={2} format={(n) => (n === 0 ? t.lend.never : `${n}×`)} onChange={(v) => save({ maxExtensions: v })} label={t.lend.extensions} />
               </div>
@@ -322,7 +329,7 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
 
           {/* 03 Kalender */}
           <Section id="kalender" n={3} title={t.cal.title} desc={t.cal.desc}>
-            <div className="rounded-[10px] border border-line p-5 md:p-6">
+            <div className="rounded-md border border-line p-5 md:p-6">
               <CalendarView cal={calendar} />
               <BlockForm copyId={copy.id} calendar={calendar} />
             </div>
@@ -347,10 +354,10 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
                 <OptionCard key={v} on={s.passOn === v} title={t.pass[v][0]} desc={t.pass[v][1]} onClick={() => save({ passOn: v })} />
               ))}
             </div>
-            <div className={cx("mt-4 rounded-[10px] border border-line px-5 py-4 flex flex-wrap items-center justify-between gap-4 transition-opacity", s.passOn === "never" && "opacity-45 pointer-events-none")} aria-disabled={s.passOn === "never"}>
+            <div className={cx("mt-4 rounded-md border border-line px-5 py-4 flex flex-wrap items-center justify-between gap-4 transition-opacity", s.passOn === "never" && "opacity-45 pointer-events-none")} aria-disabled={s.passOn === "never"}>
               <div>
-                <p className="font-medium text-[15px]">{t.pass.back}</p>
-                <p className="text-[13.5px] text-muted mt-0.5">{t.pass.backHint}</p>
+                <p className="font-medium text-body">{t.pass.back}</p>
+                <p className="text-body-sm text-muted mt-0.5">{t.pass.backHint}</p>
               </div>
               <Stepper value={s.chainMax} min={1} max={4} format={(n) => t.pass.after(n)} onChange={(v) => save({ chainMax: v })} label={t.pass.chain} />
             </div>
@@ -374,11 +381,11 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
           {/* 06 Verlauf */}
           <Section id="verlauf" n={6} title={t.hist.title} desc={t.hist.desc} last>
             {history.length === 0 ? (
-              <div className="rounded-[10px] border border-dashed border-line-strong p-6 text-[14.5px] text-ink-2">
+              <div className="rounded-md border border-dashed border-line-strong p-6 text-body-sm text-ink-2">
                 {t.hist.empty}
               </div>
             ) : (
-              <ul className="rounded-[10px] border border-line divide-y divide-line overflow-hidden">
+              <ul className="rounded-md border border-line divide-y divide-line overflow-hidden">
                 {history.map((h) => {
                   const open = ["requested", "accepted", "active", "return_reported", "returned", "disputed"].includes(h.status);
                   const ended = ["declined", "withdrawn", "expired", "cancelled"].includes(h.status);
@@ -389,14 +396,14 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
                       <Link href={`/vorgaenge/${h.id}`} className="group grid grid-cols-[36px_minmax(0,1fr)_auto] gap-x-3.5 items-center px-4 md:px-5 py-3.5 hover:bg-paper-2 transition-colors">
                         <Monogram name={h.borrower_name} seed={h.borrower_id} size={36} photo={h.borrower_avatar} />
                         <div className="min-w-0">
-                          <p className="text-[15px] font-medium truncate group-hover:underline underline-offset-4 decoration-1">{h.borrower_name} <span className="text-muted font-normal">· {L.offerNoun[h.kind]}</span></p>
-                          <p className="text-[13px] text-muted tnum truncate mt-0.5">
+                          <p className="text-body font-medium truncate group-hover:underline underline-offset-4 decoration-1">{h.borrower_name} <span className="text-muted font-normal">· {L.offerNoun[h.kind]}</span></p>
+                          <p className="text-meta text-muted tnum truncate mt-0.5">
                             {h.handed_over_at
                               ? `${fmtDay(h.handed_over_at, l)} – ${h.ended_at ? fmtDay(h.ended_at, l) : t.hist.today}${days ? ` · ${t.hist.days(days)}` : ""}`
                               : t.hist.requestedOn(fmtDay(h.requested_at, l))}
                           </p>
                         </div>
-                        <span className="inline-flex items-center gap-1.5 text-[13px] text-ink-2 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1.5 text-meta text-ink-2 whitespace-nowrap">
                           <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", tone)} />
                           {h.status === "completed" && h.late ? t.hist.late : h.status === "completed" && h.kind === "lend" ? t.hist.onTime : L.statusLabel[h.status as keyof typeof L.statusLabel] ?? h.status}
                         </span>

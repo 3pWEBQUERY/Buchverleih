@@ -20,7 +20,7 @@ export function Avatar({ name, seed, size = 40, className, night, photo }: { nam
     return <img src={`/api/v1/images/${photo}?w=480`} alt="" aria-hidden width={size} height={size} loading="lazy" className={cx("rounded-full flex-none object-cover", className)} style={{ width: size, height: size }} />;
   }
   return (
-    <span aria-hidden className={cx("grid place-items-center rounded-full font-semibold tracking-[-0.02em] leading-none flex-none select-none", night && NIGHT_TONES[hash(name) % NIGHT_TONES.length], className)}
+    <span aria-hidden className={cx("grid place-items-center rounded-full font-semibold tracking-ui leading-none flex-none select-none", night && NIGHT_TONES[hash(name) % NIGHT_TONES.length], className)}
       style={{ width: size, height: size, fontSize: Math.round(size * 0.46), ...(night ? {} : { background: bg, color: fg }) }}>
       {(name || "?").slice(0, 1).toUpperCase()}
     </span>
@@ -36,7 +36,7 @@ export function Faces({ names, seeds, photos, total, size = 34, ring = "ring-pap
         <Avatar key={`${n}-${i}`} name={n} seed={seeds?.[i]} photo={photos?.[i]} size={size} night={night} className={cx("ring-[2.5px]", ring, i > 0 && "-ml-2.5")} />
       ))}
       {more > 0 && (
-        <span aria-hidden className={cx("-ml-2.5 grid place-items-center rounded-full", night ? "bg-night-2 text-night-ink" : "bg-paper-2 text-ink-2", " text-[12px] font-semibold tnum ring-[2.5px]", ring)} style={{ width: size, height: size }}>
+        <span aria-hidden className={cx("-ml-2.5 grid place-items-center rounded-full", night ? "bg-night-2 text-night-ink" : "bg-paper-2 text-ink-2", " text-caption font-semibold tnum ring-[2.5px]", ring)} style={{ width: size, height: size }}>
           +{more}
         </span>
       )}

@@ -121,6 +121,33 @@ async function main() {
   }
   console.log(`Beispieldaten: ${ids.length} Mitglieder, ${books.length} Werke. Anmelden z. B. mit marc@beispiel.ch (Admin).`);
   await sql.end();
+  await demoLoan();
+}
+
+/**
+ * Ein laufender Vorgang mit Chat, damit Vorgangsseite und Zugänglichkeitsprüfung (npm run a11y) etwas zu zeigen haben.
+ * Läuft über die echten Dienste (Zustandsmaschine, Chat) – nie direkt in die Tabellen.
+ */
+async function demoLoan() {
+  const { sql: db } = await import("../src/lib/db");
+  const svc = await import("../src/lib/loans/service");
+  const { sendMessage } = await import("../src/lib/chat");
+  type U = Parameters<typeof svc.requestLoan>[0];
+  const user = async (email: string) => (await db<U[]>`select *, gen_random_uuid() as session_id from users where email = ${email}`)[0];
+  try {
+    const [marc, lea] = [await user("marc@beispiel.ch"), await user("lea@beispiel.ch")];
+    const [has] = await db`select 1 from loans where borrower_id = ${marc.id} limit 1`;
+    const [copy] = await db<{ id: string }[]>`select id from copies where owner_id = ${lea.id} and removed_at is null and cardinality(offers) > 0 order by created_at limit 1`;
+    if (!has && copy) {
+      const loan = await svc.requestLoan(marc, { copyId: copy.id, kind: "lend", message: "Hallo Lea, darf ich das lesen?" });
+      try { await svc.accept(lea, loan.id, {}); } catch { /* Kreis mit automatischer Annahme */ }
+      await sendMessage(lea.id, { type: "loan", id: loan.id }, { body: "Gern! Passt dir Samstag?" });
+      await sendMessage(marc.id, { type: "loan", id: loan.id }, { body: "Samstag ist gut." });
+      console.log("Beispiel-Vorgang: Marc leiht von Lea (angenommen, mit Chat).");
+    }
+  } finally {
+    await db.end();
+  }
 }
 
 main().catch((e) => {

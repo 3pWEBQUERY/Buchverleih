@@ -11,14 +11,14 @@ import { MOD } from "@/lib/i18n/messages/moderation";
 /** Texte der Aktionen in der Sprache der Person */
 const useT = () => MOD[useLocale()].actions;
 const msg = (e: unknown, t: { error: string }) => (e instanceof Error ? e.message : t.error);
-const dangerCls = "inline-flex items-center justify-center font-medium rounded-[6px] border border-late/50 text-late hover:bg-late hover:text-paper hover:border-late transition-colors duration-200 disabled:opacity-45 whitespace-nowrap active:scale-[0.97]";
+const dangerCls = "inline-flex items-center justify-center font-medium rounded-sm border border-late/50 text-late hover:bg-late hover:text-paper hover:border-late transition-colors duration-fast disabled:opacity-45 whitespace-nowrap active:scale-[0.97]";
 const mod = (body: Record<string, unknown>) => api("/mod", { body });
 
 /** Zeile der Warteschlange: wird beim Erledigen ausgegraut, bis der Aufschub abläuft. */
 function Pending({ pending, children, className }: { pending: string | null; children: ReactNode; className?: string }) {
   return (
-    <div className={cx("transition-opacity duration-200", pending && "opacity-40 pointer-events-none", className)} aria-busy={pending ? true : undefined}>
-      {pending ? <p className="text-sm text-muted h-9 flex items-center">{pending}</p> : children}
+    <div className={cx("transition-opacity duration-fast", pending && "opacity-40 pointer-events-none", className)} aria-busy={pending ? true : undefined}>
+      {pending ? <p className="text-body-sm text-muted h-9 flex items-center">{pending}</p> : children}
     </div>
   );
 }
@@ -35,8 +35,28 @@ export function ReportActions({ id }: { id: string }) {
   return (
     <Pending pending={pending} className="flex items-center gap-2">
       <Button size="sm" onClick={() => act("actioned")}>{t.done}</Button>
-      <Button variant="quiet" className="text-sm h-9 px-3" onClick={() => act("dismissed")}>{t.dismiss}</Button>
+      <Button variant="quiet" className="text-body-sm h-9 px-3" onClick={() => act("dismissed")}>{t.dismiss}</Button>
     </Pending>
+  );
+}
+
+/** Gemeldeten Zettel, Kommentar oder Zettel im Buch ausblenden bzw. wieder zeigen (umkehrbar, darum ohne Rückfrage) */
+export function HideContent({ targetType, targetId, hidden }: { targetType: string; targetId: string; hidden: boolean }) {
+  const l = useLocale();
+  const t = useT();
+  const toast = useToast();
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const label = { de: ["Inhalt ausblenden", "Wieder zeigen"], fr: ["Masquer le contenu", "Afficher à nouveau"], it: ["Nascondi il contenuto", "Mostra di nuovo"] }[l];
+  return (
+    <button type="button" disabled={busy} className="min-h-9 text-body-sm font-medium underline underline-offset-4 hover:text-accent-hover disabled:opacity-50"
+      onClick={async () => {
+        setBusy(true);
+        try { await mod({ action: "hide_content", targetType, targetId, hidden: !hidden }); router.refresh(); }
+        catch (e) { toast.error(msg(e, t)); } finally { setBusy(false); }
+      }}>
+      {hidden ? label[1] : label[0]}
+    </button>
   );
 }
 
@@ -52,7 +72,7 @@ export function CorrectionActions({ id }: { id: string }) {
   return (
     <Pending pending={pending} className="flex items-center gap-2">
       <Button size="sm" onClick={() => act(true)}>{t.apply}</Button>
-      <Button variant="quiet" className="text-sm h-9 px-3" onClick={() => act(false)}>{t.reject}</Button>
+      <Button variant="quiet" className="text-body-sm h-9 px-3" onClick={() => act(false)}>{t.reject}</Button>
     </Pending>
   );
 }
@@ -98,7 +118,7 @@ export function CaseDecision({ caseId, kind }: { caseId: string; kind: "damage" 
       <div className="flex flex-wrap items-center gap-2">
         {options.map((d) => (
           d === "lost"
-            ? <button key={d} type="button" onClick={() => decide(d)} className={cx(dangerCls, "h-9 px-4 text-[13.5px]")}>{t.decisions[d][0]}</button>
+            ? <button key={d} type="button" onClick={() => decide(d)} className={cx(dangerCls, "h-9 px-4 text-body-sm")}>{t.decisions[d][0]}</button>
             : <Button key={d} size="sm" variant="ghost" onClick={() => decide(d)}>{t.decisions[d][0]}</Button>
         ))}
       </div>
@@ -132,21 +152,21 @@ export function BanControls({ userId, banned, reason }: { userId: string; banned
   if (banned) {
     return (
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-[15px]"><span className="font-semibold text-late">{t.bannedLabel}</span>{reason ? <>: <span className="text-ink-2">{reason}</span></> : null}</p>
+        <p className="text-body"><span className="font-semibold text-late">{t.bannedLabel}</span>{reason ? <>: <span className="text-ink-2">{reason}</span></> : null}</p>
         <Button size="sm" variant="ghost" onClick={() => set(false)} disabled={busy}>{t.unban}</Button>
-        {error && <p className="text-sm text-late w-full" role="alert">{error}</p>}
+        {error && <p className="text-body-sm text-late w-full" role="alert">{error}</p>}
       </div>
     );
   }
   return (
     <form onSubmit={(e) => { e.preventDefault(); if (text.trim().length >= 3) set(true, text.trim()); else setError(t.needReason); }}>
-      <label htmlFor={`ban-${userId}`} className="block text-[13px] font-medium mb-2">{t.reason}</label>
+      <label htmlFor={`ban-${userId}`} className="block text-meta font-medium mb-2">{t.reason}</label>
       <div className="flex flex-col gap-3 sm:flex-row">
         <Input id={`ban-${userId}`} value={text} onChange={(e) => setText(e.target.value)} maxLength={300} placeholder={t.reasonPlaceholder} />
-        <button type="submit" disabled={busy} className={cx(dangerCls, "h-12 px-6 text-[15px] self-start sm:self-auto")}>{t.ban}</button>
+        <button type="submit" disabled={busy} className={cx(dangerCls, "h-12 px-6 text-body self-start sm:self-auto")}>{t.ban}</button>
       </div>
-      {error ? <p className="text-sm text-late mt-1.5" role="alert">{error}</p>
-        : <p className="text-sm text-muted mt-1.5">{t.banHint}</p>}
+      {error ? <p className="text-body-sm text-late mt-1.5" role="alert">{error}</p>
+        : <p className="text-body-sm text-muted mt-1.5">{t.banHint}</p>}
     </form>
   );
 }
@@ -215,8 +235,8 @@ export function RoleControl({ userId, role, name }: { userId: string; role: stri
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="min-w-0">
-        <p className="font-medium text-[15px]">{t.roleTitle}</p>
-        <p className="text-[13px] text-muted mt-0.5">
+        <p className="font-medium text-body">{t.roleTitle}</p>
+        <p className="text-meta text-muted mt-0.5">
           {isMod ? t.roleIsMod : t.roleCan}
         </p>
       </div>

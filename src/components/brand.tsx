@@ -20,8 +20,8 @@ export function LogoMark({ size = 28, className, onDark }: { size?: number; clas
 export function Wordmark({ className = "", href = "/", label = "Leihregal, Start" }: { className?: string; href?: string; label?: string }) {
   return (
     <Link href={href} className={cx("inline-flex items-center gap-2.5 group", className)} aria-label={label}>
-      <LogoMark size={30} className="transition-transform duration-300 ease-[var(--ease-spring)] group-hover:-rotate-6" />
-      <span className="text-[21px] font-[620] leading-none tracking-[-0.04em]">Leihregal</span>
+      <LogoMark size={30} className="transition-transform duration-base ease-spring group-hover:-rotate-6" />
+      <span className="text-title-sm font-semibold leading-none tracking-display">Leihregal</span>
     </Link>
   );
 }

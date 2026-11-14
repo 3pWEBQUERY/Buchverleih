@@ -4,6 +4,7 @@ import { sql } from "@/lib/db";
 import { err } from "@/lib/errors";
 import { shortCode } from "@/lib/crypto";
 import { notify } from "@/lib/notify";
+import { removeMemberContent } from "@/lib/pinboard";
 
 export type Circle = {
   id: string;
@@ -113,6 +114,7 @@ export async function setMember(userId: string, circleId: string, memberId: stri
     }
     await sql`delete from circle_members where circle_id = ${circleId} and user_id = ${userId}`;
     await sql`delete from circle_copies cc using copies c where cc.circle_id = ${circleId} and c.id = cc.copy_id and c.owner_id = ${userId}`;
+    await removeMemberContent(sql, circleId, userId);
     return;
   }
   await assertAdmin(circleId, userId);
@@ -121,6 +123,7 @@ export async function setMember(userId: string, circleId: string, memberId: stri
   if (action === "remove") {
     await sql`delete from circle_members where circle_id = ${circleId} and user_id = ${memberId}`;
     await sql`delete from circle_copies cc using copies c where cc.circle_id = ${circleId} and c.id = cc.copy_id and c.owner_id = ${memberId}`;
+    await removeMemberContent(sql, circleId, memberId);
   }
 }
 

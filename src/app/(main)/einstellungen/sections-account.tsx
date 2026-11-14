@@ -87,14 +87,14 @@ export function AvatarEditor({ userId, name, avatarKey }: { userId: string; name
       </span>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <label className={cx("inline-flex items-center justify-center h-10 px-4 rounded-[6px] bg-accent-soft text-accent-hover text-[14px] font-medium cursor-pointer hover:bg-accent hover:text-accent-ink transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--focus)]", busy && "pointer-events-none opacity-60")}>
+          <label className={cx("inline-flex items-center justify-center h-10 px-4 rounded-sm bg-accent-soft text-accent-hover text-body-sm font-medium cursor-pointer hover:bg-accent hover:text-accent-ink transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--focus)]", busy && "pointer-events-none opacity-60")}>
             {busy === "upload" ? t.uploading : has ? t.other : t.upload}
             <input ref={input} type="file" accept="image/*" className="sr-only" onChange={(e) => pick(e.target.files?.[0])} disabled={Boolean(busy)} />
           </label>
-          {has && <Button variant="quiet" className="h-10 text-[14px]" onClick={remove} disabled={Boolean(busy)}>{busy === "remove" ? t.removing : T.remove}</Button>}
+          {has && <Button variant="quiet" className="h-10 text-body-sm" onClick={remove} disabled={Boolean(busy)}>{busy === "remove" ? t.removing : T.remove}</Button>}
         </div>
-        <p className="text-[12.5px] text-muted mt-2 max-w-sm leading-snug">{t.hint}</p>
-        {error && <p className="text-[13px] text-late mt-2" role="alert">{error}</p>}
+        <p className="text-meta text-muted mt-2 max-w-sm leading-snug">{t.hint}</p>
+        {error && <p className="text-meta text-late mt-2" role="alert">{error}</p>}
       </div>
     </div>
   );
@@ -206,8 +206,8 @@ export function PhoneSection({ phone, verifiedAt }: { phone: string | null; veri
       <div>
         <div className={itemCls}>
           <span className="min-w-0">
-            <span className="block font-[560] tracking-[-0.03em] text-[20px] leading-tight tnum">{fmtPhone(phone)}</span>
-            <span className="mt-1 inline-flex items-center gap-1.5 text-[13px] text-ok"><span className="h-1.5 w-1.5 rounded-full bg-ok" /> {t.confirmedOn(verifiedAt)}</span>
+            <span className="block font-title tracking-title text-title-sm leading-tight tnum">{fmtPhone(phone)}</span>
+            <span className="mt-1 inline-flex items-center gap-1.5 text-meta text-ok"><span className="h-1.5 w-1.5 rounded-full bg-ok" /> {t.confirmedOn(verifiedAt)}</span>
           </span>
         </div>
         <Button variant="secondary" size="sm" className="mt-3" onClick={() => setEditing(true)}>{t.other}</Button>
@@ -217,7 +217,7 @@ export function PhoneSection({ phone, verifiedAt }: { phone: string | null; veri
 
   return (
     <div className="max-w-md">
-      {!verifiedAt && <p className="inline-flex items-center gap-2 rounded-[6px] bg-late/[0.08] text-late text-[13.5px] font-medium px-3 py-2 mb-5"><span className="h-1.5 w-1.5 rounded-full bg-late" /> {t.notYet}</p>}
+      {!verifiedAt && <p className="inline-flex items-center gap-2 rounded-sm bg-late/[0.08] text-late text-body-sm font-medium px-3 py-2 mb-5"><span className="h-1.5 w-1.5 rounded-full bg-late" /> {t.notYet}</p>}
       {step === "number" ? (
         <form onSubmit={send} className="flex flex-col gap-4" noValidate>
           <Field label={t.label} hint={t.hint} error={error}>
@@ -232,7 +232,7 @@ export function PhoneSection({ phone, verifiedAt }: { phone: string | null; veri
         <form onSubmit={verify} className="flex flex-col gap-4" noValidate>
           <Field label={t.codeLabel} hint={t.codeHint(number)} error={error}>
             <Input ref={codeRef} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              inputMode="numeric" autoComplete="one-time-code" placeholder="123456" className="tnum tracking-[0.3em] max-w-48" />
+              inputMode="numeric" autoComplete="one-time-code" placeholder="123456" className="tnum tracking-code max-w-48" />
           </Field>
           {devCode && <Notice>{t.dev[0]}<span className="tnum font-medium">{devCode}</span>{t.dev[1]}</Notice>}
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
@@ -303,22 +303,22 @@ export function PasskeyList({ passkeys }: { passkeys: { id: string; name: string
           {visible.map((p) => (
             <li key={p.id} className={itemCls}>
               <span className="min-w-0">
-                <span className="block text-[15px]">{p.name}</span>
-                <span className="block text-sm text-muted">{t.meta(p.created, p.lastUsed)}</span>
+                <span className="block text-body">{p.name}</span>
+                <span className="block text-body-sm text-muted">{t.meta(p.created, p.lastUsed)}</span>
               </span>
-              <Button variant="quiet" className="text-sm shrink-0 h-10 px-3" onClick={() => remove(p.id, p.name)}>{T.remove}</Button>
+              <Button variant="quiet" className="text-body-sm shrink-0 h-10 px-3" onClick={() => remove(p.id, p.name)}>{T.remove}</Button>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-ink-2 mb-5 text-[15px]">{t.none}</p>
+        <p className="text-ink-2 mb-5 text-body">{t.none}</p>
       )}
       {supported ? (
         <Button variant="secondary" size="sm" onClick={add} disabled={busy}>{busy ? t.waiting : t.add}</Button>
       ) : (
-        <p className="text-sm text-muted">{t.unsupported}</p>
+        <p className="text-body-sm text-muted">{t.unsupported}</p>
       )}
-      {error && <p className="text-sm text-late mt-3" role="alert">{error}</p>}
+      {error && <p className="text-body-sm text-late mt-3" role="alert">{error}</p>}
     </div>
   );
 }

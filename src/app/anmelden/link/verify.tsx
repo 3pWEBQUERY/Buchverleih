@@ -31,27 +31,27 @@ export function VerifyLink({ token, next, app = false }: { token: string; next: 
   }
   if (error)
     return (
-      <div className="panel-quiet rounded-[8px] p-6 anim-rise" role="alert">
-        <p className="ui-title text-[18px]">{t.broken}</p>
+      <div className="panel-quiet rounded-md p-6 anim-rise" role="alert">
+        <p className="ui-title text-lead">{t.broken}</p>
         <p className="text-ink-2 mt-1.5">{error}</p>
         <LinkButton href="/anmelden" variant="primary" className="mt-6">{t.newLink}</LinkButton>
       </div>
     );
   return (
-    <div className="anim-rise" style={{ animationDelay: "60ms" }}>
-      <p className="text-ink-2 text-[17px] mb-8">{app && token ? t.appLead : t.oneTap}</p>
+    <div className="anim-rise">
+      <p className="text-ink-2 text-lead mb-8">{app && token ? t.appLead : t.oneTap}</p>
       {app && token && (
         // Eigenes Schema statt Link-Komponente: führt aus dem Browser in die App
         <a href={appHref(token)}
-          className="mb-3 h-12 px-6 w-full rounded-[6px] bg-accent text-accent-ink hover:bg-accent-hover font-medium text-[15.5px] tracking-[-0.012em] inline-flex items-center justify-center gap-2 transition-colors duration-150">
+          className="mb-3 h-12 px-6 w-full rounded-sm bg-accent text-accent-ink hover:bg-accent-hover font-medium text-body tracking-ui inline-flex items-center justify-center gap-2 transition-colors duration-fast">
           {t.openApp} <IconArrowRight width={18} height={18} />
         </a>
       )}
       <Button variant={app && token ? "ghost" : "primary"} size="lg" className="w-full" onClick={go} disabled={busy || !token} autoFocus={!app}>
         {busy ? t.moment : app && token ? t.inBrowser : <>{t.go} <IconArrowRight width={18} height={18} /></>}
       </Button>
-      {!token && <p className="text-sm text-late mt-4">{t.missing}</p>}
-      <p className="text-sm text-muted mt-8">{t.otherAddress}<a href="/anmelden" className="underline underline-offset-4 hover:text-ink">{t.newLink}</a></p>
+      {!token && <p className="text-body-sm text-late mt-4">{t.missing}</p>}
+      <p className="text-body-sm text-muted mt-8">{t.otherAddress}<a href="/anmelden" className="underline underline-offset-4 hover:text-ink">{t.newLink}</a></p>
     </div>
   );
 }

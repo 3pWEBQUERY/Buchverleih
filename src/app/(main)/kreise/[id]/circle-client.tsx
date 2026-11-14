@@ -62,23 +62,23 @@ export function InviteBox({ circleId, url, admin, appUrl }: { circleId: string; 
   }
 
   return (
-    <section aria-labelledby="einladen" className="rounded-[10px] border border-line p-5">
-      <h2 id="einladen" className="text-[19px] font-[560] tracking-[-0.025em]">{t.invite}</h2>
+    <section aria-labelledby="einladen" className="rounded-md border border-line p-5">
+      <h2 id="einladen" className="text-title-sm font-title tracking-title">{t.invite}</h2>
       {link ? (
         <>
-          <p className="text-[13.5px] text-muted mt-1 mb-4">{t.inviteText}</p>
+          <p className="text-body-sm text-muted mt-1 mb-4">{t.inviteText}</p>
           <input ref={input} readOnly value={link} aria-label={t.inviteLink} onFocus={(e) => e.target.select()}
-            className="w-full h-11 px-3.5 rounded-[6px] bg-paper-2 border border-line text-[13.5px] text-ink-2 tnum truncate focus:outline-none focus:border-accent transition-colors" />
+            className="w-full h-11 px-3.5 rounded-sm bg-paper-2 border border-line text-body-sm text-ink-2 tnum truncate focus:outline-none focus:border-accent transition-colors" />
           <Button type="button" variant="primary" onClick={copy} className="w-full mt-2">{t.copy}</Button>
           {admin && (
             <div className="mt-4 pt-3 border-t border-line flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-              <p className="text-[13px] text-muted">{t.wrongHands}</p>
-              <Button variant="quiet" className="text-[13.5px] min-h-9" disabled={busy} onClick={renew}>{t.renew}</Button>
+              <p className="text-meta text-muted">{t.wrongHands}</p>
+              <Button variant="quiet" className="text-body-sm min-h-9" disabled={busy} onClick={renew}>{t.renew}</Button>
             </div>
           )}
         </>
       ) : (
-        <p className="text-[14.5px] text-ink-2 mt-2">{t.askAdmin}</p>
+        <p className="text-body-sm text-ink-2 mt-2">{t.askAdmin}</p>
       )}
     </section>
   );
@@ -125,17 +125,17 @@ export function MemberList({ circleId, me, admin, members }: { circleId: string;
   return (
     <div className="space-y-4">
       {admin && pending.length > 0 && (
-        <section aria-labelledby="anfragen" className="rounded-[10px] border border-accent/40 bg-accent-soft/20 overflow-hidden">
-          <h3 id="anfragen" className="px-4 md:px-5 pt-4 pb-2 text-[13.5px] font-medium text-accent-hover flex items-center gap-2">
+        <section aria-labelledby="anfragen" className="rounded-md border border-accent/40 bg-accent-soft/20 overflow-hidden">
+          <h3 id="anfragen" className="px-4 md:px-5 pt-4 pb-2 text-body-sm font-medium text-accent-hover flex items-center gap-2">
             <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent live-dot" />
             {CIRCLES[l].joinRequests(pending.length)}
           </h3>
           <ul className="divide-y divide-accent/20">
             {pending.map((m) => (
-              <li key={m.user_id} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 md:px-5 py-3.5 anim-rise">
+              <li key={m.user_id} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 md:px-5 py-3.5">
                 <Person m={m} />
                 <div className="flex items-center gap-2">
-                  <Button variant="quiet" className="text-sm" onClick={() => remove(m, true)}>{t.decline}</Button>
+                  <Button variant="quiet" className="text-body-sm" onClick={() => remove(m, true)}>{t.decline}</Button>
                   <Button variant="primary" size="sm" disabled={busy === m.user_id} onClick={() => act(m, "approve")}>{t.approve}</Button>
                 </div>
               </li>
@@ -148,24 +148,24 @@ export function MemberList({ circleId, me, admin, members }: { circleId: string;
         {active.map((m, i) => {
           const self = m.user_id === me;
           return (
-            <li key={m.user_id} className={cx("rounded-[10px] border p-4 flex flex-col gap-3 anim-rise", self ? "border-line-strong" : "border-line")} style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
+            <li key={m.user_id} className={cx("rounded-md border p-4 flex flex-col gap-3", self ? "border-line-strong" : "border-line")}>
               <Person m={m} me={self} />
-              <dl className="grid grid-cols-2 gap-1.5 text-[12.5px]">
-                <div className="rounded-[6px] bg-paper-2 px-2.5 py-2">
+              <dl className="grid grid-cols-2 gap-1.5 text-meta">
+                <div className="rounded-sm bg-paper-2 px-2.5 py-2">
                   <dt className="text-muted">{t.inShelf}</dt>
-                  <dd className="font-[560] text-[15px] tnum mt-0.5">{t.books(m.books)}</dd>
+                  <dd className="font-title text-body tnum mt-0.5">{t.books(m.books)}</dd>
                 </div>
-                <div className="rounded-[6px] bg-paper-2 px-2.5 py-2">
+                <div className="rounded-sm bg-paper-2 px-2.5 py-2">
                   <dt className="text-muted">{t.since}</dt>
-                  <dd className="font-[560] text-[15px] mt-0.5">{monthShort.format(new Date(m.joined_at))}</dd>
+                  <dd className="font-title text-body mt-0.5">{monthShort.format(new Date(m.joined_at))}</dd>
                 </div>
               </dl>
               {admin && !self && (
                 <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-line">
                   {m.role !== "admin" ? (
-                    <Button variant="quiet" className="text-[13px] min-h-8 -ml-1" disabled={busy === m.user_id} onClick={() => act(m, "make_admin")}>{t.makeAdmin}</Button>
-                  ) : <span className="text-[12.5px] text-muted">{t.coAdmin}</span>}
-                  <Button variant="danger" className="text-[13px] min-h-8" onClick={() => remove(m)}>{t.remove}</Button>
+                    <Button variant="quiet" className="text-meta min-h-8 -ml-1" disabled={busy === m.user_id} onClick={() => act(m, "make_admin")}>{t.makeAdmin}</Button>
+                  ) : <span className="text-meta text-muted">{t.coAdmin}</span>}
+                  <Button variant="danger" className="text-meta min-h-8" onClick={() => remove(m)}>{t.remove}</Button>
                 </div>
               )}
             </li>
@@ -183,12 +183,12 @@ function Person({ m, me }: { m: Member; me?: boolean }) {
     <div className="min-w-0 flex items-center gap-3.5">
       <Avatar name={m.first_name} seed={m.user_id} size={44} photo={m.avatar_key} />
       <div className="min-w-0">
-        <p className="text-[15px] flex flex-wrap items-center gap-x-2 gap-y-1">
+        <p className="text-body flex flex-wrap items-center gap-x-2 gap-y-1">
           <Link href={`/profil/${m.user_id}`} className="font-medium hover:underline underline-offset-4">{m.first_name}</Link>
           {me && <span className="text-muted">{t.you}</span>}
-          {m.role === "admin" && <span className="inline-flex items-center h-[22px] px-2 rounded-[4px] bg-accent-soft text-accent-hover text-[12px] font-medium">{t.admin}</span>}
+          {m.role === "admin" && <span className="inline-flex items-center h-[22px] px-2 rounded-xs bg-accent-soft text-accent-hover text-caption font-medium">{t.admin}</span>}
         </p>
-        <p className="text-[13px] text-muted">{[labels(l).trustLabel[m.trust_level] ?? t.newcomer, m.municipality].filter(Boolean).join(" · ")}</p>
+        <p className="text-meta text-muted">{[labels(l).trustLabel[m.trust_level] ?? t.newcomer, m.municipality].filter(Boolean).join(" · ")}</p>
       </div>
     </div>
   );
@@ -233,7 +233,7 @@ export function CircleSettings({ circleId, initial }: { circleId: string; initia
     );
   }
   return (
-    <section aria-label={t.settings} className="mt-4 rounded-[10px] border border-line p-5 md:p-6 anim-rise">
+    <section aria-label={t.settings} className="mt-4 rounded-md border border-line p-5 md:p-6 anim-rise">
       <CircleFields v={v} set={(p) => { setV((c) => ({ ...c, ...p })); if (p.name !== undefined) setNameError(null); }} nameError={nameError} />
       <div className="flex items-center gap-3 mt-7 pt-5 border-t border-line">
         <Button variant="primary" disabled={busy} onClick={save}>{busy ? t.saving : t.save}</Button>
@@ -263,11 +263,11 @@ export function LeaveCircle({ circleId, me, name, lastAdmin }: { circleId: strin
   }
 
   return (
-    <section aria-label={t.leaveAria} className="rounded-[10px] bg-paper-2 p-5">
-      <p className="text-[13.5px] text-muted">
+    <section aria-label={t.leaveAria} className="rounded-md bg-paper-2 p-5">
+      <p className="text-body-sm text-muted">
         {lastAdmin ? t.lastAdmin : t.leaveText}
       </p>
-      <Button variant="danger" className={cx("text-sm mt-2 -ml-1", leaving && "opacity-45")} disabled={lastAdmin || leaving} onClick={leave}>
+      <Button variant="danger" className={cx("text-body-sm mt-2 -ml-1", leaving && "opacity-45")} disabled={lastAdmin || leaving} onClick={leave}>
         {t.leave}
       </Button>
     </section>

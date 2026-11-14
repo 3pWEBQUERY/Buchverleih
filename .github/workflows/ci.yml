@@ -37,7 +37,49 @@ jobs:
         run: npm run typecheck
       - name: Lint
         run: npm run lint
+      - name: Tokens (globals.css ↔ tokens.json)
+        run: npm run tokens:check
       - name: Tests
         run: npm test
       - name: Build
         run: npm run build
+
+  # Zugänglichkeit: axe gegen die gebaute App mit Beispieldaten (hell/dunkel, 390/1440 px)
+  a11y:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: leihregal
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/leihregal
+      APP_URL: http://localhost:3000
+      TZ: Europe/Zurich
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run migrate
+      - name: Beispieldaten
+        run: npm run seed
+        env:
+          SEED_CONFIRM: "yes"
+      - run: npm run build
+      - name: App starten
+        run: |
+          npm start &
+          npx --yes wait-on http://localhost:3000/api/v1/health --timeout 60000
+      - name: axe
+        run: npm run a11y

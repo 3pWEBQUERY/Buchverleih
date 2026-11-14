@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ShelfCopy } from "@/lib/copies";
-import { Cover } from "@/components/cover";
+import { Cover, CoverMorph, coverVt } from "@/components/cover";
 import type { Tone } from "@/components/status";
 import { shelfStatusLocal } from "@/lib/i18n/messages/shelf-status";
 import type { Locale } from "@/lib/i18n/locale";
@@ -22,30 +22,31 @@ const NIGHT_DOT: Record<Tone, string> = {
 };
 
 export type BookRowItem = Pick<ShelfCopy, "id" | "title" | "authors" | "photo_key" | "photo_w" | "photo_h" | "cover_key" | "work_id"> &
-  Partial<Pick<ShelfCopy, "status" | "lent_until" | "next_start" | "open_requests">> & { href?: string; note?: { tone: Tone; text: string } };
+  Partial<Pick<ShelfCopy, "status" | "lent_until" | "next_start" | "open_requests" | "photo_color" | "cover_color">> & { href?: string; note?: { tone: Tone; text: string } };
 
 /** `wrap`: statt seitlich zu scrollen, laufen die Bücher auf weiteren Brettern weiter (für schmale Spalten) */
-export function BookRow({ items, height = 168, hrefBase = "/regal/", label, wrap, l = "de" }: { items: BookRowItem[]; height?: number; hrefBase?: string; label?: string; wrap?: boolean; l?: Locale }) {
+/** `morph`: Cover wandert beim Öffnen in den Kopf der Zielseite – nur am Hauptregal einer Seite setzen (Namen müssen eindeutig sein) */
+export function BookRow({ items, height = 168, hrefBase = "/regal/", label, wrap, l = "de", morph }: { items: BookRowItem[]; height?: number; hrefBase?: string; label?: string; wrap?: boolean; l?: Locale; morph?: "copy" | "work" }) {
   return (
     <ul className={cx("shelf !gap-0 !items-stretch mt-1 !pb-1", wrap && "!flex-wrap !overflow-visible !gap-y-9")} aria-label={label}>
       {items.map((c, i) => {
-        const cover = { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id };
+        const cover = { title: c.title, authors: c.authors, photoKey: c.photo_key, photoColor: c.photo_color, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, coverColor: c.cover_color, seed: c.work_id };
         const bw = Math.round(height * (2 / 3)); // gleiche Grösse für alle Bücher
         const w = Math.max(128, bw);
         const st = c.note ?? (c.status ? shelfStatusLocal({ status: c.status, lent_until: c.lent_until ?? null, next_start: c.next_start ?? null, open_requests: c.open_requests ?? 0 }, l) : null);
         const last = i === items.length - 1;
         return (
-          <li key={c.id} style={{ width: w + (wrap ? 14 : last ? 0 : 22), animationDelay: `${Math.min(i, 10) * 30}ms` }} className="anim-rise relative">
+          <li key={c.id} style={{ width: w + (wrap ? 14 : last ? 0 : 22) }} className="relative">
             {/* durchgehendes Brett: läuft unter dem Zwischenraum weiter */}
             <div aria-hidden className="absolute left-0 right-0 h-[3px] bg-night-ink/90" style={{ top: height }} />
             <Link href={c.href ?? `${hrefBase}${c.id}`} className="book group flex flex-col h-full" style={{ width: w }}>
               <div className="flex items-end flex-none" style={{ height }}>
-                <div className="book-face"><Cover data={cover} width={bw} height={height} uniform l={l} /></div>
+                <div className="book-face"><CoverMorph name={morph ? coverVt(morph, morph === "work" ? c.work_id : c.id) : null}><Cover data={cover} width={bw} height={height} uniform l={l} /></CoverMorph></div>
               </div>
               <div className="pt-[13px] pr-2 flex-1 flex flex-col">
-                <p className="text-[13.5px] font-medium leading-snug line-clamp-2 group-hover:underline underline-offset-2">{c.title}</p>
+                <p className="text-body-sm font-medium leading-snug line-clamp-2 group-hover:underline underline-offset-2">{c.title}</p>
                 {st ? (
-                  <p className="text-[12px] leading-snug text-night-muted mt-auto pt-1 flex items-start gap-1.5" title={st.text}>
+                  <p className="text-caption leading-snug text-night-muted mt-auto pt-1 flex items-start gap-1.5" title={st.text}>
                     <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none mt-[5px]", NIGHT_DOT[st.tone])} />
                     {/* Längere Angaben (FR/IT) dürfen auf zwei Zeilen umbrechen statt abgeschnitten zu werden */}
                     <span className="line-clamp-2 min-w-0">{st.text}</span>

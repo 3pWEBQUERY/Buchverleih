@@ -28,6 +28,14 @@ const de = {
     message: "Nachricht",
     submitPropose: "Vorschlagen",
     send: "Senden",
+    newMessages: (n: number): string => (n === 1 ? "1 neue Nachricht" : `${n} neue Nachrichten`),
+    enterHint: "Enter sendet, Umschalt+Enter macht eine neue Zeile.",
+    read: "Gelesen",
+    quickLabel: "Schnellantworten",
+    quick: {
+      arrange: ["Passt mir", "Geht auch eine Stunde später?", "Bin unterwegs"],
+      back: ["Wann passt dir die Rückgabe?", "Passt mir", "Bin unterwegs"],
+    },
     safety: "Treffpunkte an öffentlichen Orten sind die sicherste Wahl. Telefonnummer und Adresse teilst du nur, wenn du willst.",
   },
   code: {
@@ -76,6 +84,14 @@ const fr: ChatMsg = {
     message: "Message",
     submitPropose: "Proposer",
     send: "Envoyer",
+    newMessages: (n: number): string => (n === 1 ? "1 nouveau message" : `${n} nouveaux messages`),
+    enterHint: "Entrée envoie, Maj+Entrée ajoute une ligne.",
+    read: "Lu",
+    quickLabel: "Réponses rapides",
+    quick: {
+      arrange: ["Ça me va", "Possible une heure plus tard ?", "Je suis en route"],
+      back: ["Quand te convient le retour ?", "Ça me va", "Je suis en route"],
+    },
     safety: "Les lieux publics sont le choix le plus sûr pour se rencontrer. Tu ne partages ton numéro et ton adresse que si tu le souhaites.",
   },
   code: {
@@ -123,6 +139,14 @@ const it: ChatMsg = {
     message: "Messaggio",
     submitPropose: "Proponi",
     send: "Invia",
+    newMessages: (n: number): string => (n === 1 ? "1 nuovo messaggio" : `${n} nuovi messaggi`),
+    enterHint: "Invio spedisce, Maiusc+Invio va a capo.",
+    read: "Letto",
+    quickLabel: "Risposte rapide",
+    quick: {
+      arrange: ["Mi va bene", "Va bene anche un’ora dopo?", "Sto arrivando"],
+      back: ["Quando ti va bene la restituzione?", "Mi va bene", "Sto arrivando"],
+    },
     safety: "I luoghi pubblici sono la scelta più sicura per incontrarsi. Numero di telefono e indirizzo li condividi solo se vuoi.",
   },
   code: {

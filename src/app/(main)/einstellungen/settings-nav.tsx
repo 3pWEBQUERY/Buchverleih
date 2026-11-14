@@ -47,7 +47,7 @@ export function SettingsNav({ groups, label = "Abschnitte" }: { groups: NavGroup
           {groups.flatMap((g) => g.items.map((i) => (
             <a key={i.id} href={`#${i.id}`} data-id={i.id} aria-current={active === i.id ? "location" : undefined}
               className={cx(
-                "flex-none h-9 px-3.5 rounded-[6px] inline-flex items-center text-[13.5px] font-medium transition-colors duration-200",
+                "flex-none h-9 px-3.5 rounded-sm inline-flex items-center text-body-sm font-medium transition-colors duration-fast",
                 active === i.id ? (g.danger ? "bg-late/10 text-late" : "bg-accent-soft text-accent-hover") : "text-ink-2 bg-paper-2 hover:bg-paper-3",
               )}>
               {i.label}
@@ -68,10 +68,10 @@ export function SettingsNav({ groups, label = "Abschnitte" }: { groups: NavGroup
                   <li key={i.id}>
                     <a href={`#${i.id}`} aria-current={on ? "location" : undefined}
                       className={cx(
-                        "relative flex items-center h-9 px-3 rounded-[6px] text-[14.5px] transition-colors duration-200",
+                        "relative flex items-center h-9 px-3 rounded-sm text-body-sm transition-colors duration-fast",
                         on ? (g.danger ? "bg-late/[0.07] text-late font-medium" : "bg-accent-soft/60 text-accent-hover font-medium") : "text-muted hover:text-ink hover:bg-paper-2/60",
                       )}>
-                      <span className={cx("absolute left-0 top-2 bottom-2 w-[3px] rounded-full transition-opacity duration-200", g.danger ? "bg-late" : "bg-accent", on ? "opacity-100" : "opacity-0")} />
+                      <span className={cx("absolute left-0 top-2 bottom-2 w-[3px] rounded-full transition-opacity duration-fast", g.danger ? "bg-late" : "bg-accent", on ? "opacity-100" : "opacity-0")} />
                       {i.label}
                     </a>
                   </li>
