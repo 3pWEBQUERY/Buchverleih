@@ -25,7 +25,7 @@ export function Redeem({ token }: { token: string }) {
     <div className="mt-6"><p className="text-late" role="alert">{error}</p><LinkButton href="/vorgaenge" className="mt-6">{t.toLoans}</LinkButton></div>
   ) : (
     <div className="mt-6">
-      <p className="text-ink-2 text-[16px] mb-8 max-w-xs mx-auto">{t.text}</p>
+      <p className="text-ink-2 text-body-lg mb-8 max-w-xs mx-auto">{t.text}</p>
       <Button variant="primary" size="lg" onClick={go} disabled={busy} autoFocus className="w-full">{busy ? t.wait : t.confirm}</Button>
     </div>
   );

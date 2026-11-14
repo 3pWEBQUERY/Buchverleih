@@ -20,10 +20,10 @@ export const coverOf = (e: Edition): CoverData => ({ title: e.title, authors: e.
 export function LookupSkeleton({ isbn }: { isbn: string }) {
   const t = CAPTURE[useLocale()];
   return (
-    <div className="rounded-[10px] border border-line flex gap-5 p-5" aria-live="polite">
+    <div className="rounded-md border border-line flex gap-5 p-5" aria-live="polite">
       <div className="skeleton w-[80px] h-[120px] flex-none" />
       <div className="flex-1 pt-1">
-        <p className="text-sm text-muted tnum">{t.lookingUp(isbn)}</p>
+        <p className="text-body-sm text-muted tnum">{t.lookingUp(isbn)}</p>
         <div className="skeleton h-5 w-3/4 mt-3" />
         <div className="skeleton h-4 w-1/2 mt-2" />
       </div>
@@ -59,18 +59,18 @@ export function PendingCard({ edition, ask, onAsked, onCancel, onDone }: {
   const meta = [edition.publisher, edition.year].filter(Boolean).join(", ");
   return (
     <div className="anim-rise" aria-live="polite">
-      <div className="rounded-[10px] border border-line p-4 md:p-5 flex gap-4 md:gap-5">
+      <div className="rounded-md border border-line p-4 md:p-5 flex gap-4 md:gap-5">
         <div className="anim-cover flex-none"><Cover data={coverOf(edition)} width={80} height={120} uniform priority l={l} /></div>
         <div className="min-w-0 flex-1 flex flex-col">
-          <p className="text-[13px] font-medium text-ok flex items-center gap-1.5"><IconCheck width={15} height={15} strokeWidth={2} /> {t.found}</p>
-          <h3 className="font-serif text-[22px] md:text-[26px] leading-[1.1] mt-1.5">{edition.title}</h3>
-          <p className="text-[14.5px] text-ink-2 mt-1">{edition.authors.join(", ")}</p>
-          <dl className="mt-auto pt-3 flex flex-wrap gap-x-5 gap-y-1 text-[13px]">
+          <p className="text-meta font-medium text-ok flex items-center gap-1.5"><IconCheck width={15} height={15} strokeWidth={2} /> {t.found}</p>
+          <h3 className="font-serif text-title leading-display mt-1.5">{edition.title}</h3>
+          <p className="text-body-sm text-ink-2 mt-1">{edition.authors.join(", ")}</p>
+          <dl className="mt-auto pt-3 flex flex-wrap gap-x-5 gap-y-1 text-meta">
             {meta && <div className="flex gap-1.5"><dt className="text-muted">{t.edition}</dt><dd>{meta}</dd></div>}
             {edition.isbn13 && <div className="flex gap-1.5"><dt className="text-muted">ISBN</dt><dd className="tnum">{edition.isbn13}</dd></div>}
           </dl>
         </div>
-        <button type="button" onClick={onCancel} className="self-start h-10 w-10 -mt-1.5 -mr-1.5 grid place-items-center rounded-[6px] text-muted hover:text-ink hover:bg-paper-2 transition-colors flex-none" aria-label={t.other}>
+        <button type="button" onClick={onCancel} className="self-start h-10 w-10 -mt-1.5 -mr-1.5 grid place-items-center rounded-sm text-muted hover:text-ink hover:bg-paper-2 transition-colors flex-none" aria-label={t.other}>
           <IconClose />
         </button>
       </div>
@@ -97,7 +97,7 @@ function ConditionGrid({ onPick, value }: { onPick: (c: number) => void; value?:
         return (
           <button key={c} type="button" onClick={() => onPick(c)} aria-pressed={on}
             className={cx(
-              "group flex flex-col items-start text-left rounded-[10px] p-4 min-h-[112px] border transition-[background-color,border-color,transform] duration-150 active:scale-[0.98] disabled:opacity-45",
+              "group flex flex-col items-start text-left rounded-md p-4 min-h-[112px] border transition-[background-color,border-color,transform] duration-fast active:scale-[0.98] disabled:opacity-45",
               on ? "border-accent bg-accent-soft/35" : "bg-paper border-line hover:border-accent",
             )}>
             <span aria-hidden className="flex gap-1">
@@ -105,8 +105,8 @@ function ConditionGrid({ onPick, value }: { onPick: (c: number) => void; value?:
                 <span key={k} className={cx("h-1.5 w-4 rounded-full transition-colors", k >= c ? (on ? "bg-accent" : "bg-ink-2 group-hover:bg-accent") : "bg-paper-3")} />
               ))}
             </span>
-            <span className="block text-[17px] font-[560] tracking-[-0.02em] leading-tight mt-auto pt-4">{L.conditionLabel[c]}</span>
-            <span className="block text-[12.5px] leading-snug mt-1 text-muted">{L.conditionHint[c]}</span>
+            <span className="block text-lead font-title tracking-ui leading-tight mt-auto pt-4">{L.conditionLabel[c]}</span>
+            <span className="block text-meta leading-snug mt-1 text-muted">{L.conditionHint[c]}</span>
           </button>
         );
       })}
@@ -118,13 +118,13 @@ function PreciousQuestion({ busy, condition, onBack, onAnswer }: { busy: boolean
   const l = useLocale();
   const t = CAPTURE[l];
   return (
-    <div className="mt-4 rounded-[10px] bg-paper-2 p-5 md:p-6 anim-rise">
-      <p className="text-[13px] text-muted">
+    <div className="mt-4 rounded-md bg-paper-2 p-5 md:p-6 anim-rise">
+      <p className="text-meta text-muted">
         {t.condition}: <span className="text-ink-2 font-medium">{labels(l).conditionLabel[condition]}</span>{" "}
         <button type="button" onClick={onBack} className="text-accent-hover font-medium hover:underline underline-offset-4 ml-1">{t.change}</button>
       </p>
-      <p className="text-[20px] md:text-[24px] font-[560] tracking-[-0.03em] leading-[1.15] mt-2 max-w-xl">{t.precious}</p>
-      <p className="text-[14px] text-muted mt-2 max-w-xl">{t.preciousHint}</p>
+      <p className="text-title-sm font-title tracking-title leading-title mt-2 max-w-xl">{t.precious}</p>
+      <p className="text-body-sm text-muted mt-2 max-w-xl">{t.preciousHint}</p>
       <div className="flex flex-wrap gap-2 mt-5">
         <Button size="lg" variant="secondary" disabled={busy} onClick={() => onAnswer(true)}>{t.yesCircles}</Button>
         <Button size="lg" variant="primary" disabled={busy} onClick={() => onAnswer(false)}>{t.noShelf}</Button>
@@ -188,7 +188,7 @@ export function SearchTab({ hidden, onPick, onIsbn, onManual }: {
       )}
 
       {!hidden && loading && !res && (
-        <ul className="mt-4 rounded-[10px] border border-line divide-y divide-line px-4" aria-hidden>
+        <ul className="mt-4 rounded-md border border-line divide-y divide-line px-4" aria-hidden>
           {[0, 1, 2].map((i) => (
             <li key={i} className="flex gap-4 py-3">
               <div className="skeleton w-[40px] h-[60px] flex-none" />
@@ -199,18 +199,18 @@ export function SearchTab({ hidden, onPick, onIsbn, onManual }: {
       )}
 
       {!hidden && res && res.editions.length > 0 && (
-        <ul className={cx("mt-4 rounded-[10px] border border-line divide-y divide-line overflow-hidden transition-opacity", loading && "opacity-60")} aria-label={t.editions}>
+        <ul className={cx("mt-4 rounded-md border border-line divide-y divide-line overflow-hidden transition-opacity", loading && "opacity-60")} aria-label={t.editions}>
           {res.editions.map((e) => (
             <li key={e.id}>
               <button type="button" onClick={() => onPick(e)} className="group w-full flex items-center gap-4 py-3 px-4 text-left hover:bg-paper-2 focus-visible:bg-paper-2 transition-colors">
                 <Cover data={coverOf(e)} width={40} height={60} uniform l={l} />
                 <span className="min-w-0 flex-1">
-                  <span className="block font-serif text-[17px] leading-tight">{e.title}</span>
-                  <span className="block text-[13px] text-muted truncate mt-0.5">
+                  <span className="block font-serif text-lead leading-tight">{e.title}</span>
+                  <span className="block text-meta text-muted truncate mt-0.5">
                     {[e.authors.join(", "), e.publisher, e.year].filter(Boolean).join(" · ")}
                   </span>
                 </span>
-                <span className="h-9 px-3.5 rounded-[6px] bg-accent-soft text-accent-hover text-[13.5px] font-medium flex-none hidden sm:inline-flex items-center gap-1.5 group-hover:bg-accent group-hover:text-accent-ink transition-colors">
+                <span className="h-9 px-3.5 rounded-sm bg-accent-soft text-accent-hover text-body-sm font-medium flex-none hidden sm:inline-flex items-center gap-1.5 group-hover:bg-accent group-hover:text-accent-ink transition-colors">
                   {t.pick} <IconArrowRight width={14} height={14} />
                 </span>
               </button>
@@ -220,8 +220,8 @@ export function SearchTab({ hidden, onPick, onIsbn, onManual }: {
       )}
 
       {!hidden && res && (
-        <div className={cx("flex flex-wrap items-center justify-between gap-4", res.editions.length ? "mt-4" : "mt-4 rounded-[10px] border border-dashed border-line-strong px-5 py-5")}>
-          <p className={res.editions.length ? "text-[14px] text-muted" : "text-ink-2 text-[15px]"}>
+        <div className={cx("flex flex-wrap items-center justify-between gap-4", res.editions.length ? "mt-4" : "mt-4 rounded-md border border-dashed border-line-strong px-5 py-5")}>
+          <p className={res.editions.length ? "text-body-sm text-muted" : "text-ink-2 text-body"}>
             {res.editions.length ? t.notThere : t.unknown(res.q)}
           </p>
           <Button size="sm" variant="secondary" onClick={() => onManual(res.q)}>{t.withoutIsbn}</Button>
@@ -311,7 +311,7 @@ export function ManualTab({ prefill, ask, onAsked, add }: {
         <Notice tone="accent">{t.notFound(prefill.isbn ?? "")}</Notice>
       )}
 
-      <div className="rounded-[10px] border border-line p-4 md:p-6 grid sm:grid-cols-[minmax(0,1fr)_120px] gap-x-5 gap-y-5">
+      <div className="rounded-md border border-line p-4 md:p-6 grid sm:grid-cols-[minmax(0,1fr)_120px] gap-x-5 gap-y-5">
         <div className="space-y-5 min-w-0">
           <Field label={t.title} error={error}>
             <Input ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)} required autoComplete="off" />
@@ -337,35 +337,35 @@ export function ManualTab({ prefill, ask, onAsked, add }: {
 
         {/* Foto als Cover-Fläche im Buchformat */}
         <div className="sm:order-none order-first">
-          <span className="block text-[13px] font-medium mb-1.5">{t.photo} <span className="text-muted font-normal">{t.optional}</span></span>
-          <label className={cx("relative grid place-items-center w-[96px] sm:w-full aspect-[2/3] rounded-[8px] cursor-pointer overflow-hidden transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--focus)]",
-            preview ? "border border-line" : "border border-dashed border-line-strong hover:border-accent text-muted hover:text-accent-hover bg-paper-2/50")}>
+          <span className="block text-meta font-medium mb-1.5">{t.photo} <span className="text-muted font-normal">{t.optional}</span></span>
+          <label className={cx("relative grid place-items-center w-[96px] sm:w-full aspect-[2/3] rounded-md cursor-pointer overflow-hidden transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--focus)]",
+            preview ? "border border-line" : "border border-dashed border-field hover:border-accent text-muted hover:text-accent-hover bg-paper-2/50")}>
             {preview ? (
                
               <img src={preview} alt={t.preview} className="absolute inset-0 h-full w-full object-cover" />
             ) : (
-              <span className="flex flex-col items-center gap-1.5 text-[12.5px] font-medium text-center px-2"><IconCamera width={22} height={22} /> {t.takePhoto}</span>
+              <span className="flex flex-col items-center gap-1.5 text-meta font-medium text-center px-2"><IconCamera width={22} height={22} /> {t.takePhoto}</span>
             )}
             <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} />
           </label>
           {photo ? (
-            <button type="button" className="text-[12.5px] text-muted hover:text-ink mt-2" onClick={() => setPhoto(null)}>{t.removePhoto}</button>
+            <button type="button" className="text-meta text-muted hover:text-ink mt-2" onClick={() => setPhoto(null)}>{t.removePhoto}</button>
           ) : (
-            <p className="text-[12px] text-muted mt-2 leading-snug">{t.noPhoto}</p>
+            <p className="text-caption text-muted mt-2 leading-snug">{t.noPhoto}</p>
           )}
         </div>
       </div>
 
       <div className="pt-4">
-        <p className="font-medium text-[15px]">{c.condition}</p>
-        <p className="text-[13px] text-muted mt-0.5 mb-3">{t.readingTraces}</p>
+        <p className="font-medium text-body">{c.condition}</p>
+        <p className="text-meta text-muted mt-0.5 mb-3">{t.readingTraces}</p>
         <ConditionGrid value={condition} onPick={setCondition} />
       </div>
 
       {ask && (
         <div className="pt-4">
-          <p className="font-medium text-[15px]">{c.precious}</p>
-          <p className="text-[13px] text-muted mt-0.5 mb-3">{c.preciousShort}</p>
+          <p className="font-medium text-body">{c.precious}</p>
+          <p className="text-meta text-muted mt-0.5 mb-3">{c.preciousShort}</p>
           <div role="radiogroup" aria-label={t.choice} className="grid grid-cols-2 gap-2 sm:max-w-md">
             <OptionCard compact on={!precious} onClick={() => setPrecious(false)} title={t.no} desc={t.noDesc} />
             <OptionCard compact on={precious} onClick={() => setPrecious(true)} title={c.yesCircles} desc={t.yesDesc} />
@@ -377,7 +377,7 @@ export function ManualTab({ prefill, ask, onAsked, add }: {
         <Button type="submit" variant="primary" size="lg" disabled={busy} className="w-full sm:w-auto">
           {busy ? t.adding : t.add}
         </Button>
-        <p className="text-[13px] text-muted">{t.ready}</p>
+        <p className="text-meta text-muted">{t.ready}</p>
       </div>
     </form>
   );

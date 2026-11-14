@@ -57,11 +57,11 @@ export function ProfileActions({ userId, name, blocked }: { userId: string; name
   }
 
   return (
-    <div className="rounded-[10px] border border-line p-4">
-      <p className="text-[13px] text-muted mb-3">{t.wrong}</p>
+    <div className="rounded-md border border-line p-4">
+      <p className="text-meta text-muted mb-3">{t.wrong}</p>
       <div className="grid grid-cols-2 gap-2">
         {reported ? (
-          <span className="h-10 rounded-[6px] bg-paper-2 text-muted text-[13.5px] inline-flex items-center justify-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-done" />{t.reported}</span>
+          <span className="h-10 rounded-sm bg-paper-2 text-muted text-body-sm inline-flex items-center justify-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-done" />{t.reported}</span>
         ) : (
           <Button variant="secondary" size="sm" className="!h-10" aria-expanded={reporting} aria-controls="melden-gruende" onClick={() => setReporting((r) => !r)}>
             {t.report}
@@ -73,18 +73,18 @@ export function ProfileActions({ userId, name, blocked }: { userId: string; name
           </Button>
         ) : (
           <button type="button" disabled={busy} onClick={block}
-            className="h-10 rounded-[6px] border border-late/40 text-late text-[13.5px] font-medium hover:bg-late hover:text-paper hover:border-late transition-colors disabled:opacity-45">
+            className="h-10 rounded-sm border border-late/40 text-late text-body-sm font-medium hover:bg-late hover:text-paper hover:border-late transition-colors disabled:opacity-45">
             {t.block}
           </button>
         )}
       </div>
       {reporting && (
         <div id="melden-gruende" className="anim-rise mt-3 pt-3 border-t border-line">
-          <p className="text-[13px] font-medium mb-2">{t.problem}</p>
+          <p className="text-meta font-medium mb-2">{t.problem}</p>
           <div className="flex flex-col gap-1">
             {REASONS.map((r) => (
               <button key={r} type="button" disabled={busy} onClick={() => report(r)}
-                className="h-9 px-3 rounded-[6px] text-left text-[13.5px] hover:bg-accent-soft hover:text-accent-hover transition-colors disabled:opacity-45">
+                className="h-9 px-3 rounded-sm text-left text-body-sm hover:bg-accent-soft hover:text-accent-hover transition-colors disabled:opacity-45">
                 {labels(l).reportReasonLabel[r]}
               </button>
             ))}

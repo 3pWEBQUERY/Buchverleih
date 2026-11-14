@@ -2,7 +2,7 @@ import { SkPage, SkSheet } from "@/components/skeleton";
 
 export default function Loading() {
   return (
-    <SkPage label="Konto wird geladen">
+    <SkPage k="account">
       <SkSheet round />
     </SkPage>
   );

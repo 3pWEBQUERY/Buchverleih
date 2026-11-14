@@ -46,16 +46,16 @@ export function LoginForm({ next }: { next: string | null }) {
 
   if (sent) {
     return (
-      <div className="rounded-[10px] border border-line p-6 md:p-7 anim-rise" aria-live="polite">
+      <div className="rounded-md border border-line p-6 md:p-7 anim-rise" aria-live="polite">
         <span className="h-11 w-11 rounded-full bg-accent-soft text-accent-hover grid place-items-center anim-pop"><IconCheck width={20} height={20} /></span>
-        <p className="text-[26px] font-[560] tracking-[-0.03em] leading-tight mt-5">{a.checkMail}</p>
+        <p className="text-title font-title tracking-title leading-tight mt-5">{a.checkMail}</p>
         <p className="text-ink-2 mt-3">{a.sent[0]}<strong className="font-medium text-ink break-all">{email}</strong>{a.sent[1]}</p>
         {sent.devLink && (
-          <Notice tone="accent" className="mt-6 text-sm">
+          <Notice tone="accent" className="mt-6 text-body-sm">
             {a.devLink[0]}<a className="underline underline-offset-4 font-semibold" href={sent.devLink}>{a.devLink[1]}</a>
           </Notice>
         )}
-        <Button variant="quiet" className="mt-4 h-11 text-sm" onClick={() => setSent(null)}>{a.other}</Button>
+        <Button variant="quiet" className="mt-4 h-11 text-body-sm" onClick={() => setSent(null)}>{a.other}</Button>
       </div>
     );
   }
@@ -70,18 +70,18 @@ export function LoginForm({ next }: { next: string | null }) {
           {busy ? a.sending : <>{a.send} <IconArrowRight width={18} height={18} /></>}
         </Button>
       </form>
-      <div className="flex items-center gap-4 my-7 text-[13px] text-muted">
+      <div className="flex items-center gap-4 my-7 text-meta text-muted">
         <span className="h-px flex-1 bg-line" /> {a.or} <span className="h-px flex-1 bg-line" />
       </div>
       <Button variant="secondary" size="lg" className="w-full" onClick={passkey}>
         <IconKey /> {a.passkey}
       </Button>
-      <ul className="mt-8 flex flex-wrap gap-2 text-[12.5px] text-ink-2">
+      <ul className="mt-8 flex flex-wrap gap-2 text-meta text-ink-2">
         {a.chips.map((t) => (
-          <li key={t} className="rounded-[6px] bg-paper-2 px-3 py-2 flex items-center gap-1.5 whitespace-nowrap"><IconCheck width={14} height={14} className="text-ok flex-none" />{t}</li>
+          <li key={t} className="rounded-sm bg-paper-2 px-3 py-2 flex items-center gap-1.5 whitespace-nowrap"><IconCheck width={14} height={14} className="text-ok flex-none" />{t}</li>
         ))}
       </ul>
-      <p className="text-[13px] text-muted mt-5 leading-relaxed">{a.consent[0]}<a href="/nutzungsbedingungen" className="text-accent-hover hover:underline underline-offset-4">{a.consent[1]}</a>{a.consent[2]}<a href="/regeln" className="text-accent-hover hover:underline underline-offset-4">{a.consent[3]}</a>{a.consent[4]}</p>
+      <p className="text-meta text-muted mt-5 leading-relaxed">{a.consent[0]}<a href="/nutzungsbedingungen" className="text-accent-hover hover:underline underline-offset-4">{a.consent[1]}</a>{a.consent[2]}<a href="/regeln" className="text-accent-hover hover:underline underline-offset-4">{a.consent[3]}</a>{a.consent[4]}</p>
     </div>
   );
 }

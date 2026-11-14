@@ -159,12 +159,12 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
     return (
       <div>
         <PageTitle sub={t.emptySub}>{t.heading[0]}<em>{t.heading[1]}</em></PageTitle>
-        <section className="rounded-[12px] bg-accent text-accent-ink p-8 md:p-12 grid md:grid-cols-[1fr_auto] gap-8 items-end">
+        <section className="rounded-lg bg-accent text-accent-ink p-8 md:p-12 grid md:grid-cols-[1fr_auto] gap-8 items-end">
           <div>
-            <p className="eyebrow !text-accent-ink/75">{t.emptyEyebrow}</p>
-            <h2 className="display text-[28px] md:text-[38px] mt-3 max-w-[14ch]">{t.emptyTitle[0]}<em>{t.emptyTitle[1]}</em></h2>
+            <p className="eyebrow !text-accent-ink">{t.emptyEyebrow}</p>
+            <h2 className="display text-display mt-3 max-w-[14ch]">{t.emptyTitle[0]}<em>{t.emptyTitle[1]}</em></h2>
           </div>
-          <Link href="/regal/neu" className="h-14 px-7 rounded-[6px] bg-night-ink text-accent-hover font-semibold inline-flex items-center gap-2 justify-center"><IconScan width={20} height={20} /> {t.firstScan}</Link>
+          <Link href="/regal/neu" className="h-14 px-7 rounded-sm bg-night-ink text-accent-hover font-semibold inline-flex items-center gap-2 justify-center"><IconScan width={20} height={20} /> {t.firstScan}</Link>
         </section>
       </div>
     );
@@ -188,18 +188,18 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
       </PageTitle>
 
       <div className="flex flex-wrap items-center gap-2 mb-2 anim-rise" style={{ animationDelay: "100ms" }}>
-        <Link href="/regal/neu" title={t.shortcut} className="h-11 px-4 rounded-[6px] bg-accent text-accent-ink font-medium text-[14.5px] hidden md:inline-flex items-center gap-2 hover:bg-accent-hover transition-colors">
-          <IconScan width={18} height={18} /> {t.addBook} <kbd className="hidden md:inline font-sans text-[11px] opacity-75 border border-current/40 rounded-[4px] px-1 leading-4">n</kbd>
+        <Link href="/regal/neu" title={t.shortcut} className="h-11 px-4 rounded-sm bg-accent text-accent-ink font-medium text-body-sm hidden md:inline-flex items-center gap-2 hover:bg-accent-hover transition-colors">
+          <IconScan width={18} height={18} /> {t.addBook} <kbd className="hidden md:inline font-sans text-caption opacity-75 border border-current/40 rounded-xs px-1 leading-4">n</kbd>
         </Link>
-        <Link href="/regal/kalender" className="h-11 px-4 rounded-[6px] bg-accent-soft text-accent-hover font-medium text-[14.5px] inline-flex items-center gap-2 hover:bg-accent hover:text-accent-ink transition-colors">
+        <Link href="/regal/kalender" className="h-11 px-4 rounded-sm bg-accent-soft text-accent-hover font-medium text-body-sm inline-flex items-center gap-2 hover:bg-accent hover:text-accent-ink transition-colors">
           <IconCalendar width={18} height={18} /> {t.calendar}
         </Link>
         <button type="button" aria-pressed={selecting} onClick={() => (selecting ? stopSelecting() : setSelecting(true))}
-          className={cx("h-11 px-4 rounded-[6px] border font-medium text-[14.5px] inline-flex items-center gap-2 transition-colors",
-            selecting ? "border-accent bg-accent-soft/40 text-accent-hover" : "border-line-strong hover:border-ink-2")}>
+          className={cx("h-11 px-4 rounded-sm border font-medium text-body-sm inline-flex items-center gap-2 transition-colors",
+            selecting ? "border-accent bg-accent-soft/40 text-accent-hover" : "border-field hover:border-ink-2")}>
           {selecting ? <><IconCheck width={18} height={18} /> {t.done}</> : t.editMany}
         </button>
-        {paused && <a href="#ferien" className="ml-auto inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[6px] bg-paper-2 text-ink-2 text-[13px] font-medium"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait" />{t.pausedChip}</a>}
+        {paused && <a href="#ferien" className="ml-auto inline-flex items-center gap-1.5 h-8 px-2.5 rounded-sm bg-paper-2 text-ink-2 text-meta font-medium"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait" />{t.pausedChip}</a>}
       </div>
 
       {selecting ? (
@@ -216,12 +216,12 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
                   return (
                     <li key={c.id} className="anim-rise min-w-0" style={{ animationDelay: `${i * 40}ms` }}>
                       <Link href={c.loan_id ? `/vorgaenge/${c.loan_id}` : `/regal/${c.id}`}
-                        className={cx("group h-full rounded-[10px] border p-4 grid grid-cols-[48px_minmax(0,1fr)_auto] gap-4 items-start transition-colors",
+                        className={cx("group h-full rounded-md border p-4 grid grid-cols-[48px_minmax(0,1fr)_auto] gap-4 items-start transition-colors",
                           m?.tone === "late" ? "border-late/50 hover:border-late" : "border-line hover:border-accent")}>
                         <Cover data={{ title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id }} width={48} height={72} uniform l={l} />
                         <div className="min-w-0">
-                          <p className="text-[12.5px] text-muted">{t.at(c.lent_to ?? null)}</p>
-                          <p className="font-serif text-[18px] leading-[1.15] mt-0.5 line-clamp-2 group-hover:underline underline-offset-4 decoration-1">{c.title}</p>
+                          <p className="text-meta text-muted">{t.at(c.lent_to ?? null)}</p>
+                          <p className="font-serif text-lead leading-title mt-0.5 line-clamp-2 group-hover:underline underline-offset-4 decoration-1">{c.title}</p>
                           {m && <TimeMeterInline m={m} className="mt-2.5" l={l} />}
                         </div>
                         <IconArrowRight width={16} height={16} className="text-accent-hover mt-1 transition-transform group-hover:translate-x-0.5" />
@@ -239,11 +239,11 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
               <ul className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
                 {asked.map((c, i) => (
                   <li key={c.id} className="anim-rise" style={{ animationDelay: `${i * 40}ms` }}>
-                    <Link href="/vorgaenge?seite=verleihe" className="group h-full rounded-[10px] border border-accent/40 bg-accent-soft/15 p-4 grid grid-cols-[40px_minmax(0,1fr)] gap-3.5 items-center hover:border-accent transition-colors">
+                    <Link href="/vorgaenge?seite=verleihe" className="group h-full rounded-md border border-accent/40 bg-accent-soft/15 p-4 grid grid-cols-[40px_minmax(0,1fr)] gap-3.5 items-center hover:border-accent transition-colors">
                       <Cover data={{ title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id }} width={40} height={60} uniform l={l} />
                       <div className="min-w-0">
-                        <p className="font-serif text-[17px] leading-tight truncate">{c.title}</p>
-                        <p className="text-[13px] font-medium text-accent-hover mt-1 inline-flex items-center gap-1.5">
+                        <p className="font-serif text-lead leading-tight truncate">{c.title}</p>
+                        <p className="text-meta font-medium text-accent-hover mt-1 inline-flex items-center gap-1.5">
                           <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent live-dot" />{t.answer(c.open_requests)}
                           <IconArrowRight width={13} height={13} className="transition-transform group-hover:translate-x-0.5" />
                         </p>
@@ -263,10 +263,10 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
                   const on = filter === f.key;
                   return (
                     <button key={f.key} type="button" aria-pressed={on} onClick={() => setFilter(f.key)}
-                      className={cx("h-9 pl-3 pr-1.5 rounded-[8px] border text-[13.5px] font-medium inline-flex items-center gap-2 transition-colors",
+                      className={cx("h-9 pl-3 pr-1.5 rounded-md border text-body-sm font-medium inline-flex items-center gap-2 transition-colors",
                         on ? "border-accent bg-accent-soft/40 text-accent-hover" : "border-line text-ink-2 hover:border-ink-2")}>
                       {f.label}
-                      <span className={cx("h-6 min-w-6 px-1.5 rounded-[5px] text-[12px] grid place-items-center tnum", on ? "bg-accent-soft" : "bg-paper-2 text-muted")}>{f.n}</span>
+                      <span className={cx("h-6 min-w-6 px-1.5 rounded-sm text-caption grid place-items-center tnum", on ? "bg-accent-soft" : "bg-paper-2 text-muted")}>{f.n}</span>
                     </button>
                   );
                 })}
@@ -275,9 +275,9 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
                 <span className="sr-only">{t.search}</span>
                 <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"><IconSearch width={16} height={16} /></span>
                 <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.search}
-                  className="w-full h-10 rounded-[8px] border border-line-strong bg-paper pl-9 pr-9 text-[14.5px] placeholder:text-muted/80 [&::-webkit-search-cancel-button]:appearance-none hover:border-ink-2 focus:outline-none focus:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20 transition-colors" />
+                  className="w-full h-10 rounded-md border border-field bg-paper pl-9 pr-9 text-body-sm placeholder:text-muted [&::-webkit-search-cancel-button]:appearance-none hover:border-ink-2 focus:outline-none focus:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20 transition-colors" />
                 {q && (
-                  <button type="button" onClick={() => setQ("")} aria-label={t.clearSearch} className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 grid place-items-center rounded-[5px] text-muted hover:text-ink hover:bg-paper-3">
+                  <button type="button" onClick={() => setQ("")} aria-label={t.clearSearch} className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 grid place-items-center rounded-sm text-muted hover:text-ink hover:bg-paper-3">
                     <IconClose width={14} height={14} />
                   </button>
                 )}
@@ -285,18 +285,18 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
             </div>
 
             {groups.length === 0 ? (
-              <div className="rounded-[10px] border border-dashed border-line-strong p-6 flex flex-wrap items-center justify-between gap-4">
-                <p className="text-ink-2 text-[15px]">{needle ? t.nothingFor(q.trim()) : t.nothingHere}</p>
-                <button type="button" onClick={() => { setQ(""); setFilter("alle"); }} className="text-[14px] font-medium text-accent-hover hover:underline underline-offset-4">{t.showAll}</button>
+              <div className="rounded-md border border-dashed border-line-strong p-6 flex flex-wrap items-center justify-between gap-4">
+                <p className="text-ink-2 text-body">{needle ? t.nothingFor(q.trim()) : t.nothingHere}</p>
+                <button type="button" onClick={() => { setQ(""); setFilter("alle"); }} className="text-body-sm font-medium text-accent-hover hover:underline underline-offset-4">{t.showAll}</button>
               </div>
             ) : (
               /* Das Büchergestell: eine dunkle Fläche, jede Gruppe ein Brett */
-              <div className="surface-night rounded-[12px] px-5 md:px-8 pt-6 md:pt-7 pb-4 md:pb-5 -mx-1 md:mx-0">
+              <div className="surface-night rounded-lg px-5 md:px-8 pt-6 md:pt-7 pb-4 md:pb-5 -mx-1 md:mx-0">
                 {groups.map((g, gi) => (
                   <section key={g.key} aria-labelledby={`g-${g.key}`} className={cx(gi > 0 && "mt-8 md:mt-9")}>
                     <div className="flex items-baseline justify-between gap-4">
-                      <h3 id={`g-${g.key}`} className="text-[20px] md:text-[24px] font-[560] tracking-[-0.03em] leading-none">{g.label}</h3>
-                      <span className="text-[13px] text-night-muted tnum">{t.books(g.items.length)}</span>
+                      <h3 id={`g-${g.key}`} className="text-title-sm font-title tracking-title leading-none">{g.label}</h3>
+                      <span className="text-meta text-night-muted tnum">{t.books(g.items.length)}</span>
                     </div>
                     <BookRow items={g.items} height={156} l={l} />
                   </section>
@@ -306,7 +306,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
           </StepSection>
 
           <StepSection id="ferien" n={++n} title={t.pause} desc={t.pauseDesc}>
-            <div className={cx("rounded-[10px] border px-5 md:px-6 py-2", paused ? "border-wait/50 bg-wait/[0.06]" : "border-line")}>
+            <div className={cx("rounded-md border px-5 md:px-6 py-2", paused ? "border-wait/50 bg-wait/[0.06]" : "border-line")}>
               <Switch
                 checked={paused}
                 onChange={togglePause}
@@ -323,7 +323,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
           <div className="max-w-[1240px] px-4 md:px-12 lg:px-16 py-3">
             {panel && (
               <div className="pb-3 mb-3 border-b border-line">
-                <p className="text-[13px] font-semibold mb-2.5">
+                <p className="text-meta font-semibold mb-2.5">
                   {t.panel[panel]}
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -349,8 +349,8 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
               </div>
             )}
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm tnum whitespace-nowrap flex items-center gap-2" aria-live="polite">
-                <span className="h-8 min-w-8 px-2 rounded-[6px] bg-accent-soft text-accent-hover grid place-items-center font-semibold">{sel.size}</span> <span className="text-muted hidden sm:inline">{t.selected}</span>
+              <p className="text-body-sm tnum whitespace-nowrap flex items-center gap-2" aria-live="polite">
+                <span className="h-8 min-w-8 px-2 rounded-sm bg-accent-soft text-accent-hover grid place-items-center font-semibold">{sel.size}</span> <span className="text-muted hidden sm:inline">{t.selected}</span>
               </p>
               <div className="flex items-center gap-1 overflow-x-auto" role="toolbar" aria-label={t.toolbar}>
                 {(["offers", "visibility", "loanDays"] as const).map((k) => (
@@ -375,8 +375,8 @@ function SelectGrid({ copies, sel, toggle, setSel }: { copies: ShelfCopy[]; sel:
   return (
     <section aria-label={t.selectAria}>
       <div className="flex items-center justify-between gap-4 panel-quiet px-5 py-3 mb-6">
-        <p className="text-[15px] text-ink-2">{t.selectHint}</p>
-        <Button variant="quiet" className="text-sm" onClick={() => setSel(all ? new Set() : new Set(copies.map((c) => c.id)))}>
+        <p className="text-body text-ink-2">{t.selectHint}</p>
+        <Button variant="quiet" className="text-body-sm" onClick={() => setSel(all ? new Set() : new Set(copies.map((c) => c.id)))}>
           {all ? t.deselect : t.selectAll}
         </Button>
       </div>
@@ -387,7 +387,7 @@ function SelectGrid({ copies, sel, toggle, setSel }: { copies: ShelfCopy[]; sel:
             <li key={c.id}>
               <button type="button" aria-pressed={on} onClick={() => toggle(c.id)} className="group block w-full text-left">
                 <div className="relative flex items-end justify-center h-[112px] md:h-[136px]">
-                  <span className={cx("block rounded-xs transition-opacity duration-150", on && "outline-2 outline-accent outline-offset-2", !on && sel.size > 0 && "opacity-60")}>
+                  <span className={cx("block rounded-xs transition-opacity duration-fast", on && "outline-2 outline-accent outline-offset-2", !on && sel.size > 0 && "opacity-60")}>
                     <span className="block md:hidden">
                       <Cover data={{ title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id }} height={104} l={l} />
                     </span>
@@ -398,15 +398,15 @@ function SelectGrid({ copies, sel, toggle, setSel }: { copies: ShelfCopy[]; sel:
                   <span
                     aria-hidden
                     className={cx(
-                      "absolute top-1 right-1 h-6 w-6 grid place-items-center rounded-full border transition-colors duration-150",
-                      on ? "bg-accent border-accent text-accent-ink" : "bg-paper/90 border-line-strong text-transparent group-hover:border-accent",
+                      "absolute top-1 right-1 h-6 w-6 grid place-items-center rounded-full border transition-colors duration-fast",
+                      on ? "bg-accent border-accent text-accent-ink" : "bg-paper/90 border-field text-transparent group-hover:border-accent",
                     )}
                   >
                     <IconCheck width={15} height={15} strokeWidth={2} />
                   </span>
                 </div>
-                <span className="block text-xs leading-snug line-clamp-2 mt-2">{c.title}</span>
-                <span className="block text-xs text-muted mt-0.5">{c.offers.length ? c.offers.map((o) => labels(l).offerLabel[o]).join(", ") : t.notOfferedCap}</span>
+                <span className="block text-caption leading-snug line-clamp-2 mt-2">{c.title}</span>
+                <span className="block text-caption text-muted mt-0.5">{c.offers.length ? c.offers.map((o) => labels(l).offerLabel[o]).join(", ") : t.notOfferedCap}</span>
               </button>
             </li>
           );

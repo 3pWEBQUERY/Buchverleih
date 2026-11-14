@@ -18,9 +18,9 @@ export function ModTabs({ active, counts = {}, l = "de" }: { active: Tab; counts
           return (
             <li key={t.id}>
               <Link href={t.id === "warteschlange" ? "/moderation" : `/moderation?ansicht=${t.id}`} aria-current={on ? "page" : undefined}
-                className={cx("relative inline-flex items-center gap-2 h-12 text-[14px] font-medium transition-colors", on ? "text-ink" : "text-muted hover:text-ink")}>
+                className={cx("relative inline-flex items-center gap-2 h-12 text-body-sm font-medium transition-colors", on ? "text-ink" : "text-muted hover:text-ink")}>
                 {m.tabs[t.id]}
-                {n !== undefined && n > 0 && <span className="h-5 min-w-5 px-1.5 rounded-[4px] grid place-items-center text-[11.5px] tnum bg-accent-soft text-accent-hover">{n}</span>}
+                {n !== undefined && n > 0 && <span className="h-5 min-w-5 px-1.5 rounded-xs grid place-items-center text-caption tnum bg-accent-soft text-accent-hover">{n}</span>}
                 {on && <span aria-hidden className="absolute inset-x-0 -bottom-px h-[2px] bg-accent" />}
               </Link>
             </li>

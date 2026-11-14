@@ -3,7 +3,7 @@ import { body, query, route } from "@/lib/api";
 import { requireUser } from "@/lib/auth/session";
 import { assertMember, listMessages, sendMessage, type Thread } from "@/lib/chat";
 
-const thread = z.object({ loan: z.string().uuid().optional(), chat: z.string().uuid().optional(), after: z.string().uuid().optional() });
+const thread = z.object({ loan: z.string().uuid().optional(), chat: z.string().uuid().optional(), after: z.string().uuid().optional(), id: z.string().uuid().optional() });
 
 function toThread(q: { loan?: string; chat?: string }): Thread {
   if (q.loan) return { type: "loan", id: q.loan };
@@ -11,13 +11,13 @@ function toThread(q: { loan?: string; chat?: string }): Thread {
   throw new Error("loan oder chat fehlt");
 }
 
-/** GET /api/v1/messages?loan=… oder ?chat=… */
+/** GET /api/v1/messages?loan=… oder ?chat=… – mit &after=<id> nur neuere, mit &id=<id> genau eine Nachricht */
 export const GET = route(async (req) => {
   const u = await requireUser();
   const q = query(req, thread);
   const t = toThread(q);
   const m = await assertMember(t, u.id);
-  return { messages: await listMessages(t, q.after), readOnly: m.readOnly };
+  return { messages: await listMessages(t, q.after, q.id), readOnly: m.readOnly };
 });
 
 /** POST /api/v1/messages – Text oder Terminvorschlag */

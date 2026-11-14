@@ -95,7 +95,7 @@ export async function Home({ user }: { user: SessionUser }) {
           </Link>
           <div className="min-w-0">
             <p className="eyebrow">{today} · {user.municipality}</p>
-            <h1 className="display text-[32px] md:text-[44px] mt-1.5">{greet}, <em>{user.first_name}.</em></h1>
+            <h1 className="display text-display mt-1.5">{greet}, <em>{user.first_name}.</em></h1>
           </div>
         </div>
         <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
@@ -104,7 +104,7 @@ export async function Home({ user }: { user: SessionUser }) {
           <StatTile n={counts.shelf} label={t.stats.shelf} href="/regal" />
         </dl>
       </header>
-      <p className="text-[15.5px] md:text-[16px] text-ink-2 mt-4 max-w-2xl leading-relaxed anim-rise" style={{ animationDelay: "40ms" }}>{summary}</p>
+      <p className="text-body-lg text-ink-2 mt-4 max-w-2xl leading-relaxed anim-rise" style={{ animationDelay: "40ms" }}>{summary}</p>
 
       {requirePhone() && !user.phone_verified_at && (
         <Notice tone="accent" className="mt-6">
@@ -116,12 +116,12 @@ export async function Home({ user }: { user: SessionUser }) {
       <ul className="mt-8 grid sm:grid-cols-3 gap-2 anim-rise" style={{ animationDelay: "80ms" }}>
         {quick.map(([href, title, text, icon], i) => (
           <li key={href}>
-            <Link href={href} className={cx("group h-full rounded-[10px] border p-4 flex items-center gap-3.5 transition-colors",
+            <Link href={href} className={cx("group h-full rounded-md border p-4 flex items-center gap-3.5 transition-colors",
               i === 0 && counts.shelf === 0 ? "border-accent bg-accent-soft/30 hover:bg-accent-soft/50" : "border-line hover:border-accent")}>
-              <span className="h-10 w-10 rounded-[8px] bg-accent-soft text-accent-hover grid place-items-center flex-none transition-colors group-hover:bg-accent group-hover:text-accent-ink">{icon}</span>
+              <span className="h-10 w-10 rounded-md bg-accent-soft text-accent-hover grid place-items-center flex-none transition-colors group-hover:bg-accent group-hover:text-accent-ink">{icon}</span>
               <span className="min-w-0 flex-1">
-                <span className="block font-medium text-[15px]">{title}</span>
-                <span className="block text-[13px] text-muted truncate">{text}</span>
+                <span className="block font-medium text-body">{title}</span>
+                <span className="block text-meta text-muted truncate">{text}</span>
               </span>
               <IconArrowRight width={16} height={16} className="flex-none text-accent-hover opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-[opacity,transform]" />
             </Link>
@@ -133,11 +133,11 @@ export async function Home({ user }: { user: SessionUser }) {
         aside={loans.length > 0 && <Link href="/vorgaenge" className="inline-flex items-center gap-1 font-medium text-accent-hover hover:underline underline-offset-4">{t.allLoans} <IconArrowRight width={14} height={14} /></Link>}
         desc={mine.length ? t.yourTurn : undefined}>
         {mine.length === 0 ? (
-          <div className="rounded-[10px] bg-paper-2 px-5 py-5 flex items-center gap-4">
+          <div className="rounded-md bg-paper-2 px-5 py-5 flex items-center gap-4">
             <span className="h-10 w-10 rounded-full bg-accent-soft text-accent-hover grid place-items-center flex-none"><IconCheck width={18} height={18} /></span>
             <div>
               <p className="font-medium">{t.allDone}</p>
-              <p className="text-ink-2 text-[14.5px]">{running.length > 0 ? t.othersTurn(running.length) : t.nothingOpen}</p>
+              <p className="text-ink-2 text-body-sm">{running.length > 0 ? t.othersTurn(running.length) : t.nothingOpen}</p>
             </div>
           </div>
         ) : (
@@ -146,17 +146,17 @@ export async function Home({ user }: { user: SessionUser }) {
           </ul>
         )}
         {mine.length > 4 && (
-          <p className="text-[13.5px] text-muted mt-4"><Link href="/vorgaenge" className="font-medium text-accent-hover hover:underline underline-offset-4">{t.moreWaiting(mine.length - 4)}</Link></p>
+          <p className="text-body-sm text-muted mt-4"><Link href="/vorgaenge" className="font-medium text-accent-hover hover:underline underline-offset-4">{t.moreWaiting(mine.length - 4)}</Link></p>
         )}
 
         {running.length > 0 && (
           <div className="mt-10">
             <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-1 mb-4">
               <div>
-                <h3 className="text-[18px] md:text-[20px] font-[560] tracking-[-0.025em]">{t.running}</h3>
-                <p className="text-[14px] text-muted mt-0.5">{t.runningText}</p>
+                <h3 className="text-title-sm font-title tracking-title">{t.running}</h3>
+                <p className="text-body-sm text-muted mt-0.5">{t.runningText}</p>
               </div>
-              {running.length > 4 && <Link href="/vorgaenge" className="text-[13.5px] font-medium text-accent-hover hover:underline underline-offset-4 pb-0.5">{t.seeAll(running.length)}</Link>}
+              {running.length > 4 && <Link href="/vorgaenge" className="text-body-sm font-medium text-accent-hover hover:underline underline-offset-4 pb-0.5">{t.seeAll(running.length)}</Link>}
             </div>
             <ul className="grid xl:grid-cols-2 gap-3">
               {running.slice(0, 4).map((x, i) => <LoanRow key={x.id} loan={x} variant="running" i={i} l={l} />)}
@@ -168,12 +168,12 @@ export async function Home({ user }: { user: SessionUser }) {
       <StepSection id="naehe" n={++n} title={t.nearTitle} desc={t.nearDesc}
         aside={<Link href="/suche" className="inline-flex items-center gap-1 font-medium text-accent-hover hover:underline underline-offset-4">{t.searchAll} <IconArrowRight width={14} height={14} /></Link>}>
         {nearby.length === 0 ? (
-          <div className="rounded-[10px] border border-dashed border-line-strong p-6 flex flex-wrap items-center justify-between gap-4">
-            <p className="text-ink-2 text-[15px]">{t.nearEmpty}</p>
+          <div className="rounded-md border border-dashed border-line-strong p-6 flex flex-wrap items-center justify-between gap-4">
+            <p className="text-ink-2 text-body">{t.nearEmpty}</p>
             <LinkButton href="/suche" variant="secondary">{t.searchOn}</LinkButton>
           </div>
         ) : (
-          <div className="surface-night rounded-[12px] px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5 -mx-1 md:mx-0">
+          <div className="surface-night rounded-lg px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5 -mx-1 md:mx-0">
             <BookRow l={l} label={t.nearTitle} height={165} hrefBase="/exemplar/"
               items={nearby.map((c) => ({ ...c, note: { tone: c.status === "available" ? "ok" as const : "lent" as const, text: `${c.status === "available" ? t.free : t.taken} · ${fmtDistance(c.dist, l)}` } }))} />
           </div>
@@ -183,7 +183,7 @@ export async function Home({ user }: { user: SessionUser }) {
       {circleCopies.length > 0 && (
         <StepSection id="kreise" n={++n} title={t.circlesTitle} desc={t.circlesDesc}
           aside={<Link href="/kreise" className="inline-flex items-center gap-1 font-medium text-accent-hover hover:underline underline-offset-4">{t.circles} <IconArrowRight width={14} height={14} /></Link>}>
-          <div className="surface-night rounded-[12px] px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5 -mx-1 md:mx-0">
+          <div className="surface-night rounded-lg px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5 -mx-1 md:mx-0">
             <BookRow l={l} label={t.circlesTitle} height={150} hrefBase="/exemplar/"
               items={circleCopies.map((c) => ({ ...c, note: { tone: "ok" as const, text: `${c.owner_name} · ${c.circle}` } }))} />
           </div>
@@ -195,8 +195,8 @@ export async function Home({ user }: { user: SessionUser }) {
           <div className="flex flex-wrap gap-2">
             {genres.map((g) => (
               <Link key={g.genre} href={`/suche?genre=${encodeURIComponent(g.genre)}`}
-                className="h-11 pl-4 pr-1.5 rounded-[8px] border border-line inline-flex items-center gap-3 text-[14.5px] font-medium hover:border-accent hover:text-accent-hover transition-colors">
-                {labels(l).genreLabel[g.genre] ?? g.genre} <span className="h-8 min-w-8 px-2 rounded-[6px] bg-paper-2 text-ink-2 text-[12.5px] grid place-items-center tnum">{g.n}</span>
+                className="h-11 pl-4 pr-1.5 rounded-md border border-line inline-flex items-center gap-3 text-body-sm font-medium hover:border-accent hover:text-accent-hover transition-colors">
+                {labels(l).genreLabel[g.genre] ?? g.genre} <span className="h-8 min-w-8 px-2 rounded-sm bg-paper-2 text-ink-2 text-meta grid place-items-center tnum">{g.n}</span>
               </Link>
             ))}
           </div>
@@ -204,10 +204,10 @@ export async function Home({ user }: { user: SessionUser }) {
       )}
 
       {counts.shelf === 0 && (
-        <section className="mt-12 rounded-[12px] border border-accent/40 bg-accent-soft/25 p-6 md:p-8 grid md:grid-cols-[1fr_auto] gap-6 items-end">
+        <section className="mt-12 rounded-lg border border-accent/40 bg-accent-soft/25 p-6 md:p-8 grid md:grid-cols-[1fr_auto] gap-6 items-end">
           <div>
             <p className="eyebrow">{t.emptyEyebrow}</p>
-            <h2 className="text-[24px] md:text-[28px] font-[560] tracking-[-0.03em] mt-2 max-w-[22ch]">{t.emptyTitle}</h2>
+            <h2 className="text-title font-title tracking-title mt-2 max-w-[22ch]">{t.emptyTitle}</h2>
           </div>
           <LinkButton href="/regal/neu" variant="primary" size="lg"><IconScan width={18} height={18} /> {t.firstBook}</LinkButton>
         </section>

@@ -27,6 +27,16 @@ type Msg = {
   pending?: boolean;
 };
 
+/** Liste nach ID zusammenführen: Bekanntes ersetzen, Neues anhängen, zeitlich sortiert */
+function merge(list: Msg[], incoming: Msg[]) {
+  if (!incoming.length) return list;
+  const byId = new Map(list.map((m) => [m.id, m]));
+  for (const m of incoming) byId.set(m.id, m);
+  return [...byId.values()].sort((x, y) => x.created_at.localeCompare(y.created_at) || x.id.localeCompare(y.id));
+}
+
+const MAX_ROWS = 6;
+
 export function Chat({
   thread, me, initial, readOnly, memberCount = 2, defaultPlace, onEvent,
 }: { thread: { loan?: string; chat?: string }; me: string; initial: Msg[]; readOnly?: boolean; memberCount?: number; defaultPlace?: string | null; onEvent?: () => void }) {
@@ -35,32 +45,79 @@ export function Chat({
   const [proposing, setProposing] = useState(false);
   const [place, setPlace] = useState(defaultPlace ?? "");
   const [when, setWhen] = useState("");
+  const [unseen, setUnseen] = useState(0);
   const list = useRef<HTMLOListElement>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
+  const atEnd = useRef(true);
+  const known = useRef(msgs);
   const toast = useToast();
   const l = useLocale();
   const t = CHAT[l].chat;
   const qs = thread.loan ? `loan=${thread.loan}` : `chat=${thread.chat}`;
 
-  const refresh = useCallback(async () => {
+  useEffect(() => { known.current = msgs; }, [msgs]);
+
+  const toEnd = useCallback(() => {
+    const el = list.current;
+    // Nur die Nachrichtenliste bewegen – scrollIntoView würde auch die Seite verschieben
+    if (el) el.scrollTop = el.scrollHeight;
+    atEnd.current = true;
+    setUnseen(0);
+  }, []);
+
+  /** Neues von anderen: am Ende mitlaufen, sonst nur zählen (Pille «Neue Nachrichten») */
+  const arrived = useCallback((incoming: Msg[]) => {
+    const fresh = incoming.filter((m) => !known.current.some((k) => k.id === m.id));
+    setMsgs((cur) => merge(cur, incoming));
+    if (!fresh.length) return;
+    if (atEnd.current) requestAnimationFrame(toEnd);
+    else setUnseen((n) => n + fresh.filter((m) => m.sender_id !== me).length);
+  }, [me, toEnd]);
+
+  /** Inkrementell: nur Nachrichten nach der letzten bestätigten; eine bekannte ID wird einzeln nachgeladen */
+  const load = useCallback(async (changedId?: string) => {
     try {
-      const r = await api<{ messages: Msg[] }>(`/messages?${qs}`);
-      setMsgs(r.messages);
+      const confirmed = known.current.filter((m) => !m.pending);
+      if (changedId && confirmed.some((m) => m.id === changedId)) {
+        const r = await api<{ messages: Msg[] }>(`/messages?${qs}&id=${changedId}`);
+        setMsgs((cur) => merge(cur, r.messages));
+        return;
+      }
+      const last = confirmed[confirmed.length - 1];
+      const r = await api<{ messages: Msg[] }>(`/messages?${qs}${last ? `&after=${last.id}` : ""}`);
+      arrived(r.messages);
     } catch {}
-  }, [qs]);
+  }, [qs, arrived]);
 
   useEffect(() => {
     const es = new EventSource(`/api/v1/stream?${qs}`);
-    es.addEventListener("message", () => refresh());
+    let opened = false;
+    es.addEventListener("message", (e) => {
+      let id: string | undefined;
+      try { id = JSON.parse((e as MessageEvent).data).id; } catch {}
+      load(id);
+    });
     es.addEventListener("loan", () => onEvent?.());
+    // Nach einem Verbindungsabbruch nachholen, was in der Lücke kam
+    es.addEventListener("ready", () => { if (opened) load(); opened = true; });
     return () => es.close();
-  }, [qs, refresh, onEvent]);
+  }, [qs, load, onEvent]);
 
+  // Beim ersten Zeichnen ans Ende der Liste
+  useEffect(() => { toEnd(); }, [toEnd]);
+
+  // Eingabefeld wächst mit dem Text, höchstens sechs Zeilen
   useEffect(() => {
-    list.current?.lastElementChild?.scrollIntoView({ block: "nearest" });
-  }, [msgs.length]);
+    const el = input.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const line = parseFloat(getComputedStyle(el).lineHeight) || 24;
+    const pad = el.offsetHeight - el.clientHeight + parseFloat(getComputedStyle(el).paddingTop) + parseFloat(getComputedStyle(el).paddingBottom);
+    el.style.height = `${Math.min(el.scrollHeight, line * MAX_ROWS + pad)}px`;
+  }, [text, proposing]);
 
-  async function send(e: React.FormEvent) {
-    e.preventDefault();
+  async function send(e?: React.FormEvent) {
+    e?.preventDefault();
     if (proposing && !when) return;
     if (!proposing && !text.trim()) return;
     const body = proposing
@@ -76,9 +133,14 @@ export function Chat({
     setText("");
     setProposing(false);
     setWhen("");
+    requestAnimationFrame(toEnd);
     try {
-      await api("/messages", { body });
-      refresh();
+      const r = await api<{ id: string }>("/messages", { body });
+      // Optimistische Nachricht per ID abgleichen: kam die echte schon über den Stream, fällt die vorläufige weg
+      setMsgs((m) => (m.some((x) => x.id === r.id)
+        ? m.filter((x) => x.id !== temp.id)
+        : m.map((x) => (x.id === temp.id ? { ...x, id: r.id, pending: false } : x))));
+      // Ein neuer Vorschlag ersetzt offene ältere: deren Zustand kommt über den Stream nach
     } catch (err) {
       // Nicht gesendet: Nachricht entfernen und das Getippte zurückgeben
       setMsgs((m) => m.filter((x) => x.id !== temp.id));
@@ -90,14 +152,22 @@ export function Chat({
     }
   }
 
+  /** Enter sendet, Umschalt+Enter bricht um. Auf Touch-Geräten sendet nur der Knopf. */
+  function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key !== "Enter" || e.shiftKey || e.nativeEvent.isComposing) return;
+    if (window.matchMedia("(pointer: coarse)").matches) return;
+    e.preventDefault();
+    send();
+  }
+
   async function accept(id: string) {
     setMsgs((m) => m.map((x) => (x.id === id ? { ...x, proposal_accepted_by: [...x.proposal_accepted_by, me], proposal_status: x.proposal_accepted_by.length + 1 >= memberCount ? "accepted" : x.proposal_status } : x)));
     try {
       await api(`/messages/${id}`, { method: "POST" });
-      refresh();
+      load(id);
     } catch (err) {
       toast.error((err as Error).message);
-      refresh();
+      load(id);
     }
   }
 
@@ -127,10 +197,16 @@ export function Chat({
       {msgs.length === 0 ? (
         <div className="px-5 md:px-6 py-10 text-center">
           <span aria-hidden className="mx-auto h-11 w-11 rounded-full bg-paper-2 grid place-items-center text-ink-2"><IconCalendar /></span>
-          <p className="text-ink-2 text-[15px] mt-3 max-w-xs mx-auto">{t.empty}</p>
+          <p className="text-ink-2 text-body mt-3 max-w-xs mx-auto">{t.empty}</p>
         </div>
       ) : (
-        <ol ref={list} className="px-4 md:px-6 py-5 space-y-1 max-h-[62vh] overflow-y-auto overscroll-contain" role="log" aria-live="polite" aria-label={t.messages}>
+        <div className="relative">
+        <ol ref={list} tabIndex={0} className="px-4 md:px-6 py-5 space-y-1 max-h-[62vh] overflow-y-auto overscroll-contain" role="log" aria-live="polite" aria-label={t.messages}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            atEnd.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+            if (atEnd.current && unseen) setUnseen(0);
+          }}>
           {msgs.map((m, i) => {
             const mine = m.sender_id === me;
             const prev = msgs[i - 1];
@@ -139,7 +215,7 @@ export function Chat({
             const sep = newDay ? (
               <li key={`d-${m.id}`} aria-hidden className="flex items-center gap-3 py-3 first:pt-0">
                 <span className="h-px flex-1 bg-line" />
-                <span className="text-[11.5px] font-semibold uppercase tracking-[0.1em] text-muted">{dayLabel(m.created_at)}</span>
+                <span className="text-caption font-semibold uppercase tracking-caps text-muted">{dayLabel(m.created_at)}</span>
                 <span className="h-px flex-1 bg-line" />
               </li>
             ) : null;
@@ -148,18 +224,18 @@ export function Chat({
             }
             return [sep, (
               <li key={m.id} className={cx("group flex flex-col max-w-[85%] md:max-w-[75%] anim-rise", mine ? "ml-auto items-end" : "items-start", firstOfGroup && !newDay && "pt-3", m.pending && "opacity-60")}>
-                {firstOfGroup && <span className="text-[12px] text-muted mb-1 px-1">{mine ? t.you : m.sender_name}</span>}
+                {firstOfGroup && <span className="text-caption text-muted mb-1 px-1">{mine ? t.you : m.sender_name}</span>}
                 {m.proposal_at && (
                   <div className={cx(
-                    "rounded-[12px] w-72 max-w-full overflow-hidden border transition-colors",
+                    "rounded-lg w-72 max-w-full overflow-hidden border transition-colors",
                     m.proposal_status === "accepted" ? "border-ok bg-paper" : m.proposal_status === "countered" ? "border-line bg-paper opacity-60" : "border-accent/50 bg-paper",
                   )}>
                     <div className="px-4 pt-3.5 pb-3">
                       <p className="eyebrow flex items-center gap-1.5"><IconCalendar width={14} height={14} /> {t.proposal}</p>
-                      <p className={cx("font-[520] tracking-[-0.035em] text-[24px] leading-tight mt-2 tnum", m.proposal_status === "countered" && "line-through decoration-1")}>{fmtDayTime(m.proposal_at, l)}</p>
-                      {m.proposal_place && <p className="text-[14.5px] text-ink-2 mt-0.5">{m.proposal_place}</p>}
+                      <p className={cx("font-title tracking-title text-title leading-tight mt-2 tnum", m.proposal_status === "countered" && "line-through decoration-1")}>{fmtDayTime(m.proposal_at, l)}</p>
+                      {m.proposal_place && <p className="text-body-sm text-ink-2 mt-0.5">{m.proposal_place}</p>}
                     </div>
-                    <div className={cx("px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13.5px] border-t", m.proposal_status === "accepted" ? "border-ok/40 bg-ok/[0.07]" : "border-line bg-paper-2")}>
+                    <div className={cx("px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-2 text-body-sm border-t", m.proposal_status === "accepted" ? "border-ok/40 bg-ok/[0.07]" : "border-line bg-paper-2")}>
                       {m.proposal_status === "accepted" && (
                         <>
                           <span className="text-ok font-semibold inline-flex items-center gap-1"><IconCheck width={15} height={15} /> {t.agreed}</span>
@@ -181,12 +257,12 @@ export function Chat({
                 )}
                 {m.body && (
                   <p className={cx(
-                    "px-4 py-2.5 rounded-[12px] text-[15px] leading-snug whitespace-pre-wrap break-words",
+                    "px-4 py-2.5 rounded-lg text-body leading-snug whitespace-pre-wrap break-words",
                     m.proposal_at && "mt-1",
-                    mine ? "bg-accent-soft text-ink rounded-br-[4px]" : "bg-paper-2 text-ink rounded-bl-[4px]",
+                    mine ? "bg-accent-soft text-ink rounded-br-xs" : "bg-paper-2 text-ink rounded-bl-xs",
                   )}>{m.body}</p>
                 )}
-                <span className="flex items-center gap-2 mt-1 px-1 text-[11.5px] text-muted">
+                <span className="flex items-center gap-2 mt-1 px-1 text-caption text-muted">
                   <time dateTime={m.created_at}>{m.pending ? t.sending : ago(m.created_at, l)}</time>
                   {!mine && !m.pending && (
                     <button onClick={() => report(m.id)} className="opacity-0 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100 inline-flex items-center gap-1 min-h-8 hover:text-ink transition-opacity">
@@ -198,35 +274,44 @@ export function Chat({
             )];
           })}
         </ol>
+        {unseen > 0 && (
+          <button type="button" onClick={toEnd}
+            className="press anim-sheet absolute left-1/2 -translate-x-1/2 bottom-3 h-9 px-4 rounded-full bg-ink text-paper text-meta font-medium inline-flex items-center gap-2">
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent" />{t.newMessages(unseen)}
+          </button>
+        )}
+        </div>
       )}
 
       {readOnly ? (
-        <p className="text-sm text-muted border-t border-line px-5 md:px-6 py-4">{t.closed}</p>
+        <p className="text-body-sm text-muted border-t border-line px-5 md:px-6 py-4">{t.closed}</p>
       ) : (
         <form onSubmit={send} className="border-t border-line px-3 md:px-4 pt-3 pb-3">
           {proposing && (
-            <div className="grid sm:grid-cols-2 gap-3 mb-3 p-3 rounded-[8px] bg-paper-2 anim-rise">
+            <div className="grid sm:grid-cols-2 gap-3 mb-3 p-3 rounded-md bg-paper-2 anim-rise">
               <label className="block">
-                <span className="block text-[13px] font-semibold mb-1.5">{t.dateTime}</span>
+                <span className="block text-meta font-semibold mb-1.5">{t.dateTime}</span>
                 <Input type="datetime-local" required min={minLocal} value={when} onChange={(e) => setWhen(e.target.value)} />
               </label>
               <label className="block">
-                <span className="block text-[13px] font-semibold mb-1.5">{t.place}</span>
+                <span className="block text-meta font-semibold mb-1.5">{t.place}</span>
                 <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder={t.placePlaceholder} maxLength={120} />
               </label>
             </div>
           )}
-          <div className="flex items-center gap-1.5 rounded-[8px] border border-line-strong bg-paper p-1 focus-within:border-accent transition-[border-color]">
+          <div className="flex items-end gap-1.5 rounded-md border border-field bg-paper p-1 focus-within:border-accent transition-[border-color]">
             <button type="button" onClick={() => setProposing((p) => !p)} aria-pressed={proposing}
-              className={cx("h-10 w-10 flex-none grid place-items-center rounded-[6px] transition-colors", proposing ? "bg-accent text-accent-ink" : "text-ink-2 hover:bg-paper-2")}
+              className={cx("press h-10 w-10 flex-none grid place-items-center rounded-sm", proposing ? "bg-accent text-accent-ink" : "text-ink-2 hover:bg-paper-2")}
               aria-label={t.propose} title={t.propose}>
               <IconCalendar />
             </button>
-            <input value={text} onChange={(e) => setText(e.target.value)} placeholder={proposing ? t.note : t.message} maxLength={2000} aria-label={t.message}
-              className="flex-1 min-w-0 h-10 bg-transparent px-1.5 text-[16px] placeholder:text-muted/70 focus:outline-none focus-visible:outline-none" />
+            <textarea ref={input} rows={1} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={onKeyDown}
+              placeholder={proposing ? t.note : t.message} maxLength={2000} aria-label={t.message} aria-describedby="chat-hint" enterKeyHint="enter"
+              className="flex-1 min-w-0 min-h-10 resize-none bg-transparent px-1.5 py-2 text-body-lg leading-normal placeholder:text-muted focus:outline-none focus-visible:outline-none" />
             <Button type="submit" variant="secondary" className="h-10 px-4 flex-none">{proposing ? t.submitPropose : t.send}</Button>
           </div>
-          <p className="text-[12px] text-muted mt-2 px-2">{t.safety}</p>
+          <p id="chat-hint" className="hidden [@media(pointer:fine)]:block text-caption text-muted mt-2 px-2">{t.enterHint}</p>
+          <p className="text-caption text-muted mt-2 px-2">{t.safety}</p>
         </form>
       )}
     </div>

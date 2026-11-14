@@ -12,7 +12,7 @@ export function RetryButton({ retry = "Erneut versuchen", waiting = "Wartet auf 
   return (
     <div className="flex flex-wrap items-center gap-4">
       <Button variant="primary" size="lg" onClick={() => window.location.reload()}>{retry}</Button>
-      <span className="inline-flex items-center gap-2 text-sm text-muted"><span className="h-2 w-2 rounded-full bg-late live-dot" /> {waiting}</span>
+      <span className="inline-flex items-center gap-2 text-body-sm text-muted"><span className="h-2 w-2 rounded-full bg-late live-dot" /> {waiting}</span>
     </div>
   );
 }

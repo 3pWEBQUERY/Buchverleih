@@ -28,10 +28,10 @@ export async function AppShell({ user, unread, children }: { user: SessionUser; 
       <aside className="hidden md:flex flex-col sticky top-0 h-dvh border-r border-line bg-paper-2/60 px-4 py-6">
         <Wordmark className="px-2 mb-8" label={m.home} />
         <SearchTrigger />
-        <Link href="/regal/neu" className="mt-3 mb-7 h-11 rounded-[6px] bg-accent text-accent-ink font-medium text-[15px] flex items-center justify-center gap-2 hover:bg-accent-hover transition-colors">
+        <Link href="/regal/neu" className="mt-3 mb-7 h-11 rounded-sm bg-accent text-accent-ink font-medium text-body flex items-center justify-center gap-2 hover:bg-accent-hover transition-colors">
           <IconScan width={18} height={18} /> {m.addBook}
         </Link>
-        <nav className="flex flex-col gap-0.5 text-[15px]" aria-label={n.main}>
+        <nav className="flex flex-col gap-0.5 text-body" aria-label={n.main}>
           <NavLink href="/" exact icon={<IconHome />}>{n.start}</NavLink>
           <NavLink href="/vorgaenge" icon={<IconLoans />}>{n.loans}</NavLink>
           <NavLink href="/regal" icon={<IconShelf />}>{n.shelf}</NavLink>
@@ -44,19 +44,19 @@ export async function AppShell({ user, unread, children }: { user: SessionUser; 
         </nav>
 
         <div className="mt-auto">
-          <Link href={`/profil/${user.id}`} className="flex items-center gap-3 rounded-[8px] p-2 hover:bg-paper-3 transition-colors">
+          <Link href={`/profil/${user.id}`} className="flex items-center gap-3 rounded-md p-2 hover:bg-paper-3 transition-colors">
             <Monogram name={user.first_name || "?"} seed={user.id} size={40} photo={user.avatar_key} />
             <span className="min-w-0 leading-tight">
               <span className="block font-medium truncate">{user.first_name || n.profile}</span>
-              <span className="block text-[13px] text-muted truncate">{labels(l).trustLabel[user.trust_level]} · {user.municipality}</span>
+              <span className="block text-meta text-muted truncate">{labels(l).trustLabel[user.trust_level]} · {user.municipality}</span>
             </span>
           </Link>
-          <div className="flex items-center justify-between px-2 mt-3 text-[12px] text-muted">
+          <div className="flex items-center justify-between px-2 mt-3 text-caption text-muted">
             <Link href="/einstellungen" className="inline-flex items-center gap-1.5 hover:text-ink"><IconSettings width={15} height={15} /> {n.settings}</Link>
-            <span className="inline-flex items-center gap-1"><kbd className="font-sans border border-line-strong rounded-[4px] px-1.5 leading-5">/</kbd> {n.search}</span>
+            <span className="inline-flex items-center gap-1"><kbd className="font-sans border border-line-strong rounded-xs px-1.5 leading-5">/</kbd> {n.search}</span>
           </div>
           <div className="flex items-center justify-between gap-2 px-2 mt-3">
-            <nav aria-label={n.legal} className="flex flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-muted">
+            <nav aria-label={n.legal} className="flex flex-wrap gap-x-3 gap-y-1 text-caption text-muted">
               <Link href="/hilfe" className="hover:text-ink">{n.help}</Link>
               <Link href="/datenschutz" className="hover:text-ink">{n.privacy}</Link>
               <Link href="/impressum" className="hover:text-ink">{n.imprint}</Link>
@@ -89,7 +89,7 @@ export async function AppShell({ user, unread, children }: { user: SessionUser; 
       </div>
 
       <nav aria-label={n.main} className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-paper/95 backdrop-blur-md border-t border-line pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-5 h-[68px] text-[11px] items-center">
+        <div className="grid grid-cols-5 h-[68px] text-caption items-center">
           <NavLink href="/" exact icon={<IconHome />} tab>{n.start}</NavLink>
           <NavLink href="/vorgaenge" icon={<IconLoans />} tab>{n.loans}</NavLink>
           <div className="flex justify-center">
@@ -115,11 +115,11 @@ export async function PublicShell({ children }: { children: React.ReactNode }) {
       <header className="public-header sticky top-0 z-30 bg-paper/85 backdrop-blur-md border-b border-line transition-colors">
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 h-16 flex items-center justify-between">
           <Wordmark label={m.home} />
-          <nav className="flex items-center gap-1 md:gap-2 text-[15px] font-medium">
-            <Link href="/suche" className="hidden sm:inline-flex px-3 h-10 items-center rounded-[6px] hover:bg-paper-2">{m.publicNav.find}</Link>
-            <Link href="/hilfe" className="hidden lg:inline-flex px-3 h-10 items-center rounded-[6px] hover:bg-paper-2">{m.publicNav.how}</Link>
+          <nav className="flex items-center gap-1 md:gap-2 text-body font-medium">
+            <Link href="/suche" className="hidden sm:inline-flex px-3 h-10 items-center rounded-sm hover:bg-paper-2">{m.publicNav.find}</Link>
+            <Link href="/hilfe" className="hidden lg:inline-flex px-3 h-10 items-center rounded-sm hover:bg-paper-2">{m.publicNav.how}</Link>
             <LanguageSwitch className="hidden sm:inline-flex mx-1" />
-            <Link href="/anmelden" className="ml-1 inline-flex px-5 h-10 items-center rounded-[6px] bg-accent-soft text-accent-hover hover:bg-accent hover:text-accent-ink transition-colors">{m.publicNav.login}</Link>
+            <Link href="/anmelden" className="ml-1 inline-flex px-5 h-10 items-center rounded-sm bg-accent-soft text-accent-hover hover:bg-accent hover:text-accent-ink transition-colors">{m.publicNav.login}</Link>
           </nav>
         </div>
       </header>
@@ -127,15 +127,15 @@ export async function PublicShell({ children }: { children: React.ReactNode }) {
       <footer className="surface-night">
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 py-14 grid gap-10 md:grid-cols-[1.3fr_1fr_1fr_1fr]">
           <div>
-            <div className="flex items-center gap-2.5 text-night-ink"><LogoMark onDark size={30} /><span className="text-[21px] font-[620] leading-none tracking-[-0.04em]">Leihregal</span></div>
-            <p className="text-night-muted mt-4 max-w-xs text-[15px]">{f.claim}</p>
+            <div className="flex items-center gap-2.5 text-night-ink"><LogoMark onDark size={30} /><span className="text-title-sm font-semibold leading-none tracking-display">Leihregal</span></div>
+            <p className="text-night-muted mt-4 max-w-xs text-body">{f.claim}</p>
             <LanguageSwitch tone="night" className="mt-6 -ml-1.5" />
           </div>
           <FooterCol title={f.discover} links={[["/suche", f.find], ["/anmelden?next=/regal/neu", f.addBook], ["/anmelden?next=/kreise/neu", f.newCircle]]} />
           <FooterCol title={f.help} links={[["/hilfe", f.how], ["/hilfe#schaden", f.damage], ["/regeln", f.rules]]} />
           <FooterCol title={f.legal} links={[["/nutzungsbedingungen", f.terms], ["/datenschutz", f.privacy], ["/impressum", f.imprint]]} />
         </div>
-        <div className="max-w-[1320px] mx-auto px-4 md:px-10 pb-8 text-[13px] text-night-muted flex flex-wrap gap-x-6 gap-y-1 border-t border-night-line pt-6">
+        <div className="max-w-[1320px] mx-auto px-4 md:px-10 pb-8 text-meta text-night-muted flex flex-wrap gap-x-6 gap-y-1 border-t border-night-line pt-6">
           <span>{f.beta}</span>
           <span>{f.eu}</span>
           {f.legalNote && <span>{f.legalNote}</span>}
@@ -148,8 +148,8 @@ export async function PublicShell({ children }: { children: React.ReactNode }) {
 function FooterCol({ title, links }: { title: string; links: [string, string][] }) {
   return (
     <div>
-      <p className="text-[12px] font-medium text-night-muted mb-4">{title}</p>
-      <ul className="space-y-2.5 text-[15px] text-night-ink">
+      <p className="text-caption font-medium text-night-muted mb-4">{title}</p>
+      <ul className="space-y-2.5 text-body text-night-ink">
         {links.map(([href, label]) => <li key={href}><Link href={href} className="link-grow">{label}</Link></li>)}
       </ul>
     </div>

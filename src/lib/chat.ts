@@ -50,14 +50,19 @@ export async function assertMember(t: Thread, userId: string) {
   return m;
 }
 
-export async function listMessages(t: Thread, after?: string) {
+/**
+ * Nachrichten eines Threads. `after`: nur neuere als diese Nachricht (inkrementelles Nachladen),
+ * `only`: genau diese eine (wenn sich ein Terminvorschlag geändert hat).
+ */
+export async function listMessages(t: Thread, after?: string, only?: string) {
   const col = t.type === "loan" ? sql`m.loan_id` : sql`m.handover_chat_id`;
   return sql<Message[]>`
     select m.id, m.sender_id, u.first_name as sender_name, m.body, m.proposal_place, m.proposal_at, m.proposal_status,
            m.proposal_accepted_by, m.created_at
       from messages m left join users u on u.id = m.sender_id
      where ${col} = ${t.id}
-       ${after ? sql`and m.created_at > (select created_at from messages where id = ${after})` : sql``}
+       ${after ? sql`and (m.created_at, m.id) > (select created_at, id from messages where id = ${after})` : sql``}
+       ${only ? sql`and m.id = ${only}` : sql``}
      order by m.created_at, m.id
      limit 500`;
 }

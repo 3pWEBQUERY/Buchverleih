@@ -30,7 +30,7 @@ export function LanguageSwitch({ tone = "paper", className }: { tone?: "paper" |
               start(() => router.refresh());
               setBusy(null);
             }}
-            className={cx("h-7 min-w-8 px-1.5 rounded-[4px] text-[12px] font-semibold uppercase tracking-[0.04em] transition-colors",
+            className={cx("h-7 min-w-8 px-1.5 rounded-xs text-caption font-semibold uppercase tracking-caps transition-colors",
               tone === "night"
                 ? on ? "bg-night-2 text-night-ink" : "text-night-muted hover:text-night-ink"
                 : on ? "bg-paper text-ink outline outline-1 outline-line-strong" : "text-muted hover:text-ink")}>
@@ -54,9 +54,9 @@ export function LanguageChoice() {
         return (
           <button key={l} type="button" role="radio" aria-checked={on} lang={l}
             onClick={async () => { if (!on) { await save(l).catch(() => {}); start(() => router.refresh()); } }}
-            className={cx("text-left rounded-[10px] border px-3.5 py-3 transition-colors", on ? "border-accent bg-accent-soft/35" : "border-line hover:border-ink-2")}>
-            <span className="block text-[12px] font-semibold uppercase tracking-[0.06em] text-muted">{l}</span>
-            <span className="block text-[15px] font-medium mt-1">{localeName[l]}</span>
+            className={cx("text-left rounded-md border px-3.5 py-3 transition-colors", on ? "border-accent bg-accent-soft/35" : "border-line hover:border-ink-2")}>
+            <span className="block text-caption font-semibold uppercase tracking-caps text-muted">{l}</span>
+            <span className="block text-body font-medium mt-1">{localeName[l]}</span>
           </button>
         );
       })}

@@ -21,7 +21,7 @@ const HATCH = "repeating-linear-gradient(135deg, var(--line-strong) 0 1px, trans
 function barTone(b: CalendarBar) {
   if (b.kind === "block") return "text-muted border border-line-strong bg-paper";
   if (b.paused) return "bg-paper-3 text-muted border border-dashed border-line-strong";
-  if (!b.status) return "bg-ink-2/55 text-paper";
+  if (!b.status) return "bg-ink-2 text-paper";
   if (b.status === "active" || b.status === "return_reported") return "bg-lent text-paper";
   if (b.status === "disputed") return "bg-late text-paper";
   return "bg-wait text-paper";
@@ -92,8 +92,8 @@ export function CalendarView({
   return (
     <div>
       {summary && (
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-5 text-[13px]">
-          <span className={cx("inline-flex items-center gap-2 h-7 px-2.5 rounded-[6px] font-medium", freeNow ? "bg-ok/10 text-ok" : "bg-paper-2 text-ink-2")}>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-5 text-meta">
+          <span className={cx("inline-flex items-center gap-2 h-7 px-2.5 rounded-sm font-medium", freeNow ? "bg-ok/10 text-ok" : "bg-paper-2 text-ink-2")}>
             <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", freeNow ? "bg-ok" : "bg-wait")} />
             {freeNow ? t.freeNow : nextFree ? t.freeFrom(fmtDay(dayToDate(nextFree.start), l)) : t.fullToHorizon}
           </span>
@@ -107,20 +107,20 @@ export function CalendarView({
         <div className="relative select-none w-full" style={{ minWidth: fit ? undefined : days * minPx, height }}>
           {/* Monate */}
           {!bare && months.map((m) => (
-            <span key={m.left} className={cx("absolute top-0 font-medium text-ink-2 whitespace-nowrap", compact ? "text-[11px]" : "text-[12px]")} style={{ left: `${m.left}%` }}>
+            <span key={m.left} className={cx("absolute top-0 font-medium text-ink-2 whitespace-nowrap", compact ? "text-caption" : "text-caption")} style={{ left: `${m.left}%` }}>
               <span className="absolute top-[16px] w-px bg-line-strong" style={{ height: top - 16 }} />
               <span className="pl-1.5">{m.label}</span>
             </span>
           ))}
 
           {/* Spur mit Wochenraster */}
-          <div className="absolute inset-x-0 rounded-[8px] bg-paper-2 overflow-hidden" style={{ top, height: trackH }}>
+          <div className="absolute inset-x-0 rounded-md bg-paper-2 overflow-hidden" style={{ top, height: trackH }}>
             {mondays.map((w) => <span key={w.day} aria-hidden className="absolute top-0 bottom-0 w-px bg-line" style={{ left: `${w.left}%` }} />)}
             {/* Ausserhalb des Horizonts */}
             <span className="absolute top-0 bottom-0 right-0 border-l border-line-strong" style={{ left: `${pct(cal.horizonEnd)}%`, backgroundImage: HATCH, opacity: 0.6 }}
               title={t.notBookableYet} />
             {!compact && span(cal.horizonEnd, end) > 9 && (
-              <span className="absolute top-1/2 -translate-y-1/2 pl-2 text-[11px] text-muted whitespace-nowrap" style={{ left: `${pct(cal.horizonEnd)}%` }}>{t.notBookable}</span>
+              <span className="absolute top-1/2 -translate-y-1/2 pl-2 text-caption text-muted whitespace-nowrap" style={{ left: `${pct(cal.horizonEnd)}%` }}>{t.notBookable}</span>
             )}
           </div>
 
@@ -131,12 +131,12 @@ export function CalendarView({
             const label = t.freeFromLower(fmtDay(dayToDate(f.start), l));
             return onPick ? (
               <button key={f.start} type="button" onClick={() => onPick(f, f.start)}
-                className="absolute group rounded-[6px] border border-dashed border-ok/50 bg-ok/[0.06] hover:bg-ok/[0.14] hover:border-ok focus-visible:border-ok transition-colors flex items-center gap-1 px-1.5 text-[11.5px] font-medium text-ok overflow-hidden whitespace-nowrap"
+                className="absolute group rounded-sm border border-dashed border-ok/50 bg-ok/[0.06] hover:bg-ok/[0.14] hover:border-ok focus-visible:border-ok transition-colors flex items-center gap-1 px-1.5 text-caption font-medium text-ok overflow-hidden whitespace-nowrap"
                 style={style} aria-label={t.pickAria(fmtDay(dayToDate(f.start), l), f.days > 400 ? t.unlimited : t.days(f.days))}>
                 <IconPlus width={12} height={12} className="flex-none" /><span className="truncate">{label}</span>
               </button>
             ) : (
-              <span key={f.start} aria-hidden className="absolute rounded-[6px] bg-ok/[0.07] flex items-center px-2 text-[11.5px] text-ok overflow-hidden whitespace-nowrap" style={style}>
+              <span key={f.start} aria-hidden className="absolute rounded-sm bg-ok/[0.07] flex items-center px-2 text-caption text-ok overflow-hidden whitespace-nowrap" style={style}>
                 {!compact && <span className="truncate">{label}</span>}
               </span>
             );
@@ -150,14 +150,14 @@ export function CalendarView({
             const range = fmtRange({ start: b.start, end: b.end }, l);
             return (
               <div key={b.id}>
-                <div className={cx("absolute rounded-[6px] px-2 flex items-center gap-2 overflow-hidden whitespace-nowrap", compact ? "text-[11px]" : "text-[12px]", barTone(b), b.mine && "ring-2 ring-accent ring-offset-1 ring-offset-paper")}
+                <div className={cx("absolute rounded-sm px-2 flex items-center gap-2 overflow-hidden whitespace-nowrap", compact ? "text-caption" : "text-caption", barTone(b), b.mine && "ring-2 ring-accent ring-offset-1 ring-offset-paper")}
                   style={{ top: top + 2, height: trackH - 4, left: `${pct(b.start)}%`, width: `${Math.max(0.6, span(b.start, bEnd))}%`, ...(b.kind === "block" ? { backgroundImage: HATCH } : {}) }}
                   title={`${label}: ${range}${b.status ? ` · ${labels(l).statusLabel[b.status]}` : ""}`}>
                   <span className="font-medium flex-none max-w-full truncate">{label}</span>
                   {!compact && b.end && <span className="opacity-75 min-w-0 truncate tnum hidden md:inline">{range}</span>}
                 </div>
                 {bufEnd && b.bufferDays > 0 && (
-                  <span aria-hidden className="absolute rounded-r-[4px]" title={`${t.buffer} ${t.days(b.bufferDays)}`}
+                  <span aria-hidden className="absolute rounded-r-xs" title={`${t.buffer} ${t.days(b.bufferDays)}`}
                     style={{ top: top + 2, height: trackH - 4, left: `${pct(b.end!)}%`, width: `${span(b.end!, bufEnd)}%`, backgroundImage: HATCH }} />
                 )}
                 {b.handoverChatId && bufEnd && (
@@ -172,9 +172,9 @@ export function CalendarView({
 
           {/* Gewählter Zeitraum der Anfrage */}
           {selection && (
-            <div aria-hidden className={cx("absolute rounded-[7px] border-2 pointer-events-none transition-[left,width] duration-200", selection.ok ? "border-accent bg-accent/[0.12]" : "border-late bg-late/10")}
+            <div aria-hidden className={cx("absolute rounded-sm border-2 pointer-events-none transition-[left,width] duration-fast", selection.ok ? "border-accent bg-accent/[0.12]" : "border-late bg-late/10")}
               style={{ top: top - 2, height: trackH + 4, left: `${pct(selection.start)}%`, width: `${Math.max(0.8, span(selection.start, selection.end))}%` }}>
-              <span className={cx("absolute left-0 whitespace-nowrap text-[11px] font-medium px-1.5 h-[18px] inline-flex items-center rounded-[4px]", selection.ok ? "bg-accent text-accent-ink" : "bg-late text-paper")}
+              <span className={cx("absolute left-0 whitespace-nowrap text-caption font-medium px-1.5 h-[18px] inline-flex items-center rounded-xs", selection.ok ? "bg-accent text-accent-ink" : "bg-late text-paper")}
                 style={{ top: trackH + 6 }}>
                 {selection.ok ? t.yourRequest : t.taken}
               </span>
@@ -183,7 +183,7 @@ export function CalendarView({
 
           {/* Datumsleiste: Montage */}
           {!compact && mondays.map((w) => (
-            <span key={w.day} aria-hidden className="absolute text-[10.5px] text-muted tnum -translate-x-1/2" style={{ left: `${w.left}%`, top: top + trackH + 4 + selH }}>
+            <span key={w.day} aria-hidden className="absolute text-caption text-muted tnum -translate-x-1/2" style={{ left: `${w.left}%`, top: top + trackH + 4 + selH }}>
               {Number(w.day.slice(8))}{l === "de" ? "." : ""}
             </span>
           ))}
@@ -191,7 +191,7 @@ export function CalendarView({
           {/* Heute */}
           <div className="absolute w-[2px] -translate-x-1/2 bg-accent pointer-events-none" style={{ left: `${pct(cal.today)}%`, top: top - 4, height: trackH + 8 }} aria-hidden>
             {!bare && (
-              <span className={cx("absolute -top-[15px] text-[10px] font-semibold uppercase tracking-[0.06em] bg-accent text-accent-ink rounded-[3px] px-1 leading-[14px]",
+              <span className={cx("absolute -top-[15px] text-caption font-semibold uppercase tracking-caps bg-accent text-accent-ink rounded-xs px-1 py-px leading-none",
                 pct(cal.today) < 6 ? "-left-px" : pct(cal.today) > 94 ? "-right-px" : "left-1/2 -translate-x-1/2")}>{t.today}</span>
             )}
           </div>
@@ -199,12 +199,12 @@ export function CalendarView({
       </div>
 
       {showLegend && (
-        <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-4 text-[12.5px] text-muted">
-          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-[3px] bg-lent" /> {t.legend.lent}</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-[3px] bg-wait" /> {t.legend.booked}</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-[3px] border border-dashed border-ok/60 bg-ok/[0.08]" /> {t.legend.free}</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-[3px]" style={{ backgroundImage: HATCH }} /> {t.legend.buffer}</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-[3px] border border-line-strong" style={{ backgroundImage: HATCH }} /> {t.legend.blocked}</span>
+        <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-4 text-meta text-muted">
+          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-xs bg-lent" /> {t.legend.lent}</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-xs bg-wait" /> {t.legend.booked}</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-xs border border-dashed border-ok/60 bg-ok/[0.08]" /> {t.legend.free}</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-xs" style={{ backgroundImage: HATCH }} /> {t.legend.buffer}</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-5 rounded-xs border border-line-strong" style={{ backgroundImage: HATCH }} /> {t.legend.blocked}</span>
           {onPick && <span className="text-ink-2">{t.legend.pick}</span>}
         </div>
       )}
@@ -240,15 +240,15 @@ export function CalendarAxis({ start, end, today }: { start: string; end: string
   return (
     <div className="relative h-[60px] select-none" aria-hidden>
       {marks.months.map((m) => (
-        <span key={m.left} className="absolute top-0 text-[12px] font-medium text-ink-2 whitespace-nowrap" style={{ left: `${m.left}%` }}>
+        <span key={m.left} className="absolute top-0 text-caption font-medium text-ink-2 whitespace-nowrap" style={{ left: `${m.left}%` }}>
           <span className="absolute top-[16px] w-px h-[44px] bg-line-strong" /><span className="pl-1.5">{m.label}</span>
         </span>
       ))}
       {marks.mondays.map((w, i) => (
-        <span key={w.day} className={cx("absolute top-[22px] text-[10.5px] text-muted tnum -translate-x-1/2", i % 2 === 1 && "hidden sm:inline")} style={{ left: `${w.left}%` }}>{Number(w.day.slice(8))}{l === "de" ? "." : ""}</span>
+        <span key={w.day} className={cx("absolute top-[22px] text-caption text-muted tnum -translate-x-1/2", i % 2 === 1 && "hidden sm:inline")} style={{ left: `${w.left}%` }}>{Number(w.day.slice(8))}{l === "de" ? "." : ""}</span>
       ))}
       <span className="absolute bottom-0 w-[2px] h-[14px] -translate-x-1/2 bg-accent" style={{ left: `${pct(today)}%` }} />
-      <span className={cx("absolute bottom-[14px] text-[10px] font-semibold uppercase tracking-[0.06em] bg-accent text-accent-ink rounded-[3px] px-1 leading-[14px]", pct(today) < 6 ? "" : "-translate-x-1/2")} style={{ left: `${pct(today)}%` }}>{CALENDAR[l].today}</span>
+      <span className={cx("absolute bottom-[14px] text-caption font-semibold uppercase tracking-caps bg-accent text-accent-ink rounded-xs px-1 py-px leading-none", pct(today) < 6 ? "" : "-translate-x-1/2")} style={{ left: `${pct(today)}%` }}>{CALENDAR[l].today}</span>
     </div>
   );
 }

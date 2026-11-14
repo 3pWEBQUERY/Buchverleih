@@ -39,16 +39,16 @@ export function MoreBooks({ related, ownerName, ownerId, workId, title, hasOrigi
       <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
         <div>
           <p className="eyebrow">{t.eyebrow}</p>
-          <h2 id="weiter" className="display text-[28px] md:text-[38px] mt-2">{t.heading(where)[0]}<em>{t.heading(where)[1]}</em></h2>
+          <h2 id="weiter" className="display text-display mt-2">{t.heading(where)[0]}<em>{t.heading(where)[1]}</em></h2>
         </div>
-        <p className="text-[14px] text-muted tnum pb-1">{t.total(total, shelves.length)}</p>
+        <p className="text-body-sm text-muted tnum pb-1">{t.total(total, shelves.length)}</p>
       </header>
 
       <nav aria-label={t.shelves} className="mt-6 flex flex-wrap gap-2">
         {shelves.map((s) => (
-          <a key={s.id} href={`#mehr-${s.id}`} className="h-9 pl-3.5 pr-1.5 rounded-[8px] border border-line inline-flex items-center gap-2.5 text-[13.5px] font-medium hover:border-accent hover:text-accent-hover transition-colors">
+          <a key={s.id} href={`#mehr-${s.id}`} className="h-9 pl-3.5 pr-1.5 rounded-md border border-line inline-flex items-center gap-2.5 text-body-sm font-medium hover:border-accent hover:text-accent-hover transition-colors">
             <span className="max-w-[28ch] truncate">{s.title}</span>
-            <span className="h-6 min-w-6 px-1.5 rounded-[5px] bg-paper-2 text-ink-2 text-[12px] grid place-items-center tnum">{s.items.length}</span>
+            <span className="h-6 min-w-6 px-1.5 rounded-sm bg-paper-2 text-ink-2 text-caption grid place-items-center tnum">{s.items.length}</span>
           </a>
         ))}
       </nav>
@@ -59,16 +59,16 @@ export function MoreBooks({ related, ownerName, ownerId, workId, title, hasOrigi
           <div key={s.id} id={`mehr-${s.id}`} className={cx("scroll-mt-28 min-w-0 flex flex-col", s.items.length > 3 && "lg:col-span-2")}>
             <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 mb-4">
               <div className="min-w-0">
-                <h3 className="text-[20px] md:text-[24px] font-[560] tracking-[-0.03em] leading-tight">{s.title}</h3>
-                <p className="text-[14.5px] text-muted mt-1">{s.desc}</p>
+                <h3 className="text-title-sm font-title tracking-title leading-tight">{s.title}</h3>
+                <p className="text-body-sm text-muted mt-1">{s.desc}</p>
               </div>
               {s.link && (
-                <Link href={s.link.href} className="inline-flex items-center gap-1 text-[13.5px] font-medium text-accent-hover hover:underline underline-offset-4 pb-1">
+                <Link href={s.link.href} className="inline-flex items-center gap-1 text-body-sm font-medium text-accent-hover hover:underline underline-offset-4 pb-1">
                   {s.link.label} <IconArrowRight width={14} height={14} />
                 </Link>
               )}
             </div>
-            <div className="surface-night rounded-[12px] px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5 -mx-1 md:mx-0 flex-1">
+            <div className="surface-night rounded-lg px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5 -mx-1 md:mx-0 flex-1">
               <BookRow l={l} label={s.title} height={165} hrefBase="/exemplar/"
                 items={s.withNote ? s.items.map((c) => ({ ...c, note: note(c) })) : s.items} />
             </div>

@@ -32,7 +32,7 @@ export function Shelf({ items, height = 176, className, label, l = "de" }: { ite
                 </div>
                 <div className="shelf-board" />
                 <div className="pt-2 pr-1">
-                  {it.caption && <div className="text-[13px] leading-snug line-clamp-2 group-hover:underline">{it.caption}</div>}
+                  {it.caption && <div className="text-meta leading-snug line-clamp-2 group-hover:underline">{it.caption}</div>}
                   {it.meta && <div className="mt-1">{it.meta}</div>}
                 </div>
               </Link>

@@ -13,9 +13,9 @@ export function CorrectionForm({ editionId, loggedIn }: { editionId: string; log
   const [sent, setSent] = useState(false);
   const toast = useToast();
   const t = EXEMPLAR[useLocale()].corr;
-  if (sent) return <p id="korrektur" className="text-sm text-muted">{t.thanks}</p>;
+  if (sent) return <p id="korrektur" className="text-body-sm text-muted">{t.thanks}</p>;
   return (
-    <details id="korrektur" className="group text-sm text-muted">
+    <details id="korrektur" className="group text-body-sm text-muted">
       <summary className="cursor-pointer list-none inline-flex gap-1">{t.ask} <span className="underline underline-offset-4 group-hover:text-ink">{t.report}</span></summary>
       {loggedIn ? (
         <form className="mt-4 panel p-5 grid sm:grid-cols-[180px_1fr_auto] gap-3 items-end text-ink"

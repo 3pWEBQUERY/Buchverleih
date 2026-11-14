@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { cx } from "./ui";
 import { IconDots, IconSearch } from "./icons";
 import { useLocale } from "./locale-provider";
@@ -14,14 +14,14 @@ export function NavLink({ href, icon, children, exact, tab }: { href: string; ic
     return (
       <Link href={href} aria-current={active ? "page" : undefined}
         className={cx("flex flex-col items-center justify-center gap-1 transition-colors", active ? "text-ink" : "text-muted")}>
-        <span className={cx("grid place-items-center h-8 w-12 rounded-[6px] transition-colors duration-200", active && "bg-paper-3")}>{icon}</span>
+        <span className={cx("grid place-items-center h-8 w-12 rounded-sm transition-colors duration-fast", active && "bg-paper-3")}>{icon}</span>
         <span className={cx("leading-none", active && "font-semibold")}>{children}</span>
       </Link>
     );
   }
   return (
     <Link href={href} aria-current={active ? "page" : undefined}
-      className={cx("relative flex items-center gap-3 px-3 h-10 rounded-[6px] transition-colors duration-150", active ? "bg-paper text-ink font-medium outline outline-1 outline-line-strong" : "text-ink-2 hover:text-ink hover:bg-paper-3")}>
+      className={cx("relative flex items-center gap-3 px-3 h-10 rounded-sm transition-colors duration-fast", active ? "bg-paper text-ink font-medium outline outline-1 outline-line-strong" : "text-ink-2 hover:text-ink hover:bg-paper-3")}>
       <span className={active ? "text-ink" : "text-muted"}>{icon}</span>
       <span className="flex-1 flex items-center justify-between gap-2">{children}</span>
     </Link>
@@ -32,10 +32,10 @@ export function NavLink({ href, icon, children, exact, tab }: { href: string; ic
 export function SearchTrigger() {
   const l = useLocale();
   return (
-    <Link href="/suche?fokus=1" className="h-11 px-4 rounded-[6px] border border-line-strong bg-paper flex items-center gap-2.5 text-muted hover:border-ink transition-colors text-[15px]">
+    <Link href="/suche?fokus=1" className="h-11 px-4 rounded-sm border border-field bg-paper flex items-center gap-2.5 text-muted hover:border-ink transition-colors text-body-sm">
       <IconSearch width={18} height={18} />
-      <span className="flex-1">{SHELL[l].searchPlaceholder}</span>
-      <kbd className="font-sans text-[12px] border border-line-strong rounded-[4px] px-1.5 leading-5">/</kbd>
+      <span className="flex-1 truncate">{SHELL[l].searchPlaceholder}</span>
+      <kbd className="font-sans text-caption border border-line-strong rounded-xs px-1.5 leading-5">/</kbd>
     </Link>
   );
 }
@@ -71,39 +71,63 @@ export function Shortcuts() {
   return null;
 }
 
-/** Mobil: «Mehr»-Menü für Seiten, die nicht in der unteren Leiste stehen (Kreise, Wunschliste …) */
+/**
+ * Mobil: «Mehr»-Menü für Seiten, die nicht in der unteren Leiste stehen (Kreise, Wunschliste …).
+ * Natives Popover: Esc und Tippen daneben schliessen von selbst, das Menü liegt in der obersten Ebene.
+ * Pfeiltasten, Pos1 und Ende wandern durch die Einträge.
+ */
 export function MobileMore({ links, label = "Weitere Seiten" }: { links: { href: string; label: string }[]; label?: string }) {
   const [open, setOpen] = useState(false);
   const path = usePathname();
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => setOpen(false), [path]);
+  const id = useId();
+  const menu = useRef<HTMLElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+
+  // Nach einem Seitenwechsel schliessen
   useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
-  }, [open]);
+    const el = menu.current;
+    if (el?.matches(":popover-open")) el.hidePopover();
+  }, [path]);
+
+  const items = () => [...(menu.current?.querySelectorAll<HTMLAnchorElement>("a") ?? [])];
+  const onKey = (e: React.KeyboardEvent) => {
+    const list = items();
+    const i = list.indexOf(document.activeElement as HTMLAnchorElement);
+    const go = (n: number) => { e.preventDefault(); list[(n + list.length) % list.length]?.focus(); };
+    if (e.key === "ArrowDown") go(i + 1);
+    else if (e.key === "ArrowUp") go(i < 0 ? list.length - 1 : i - 1);
+    else if (e.key === "Home") go(0);
+    else if (e.key === "End") go(list.length - 1);
+  };
+
   return (
-    <div ref={ref} className="relative">
-      <button type="button" aria-expanded={open} aria-haspopup="true" aria-label={label} onClick={() => setOpen((o) => !o)}
-        className="h-11 w-11 grid place-items-center rounded-[6px] hover:bg-paper-3 transition-colors">
+    <div className="relative">
+      <button ref={trigger} type="button" popoverTarget={id} aria-expanded={open} aria-haspopup="true" aria-label={label}
+        onKeyDown={(e) => {
+          // Pfeil nach unten öffnet und springt in den ersten Eintrag (wie bei Menüs üblich)
+          if (e.key === "ArrowDown" && !open) { e.preventDefault(); menu.current?.showPopover(); }
+        }}
+        className="press h-11 w-11 grid place-items-center rounded-sm hover:bg-paper-3 transition-colors">
         <IconDots />
       </button>
-      {open && (
-        <nav aria-label={label} className="absolute right-0 top-12 w-56 rounded-[10px] border border-line-strong bg-paper py-1.5 anim-sheet">
-          {links.map((l) => {
-            const active = path === l.href || path.startsWith(l.href + "/");
-            return (
-              <Link key={l.href} href={l.href} aria-current={active ? "page" : undefined}
-                className={cx("flex items-center h-11 px-4 text-[15px] transition-colors", active ? "text-accent-hover font-medium bg-accent-soft/30" : "hover:bg-paper-2")}>
-                {l.label}
-              </Link>
-            );
-          })}
-        </nav>
-      )}
+      <nav ref={menu} id={id} popover="auto" aria-label={label} onKeyDown={onKey}
+        onToggle={(e) => {
+          const now = (e as unknown as ToggleEvent).newState === "open";
+          setOpen(now);
+          if (now) items()[0]?.focus();
+          else if (menu.current?.contains(document.activeElement)) trigger.current?.focus();
+        }}
+        className="more-menu fixed inset-auto top-[52px] right-2 m-0 w-56 rounded-md border border-field bg-paper text-ink py-1.5">
+        {links.map((l) => {
+          const active = path === l.href || path.startsWith(l.href + "/");
+          return (
+            <Link key={l.href} href={l.href} aria-current={active ? "page" : undefined}
+              className={cx("flex items-center h-11 px-4 text-body transition-colors", active ? "text-accent-hover font-medium bg-accent-soft/30" : "hover:bg-paper-2")}>
+              {l.label}
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }

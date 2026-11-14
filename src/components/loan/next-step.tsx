@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, uploadPhoto } from "@/lib/client";
 import type { LoanView } from "@/lib/loans/queries";
@@ -176,7 +175,7 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
           <div className="flex flex-wrap gap-3">
             <Button variant="primary" size="lg" disabled={busy} onClick={() => act({ action: "pass_on_consent", agree: true }, m.agreed)}>{m.yesPassOn}</Button>
             <Button variant="secondary" size="lg" disabled={busy} onClick={() => act({ action: "pass_on_consent", agree: false }, m.viaOwnerShort)}>{m.no}</Button>
-            {p && <span className="text-sm text-muted self-center">{m.consents([p.owner, p.prev, p.next].filter(Boolean).length)}</span>}
+            {p && <span className="text-body-sm text-muted self-center">{m.consents([p.owner, p.prev, p.next].filter(Boolean).length)}</span>}
           </div>
         );
         break;
@@ -229,7 +228,7 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
 
   return (
     <section aria-label={m.aria} className={cx(
-      "anim-rise rounded-[12px]",
+      "anim-rise rounded-lg",
       myTurn ? "bg-paper-2 px-5 py-6 md:p-8" : "border border-line px-5 py-6 md:px-8 md:py-7",
     )}>
       <p className="eyebrow flex items-center gap-2">
@@ -237,13 +236,13 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
         {eyebrow}
       </p>
       {heading && (
-        <h2 className={cx("mt-2.5 font-[560] tracking-[-0.035em] leading-[1.05]", myTurn ? "text-[30px] md:text-[40px]" : "text-[24px] md:text-[30px]")}>{heading}</h2>
+        <h2 className={cx("mt-2.5 font-title tracking-title leading-display", myTurn ? "text-display " : "text-title ")}>{heading}</h2>
       )}
-      {context && <p className={cx("text-[16px] md:text-[17px] leading-relaxed text-ink-2 max-w-2xl", heading ? "mt-3" : "")}>{context}</p>}
+      {context && <p className={cx("text-lead leading-relaxed text-ink-2 max-w-2xl", heading ? "mt-3" : "")}>{context}</p>}
       {main && <div className="mt-7">{main}</div>}
       {secondary.length > 0 && (
         <div className={cx("flex flex-wrap items-center gap-x-6 gap-y-1 mt-7 pt-4 border-t", myTurn ? "border-line-strong/60" : "border-line")}>
-          <span className="text-[12.5px] text-muted mr-1">{m.more}</span>
+          <span className="text-meta text-muted mr-1">{m.more}</span>
           {secondary.map((b, i) => <span key={i} className="inline-flex min-h-11 items-center">{b}</span>)}
         </div>
       )}
@@ -264,7 +263,6 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
       )}
       {panel === "reschedule" && loan.wanted && <Reschedule loan={loan} busy={busy} onSubmit={(start, end) => act({ action: "reschedule", start, end }, m.rescheduled)} onCancelFree={() => act({ action: "cancel_without_penalty" }, m.cancelled)} />}
 
-      <Portal>
       {overlay?.kind === "code" && (
         <HandoverCode loanId={overlay.loanId ?? loan.id} label={overlay.label} onClose={() => setOverlay(null)} onDone={() => { setOverlay(null); toast.show({ text: m.scanned }); refresh(); }} />
       )}
@@ -272,21 +270,13 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
         <ScanOverlay loanId={loan.id} label={overlay.label} onClose={() => setOverlay(null)}
           onDone={(r) => { setOverlay(null); toast.show({ text: r.waitingForOther ? m.scannedShowYours : m.confirmed }); refresh(); }} />
       )}
-      </Portal>
     </section>
   );
 }
 
-/** Überlagerungen ausserhalb animierter Container rendern (transform erzeugt sonst einen eigenen Bezugsrahmen) */
-function Portal({ children }: { children: React.ReactNode }) {
-  const [el, setEl] = useState<HTMLElement | null>(null);
-  useEffect(() => setEl(document.body), []);
-  return el ? createPortal(children, el) : null;
-}
-
 // ---------------------------------------------------------------- Teilformulare
 
-const radioCard = "flex items-center gap-3 min-h-14 px-4 py-3 rounded-[10px] bg-paper border border-line cursor-pointer hover:border-ink-2 has-[:checked]:border-accent has-[:checked]:bg-accent-soft/35 transition-colors";
+const radioCard = "flex items-center gap-3 min-h-14 px-4 py-3 rounded-md bg-paper border border-line cursor-pointer hover:border-ink-2 has-[:checked]:border-accent has-[:checked]:bg-accent-soft/35 transition-colors";
 
 function AcceptForm({ loan, busy, onAccept, onDecline }: { loan: LoanView; busy: boolean; onAccept: (b: Record<string, unknown>) => void; onDecline: () => void }) {
   const [spot, setSpot] = useState(loan.ownerSpots[0]?.id ?? "");
@@ -298,19 +288,19 @@ function AcceptForm({ loan, busy, onAccept, onDecline }: { loan: LoanView; busy:
     <div className="space-y-6 max-w-2xl">
       {loan.kind === "swap" && (
         <fieldset>
-          <legend className="text-[13px] font-medium mb-2">{m.offeredBooks}</legend>
+          <legend className="text-meta font-medium mb-2">{m.offeredBooks}</legend>
           <div className="grid sm:grid-cols-2 gap-2">
             {loan.swapOffered.map((o) => (
               <label key={o.id} className={radioCard}>
                 <input type="radio" name="swap" checked={swapCopy === o.id} onChange={() => setSwapCopy(o.id)} className="accent-[var(--accent)] h-4 w-4 flex-none" />
                 <span className="min-w-0">
-                  <span className="block font-serif text-[17px] leading-tight truncate">{o.title}</span>
-                  <span className="block text-[13px] text-muted truncate">{o.authors[0]}</span>
+                  <span className="block font-serif text-lead leading-tight truncate">{o.title}</span>
+                  <span className="block text-meta text-muted truncate">{o.authors[0]}</span>
                 </span>
               </label>
             ))}
           </div>
-          <Link href={`/profil/${loan.other?.id}`} className="text-sm font-medium text-accent-hover hover:underline underline-offset-4 mt-3 inline-block">{m.wholeSwapShelf}</Link>
+          <Link href={`/profil/${loan.other?.id}`} className="text-body-sm font-medium text-accent-hover hover:underline underline-offset-4 mt-3 inline-block">{m.wholeSwapShelf}</Link>
         </fieldset>
       )}
       <div className="grid md:grid-cols-2 gap-5 md:gap-4">
@@ -321,7 +311,7 @@ function AcceptForm({ loan, busy, onAccept, onDecline }: { loan: LoanView; busy:
           </Select>
         </Field>
       ) : loan.circle?.fixed_spot ? (
-        <div className="text-[15px]"><span className="block text-[13px] font-medium mb-2">{m.circleSpot}</span><span className="flex items-center h-12 px-4 rounded-[8px] bg-paper-2 border border-line">{loan.circle.fixed_spot}</span></div>
+        <div className="text-body"><span className="block text-meta font-medium mb-2">{m.circleSpot}</span><span className="flex items-center h-12 px-4 rounded-md bg-paper-2 border border-line">{loan.circle.fixed_spot}</span></div>
       ) : (
         <Notice className="self-end">{m.noSpot[0]}<Link href="/einstellungen#uebergabeorte" className="underline underline-offset-4">{m.noSpot[1]}</Link>{m.noSpot[2]}</Notice>
       )}
@@ -348,10 +338,10 @@ function PhotoPicker({ loanId, purpose, keys, setKeys, max = 6 }: { loanId: stri
     <div className="flex flex-wrap items-center gap-3">
       {keys.map((k) => (
          
-        <img key={k} src={`/api/v1/images/${k}?w=480`} alt={m.uploadedPhoto} className="h-20 w-20 object-cover rounded-[10px] outline outline-1 -outline-offset-1 outline-black/10 anim-pop" />
+        <img key={k} src={`/api/v1/images/${k}?w=480`} alt={m.uploadedPhoto} className="h-20 w-20 object-cover rounded-md outline outline-1 -outline-offset-1 outline-black/10 anim-pop" />
       ))}
       {keys.length < max && (
-        <label className={cx("h-20 px-5 grid place-items-center border border-dashed border-line-strong rounded-[10px] bg-paper text-sm font-medium cursor-pointer hover:border-accent hover:text-accent-hover transition-colors", busy && "opacity-50")}>
+        <label className={cx("h-20 px-5 grid place-items-center border border-dashed border-field rounded-md bg-paper text-body-sm font-medium cursor-pointer hover:border-accent hover:text-accent-hover transition-colors", busy && "opacity-50")}>
           {busy ? m.loading : m.addPhoto}
           <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={busy}
             onChange={async (e) => {
@@ -391,11 +381,11 @@ function DamageForm({ loan, busy, onSubmit }: { loan: LoanView; busy: boolean; o
   const m = STEPS[useLocale()];
   return (
     <div className="mt-6 border-t border-line pt-5 space-y-4 max-w-xl anim-rise">
-      <p className="text-[15px] text-ink-2">{m.damageIntro(Boolean(loan.conditionNote))}<Link href="/hilfe#schaden" className="underline underline-offset-4">{m.examples}</Link></p>
+      <p className="text-body text-ink-2">{m.damageIntro(Boolean(loan.conditionNote))}<Link href="/hilfe#schaden" className="underline underline-offset-4">{m.examples}</Link></p>
       <Textarea aria-label={m.describeDamage} value={d} onChange={(e) => setD(e.target.value)} placeholder={m.damagePlaceholder} maxLength={1000} />
       <PhotoPicker loanId={loan.id} purpose="case" keys={keys} setKeys={setKeys} />
       <Button variant="secondary" disabled={busy || d.trim().length < 5 || keys.length === 0} onClick={() => onSubmit(d, keys)}>{m.reportDamage}</Button>
-      {keys.length === 0 && <p className="text-sm text-muted">{m.photoNeeded}</p>}
+      {keys.length === 0 && <p className="text-body-sm text-muted">{m.photoNeeded}</p>}
     </div>
   );
 }
@@ -408,12 +398,12 @@ function ReportHandover({ loan, busy, onReport }: { loan: LoanView; busy: boolea
   return (
     <div className="mt-6 border-t border-line pt-5 space-y-4 max-w-xl anim-rise">
       {dropoff && (
-        <div className="grid sm:grid-cols-2 gap-2 text-[15px]">
+        <div className="grid sm:grid-cols-2 gap-2 text-body">
           <label className={radioCard}><input type="radio" checked={mode === "report"} onChange={() => setMode("report")} className="accent-[var(--ink)] h-4 w-4" /> {m.inPerson}</label>
           <label className={radioCard}><input type="radio" checked={mode === "dropoff"} onChange={() => setMode("dropoff")} className="accent-[var(--ink)] h-4 w-4" /> {m.inDropoff}</label>
         </div>
       )}
-      <p className="text-[15px] text-ink-2">{mode === "dropoff" ? m.dropoffText : m.reportText}</p>
+      <p className="text-body text-ink-2">{mode === "dropoff" ? m.dropoffText : m.reportText}</p>
       {mode === "dropoff" && <PhotoPicker loanId={loan.id} purpose="dropoff" keys={keys} setKeys={setKeys} max={1} />}
       <Button variant="secondary" disabled={busy || (mode === "dropoff" && !keys.length)} onClick={() => onReport(mode === "dropoff" ? keys[0] : null)}>{m.reportHandover}</Button>
     </div>
@@ -439,7 +429,7 @@ function RateForm({ busy, onRate }: { busy: boolean; onRate: (v: "good" | "probl
       <div className="flex flex-wrap gap-2">
         {Object.entries(labels(l).ratingReasonLabel).map(([k, label]) => (
           <Check key={k} label={label} checked={reasons.includes(k)} onChange={(v) => setReasons((r) => (v ? [...r, k] : r.filter((x) => x !== k)))}
-            className="min-h-11 pl-3 pr-4 rounded-[6px] bg-paper border border-line has-[:checked]:border-accent has-[:checked]:bg-accent-soft/35 transition-colors" />
+            className="min-h-11 pl-3 pr-4 rounded-sm bg-paper border border-line has-[:checked]:border-accent has-[:checked]:bg-accent-soft/35 transition-colors" />
         ))}
       </div>
       <Textarea aria-label={m.toModeration} value={note} onChange={(e) => setNote(e.target.value)} placeholder={m.whatHappened} maxLength={500} />
@@ -466,7 +456,7 @@ function CaseResponse({ loan, onDone }: { loan: LoanView; onDone: () => void }) 
     <div className="space-y-4 max-w-xl">
       <div className="grid gap-2">
         {options.map((o) => (
-          <label key={o} className={cx(radioCard, "text-[15px]")}>
+          <label key={o} className={cx(radioCard, "text-body")}>
             <input type="radio" name="case" checked={choice === o} onChange={() => setChoice(o)} className="accent-[var(--accent)] h-4 w-4 flex-none" />
             {labels(l).caseResponseLabel[o]}
           </label>
@@ -500,13 +490,13 @@ function Reschedule({ loan, busy, onSubmit, onCancelFree }: { loan: LoanView; bu
   const [days, setDays] = useState(Math.max(1, Math.round((dayToDate(loan.wanted!.end!).getTime() - dayToDate(loan.wanted!.start).getTime()) / 86400_000)));
   return (
     <div className="mt-6 border-t border-line pt-5 space-y-4 max-w-xl anim-rise">
-      <p className="text-[15px] text-ink-2">{m.rescheduleText}</p>
+      <p className="text-body text-ink-2">{m.rescheduleText}</p>
       <div className="flex flex-wrap gap-4 items-end">
         <Field label={m.start}><Input type="date" value={start} onChange={(e) => setStart(e.target.value)} className="w-48" /></Field>
         <Field label={m.days}><Input type="number" min={1} max={loan.copySettings.loan_days} value={days} onChange={(e) => setDays(Number(e.target.value) || 1)} className="w-24" /></Field>
         <Button variant="secondary" disabled={busy} onClick={() => onSubmit(start, addDays(start, days))}>{m.apply}</Button>
       </div>
-      <p className="text-sm text-muted">{m.until(fmtDay(dayToDate(addDays(start, days - 1)), l))}</p>
+      <p className="text-body-sm text-muted">{m.until(fmtDay(dayToDate(addDays(start, days - 1)), l))}</p>
       <Button variant="quiet" onClick={onCancelFree}>{m.cancelFree}</Button>
     </div>
   );

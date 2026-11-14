@@ -90,16 +90,16 @@ export function WishlistClient({ items: initial, matches }: { items: WishItem[];
           <ul className="grid xl:grid-cols-2 gap-3">
             {matches.map((m, i) => (
               <li key={m.id} className="anim-rise" style={{ animationDelay: `${i * 40}ms` }}>
-                <Link href={`/exemplar/${m.their_copy}`} className="group rounded-[10px] border border-line p-5 h-full flex flex-col gap-4 hover:border-accent transition-colors">
-                  <p className="text-[13px] text-muted flex items-center gap-2">
-                    <span aria-hidden className="h-7 w-7 rounded-[6px] bg-accent-soft text-accent-hover grid place-items-center"><IconSwap width={15} height={15} /></span>
+                <Link href={`/exemplar/${m.their_copy}`} className="group rounded-md border border-line p-5 h-full flex flex-col gap-4 hover:border-accent transition-colors">
+                  <p className="text-meta text-muted flex items-center gap-2">
+                    <span aria-hidden className="h-7 w-7 rounded-sm bg-accent-soft text-accent-hover grid place-items-center"><IconSwap width={15} height={15} /></span>
                     {t.swapWith(m.other_name)}
                   </p>
                   <dl className="grid grid-cols-2 gap-4">
-                    <div><dt className="text-[12.5px] text-muted">{t.youGet}</dt><dd className="font-serif text-[19px] leading-[1.15] mt-1">{m.their_title}</dd></div>
-                    <div><dt className="text-[12.5px] text-muted">{t.theirWish(m.other_name)}</dt><dd className="font-serif text-[19px] leading-[1.15] mt-1">{m.my_title}</dd></div>
+                    <div><dt className="text-meta text-muted">{t.youGet}</dt><dd className="font-serif text-title-sm leading-title mt-1">{m.their_title}</dd></div>
+                    <div><dt className="text-meta text-muted">{t.theirWish(m.other_name)}</dt><dd className="font-serif text-title-sm leading-title mt-1">{m.my_title}</dd></div>
                   </dl>
-                  <span className="mt-auto inline-flex items-center gap-1.5 text-[13.5px] font-medium text-accent-hover">{t.viewSwap} <IconArrowRight width={15} height={15} className="transition-transform group-hover:translate-x-0.5" /></span>
+                  <span className="mt-auto inline-flex items-center gap-1.5 text-body-sm font-medium text-accent-hover">{t.viewSwap} <IconArrowRight width={15} height={15} className="transition-transform group-hover:translate-x-0.5" /></span>
                 </Link>
               </li>
             ))}
@@ -110,12 +110,12 @@ export function WishlistClient({ items: initial, matches }: { items: WishItem[];
       <StepSection id="titel" n={++n} title={t.yourTitles} aside={items.length > 0 ? t.nTitles(items.length) : undefined}
         desc={t.titlesDesc}>
         {items.length === 0 ? (
-          <div className="rounded-[10px] border border-dashed border-line-strong p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6 anim-rise">
+          <div className="rounded-md border border-dashed border-line-strong p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6 anim-rise">
             <div aria-hidden className="flex items-end gap-1.5 flex-none">
-              {[0, 1, 2].map((k) => <span key={k} className="block w-[34px] h-[51px] rounded-[3px] border border-dashed border-line-strong" />)}
+              {[0, 1, 2].map((k) => <span key={k} className="block w-[34px] h-[51px] rounded-xs border border-dashed border-line-strong" />)}
             </div>
             <div className="flex-1 flex flex-wrap items-center justify-between gap-4">
-              <p className="text-[15px] text-ink-2 max-w-md">{t.empty}</p>
+              <p className="text-body text-ink-2 max-w-md">{t.empty}</p>
               <LinkButton href="/suche" variant="secondary">{t.browse}</LinkButton>
             </div>
           </div>
@@ -141,54 +141,54 @@ function WishCard({ it, i, onRadius, onAlarm, onRemove }: { it: WishItem; i: num
 
   return (
     <li className="anim-rise min-w-0" style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
-      <article className={cx("h-full rounded-[10px] border p-4 md:p-5 flex flex-col gap-4 transition-colors", free ? "border-ok/40" : "border-line")}>
+      <article className={cx("h-full rounded-md border p-4 md:p-5 flex flex-col gap-4 transition-colors", free ? "border-ok/40" : "border-line")}>
         {/* Buch */}
         <div className="grid grid-cols-[64px_minmax(0,1fr)_auto] gap-4">
           <Link href={`/titel/${it.work_id}`} tabIndex={-1} aria-hidden className="book self-start">
             <span className="book-face block"><Cover l={l} data={cover} width={64} height={96} uniform /></span>
           </Link>
           <div className="min-w-0">
-            <p className="text-[12.5px] text-muted flex items-center gap-2 flex-wrap">
+            <p className="text-meta text-muted flex items-center gap-2 flex-wrap">
               <span>{c.since(fmtDay(it.since, l))}</span>
               {it.alarm && (
-                <span className="inline-flex items-center gap-1 h-5 px-1.5 rounded-[5px] bg-accent-soft text-accent-hover text-[11.5px] font-semibold">
+                <span className="inline-flex items-center gap-1 h-5 px-1.5 rounded-sm bg-accent-soft text-accent-hover text-caption font-semibold">
                   <IconBell width={11} height={11} /> {c.alarmOn}
                 </span>
               )}
             </p>
-            <Link href={`/titel/${it.work_id}`} className="block font-serif text-[19px] md:text-[21px] leading-[1.15] mt-1.5 hover:underline underline-offset-4 decoration-1 line-clamp-2">{it.title}</Link>
-            {it.authors.length > 0 && <p className="text-[13.5px] text-muted mt-0.5 truncate">{it.authors.join(", ")}</p>}
+            <Link href={`/titel/${it.work_id}`} className="block font-serif text-title-sm leading-title mt-1.5 hover:underline underline-offset-4 decoration-1 line-clamp-2">{it.title}</Link>
+            {it.authors.length > 0 && <p className="text-body-sm text-muted mt-0.5 truncate">{it.authors.join(", ")}</p>}
           </div>
           <button type="button" onClick={onRemove} aria-label={c.removeAria(it.title)} title={c.remove}
-            className="h-9 w-9 -mt-1 -mr-1 rounded-[6px] text-muted hover:text-ink hover:bg-paper-3 grid place-items-center transition-colors">
+            className="h-9 w-9 -mt-1 -mr-1 rounded-sm text-muted hover:text-ink hover:bg-paper-3 grid place-items-center transition-colors">
             <IconClose width={16} height={16} />
           </button>
         </div>
 
         {/* Verfügbarkeit */}
-        <div className={cx("rounded-[8px] px-4 py-3.5", free ? "bg-ok/[0.07]" : "bg-paper-2")}>
+        <div className={cx("rounded-md px-4 py-3.5", free ? "bg-ok/[0.07]" : "bg-paper-2")}>
           <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 items-end">
-            <p className={cx("text-[12px]", free ? "text-ok" : "text-muted")}>
+            <p className={cx("text-caption", free ? "text-ok" : "text-muted")}>
               {free ? c.freeUpTo(it.radius_km) : busy ? (waitDays === 0 ? c.freeAgain : c.freeAgainIn) : c.inRadius(it.radius_km)}
             </p>
-            <p className="text-[12px] text-muted text-right">{free ? c.nearest : busy ? c.freeFrom : it.nearest_beyond != null ? c.nextCopy : ""}</p>
+            <p className="text-caption text-muted text-right">{free ? c.nearest : busy ? c.freeFrom : it.nearest_beyond != null ? c.nextCopy : ""}</p>
             <p className={cx("flex items-baseline gap-1.5 leading-none", free && "text-ok")}>
               {free ? (
-                <><span className="text-[30px] font-[560] tracking-[-0.045em] tnum">{it.available_near}</span><span className="text-[15px] font-medium">{c.copies(it.available_near)}</span></>
+                <><span className="text-title font-title tracking-display tnum">{it.available_near}</span><span className="text-body font-medium">{c.copies(it.available_near)}</span></>
               ) : busy && waitDays != null ? (
-                waitDays === 0 ? <span className="text-[24px] font-[560] tracking-[-0.04em]">{c.today}</span>
-                  : <><span className="text-[30px] font-[560] tracking-[-0.045em] tnum">{waitDays}</span><span className="text-[15px] font-medium">{c.days(waitDays)}</span></>
+                waitDays === 0 ? <span className="text-title font-title tracking-display">{c.today}</span>
+                  : <><span className="text-title font-title tracking-display tnum">{waitDays}</span><span className="text-body font-medium">{c.days(waitDays)}</span></>
               ) : (
-                <span className="text-[20px] font-[560] tracking-[-0.03em] text-ink-2">{busy ? c.taken : c.noCopy}</span>
+                <span className="text-title-sm font-title tracking-title text-ink-2">{busy ? c.taken : c.noCopy}</span>
               )}
             </p>
-            <p className="text-[14px] font-medium tnum text-right truncate pb-0.5">
+            <p className="text-body-sm font-medium tnum text-right truncate pb-0.5">
               {free ? <>{fmtDistance(it.free_dist, l)}{it.free_owner && <span className="text-muted font-normal"> · {it.free_owner}</span>}</>
                 : busy && it.next_free ? fmtDay(dayToDate(it.next_free), l)
                 : it.nearest_beyond != null ? fmtDistance(it.nearest_beyond, l) : ""}
             </p>
           </div>
-          <p className="mt-2.5 text-[12.5px] text-muted leading-snug">
+          <p className="mt-2.5 text-meta text-muted leading-snug">
             {free
               ? it.total_near > it.available_near ? c.moreLent(it.total_near - it.available_near) : c.askNow
               : busy ? c.allLent(it.total_near, it.radius_km, it.alarm)
@@ -198,15 +198,15 @@ function WishCard({ it, i, onRadius, onAlarm, onRemove }: { it: WishItem; i: num
           {(free || widen) && (
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
               {free && it.free_copy && (
-                <Link href={`/exemplar/${it.free_copy}`} className="h-9 px-3.5 rounded-[6px] bg-accent text-accent-ink text-[13.5px] font-medium inline-flex items-center gap-1.5 hover:bg-accent-hover transition-colors">
+                <Link href={`/exemplar/${it.free_copy}`} className="h-9 px-3.5 rounded-sm bg-accent text-accent-ink text-body-sm font-medium inline-flex items-center gap-1.5 hover:bg-accent-hover transition-colors">
                   {c.request} <IconArrowRight width={15} height={15} />
                 </Link>
               )}
               {free && it.available_near > 1 && (
-                <Link href={`/titel/${it.work_id}`} className="text-[13.5px] font-medium text-accent-hover hover:underline underline-offset-4">{c.compare(it.available_near)}</Link>
+                <Link href={`/titel/${it.work_id}`} className="text-body-sm font-medium text-accent-hover hover:underline underline-offset-4">{c.compare(it.available_near)}</Link>
               )}
               {widen && (
-                <button type="button" onClick={() => onRadius(widen)} className="h-9 px-3.5 rounded-[6px] bg-accent-soft text-accent-hover text-[13.5px] font-medium hover:bg-accent hover:text-accent-ink transition-colors">
+                <button type="button" onClick={() => onRadius(widen)} className="h-9 px-3.5 rounded-sm bg-accent-soft text-accent-hover text-body-sm font-medium hover:bg-accent hover:text-accent-ink transition-colors">
                   {c.widen(widen)}
                 </button>
               )}
@@ -216,12 +216,12 @@ function WishCard({ it, i, onRadius, onAlarm, onRemove }: { it: WishItem; i: num
 
         {/* Einstellungen */}
         <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 sm:gap-x-5 gap-y-3">
-          <div role="radiogroup" aria-label={c.radiusFor(it.title)} className="inline-flex p-0.5 rounded-[8px] bg-paper-2 border border-line">
+          <div role="radiogroup" aria-label={c.radiusFor(it.title)} className="inline-flex p-0.5 rounded-md bg-paper-2 border border-line">
             {RADII.map((r) => {
               const on = it.radius_km === r;
               return (
                 <button key={r} type="button" role="radio" aria-checked={on} onClick={() => !on && onRadius(r)}
-                  className={cx("h-8 px-2 sm:px-2.5 rounded-[6px] text-[12.5px] font-medium tnum whitespace-nowrap transition-colors relative after:absolute after:content-[''] after:-inset-y-1.5",
+                  className={cx("h-8 px-2 sm:px-2.5 rounded-sm text-meta font-medium tnum whitespace-nowrap transition-colors relative after:absolute after:content-[''] after:-inset-y-1.5",
                     on ? "bg-paper text-accent-hover outline outline-1 outline-accent/50" : "text-ink-2 hover:text-ink")}>
                   {r} km
                 </button>
@@ -229,10 +229,10 @@ function WishCard({ it, i, onRadius, onAlarm, onRemove }: { it: WishItem; i: num
             })}
           </div>
           <button type="button" role="switch" aria-checked={it.alarm} aria-label={c.alarmFor(it.title)} onClick={() => onAlarm(!it.alarm)}
-            className="inline-flex items-center gap-2.5 h-9 text-[13.5px] font-medium">
+            className="inline-flex items-center gap-2.5 h-9 text-body-sm font-medium">
             <span><span className="sm:hidden">{c.alarmShort}</span><span className="hidden sm:inline">{c.alarm}</span></span>
-            <span aria-hidden className={cx("relative h-6 w-10 flex-none rounded-full transition-colors duration-200", it.alarm ? "bg-accent" : "bg-paper-3")}>
-              <span className={cx("absolute top-1 h-4 w-4 rounded-full bg-paper transition-[left] duration-300 ease-[var(--ease-spring)]", it.alarm ? "left-5" : "left-1")} />
+            <span aria-hidden className={cx("relative h-6 w-10 flex-none rounded-full transition-colors duration-fast", it.alarm ? "bg-accent" : "bg-paper-3")}>
+              <span className={cx("absolute top-1 h-4 w-4 rounded-full bg-paper transition-[left] duration-base ease-spring", it.alarm ? "left-5" : "left-1")} />
             </span>
           </button>
         </div>
@@ -301,25 +301,25 @@ function AddTitle({ onList, autoFocus }: { onList: Set<string>; autoFocus: boole
         <input id="wunsch-q" ref={ref} type="search" autoComplete="off" autoFocus={autoFocus} value={q} onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Escape") setQ(""); if (e.key === "Enter" && hits?.[0] && !onList.has(hits[0].work_id)) { e.preventDefault(); add(hits[0]); } }}
           placeholder={a.placeholder}
-          className="w-full h-13 bg-paper border border-line-strong rounded-[8px] pl-12 pr-5 [&::-webkit-search-cancel-button]:appearance-none text-[16px] placeholder:text-muted/80 hover:border-ink-2 focus:outline-none focus:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20 transition-colors" />
+          className="w-full h-13 bg-paper border border-field rounded-md pl-12 pr-5 [&::-webkit-search-cancel-button]:appearance-none text-body-lg placeholder:text-muted hover:border-ink-2 focus:outline-none focus:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20 transition-colors" />
       </div>
       {hits && (
         <div className="anim-rise mt-2" aria-live="polite">
           {hits.length === 0 ? (
-            <p className="text-sm text-muted py-3 px-5">{a.notFound(q.trim())}</p>
+            <p className="text-body-sm text-muted py-3 px-5">{a.notFound(q.trim())}</p>
           ) : (
-            <ul className="rounded-[10px] border border-line divide-y divide-line overflow-hidden">
+            <ul className="rounded-md border border-line divide-y divide-line overflow-hidden">
               {hits.map((e) => {
                 const on = onList.has(e.work_id);
                 return (
                   <li key={e.work_id} className="px-4 md:px-5 py-3 grid grid-cols-[36px_minmax(0,1fr)_auto] gap-4 items-center">
                     <Cover l={l} data={{ title: e.title, authors: e.authors, coverKey: e.cover_key, seed: e.work_id }} width={36} height={54} uniform />
                     <div className="min-w-0">
-                      <div className="font-serif text-[17px] leading-tight truncate">{e.title}</div>
-                      <div className="text-sm text-muted truncate">{e.authors.join(", ")}</div>
+                      <div className="font-serif text-lead leading-tight truncate">{e.title}</div>
+                      <div className="text-body-sm text-muted truncate">{e.authors.join(", ")}</div>
                     </div>
                     {on ? (
-                      <span className="inline-flex items-center gap-1.5 text-[13px] text-ok font-medium"><IconCheck width={15} height={15} />{a.onList}</span>
+                      <span className="inline-flex items-center gap-1.5 text-meta text-ok font-medium"><IconCheck width={15} height={15} />{a.onList}</span>
                     ) : (
                       <Button size="sm" variant="secondary" disabled={busy === e.work_id} onClick={() => add(e)}>{a.add}</Button>
                     )}

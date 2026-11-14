@@ -8,8 +8,8 @@ export default async function NotFound() {
   return (
     <div className="max-w-2xl py-6 md:py-10">
       <p className="eyebrow">{t.eyebrow}</p>
-      <h1 className="display text-[32px] md:text-[44px] mt-3">{t.heading[0]}<em>{t.heading[1]}</em></h1>
-      <p className="text-ink-2 text-[16px] leading-relaxed mt-4 max-w-prose">{t.textApp}</p>
+      <h1 className="display text-display mt-3">{t.heading[0]}<em>{t.heading[1]}</em></h1>
+      <p className="text-ink-2 text-body-lg leading-relaxed mt-4 max-w-prose">{t.textApp}</p>
       <div className="mt-8 flex flex-wrap gap-2">
         <LinkButton href="/" variant="primary">{t.home}</LinkButton>
         <LinkButton href="/suche" variant="secondary">{t.search}</LinkButton>

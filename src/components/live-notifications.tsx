@@ -126,19 +126,19 @@ function Toast({ item, onClose }: { item: Item; onClose: () => void }) {
   const href = item.href ?? "/benachrichtigungen";
   return (
     <div onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}
-      className="pointer-events-auto relative overflow-hidden rounded-[12px] border border-line-strong bg-paper anim-sheet">
+      className="pointer-events-auto relative overflow-hidden rounded-lg border border-line-strong bg-paper anim-sheet">
       <div className="grid grid-cols-[36px_minmax(0,1fr)_auto] gap-3 p-4 pr-2">
         <span aria-hidden className="h-9 w-9 rounded-full bg-accent-soft text-accent-hover grid place-items-center"><IconBell width={17} height={17} /></span>
         <Link href={href} onClick={onClose} className="min-w-0 group">
-          <p className="text-[12px] text-muted flex items-center gap-1.5">
+          <p className="text-caption text-muted flex items-center gap-1.5">
             <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent" /> {t.newNow}
           </p>
-          <p className="text-[14.5px] font-medium leading-snug mt-1 group-hover:underline underline-offset-2 decoration-1">{item.title}</p>
-          {item.body && <p className="text-[13.5px] text-muted leading-snug mt-1 line-clamp-2">{item.body}</p>}
-          <p className="text-[13px] font-medium text-accent-hover mt-2">{item.href ? t.view : t.all} →</p>
+          <p className="text-body-sm font-medium leading-snug mt-1 group-hover:underline underline-offset-2 decoration-1">{item.title}</p>
+          {item.body && <p className="text-body-sm text-muted leading-snug mt-1 line-clamp-2">{item.body}</p>}
+          <p className="text-meta font-medium text-accent-hover mt-2">{item.href ? t.view : t.all} →</p>
         </Link>
         <button type="button" onClick={onClose} aria-label={t.close}
-          className="h-9 w-9 -mt-1 rounded-[6px] text-muted hover:text-ink hover:bg-paper-3 grid place-items-center transition-colors">
+          className="h-9 w-9 -mt-1 rounded-sm text-muted hover:text-ink hover:bg-paper-3 grid place-items-center transition-colors">
           <IconClose width={16} height={16} />
         </button>
       </div>
@@ -168,7 +168,7 @@ export function UnreadBadge({ compact }: { compact?: boolean }) {
   const label = t.unread(unread);
   if (compact) return <span key={bump} className="block h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-paper anim-pop"><span className="sr-only">, {label}</span></span>;
   return (
-    <span key={bump} className="min-w-6 h-6 px-1.5 rounded-[6px] bg-accent text-accent-ink text-[12px] font-bold tnum grid place-items-center anim-pop">
+    <span key={bump} className="min-w-6 h-6 px-1.5 rounded-sm bg-accent text-accent-ink text-caption font-bold tnum grid place-items-center anim-pop">
       <span aria-hidden>{unread > 99 ? "99+" : unread}</span><span className="sr-only">{label}</span>
     </span>
   );

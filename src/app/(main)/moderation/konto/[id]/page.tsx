@@ -60,7 +60,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <span className="md:hidden"><Monogram name={u.first_name || "?"} seed={u.id} size={64} photo={u.avatar_key} /></span><span className="hidden md:block"><Monogram name={u.first_name || "?"} seed={u.id} size={80} photo={u.avatar_key} /></span>
         <div className="min-w-0">
           <p className="eyebrow">{ml.role[u.role] ?? u.role} · {t.level} {L.trustLabel[u.trust_level] ?? u.trust_level}</p>
-          <h1 className="display text-[32px] md:text-[44px] mt-2">{u.first_name || MOD[l].accounts.noName}</h1>
+          <h1 className="display text-display mt-2">{u.first_name || MOD[l].accounts.noName}</h1>
           <p className="text-ink-2 mt-3 break-words">
             {u.email}
             {u.phone_e164 && <> · <span className="tnum">{fmtPhone(u.phone_e164)}</span></>}
@@ -86,7 +86,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           {self ? (
             <Notice>{t.self}</Notice>
           ) : (
-            <div className="rounded-[10px] border border-line divide-y divide-line">
+            <div className="rounded-md border border-line divide-y divide-line">
               {mod.role === "admin" && u.role !== "admin" && (
                 <div className="px-5 md:px-6 py-4">
                   <RoleControl userId={u.id} role={u.role} name={u.first_name || t.thisPerson} />
@@ -98,15 +98,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               {u.avatar_key && (
                 <div className="px-5 md:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium text-[15px]">{t.avatar}</p>
-                    <p className="text-[13px] text-muted mt-0.5">{t.avatarText}</p>
+                    <p className="font-medium text-body">{t.avatar}</p>
+                    <p className="text-meta text-muted mt-0.5">{t.avatarText}</p>
                   </div>
                   <RemoveAvatar userId={u.id} />
                 </div>
               )}
-              <div className="p-5 md:p-6 rounded-b-[14px] bg-late/[0.04]">
+              <div className="p-5 md:p-6 rounded-b-lg bg-late/[0.04]">
                 <p className="eyebrow !text-late mb-1">{t.danger}</p>
-                <p className="font-medium text-[16px] mb-4">{t.ban}</p>
+                <p className="font-medium text-body-lg mb-4">{t.ban}</p>
                 <BanControls userId={u.id} banned={Boolean(u.banned_at)} reason={u.ban_reason} />
               </div>
             </div>
@@ -117,15 +117,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <section aria-labelledby="vorgaenge">
             <ModHead id="vorgaenge" title={t.loans} count={loans.length} aside={loans.length === 50 ? t.last50 : undefined} />
             {loans.length === 0 ? <Quiet>{t.noLoans}</Quiet> : (
-              <ul className="rounded-[10px] border border-line divide-y divide-line overflow-hidden">
+              <ul className="rounded-md border border-line divide-y divide-line overflow-hidden">
                 {loans.map((x) => {
                   const bad = x.status === "disputed" || x.status === "lost";
                   return (
                     <li key={x.id}>
                       <Link href={`/moderation/vorgang/${x.id}`} className="group flex items-center justify-between gap-4 px-5 py-3.5 hover:bg-paper-2 transition-colors">
                         <span className="min-w-0">
-                          <span className="block font-serif text-[20px] leading-snug truncate">{x.title}</span>
-                          <span className="block text-[13px] text-muted">{ml.kind[x.kind] ?? x.kind} · {x.as_owner ? t.lends : t.borrows} · {fmtDay(x.requested_at, l)}</span>
+                          <span className="block font-serif text-title-sm leading-snug truncate">{x.title}</span>
+                          <span className="block text-meta text-muted">{ml.kind[x.kind] ?? x.kind} · {x.as_owner ? t.lends : t.borrows} · {fmtDay(x.requested_at, l)}</span>
                         </span>
                         <Chip tone={bad ? "late" : x.status === "active" ? "lent" : "done"} strong={bad} className="shrink-0">
                           {L.statusLabel[x.status as LoanStatus] ?? x.status}
@@ -141,15 +141,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <section aria-labelledby="meldungen">
             <ModHead id="meldungen" title={t.reports} count={reports.length} />
             {reports.length === 0 ? <Quiet>{t.noReports}</Quiet> : (
-              <ul className="rounded-[10px] border border-line divide-y divide-line">
+              <ul className="rounded-md border border-line divide-y divide-line">
                 {reports.map((r) => (
                   <li key={r.id} className="px-5 py-4">
                     <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
                       <span className="font-medium">{L.reportReasonLabel[r.reason as keyof typeof L.reportReasonLabel] ?? r.reason}</span>
                       <Chip tone={r.status === "open" ? "late" : "done"} strong={r.status === "open"}>{ml.reportStatus[r.status] ?? r.status}</Chip>
                     </div>
-                    {r.note && <p className="text-sm text-ink-2 mt-1.5 max-w-prose">«{r.note}»</p>}
-                    <p className="text-[13px] text-muted mt-1">{ago(r.created_at, l)}</p>
+                    {r.note && <p className="text-body-sm text-ink-2 mt-1.5 max-w-prose">«{r.note}»</p>}
+                    <p className="text-meta text-muted mt-1">{ago(r.created_at, l)}</p>
                   </li>
                 ))}
               </ul>

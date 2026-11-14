@@ -117,8 +117,8 @@ export default async function BenachrichtigungenPage({ searchParams }: { searchP
               return (
                 <li key={f.id}>
                   <Link href={f.id === "alle" ? "/benachrichtigungen" : `/benachrichtigungen?art=${f.id}`} scroll={false} aria-current={on ? "page" : undefined}
-                    className={cx("relative inline-flex items-center gap-2 h-12 text-[14px] font-medium whitespace-nowrap transition-colors", on ? "text-ink" : "text-muted hover:text-ink")}>
-                    {m.filters[f.id]} <span className="text-[12px] tnum text-muted">{count(f.id)}</span>
+                    className={cx("relative inline-flex items-center gap-2 h-12 text-body-sm font-medium whitespace-nowrap transition-colors", on ? "text-ink" : "text-muted hover:text-ink")}>
+                    {m.filters[f.id]} <span className="text-caption tnum text-muted">{count(f.id)}</span>
                     {on && <span aria-hidden className="absolute inset-x-0 -bottom-px h-[2px] bg-accent" />}
                   </Link>
                 </li>
@@ -129,11 +129,11 @@ export default async function BenachrichtigungenPage({ searchParams }: { searchP
       )}
 
       {all.length === 0 ? (
-        <div className="rounded-[10px] border border-dashed border-line-strong p-6 md:p-8 flex flex-col sm:flex-row sm:items-center gap-6">
-          <span aria-hidden className="h-12 w-12 rounded-[8px] bg-accent-soft text-accent-hover grid place-items-center flex-none"><IconBell /></span>
+        <div className="rounded-md border border-dashed border-line-strong p-6 md:p-8 flex flex-col sm:flex-row sm:items-center gap-6">
+          <span aria-hidden className="h-12 w-12 rounded-md bg-accent-soft text-accent-hover grid place-items-center flex-none"><IconBell /></span>
           <div className="flex-1">
-            <p className="text-[17px] font-medium">{m.empty}</p>
-            <p className="text-[14.5px] text-muted mt-0.5 max-w-md">{m.emptyText}</p>
+            <p className="text-lead font-medium">{m.empty}</p>
+            <p className="text-body-sm text-muted mt-0.5 max-w-md">{m.emptyText}</p>
           </div>
           <LinkButton href="/suche" variant="secondary">{m.searchBooks}</LinkButton>
         </div>
@@ -144,7 +144,7 @@ export default async function BenachrichtigungenPage({ searchParams }: { searchP
             <StepSection key={g} n={++n} first={n === 1} title={g} aside={`${list.length}`}><List items={list} l={l} /></StepSection>
           ))}
           {items.length === 0 && (
-            <p className="mt-10 text-muted text-[15px]">
+            <p className="mt-10 text-muted text-body">
               {m.noneOfKind} <Link href="/benachrichtigungen" className="text-accent-hover font-medium inline-flex items-center gap-1 hover:underline underline-offset-4">{m.showAll} <IconArrowRight width={14} height={14} /></Link>
             </p>
           )}
@@ -156,28 +156,28 @@ export default async function BenachrichtigungenPage({ searchParams }: { searchP
 
 function List({ items, unread, l }: { items: Item[]; unread?: boolean; l: Locale }) {
   return (
-    <ul className={cx("rounded-[10px] border divide-y divide-line overflow-hidden", unread ? "border-accent/40" : "border-line")}>
+    <ul className={cx("rounded-md border divide-y divide-line overflow-hidden", unread ? "border-accent/40" : "border-line")}>
       {items.map((n, i) => {
         const k = kindOf(n.type);
         const Icon = k.icon;
         const inner = (
           <>
-            <span aria-hidden className={cx("relative h-9 w-9 rounded-[8px] grid place-items-center flex-none", toneCls[k.tone])}>
+            <span aria-hidden className={cx("relative h-9 w-9 rounded-md grid place-items-center flex-none", toneCls[k.tone])}>
               <Icon width={17} height={17} />
             </span>
             <span className="min-w-0">
-              <span className={cx("block leading-snug text-[15px]", unread ? "font-medium text-ink" : "text-ink", n.href && "group-hover:underline underline-offset-4 decoration-1")}>
+              <span className={cx("block leading-snug text-body", unread ? "font-medium text-ink" : "text-ink", n.href && "group-hover:underline underline-offset-4 decoration-1")}>
                 {unread && <span className="sr-only">{NOTIF[l].newSr}</span>}{n.title}
               </span>
-              {n.body && <span className="block text-[13.5px] text-muted mt-0.5 leading-snug">{n.body}</span>}
+              {n.body && <span className="block text-body-sm text-muted mt-0.5 leading-snug">{n.body}</span>}
               {n.meter && <TimeMeterInline m={n.meter} className="mt-2.5" l={l} />}
             </span>
             <span className="flex flex-col items-end gap-2 pt-0.5">
-              <time dateTime={new Date(n.created_at).toISOString()} title={fmtDayTime(n.created_at, l)} className="text-[12.5px] text-muted whitespace-nowrap tnum flex items-center gap-1.5">
+              <time dateTime={new Date(n.created_at).toISOString()} title={fmtDayTime(n.created_at, l)} className="text-meta text-muted whitespace-nowrap tnum flex items-center gap-1.5">
                 {unread && <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent" />}
                 {ago(n.created_at, l)}
               </time>
-              {n.href && <IconArrowRight aria-hidden width={16} height={16} className="text-accent-hover opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-[opacity,transform] duration-200" />}
+              {n.href && <IconArrowRight aria-hidden width={16} height={16} className="text-accent-hover opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-[opacity,transform] duration-fast" />}
             </span>
           </>
         );

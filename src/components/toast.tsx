@@ -106,7 +106,7 @@ function ToastItem({ t, undoLabel, onDone }: { t: Toast; undoLabel: string; onDo
   const [used, setUsed] = useState(false);
   return (
     <div role={t.tone === "error" ? "alert" : "status"}
-      className={`anim-sheet pointer-events-auto max-w-md w-full flex items-center justify-between gap-4 px-4 py-3 rounded-[10px] border text-[15px] ${t.tone === "error" ? "bg-paper border-late/50 text-late" : "bg-paper border-line-strong text-ink"}`}>
+      className={`anim-sheet pointer-events-auto max-w-md w-full flex items-center justify-between gap-4 px-4 py-3 rounded-md border text-body ${t.tone === "error" ? "bg-paper border-late/50 text-late" : "bg-paper border-line-strong text-ink"}`}>
       <span>{t.text}</span>
       {t.undo && (
         <button className="font-semibold text-accent-hover underline underline-offset-4 flex-none min-h-9 disabled:opacity-50" disabled={used}

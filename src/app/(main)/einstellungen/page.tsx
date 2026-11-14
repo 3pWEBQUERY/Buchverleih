@@ -56,11 +56,11 @@ export default async function Page() {
     <div>
       <PageTitle eyebrow={m.eyebrow} sub={m.sub}
         aside={
-          <div className="rounded-[10px] border border-line flex items-center gap-3.5 pl-3 pr-5 py-3 anim-rise min-w-0 max-w-full" style={{ animationDelay: "60ms" }}>
+          <div className="rounded-md border border-line flex items-center gap-3.5 pl-3 pr-5 py-3 anim-rise min-w-0 max-w-full" style={{ animationDelay: "60ms" }}>
             <Monogram name={user.first_name || "?"} seed={user.id} size={44} photo={user.avatar_key} />
             <span className="min-w-0 leading-tight">
               <span className="block font-medium truncate">{user.first_name} <span className="text-muted font-normal">· {labels(l).trustLabel[user.trust_level]}</span></span>
-              <span className="block text-[13px] text-muted truncate mt-0.5">{user.email}</span>
+              <span className="block text-meta text-muted truncate mt-0.5">{user.email}</span>
             </span>
           </div>
         }>
@@ -131,7 +131,7 @@ export default async function Page() {
           </StepSection>
 
           <StepSection id="konto-loeschen" n={4} title={<span className="text-late">{m.danger.title}</span>} desc={m.danger.desc}>
-            <div className="rounded-[10px] border border-late/35 bg-late/[0.03] p-5 md:p-6">
+            <div className="rounded-md border border-late/35 bg-late/[0.03] p-5 md:p-6">
               <DeleteAccount />
             </div>
           </StepSection>
@@ -142,15 +142,15 @@ export default async function Page() {
 }
 
 function Card({ children }: { children: ReactNode }) {
-  return <div className="rounded-[10px] border border-line divide-y divide-line">{children}</div>;
+  return <div className="rounded-md border border-line divide-y divide-line">{children}</div>;
 }
 
 function Row({ id, t: [label, text], children, className }: { id: string; t: [string, string]; children: ReactNode; className?: string }) {
   return (
     <div id={id} className={cx("scroll-mt-32 md:scroll-mt-20 lg:scroll-mt-10 p-5 md:p-6 2xl:grid 2xl:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] 2xl:gap-10", className)}>
       <div className="mb-4 2xl:mb-0">
-        <h3 className="font-medium text-[15.5px]">{label}</h3>
-        <p className="text-[13.5px] text-muted mt-1 leading-relaxed">{text}</p>
+        <h3 className="font-medium text-body">{label}</h3>
+        <p className="text-body-sm text-muted mt-1 leading-relaxed">{text}</p>
       </div>
       <div className="min-w-0">{children}</div>
     </div>

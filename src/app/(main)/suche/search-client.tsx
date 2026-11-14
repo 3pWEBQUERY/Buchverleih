@@ -22,7 +22,7 @@ import type { Center } from "./search-map";
 // Leaflet nur laden, wenn jemand die Karte öffnet
 const SearchMap = dynamic(() => import("./search-map"), {
   ssr: false,
-  loading: () => <div className="skeleton rounded-[12px] h-[62vh] min-h-[420px] max-h-[680px]" />,
+  loading: () => <div className="skeleton rounded-lg h-[62vh] min-h-[420px] max-h-[680px]" />,
 });
 type View = "list" | "map";
 
@@ -201,8 +201,8 @@ export function SearchClient({
     <div>
       <header className="mb-8 md:mb-10 anim-rise">
         <p className="eyebrow">{t.eyebrow(place)}</p>
-        <h1 className="display text-[32px] md:text-[44px] mt-2">{t.heading[0]}<em>{t.heading[1]}</em></h1>
-        <p className="text-[15.5px] md:text-[16px] text-ink-2 mt-3 max-w-xl leading-relaxed">{t.lead}</p>
+        <h1 className="display text-display mt-2">{t.heading[0]}<em>{t.heading[1]}</em></h1>
+        <p className="text-body-lg text-ink-2 mt-3 max-w-xl leading-relaxed">{t.lead}</p>
       </header>
 
       <form role="search" onSubmit={(e) => e.preventDefault()} className="relative anim-rise" style={{ animationDelay: "40ms" }}>
@@ -223,15 +223,15 @@ export function SearchClient({
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={onKeyDown}
           placeholder={t.inputLabel}
-          className="w-full h-14 md:h-[60px] bg-paper border border-line-strong rounded-[10px] pl-13 pr-14 text-[17px] md:text-[18px] tracking-[-0.01em] placeholder:text-muted/80 hover:border-ink-2 focus:outline-none focus:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20 transition-colors duration-150 [&::-webkit-search-cancel-button]:appearance-none"
+          className="w-full h-14 md:h-[60px] bg-paper border border-field rounded-md pl-13 pr-14 text-lead tracking-ui placeholder:text-muted hover:border-ink-2 focus:outline-none focus:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20 transition-colors duration-fast [&::-webkit-search-cancel-button]:appearance-none"
         />
         {q ? (
           <button type="button" onClick={() => { setQ(""); inputRef.current?.focus(); }} aria-label={t.clear}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-[6px] text-ink-2 hover:bg-paper-2 hover:text-ink transition-colors">
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-sm text-ink-2 hover:bg-paper-2 hover:text-ink transition-colors">
             <IconClose />
           </button>
         ) : (
-          <kbd aria-hidden className="hidden md:grid absolute right-5 top-1/2 -translate-y-1/2 h-7 w-7 place-items-center text-[13px] text-muted border border-line-strong rounded-[6px] font-sans">/</kbd>
+          <kbd aria-hidden className="hidden md:grid absolute right-5 top-1/2 -translate-y-1/2 h-7 w-7 place-items-center text-meta text-muted border border-line-strong rounded-sm font-sans">/</kbd>
         )}
       </form>
 
@@ -243,11 +243,11 @@ export function SearchClient({
 
       <div className="mt-10 md:mt-12 min-w-0" aria-busy={loading}>
         <p className="sr-only" aria-live="polite">{summary ?? ""}</p>
-        {error && <p role="alert" className="rounded-[10px] bg-late/[0.06] text-late px-5 py-4 mb-5">{error}</p>}
+        {error && <p role="alert" className="rounded-md bg-late/[0.06] text-late px-5 py-4 mb-5">{error}</p>}
 
         {results !== null && results.length > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6 md:mb-8">
-            <p className="text-[14px] text-muted" aria-hidden>{summary}</p>
+            <p className="text-body-sm text-muted" aria-hidden>{summary}</p>
             <ViewSwitch view={view} onChange={switchView} t={t.view} />
           </div>
         )}
@@ -270,7 +270,7 @@ export function SearchClient({
             title={resultsFor ? <>{t.hitsFor[0]}{resultsFor}{t.hitsFor[1]}</> : stage.length > 0 ? t.allAround : t.around}
             desc={summary ?? undefined}
             aside={<span className={cx("transition-opacity", loading ? "opacity-100" : "opacity-0")}>{t.searching}</span>}>
-            <ul className={cx("grid xl:grid-cols-2 gap-3 transition-opacity duration-150", loading && "opacity-60")}>
+            <ul className={cx("grid xl:grid-cols-2 gap-3 transition-opacity duration-fast", loading && "opacity-60")}>
               {rest.map((h, i) => (
                 <ResultCard key={h.work_id} h={h} href={href(h)} i={i} />
               ))}
@@ -292,13 +292,13 @@ export function SearchClient({
 function ViewSwitch({ view, onChange, t }: { view: View; onChange: (v: View) => void; t: { label: string; list: string; map: string } }) {
   const opt = (v: View, label: string, icon: React.ReactNode) => (
     <button type="button" role="radio" aria-checked={view === v} onClick={() => onChange(v)}
-      className={cx("h-8 px-3 rounded-[5px] inline-flex items-center gap-1.5 text-[13.5px] font-medium transition-colors duration-150",
+      className={cx("h-8 px-3 rounded-sm inline-flex items-center gap-1.5 text-body-sm font-medium transition-colors duration-fast",
         view === v ? "bg-paper text-ink border border-line" : "text-ink-2 hover:text-ink border border-transparent")}>
       {icon}{label}
     </button>
   );
   return (
-    <div role="radiogroup" aria-label={t.label} className="inline-flex items-center gap-0.5 p-0.5 rounded-[7px] bg-paper-2">
+    <div role="radiogroup" aria-label={t.label} className="inline-flex items-center gap-0.5 p-0.5 rounded-sm bg-paper-2">
       {opt("list", t.list, <svg aria-hidden viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5.5 4h8M5.5 8h8M5.5 12h8" /><circle cx="2.5" cy="4" r=".6" fill="currentColor" /><circle cx="2.5" cy="8" r=".6" fill="currentColor" /><circle cx="2.5" cy="12" r=".6" fill="currentColor" /></svg>)}
       {opt("map", t.map, <svg aria-hidden viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M1.5 3.5l4-1.5 5 2 4-1.5v10l-4 1.5-5-2-4 1.5z" /><path d="M5.5 2v10M10.5 4v10" /></svg>)}
     </div>
@@ -307,7 +307,7 @@ function ViewSwitch({ view, onChange, t }: { view: View; onChange: (v: View) => 
 
 /* ------------------------------------------------------------------ Filter */
 
-const chip = "h-9 px-3.5 rounded-[6px] text-[13.5px] font-medium inline-flex items-center gap-2 whitespace-nowrap flex-none border transition-[background-color,color,border-color] duration-150";
+const chip = "h-9 px-3.5 rounded-sm text-body-sm font-medium inline-flex items-center gap-2 whitespace-nowrap flex-none border transition-[background-color,color,border-color] duration-fast";
 const chipOff = "border-line bg-paper text-ink-2 hover:border-ink-2 hover:text-ink";
 const chipOn = "border-accent bg-accent-soft/50 text-accent-hover";
 
@@ -317,15 +317,15 @@ function FilterChips({ f, set, reset, n, hasOrigin }: { f: Filters; set: <K exte
   const L = labels(l);
   return (
     <div className="mt-3 -mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto md:overflow-visible anim-rise [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ animationDelay: "80ms" }}>
-      <div role="group" aria-label={t.filters} className="flex md:flex-wrap items-center gap-2 w-max md:w-full pb-1 md:p-2 md:rounded-[10px] md:bg-paper-2">
+      <div role="group" aria-label={t.filters} className="flex md:flex-wrap items-center gap-2 w-max md:w-full pb-1 md:p-2 md:rounded-md md:bg-paper-2">
         <div role="radiogroup" aria-label={t.radiusAria}
-          className={cx("flex-none inline-flex items-center h-9 pl-3 pr-1 gap-0.5 rounded-[6px] border border-line bg-paper", !hasOrigin && "opacity-50 pointer-events-none")}>
-          <span className="text-[13px] font-medium text-muted mr-1.5">{t.radius}</span>
+          className={cx("flex-none inline-flex items-center h-9 pl-3 pr-1 gap-0.5 rounded-sm border border-line bg-paper", !hasOrigin && "opacity-50 pointer-events-none")}>
+          <span className="text-meta font-medium text-muted mr-1.5">{t.radius}</span>
           {RADII.map((r) => {
             const on = f.radius === r;
             return (
               <button key={r} type="button" role="radio" aria-checked={on} onClick={() => set("radius", r)}
-                className={cx("h-7 min-w-7 px-2 rounded-[4px] text-[13px] font-medium tnum transition-colors duration-150 relative after:absolute after:content-[''] after:-inset-2", on ? "bg-accent text-accent-ink" : "text-ink-2 hover:bg-paper-2")}>
+                className={cx("h-7 min-w-7 px-2 rounded-xs text-meta font-medium tnum transition-colors duration-fast relative after:absolute after:content-[''] after:-inset-2", on ? "bg-accent text-accent-ink" : "text-ink-2 hover:bg-paper-2")}>
                 {r}{on && <span className="font-medium"> km</span>}
               </button>
             );
@@ -357,7 +357,7 @@ function FilterChips({ f, set, reset, n, hasOrigin }: { f: Filters; set: <K exte
           options={[["0", t.anyCondition], ["1", L.conditionLabel[1]], ["2", `${L.conditionLabel[2]} ${t.orBetter}`], ["3", `${L.conditionLabel[3]} ${t.orBetter}`]]} />
 
         {n > 0 && (
-          <button type="button" onClick={reset} className="h-9 px-3 text-[13.5px] font-medium text-accent-hover hover:underline underline-offset-4 flex-none md:ml-auto">
+          <button type="button" onClick={reset} className="h-9 px-3 text-body-sm font-medium text-accent-hover hover:underline underline-offset-4 flex-none md:ml-auto">
             {t.reset}
           </button>
         )}
@@ -389,7 +389,7 @@ function Stage({ hits, href }: { hits: WorkHit[]; href: (h: WorkHit) => string }
   const l = useLocale();
   const t = SEARCH[l];
   return (
-    <div className="surface-night rounded-[12px] px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5 -mx-1 md:mx-0 anim-rise">
+    <div className="surface-night rounded-lg px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5 -mx-1 md:mx-0 anim-rise">
       <BookRow label={t.stageLabel} height={165}
         items={hits.map((h) => ({
           id: h.work_id, work_id: h.work_id, title: h.title, authors: h.authors,
@@ -405,25 +405,25 @@ function ResultCard({ h, href, i }: { h: WorkHit; href: string; i: number }) {
   const dist = fmtDistance(h.nearest_m, l);
   return (
     <li className="anim-rise min-w-0" style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
-      <Link href={href} className="book group rounded-[10px] border border-line h-full grid grid-cols-[64px_minmax(0,1fr)] md:grid-cols-[72px_minmax(0,1fr)] gap-4 md:gap-5 p-4 md:p-5 hover:border-accent transition-colors duration-150">
+      <Link href={href} className="book group rounded-md border border-line h-full grid grid-cols-[64px_minmax(0,1fr)] md:grid-cols-[72px_minmax(0,1fr)] gap-4 md:gap-5 p-4 md:p-5 hover:border-accent transition-colors duration-fast">
         <span className="self-start">
           <span className="book-face block md:hidden"><Cover l={l} data={coverOf(h)} width={64} height={96} uniform /></span>
           <span className="book-face hidden md:block"><Cover l={l} data={coverOf(h)} width={72} height={108} uniform /></span>
         </span>
         <div className="min-w-0 flex flex-col">
           <div className="flex items-start justify-between gap-3">
-            <p className="font-serif text-[19px] md:text-[20px] leading-[1.15] line-clamp-2">{h.title}</p>
-            {dist && <span className="flex-none text-[13px] font-medium tnum text-ink-2 pt-0.5">{dist}</span>}
+            <p className="font-serif text-title-sm leading-title line-clamp-2">{h.title}</p>
+            {dist && <span className="flex-none text-meta font-medium tnum text-ink-2 pt-0.5">{dist}</span>}
           </div>
-          {h.authors.length > 0 && <p className="text-[13.5px] text-muted mt-0.5 truncate">{h.authors.join(", ")}</p>}
-          <div className="mt-auto pt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px]">
+          {h.authors.length > 0 && <p className="text-body-sm text-muted mt-0.5 truncate">{h.authors.join(", ")}</p>}
+          <div className="mt-auto pt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-meta">
             <span className={cx("inline-flex items-center gap-1.5 font-medium", h.available_now ? "text-ok" : "text-ink-2")}>
               <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", h.available_now ? "bg-ok" : "bg-lent")} />
               <span className="sr-only">{availabilityText(h, l)}</span>
               <span aria-hidden>{availabilityChip(h, l)}</span>
             </span>
             {h.offers.length > 0 && <span className="text-muted">{h.offers.map((o) => labels(l).offerLabel[o]).join(" · ")}</span>}
-            <IconArrowRight aria-hidden width={16} height={16} className="ml-auto text-accent-hover opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-[opacity,transform] duration-200" />
+            <IconArrowRight aria-hidden width={16} height={16} className="ml-auto text-accent-hover opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-[opacity,transform] duration-fast" />
           </div>
         </div>
       </Link>
@@ -435,7 +435,7 @@ function ResultSkeleton() {
   return (
     <ul aria-hidden className="grid xl:grid-cols-2 gap-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <li key={i} className="rounded-[10px] border border-line flex gap-5 p-5">
+        <li key={i} className="rounded-md border border-line flex gap-5 p-5">
           <div className="skeleton w-[72px] h-[108px] flex-none" />
           <div className="flex-1">
             <div className="skeleton h-6" style={{ width: `${55 + ((i * 17) % 35)}%` }} />
@@ -473,23 +473,23 @@ function PlzBar({ plz, place, onSet }: { plz: string; place: string | null; onSe
 
   if (!editing && plz) {
     return (
-      <p className="mt-4 text-[14px] text-muted flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[6px] bg-paper-2 text-ink-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent" /> <span className="tnum">{plz}</span>{place && <> {place}</>}</span>
+      <p className="mt-4 text-body-sm text-muted flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-sm bg-paper-2 text-ink-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent" /> <span className="tnum">{plz}</span>{place && <> {place}</>}</span>
         <button type="button" className="underline underline-offset-4 hover:text-ink" onClick={() => setEditing(true)}>{t.change}</button>
         <Link href="/anmelden?next=/suche" className="underline underline-offset-4 hover:text-ink">{t.login}</Link>
       </p>
     );
   }
   return (
-    <form onSubmit={submit} className="mt-4 rounded-[10px] border border-line p-5 md:p-6 flex flex-wrap items-end justify-between gap-4">
-      <label htmlFor="suche-plz" className="block text-[15px] text-ink-2 max-w-md">{t.ask}</label>
+    <form onSubmit={submit} className="mt-4 rounded-md border border-line p-5 md:p-6 flex flex-wrap items-end justify-between gap-4">
+      <label htmlFor="suche-plz" className="block text-body text-ink-2 max-w-md">{t.ask}</label>
       <div className="flex items-center gap-2">
         <input id="suche-plz" inputMode="numeric" autoComplete="postal-code" maxLength={4} placeholder="8180" value={value}
           onChange={(e) => setValue(e.target.value.replace(/\D/g, ""))} aria-describedby={err ? "suche-plz-err" : undefined}
-          className="w-28 h-11 bg-paper border border-line-strong rounded-[6px] px-5 text-[16px] tnum tracking-[0.08em] placeholder:text-muted/70 focus:outline-none focus:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20" />
+          className="w-28 h-11 bg-paper border border-field rounded-sm px-5 text-body-lg tnum tracking-caps placeholder:text-muted focus:outline-none focus:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20" />
         <Button type="submit" variant="primary" disabled={value.length !== 4}>{t.show}</Button>
       </div>
-      {err && <span id="suche-plz-err" role="alert" className="basis-full block text-sm text-late">{err}</span>}
+      {err && <span id="suche-plz-err" role="alert" className="basis-full block text-body-sm text-late">{err}</span>}
     </form>
   );
 }
@@ -536,12 +536,12 @@ function NoHits({ q, f, n, loggedIn, widen, reset }: { q: string; f: Filters; n:
 
   return (
     <div className="anim-rise space-y-4">
-      <div className="rounded-[10px] border border-dashed border-line-strong p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6">
+      <div className="rounded-md border border-dashed border-line-strong p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6">
         <div aria-hidden className="flex items-end gap-1.5 flex-none">
-          {[0, 1, 2].map((k) => <span key={k} className="block w-[30px] h-[45px] rounded-[3px] border border-dashed border-line-strong" />)}
+          {[0, 1, 2].map((k) => <span key={k} className="block w-[30px] h-[45px] rounded-xs border border-dashed border-line-strong" />)}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-ink text-[17px] max-w-xl">{sentence}</p>
+          <p className="text-ink text-lead max-w-xl">{sentence}</p>
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
             {f.radius < 25 && <Button type="button" variant="secondary" onClick={widen}>{t.widen}</Button>}
             {n > 0 && <Button type="button" variant="quiet" onClick={reset}>{t.reset}</Button>}
@@ -550,7 +550,7 @@ function NoHits({ q, f, n, loggedIn, widen, reset }: { q: string; f: Filters; n:
       </div>
 
       {q.length >= 2 && !loggedIn && (
-        <div className="rounded-[10px] border border-line p-5 md:p-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="rounded-md border border-line p-5 md:p-6 flex flex-wrap items-center justify-between gap-4">
           <p className="text-ink-2 max-w-lg">{t.guest}</p>
           <LinkButton href={`/anmelden?next=${encodeURIComponent(`/suche?q=${q}`)}`} variant="secondary">{t.login}</LinkButton>
         </div>
@@ -558,19 +558,19 @@ function NoHits({ q, f, n, loggedIn, widen, reset }: { q: string; f: Filters; n:
 
       {q.length >= 2 && loggedIn && works && (
         works.length === 0 ? (
-          <p className="text-muted text-sm px-1">{t.notInCatalog(q)}</p>
+          <p className="text-muted text-body-sm px-1">{t.notInCatalog(q)}</p>
         ) : (
-          <div className="rounded-[10px] border border-line">
-            <p className="px-5 md:px-6 pt-5 pb-3 text-[14px] text-muted">{t.wishIntro}</p>
+          <div className="rounded-md border border-line">
+            <p className="px-5 md:px-6 pt-5 pb-3 text-body-sm text-muted">{t.wishIntro}</p>
             <ul className="divide-y divide-line border-t border-line">
               {works.map((w) => (
                 <li key={w.work_id} className="flex items-center justify-between gap-4 px-5 md:px-6 py-3.5">
                   <div className="min-w-0">
-                    <div className="font-serif text-[18px] leading-tight truncate">{w.title}</div>
-                    {w.authors.length > 0 && <div className="text-sm text-muted truncate">{w.authors.join(", ")}</div>}
+                    <div className="font-serif text-lead leading-tight truncate">{w.title}</div>
+                    {w.authors.length > 0 && <div className="text-body-sm text-muted truncate">{w.authors.join(", ")}</div>}
                   </div>
                   {added.has(w.work_id) ? (
-                    <Link href="/wunschliste" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ok hover:underline underline-offset-4"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok" /> {t.onList}</Link>
+                    <Link href="/wunschliste" className="inline-flex items-center gap-1.5 text-meta font-medium text-ok hover:underline underline-offset-4"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok" /> {t.onList}</Link>
                   ) : (
                     <Button type="button" variant={works.length === 1 ? "primary" : "secondary"} size="sm" disabled={busy === w.work_id} onClick={() => wish(w.work_id)}>
                       {t.addWish}

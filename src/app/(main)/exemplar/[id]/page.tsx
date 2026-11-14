@@ -102,7 +102,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   return (
     <div>
-      <Link href={own ? "/regal" : "/suche"} className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
+      <Link href={own ? "/regal" : "/suche"} className="inline-flex items-center gap-1.5 text-body-sm font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
         <IconArrowLeft width={16} height={16} /> {own ? t.myShelf : t.search}
       </Link>
 
@@ -110,13 +110,13 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         {/* ------------------------------------------------ Produktblatt */}
         <aside className="lg:sticky lg:top-8 space-y-5">
           <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-5 items-end lg:block lg:space-y-5">
-            <div className="lg:rounded-[12px] lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center anim-cover">
+            <div className="lg:rounded-lg lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center anim-cover">
               <span className="block lg:hidden"><Cover priority data={cover} width={104} height={156} uniform l={l} /></span>
               <span className="hidden lg:block"><Cover priority large data={cover} width={220} height={330} uniform l={l} /></span>
             </div>
             <div className="anim-rise min-w-0">
-              <h1 lang="de" className="font-serif text-[24px] md:text-[32px] leading-[1.1] hyphens-auto break-words">{copy.title}</h1>
-              <p className="text-[14.5px] md:text-[15px] text-ink-2 mt-1.5">{copy.authors.join(", ")}</p>
+              <h1 lang="de" className="font-serif text-title leading-display hyphens-auto break-words">{copy.title}</h1>
+              <p className="text-body text-ink-2 mt-1.5">{copy.authors.join(", ")}</p>
             </div>
           </div>
 
@@ -124,7 +124,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <ul className="grid grid-cols-4 gap-2" aria-label={t.photosAria}>
               {extraPhotos.slice(0, 4).map((p) => (
                 <li key={p.id} className="aspect-[3/4]">
-                  <a href={imageUrl(p.key, false)} target="_blank" className="block h-full rounded-[8px] overflow-hidden border border-line hover:border-ink-2 transition-colors">
+                  <a href={imageUrl(p.key, false)} target="_blank" className="block h-full rounded-md overflow-hidden border border-line hover:border-ink-2 transition-colors">
                     { }
                     <img src={imageUrl(p.key)} alt={t.photoAlt(copy.title)} className="h-full w-full object-cover" />
                   </a>
@@ -133,28 +133,28 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             </ul>
           )}
 
-          <div className="rounded-[10px] border border-line divide-y divide-line">
+          <div className="rounded-md border border-line divide-y divide-line">
             <div className="px-4 py-3.5 flex items-center justify-between gap-3">
-              <span className="inline-flex items-center gap-2 text-[14px] font-medium"><span aria-hidden className={cx("h-2 w-2 rounded-full", toneDot[st.tone])} />{st.text}</span>
-              {dist && <span className="text-[13px] text-muted tnum">{dist}</span>}
+              <span className="inline-flex items-center gap-2 text-body-sm font-medium"><span aria-hidden className={cx("h-2 w-2 rounded-full", toneDot[st.tone])} />{st.text}</span>
+              {dist && <span className="text-meta text-muted tnum">{dist}</span>}
             </div>
-            <dl className="px-4 py-3 text-[13.5px] grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
+            <dl className="px-4 py-3 text-body-sm grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
               {facts.map(([k, v]) => (
                 <div key={k} className="contents"><dt className="text-muted">{k}</dt><dd className="text-right tnum truncate">{v}</dd></div>
               ))}
             </dl>
             <div className="px-4 py-3.5">
               <div className="flex items-baseline justify-between gap-3">
-                <p className="text-[13.5px] text-muted">{t.condition}</p>
-                <p className="text-[13.5px] font-medium">{L.conditionLabel[copy.condition]}</p>
+                <p className="text-body-sm text-muted">{t.condition}</p>
+                <p className="text-body-sm font-medium">{L.conditionLabel[copy.condition]}</p>
               </div>
               <div aria-hidden className="mt-2 grid grid-cols-4 gap-1">
                 {[1, 2, 3, 4].map((c) => (
                   <span key={c} className={cx("h-1.5 rounded-full", c <= copy.condition ? (c === copy.condition ? "bg-accent" : "bg-ink-2/70") : "bg-paper-3")} />
                 ))}
               </div>
-              <div aria-hidden className="mt-1.5 flex justify-between text-[11px] text-muted"><span>{t.condNew}</span><span>{t.condWorn}</span></div>
-              <p className="text-[13px] text-muted leading-snug mt-2.5">
+              <div aria-hidden className="mt-1.5 flex justify-between text-caption text-muted"><span>{t.condNew}</span><span>{t.condWorn}</span></div>
+              <p className="text-meta text-muted leading-snug mt-2.5">
                 {L.conditionHint[copy.condition]}.{copy.condition_note && <> {t.note} <span className="text-ink">«{copy.condition_note}»</span></>}
               </p>
             </div>
@@ -162,11 +162,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
           <div className="flex flex-col gap-2">
             {own && (
-              <Link href={`/regal/${copy.id}`} className="h-11 rounded-[6px] bg-accent-soft text-accent-hover font-medium text-[14.5px] inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-accent-ink transition-colors">
+              <Link href={`/regal/${copy.id}`} className="h-11 rounded-sm bg-accent-soft text-accent-hover font-medium text-body-sm inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-accent-ink transition-colors">
                 {t.edit} <IconArrowRight width={16} height={16} />
               </Link>
             )}
-            <Link href={`/titel/${copy.work_id}`} className="h-11 rounded-[6px] border border-line-strong font-medium text-[14.5px] inline-flex items-center justify-center gap-2 hover:border-accent hover:text-accent-hover transition-colors">
+            <Link href={`/titel/${copy.work_id}`} className="h-11 rounded-sm border border-field font-medium text-body-sm inline-flex items-center justify-center gap-2 hover:border-accent hover:text-accent-hover transition-colors">
               {sameWork.n > 0 ? t.compare(sameWork.n) : t.toTitle} <IconArrowRight width={16} height={16} />
             </Link>
             {!own && <ShareButton title={copy.title} text={t.shareText(copy.title)} path={`/titel/${copy.work_id}`} />}
@@ -178,7 +178,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <div className="min-w-0">
           <header className="anim-rise">
             <p className="eyebrow">{copy.offers.map((o) => L.offerLabel[o]).join(" · ") || t.notOffered}</p>
-            <h2 className="display text-[28px] md:text-[38px] mt-2">
+            <h2 className="display text-display mt-2">
               {(() => {
                 const h = own ? t.heads.own : copy.offers.includes("lend") ? t.heads.lend : copy.offers.includes("swap") ? t.heads.swap : t.heads.gift;
                 return <>{h[0]}<em>{h[1]}</em></>;
@@ -187,7 +187,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             {!own && quick.length > 0 && (
               <ul className="mt-5 flex flex-wrap gap-1.5" aria-label={t.glance}>
                 {quick.map((q) => (
-                  <li key={q.text} className={cx("inline-flex items-center gap-1.5 h-8 px-3 rounded-[8px] text-[13px] font-medium",
+                  <li key={q.text} className={cx("inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-meta font-medium",
                     q.tone === "ok" ? "bg-ok/10 text-ok" : q.tone === "wait" ? "bg-wait/10 text-ink-2" : "bg-paper-2 text-ink-2")}>
                     {q.tone !== "plain" && <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", q.tone === "ok" ? "bg-ok" : "bg-wait")} />}
                     {q.text}
@@ -198,13 +198,13 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           </header>
 
           {/* Wer verleiht – vor der Anfrage sichtbar (PRD 6.1) */}
-          <section aria-labelledby="verleiher" className="mt-10 rounded-[10px] border border-line p-5 md:p-6 grid sm:grid-cols-[minmax(0,1fr)_auto] gap-6 items-center anim-rise" style={{ animationDelay: "60ms" }}>
+          <section aria-labelledby="verleiher" className="mt-10 rounded-md border border-line p-5 md:p-6 grid sm:grid-cols-[minmax(0,1fr)_auto] gap-6 items-center anim-rise" style={{ animationDelay: "60ms" }}>
             <div className="flex items-center gap-4 min-w-0">
               <Monogram name={copy.owner_name} seed={copy.owner_id} size={56} photo={copy.owner_avatar} />
               <div className="min-w-0">
-                <p className="text-[13px] text-muted">{own ? t.yourCopy : t.lends}</p>
-                <Link id="verleiher" href={`/profil/${copy.owner_id}`} className="text-[22px] font-[560] tracking-[-0.03em] leading-tight hover:underline underline-offset-4 decoration-1">{copy.owner_name}</Link>
-                <p className="text-[13.5px] text-muted mt-0.5">
+                <p className="text-meta text-muted">{own ? t.yourCopy : t.lends}</p>
+                <Link id="verleiher" href={`/profil/${copy.owner_id}`} className="text-title-sm font-title tracking-title leading-tight hover:underline underline-offset-4 decoration-1">{copy.owner_name}</Link>
+                <p className="text-body-sm text-muted mt-0.5">
                   {L.trustLabel[copy.owner_trust] ?? t.newTrust}{copy.owner_municipality && ` · ${copy.owner_municipality}`} · {t.since(fmtMonthYear(copy.owner_since, l))}
                 </p>
               </div>
@@ -212,9 +212,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             {owner && (
               <dl className="grid grid-cols-3 gap-2">
                 {[[String(owner.lent), t.stats.lent], [String(owner.borrowed), t.stats.borrowed], [owner.punctual_pct == null ? "–" : `${owner.punctual_pct}%`, t.stats.punctual]].map(([n, lab]) => (
-                  <div key={lab} className="rounded-[8px] bg-paper-2 px-4 py-3 min-w-[84px] flex flex-col-reverse">
-                    <dt className="text-[12px] text-muted mt-1">{lab}</dt>
-                    <dd className="text-[24px] font-[560] tracking-[-0.04em] leading-none tnum">{n}</dd>
+                  <div key={lab} className="rounded-md bg-paper-2 px-4 py-3 min-w-[84px] flex flex-col-reverse">
+                    <dt className="text-caption text-muted mt-1">{lab}</dt>
+                    <dd className="text-title font-title tracking-display leading-none tnum">{n}</dd>
                   </div>
                 ))}
               </dl>
@@ -222,7 +222,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           </section>
 
           {owner && !own && (owner.shared_circles.length > 0 || owner.good_ratings > 0) && (
-            <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 px-1 text-[13px] text-muted">
+            <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 px-1 text-meta text-muted">
               {owner.shared_circles.length > 0 && <li>{t.together} <span className="text-ink-2 font-medium">{owner.shared_circles.join(", ")}</span></li>}
               {owner.good_ratings > 0 && <li><span className="text-ink-2 font-medium tnum">{owner.good_ratings}</span> {t.goodRatings(owner.good_ratings)}</li>}
             </ul>
@@ -241,11 +241,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                     ? [t.giveBack, t.giveBackText(loanDays, copy.auto_extend)]
                     : [t.keep, copy.offers.includes("swap") ? t.keepSwap : t.keepGift],
                 ].map(([title, d], i) => (
-                  <li key={title} className="rounded-[10px] bg-paper-2 px-4 py-3.5">
-                    <p className="flex items-center gap-2 text-[14px] font-semibold">
-                      <span className="h-6 w-6 rounded-full bg-paper text-accent-hover text-[12px] grid place-items-center tnum border border-line">{i + 1}</span>{title}
+                  <li key={title} className="rounded-md bg-paper-2 px-4 py-3.5">
+                    <p className="flex items-center gap-2 text-body-sm font-semibold">
+                      <span className="h-6 w-6 rounded-full bg-paper text-accent-hover text-caption grid place-items-center tnum border border-line">{i + 1}</span>{title}
                     </p>
-                    <p className="text-[13px] text-muted mt-1.5 leading-snug">{d}</p>
+                    <p className="text-meta text-muted mt-1.5 leading-snug">{d}</p>
                   </li>
                 ))}
               </ol>
@@ -253,7 +253,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           )}
 
           {!own && copy.owner_demo && (
-            <div className="mt-8 rounded-[10px] border border-dashed border-line-strong p-5 text-[14.5px] text-ink-2">
+            <div className="mt-8 rounded-md border border-dashed border-line-strong p-5 text-body-sm text-ink-2">
               <p className="font-medium text-ink">{t.demoTitle}</p>
               <p className="mt-1">{t.demoText}</p>
             </div>
@@ -274,13 +274,13 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           {own && cal && (
             <section className="mt-12 pt-12 border-t border-line" aria-labelledby="kalender">
               <div className="grid md:grid-cols-[56px_minmax(0,1fr)] gap-x-4 gap-y-1 mb-7">
-                <span className="text-[13px] tnum text-muted pt-1.5">01</span>
+                <span className="text-meta tnum text-muted pt-1.5">01</span>
                 <div>
-                  <h2 id="kalender" className="text-[24px] md:text-[28px] font-[560] tracking-[-0.03em]">{t.calTitle}</h2>
-                  <p className="text-[15px] text-muted mt-1.5">{t.calDesc}</p>
+                  <h2 id="kalender" className="text-title font-title tracking-title">{t.calTitle}</h2>
+                  <p className="text-body text-muted mt-1.5">{t.calDesc}</p>
                 </div>
               </div>
-              <div className="md:pl-[72px]"><div className="rounded-[10px] border border-line p-5 md:p-6"><CalendarView cal={cal} /></div></div>
+              <div className="md:pl-[72px]"><div className="rounded-md border border-line p-5 md:p-6"><CalendarView cal={cal} /></div></div>
             </section>
           )}
         </div>

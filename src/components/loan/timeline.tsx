@@ -89,7 +89,7 @@ export function Timeline({ loan, l = "de" }: { loan: LoanView; l?: Locale }) {
     <div>
       <div className="flex items-baseline justify-between gap-4 mb-5">
         <p className="eyebrow">{m.title}</p>
-        <p className="text-[12.5px] text-muted tnum">
+        <p className="text-meta text-muted tnum">
           {ended ? m.ended : current ? m.stepOf(cur + 1, steps.length) : m.doneOf(reached, steps.length)}
         </p>
       </div>
@@ -103,10 +103,10 @@ export function Timeline({ loan, l = "de" }: { loan: LoanView; l?: Locale }) {
               {/* Knoten und Verbindung zum nächsten Schritt */}
               <div aria-hidden className="flex flex-col md:flex-row items-center flex-none">
                 <span className={cx(
-                  "relative h-7 w-7 rounded-full grid place-items-center flex-none text-[12px] font-semibold tnum transition-colors",
+                  "relative h-7 w-7 rounded-full grid place-items-center flex-none text-caption font-semibold tnum transition-colors",
                   st.done ? "bg-ink-2 text-paper"
                     : isCur ? (bad ? "bg-late text-paper" : "bg-accent text-accent-ink")
-                    : ended ? "border border-line text-muted/60" : "border-[1.5px] border-line-strong text-muted",
+                    : ended ? "border border-line text-muted" : "border-[1.5px] border-line-strong text-muted",
                 )}>
                   {st.done ? <IconCheck width={14} height={14} /> : i + 1}
                   {isCur && <span className={cx("absolute -inset-1 rounded-full border-2", bad ? "border-late/30" : "border-accent/30")} />}
@@ -117,13 +117,13 @@ export function Timeline({ loan, l = "de" }: { loan: LoanView; l?: Locale }) {
                 )}
               </div>
               <div className={cx("min-w-0 pt-0.5 md:pt-3.5 md:pr-4", !last && "pb-5 md:pb-0")}>
-                <p className={cx("text-[14px] leading-tight", st.done || isCur ? "font-semibold text-ink" : "font-medium text-muted")}>
+                <p className={cx("text-body-sm leading-tight", st.done || isCur ? "font-semibold text-ink" : "font-medium text-muted")}>
                   {st.label}
                   {!st.done && !isCur && <span className="sr-only">{m.open}</span>}
                 </p>
-                {st.note && <p className={cx("text-[12.5px] mt-1 leading-snug tnum", bad ? "text-late" : isCur ? "text-ink-2" : "text-muted")}>{st.note}{st.time && <span className="md:block"><span className="md:hidden">, </span>{m.clock(st.time)}</span>}</p>}
+                {st.note && <p className={cx("text-meta mt-1 leading-snug tnum", bad ? "text-late" : isCur ? "text-ink-2" : "text-muted")}>{st.note}{st.time && <span className="md:block"><span className="md:hidden">, </span>{m.clock(st.time)}</span>}</p>}
                 {isCur && st.chip && (
-                  <span className={cx("inline-flex items-center gap-1.5 mt-2 h-6 px-2 rounded-[6px] text-[12px] font-semibold tnum",
+                  <span className={cx("inline-flex items-center gap-1.5 mt-2 h-6 px-2 rounded-sm text-caption font-semibold tnum",
                     bad ? "bg-late/10 text-late" : "bg-accent-soft text-accent-hover")}>
                     <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full live-dot", bad ? "bg-late" : "bg-accent")} />{st.chip}
                   </span>
@@ -135,7 +135,7 @@ export function Timeline({ loan, l = "de" }: { loan: LoanView; l?: Locale }) {
       </ol>
 
       {(ended || s === "lost" || s === "disputed") && (
-        <p className={cx("mt-3 text-[14px]", s === "lost" || s === "disputed" ? "text-late" : "text-muted")}>
+        <p className={cx("mt-3 text-body-sm", s === "lost" || s === "disputed" ? "text-late" : "text-muted")}>
           {labels(l).statusLabel[s]}{t.closed_at && ended ? m.on(fmtDay(t.closed_at, l)) : ""}
         </p>
       )}

@@ -132,8 +132,8 @@ export function Erfassen({ initial }: { initial: Added[] }) {
     <div>
       <header className="anim-rise">
         <p className="eyebrow">{t.eyebrow}</p>
-        <h1 className="display text-[32px] md:text-[44px] mt-2">{t.heading[0]}<em>{t.heading[1]}</em></h1>
-        <p className="text-[15.5px] md:text-[16px] text-ink-2 mt-3 leading-relaxed max-w-2xl">
+        <h1 className="display text-display mt-2">{t.heading[0]}<em>{t.heading[1]}</em></h1>
+        <p className="text-body-lg text-ink-2 mt-3 leading-relaxed max-w-2xl">
           {t.lead}
         </p>
       </header>
@@ -153,23 +153,23 @@ export function Erfassen({ initial }: { initial: Added[] }) {
           <StepSection id="finden" n={2} title={t.step2[tab][0]} desc={t.step2[tab][1]}>
             {tab === "scan" && (
               <div className="space-y-4">
-                <div className="rounded-[12px] border border-line bg-paper-2 p-2.5 md:p-3">
+                <div className="rounded-lg border border-line bg-paper-2 p-2.5 md:p-3">
                   <div className="flex items-center justify-between gap-3 px-2 pt-1 pb-2.5">
-                    <p className="text-[12.5px] font-medium text-ink-2 flex items-center gap-2">
+                    <p className="text-meta font-medium text-ink-2 flex items-center gap-2">
                       <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", noCamera ? "bg-done" : pending || looking ? "bg-wait" : "bg-accent live-dot")} />
                       {noCamera ? t.cam.none : looking ? t.cam.looking : pending ? t.cam.paused : t.cam.ready}
                     </p>
-                    <p className="text-[12.5px] text-muted hidden sm:block">{t.ean}</p>
+                    <p className="text-meta text-muted hidden sm:block">{t.ean}</p>
                   </div>
-                  <div className={cx("overflow-hidden rounded-[8px] transition-[max-height] duration-300 ease-[var(--ease-out-quart)]", pending || looking ? "max-h-32" : "max-h-[70vh]")}>
-                    <Scanner mode="isbn" continuous paused={Boolean(pending || looking)} onResult={lookup} fallbackHint={t.fallback} className="!rounded-[8px] bg-paper" onUnavailable={() => setNoCamera(true)} />
+                  <div className={cx("overflow-hidden rounded-md transition-[max-height] duration-base ease-out", pending || looking ? "max-h-32" : "max-h-[70vh]")}>
+                    <Scanner mode="isbn" continuous paused={Boolean(pending || looking)} onResult={lookup} fallbackHint={t.fallback} className="!rounded-md bg-paper" onUnavailable={() => setNoCamera(true)} />
                   </div>
                 </div>
 
                 {!pending && !looking && (
-                  <form className="rounded-[10px] border border-line p-4 md:p-5" onSubmit={(e) => { e.preventDefault(); if (manualIsbn.trim()) lookup(manualIsbn); }}>
-                    <label htmlFor="isbn-hand" className="font-medium text-[15px] block">{t.isbnHand}</label>
-                    <p className="text-[13px] text-muted mt-0.5 mb-3">{t.isbnHandHint}</p>
+                  <form className="rounded-md border border-line p-4 md:p-5" onSubmit={(e) => { e.preventDefault(); if (manualIsbn.trim()) lookup(manualIsbn); }}>
+                    <label htmlFor="isbn-hand" className="font-medium text-body block">{t.isbnHand}</label>
+                    <p className="text-meta text-muted mt-0.5 mb-3">{t.isbnHandHint}</p>
                     <div className="flex gap-2">
                       <Input id="isbn-hand" className="flex-1 min-w-0" value={manualIsbn} onChange={(e) => setManualIsbn(e.target.value)} inputMode="numeric" autoComplete="off" placeholder="978 3 15 009152 1" />
                       <Button type="submit" variant="secondary" className="h-12 flex-none" disabled={manualIsbn.replace(/\D/g, "").length < 10}>{t.lookup}</Button>
@@ -195,7 +195,7 @@ export function Erfassen({ initial }: { initial: Added[] }) {
                 {looking ? <LookupSkeleton isbn={looking} />
                   : pending ? <PendingCard key={pending.id} edition={pending} ask={!asked} onAsked={markAsked} onCancel={() => setPending(null)} onDone={done} />
                   : (
-                    <div className="rounded-[10px] border border-dashed border-line-strong px-5 py-6 text-[15px] text-muted">
+                    <div className="rounded-md border border-dashed border-line-strong px-5 py-6 text-body text-muted">
                       {tab === "scan" ? t.waitScan : t.waitPick}
                     </div>
                   )}
@@ -206,20 +206,20 @@ export function Erfassen({ initial }: { initial: Added[] }) {
 
         {/* ------------------------------------------------ Heute erfasst */}
         <aside className="lg:sticky lg:top-8 min-w-0" aria-labelledby="heute">
-          <div className="rounded-[10px] border border-line overflow-hidden">
+          <div className="rounded-md border border-line overflow-hidden">
             <div className="flex items-end justify-between gap-4 px-5 pt-5 pb-4">
               <div>
-                <h2 id="heute" className="text-[19px] font-[560] tracking-[-0.025em]">{t.today}</h2>
-                <p className="text-[13px] text-muted mt-0.5">{added.length === 0 ? t.nothing : t.newest}</p>
+                <h2 id="heute" className="text-title-sm font-title tracking-title">{t.today}</h2>
+                <p className="text-meta text-muted mt-0.5">{added.length === 0 ? t.nothing : t.newest}</p>
               </div>
-              <span className="text-[34px] font-[560] tracking-[-0.04em] leading-none tnum">{added.length}</span>
+              <span className="text-display font-title tracking-display leading-none tnum">{added.length}</span>
             </div>
             {added.length === 0 ? (
               <div className="px-5 pb-6 flex items-end gap-4 border-t border-line pt-5">
                 <div aria-hidden className="flex items-end gap-1.5 flex-none">
-                  {[0, 1, 2].map((i) => <span key={i} className="block w-[28px] h-[42px] rounded-[3px] border border-dashed border-line-strong" />)}
+                  {[0, 1, 2].map((i) => <span key={i} className="block w-[28px] h-[42px] rounded-xs border border-dashed border-line-strong" />)}
                 </div>
-                <p className="text-ink-2 text-[14px] leading-snug">{t.firstHint}</p>
+                <p className="text-ink-2 text-body-sm leading-snug">{t.firstHint}</p>
               </div>
             ) : (
               <ul className="divide-y divide-line border-t border-line max-h-[56vh] overflow-y-auto">
@@ -227,12 +227,12 @@ export function Erfassen({ initial }: { initial: Added[] }) {
                   <li key={a.id} className={cx("flex items-center gap-3.5 px-5 py-3", a.id === fresh && "anim-flash")}>
                     <Cover data={a.cover} width={36} height={54} uniform l={l} />
                     <div className="min-w-0 flex-1">
-                      <p className="font-serif text-[16.5px] leading-tight truncate">{a.title}</p>
-                      <p className="text-[12.5px] text-muted truncate mt-0.5">
+                      <p className="font-serif text-lead leading-tight truncate">{a.title}</p>
+                      <p className="text-meta text-muted truncate mt-0.5">
                         {labels(l).conditionLabel[a.condition]}{a.circlesOnly ? t.circlesOnly : ""}{a.authors[0] ? ` · ${a.authors[0]}` : ""}
                       </p>
                     </div>
-                    <Link href={`/regal/${a.id}`} className="text-[13px] font-medium text-accent-hover hover:underline underline-offset-4 flex-none py-2">{t.edit}</Link>
+                    <Link href={`/regal/${a.id}`} className="text-meta font-medium text-accent-hover hover:underline underline-offset-4 flex-none py-2">{t.edit}</Link>
                   </li>
                 ))}
               </ul>
