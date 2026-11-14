@@ -6,7 +6,7 @@ import { renderNotification, type NotificationType, type NotifyData } from "@/li
 import { ago, diffDays, fmtDayTime, isoDay, todayCH } from "@/lib/dates";
 import { LinkButton, PageTitle, cx } from "@/components/ui";
 import { StatTile, StepSection } from "@/components/step-section";
-import { IconArrowRight, IconBell, IconBookmark, IconCalendar, IconChat, IconCheck, IconFlag, IconLoans, IconSwap } from "@/components/icons";
+import { IconArrowRight, IconBell, IconBookmark, IconCalendar, IconChat, IconCheck, IconCircles, IconFlag, IconLoans, IconSwap } from "@/components/icons";
 import { MarkAllRead } from "./mark-read";
 import { timeMeter, TimeMeterInline, type MeterInput } from "@/components/loan/loan-row";
 import { getLocale } from "@/lib/i18n/server";
@@ -31,6 +31,8 @@ function kindOf(t: NotificationType): { icon: typeof IconBell; tone: "late" | "o
   if (t === "title_alarm") return { icon: IconBookmark, tone: "ok", group: "alarme" };
   if (t === "swap_offer" || t.startsWith("pass_on")) return { icon: IconSwap, tone: "plain", group: "anfragen" };
   if (t === "handover_chat") return { icon: IconChat, tone: "plain", group: "anfragen" };
+  if (t === "circle_post_offer") return { icon: IconBookmark, tone: "ok", group: "alarme" };
+  if (t === "circle_post_new" || t === "circle_post_reply") return { icon: IconCircles, tone: "plain", group: "weiteres" };
   return { icon: IconBell, tone: "plain", group: "weiteres" };
 }
 

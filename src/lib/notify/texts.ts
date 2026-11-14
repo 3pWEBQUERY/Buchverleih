@@ -72,6 +72,9 @@ const de: Table = {
   message: ({ name, t, d }) => [`${name}: ${t}`, d.text ?? "Neue Nachricht"],
   invite_own_books: () => ["Dein Regal ist noch leer", "Wer leiht, verleiht oft auch. Ein Buch einstellen dauert unter 20 Sekunden."],
   circle_join_request: ({ name, d }) => [`${name} möchte beitreten`, d.text ?? "Gib die Anfrage im Kreis frei."],
+  circle_post_new: ({ name, d }) => [d.circle ? `${name} im Kreis «${d.circle}»` : `${name} an der Pinnwand`, d.text ?? "Neuer Zettel an der Pinnwand."],
+  circle_post_reply: ({ name, d }) => [`${name} zu deinem Zettel`, d.text ?? "Neue Antwort an der Pinnwand."],
+  circle_post_offer: ({ name, t }) => [`${name} hat ${t}`, "Du suchst es an der Pinnwand. Sieh dir das Exemplar an und frag es wie gewohnt an."],
 };
 
 const fr: Table = {
@@ -114,6 +117,9 @@ const fr: Table = {
   message: ({ name, t, d }) => [`${name} : ${t}`, d.text ?? "Nouveau message"],
   invite_own_books: () => ["Ton étagère est encore vide", "Qui emprunte prête souvent aussi. Ajouter un livre prend moins de 20 secondes."],
   circle_join_request: ({ name, d }) => [`${name} aimerait rejoindre le cercle`, d.text ?? "Valide la demande dans le cercle."],
+  circle_post_new: ({ name, d }) => [d.circle ? `${name} dans le cercle « ${d.circle} »` : `${name} sur le tableau`, d.text ?? "Nouveau billet sur le tableau d’affichage."],
+  circle_post_reply: ({ name, d }) => [`${name} à propos de ton billet`, d.text ?? "Nouvelle réponse sur le tableau d’affichage."],
+  circle_post_offer: ({ name, t }) => [`${name} a ${t}`, "Tu le cherches sur le tableau d’affichage. Regarde l’exemplaire et fais ta demande comme d’habitude."],
 };
 
 const it: Table = {
@@ -156,6 +162,9 @@ const it: Table = {
   message: ({ name, t, d }) => [`${name}: ${t}`, d.text ?? "Nuovo messaggio"],
   invite_own_books: () => ["Il tuo scaffale è ancora vuoto", "Chi prende in prestito spesso presta anche. Aggiungere un libro richiede meno di 20 secondi."],
   circle_join_request: ({ name, d }) => [`${name} vorrebbe entrare nella cerchia`, d.text ?? "Approva la richiesta nella cerchia."],
+  circle_post_new: ({ name, d }) => [d.circle ? `${name} nella cerchia «${d.circle}»` : `${name} in bacheca`, d.text ?? "Nuovo biglietto in bacheca."],
+  circle_post_reply: ({ name, d }) => [`${name} sul tuo biglietto`, d.text ?? "Nuova risposta in bacheca."],
+  circle_post_offer: ({ name, t }) => [`${name} ha ${t}`, "Lo cerchi in bacheca. Guarda l’esemplare e richiedilo come sempre."],
 };
 
 export const TEXTS: Record<Locale, Table> = { de, fr, it };

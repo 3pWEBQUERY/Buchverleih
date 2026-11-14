@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { pageUser } from "@/lib/page";
-import { listWishlist, mySwapMatches } from "@/lib/wishlist";
+import { circleHitsForWishlist, listWishlist, mySwapMatches } from "@/lib/wishlist";
 import { coversForWorks } from "@/lib/title-queries";
 import { PageTitle } from "@/components/ui";
 import { StatTile } from "@/components/step-section";
@@ -16,11 +16,13 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function WunschlistePage() {
   const user = await pageUser("/wunschliste");
   const t = WISHLIST[await getLocale()];
-  const [items, matches] = await Promise.all([listWishlist(user.id), mySwapMatches(user.id)]);
+  const [items, matches, hits] = await Promise.all([listWishlist(user.id), mySwapMatches(user.id), circleHitsForWishlist(user.id)]);
   const covers = await coversForWorks(items.map((i) => i.work_id));
   const list: WishItem[] = items.map((i) => {
     const c = covers.get(i.work_id);
-    return { ...i, cover_key: c?.cover_key ?? null, cover_w: c?.cover_w ?? null, cover_h: c?.cover_h ?? null };
+    // Im Kreis vorhanden: ein Treffer pro Wunsch genügt, freie zuerst
+    const hit = hits.filter((h) => h.work_id === i.work_id).sort((a, b) => Number(b.free_now) - Number(a.free_now))[0] ?? null;
+    return { ...i, cover_key: c?.cover_key ?? null, cover_w: c?.cover_w ?? null, cover_h: c?.cover_h ?? null, circle_hit: hit };
   });
 
   const free = list.filter((i) => i.available_near > 0).length;

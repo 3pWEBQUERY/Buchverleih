@@ -16,6 +16,12 @@ import { InviteBox, LeaveCircle, MemberList, CircleSettings } from "./circle-cli
 import { getLocale } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/locale";
 import { CIRCLES } from "@/lib/i18n/messages/circles";
+import { listPosts, COMMENT_MAX, POST_TEXT_MAX } from "@/lib/pinboard";
+import { wantedInCircle } from "@/lib/wishlist";
+import { pulse } from "@/lib/pulse";
+import { Pinboard } from "@/components/kreise/pinboard";
+import { WantedBoard } from "@/components/kreise/wanted-board";
+import { PulseList } from "@/components/pulse";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -58,7 +64,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     );
   }
 
-  const [members, copies] = await Promise.all([circleMembers(id), circleShelf(id, user.id)]);
+  const [members, copies, board, wanted, pulseItems] = await Promise.all([
+    circleMembers(id), circleShelf(id, user.id), listPosts(id, user.id), wantedInCircle(id, user.id), pulse(user.id, { circleId: id }),
+  ]);
+  const ownCopies = copies.filter((c) => c.owner_id === user.id);
   const admin = circle.my_role === "admin";
   const inviteUrl = admin || circle.join_mode === "link" ? `${env.appUrl}/k/${circle.invite_code}` : null;
   const admins = members.filter((m) => m.role === "admin" && m.status === "active").length;
@@ -110,6 +119,14 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </dl>
       </header>
 
+      {/* Puls: was diese Woche im Kreis passiert ist – nur Aggregiertes oder selbst Veröffentlichtes */}
+      {pulseItems.length > 0 && (
+        <section aria-labelledby="puls-t" className="mb-8 md:mb-10">
+          <h2 id="puls-t" className="eyebrow">{t.pulse.title}</h2>
+          <PulseList items={pulseItems.slice(0, 6)} l={l} className="mt-2 grid sm:grid-cols-2 xl:grid-cols-3 gap-x-10" />
+        </section>
+      )}
+
       {/* Das gemeinsame Regal auf der dunklen Bühne */}
       <section id="regal" className="scroll-mt-24 surface-night rounded-lg px-5 md:px-9 pt-7 md:pt-9 pb-5 md:pb-7 -mx-1 md:mx-0" aria-labelledby="regal-t">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -147,6 +164,17 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
       <div className="mt-6 md:mt-8 grid lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px] gap-x-10 xl:gap-x-16 gap-y-10 items-start">
         <div className="min-w-0">
+          <StepSection id="pinnwand" n={++n} title={t.pin.title} desc={t.pin.desc}>
+            <Pinboard circleId={circle.id} me={user.id} initial={board} limits={{ text: POST_TEXT_MAX, comment: COMMENT_MAX }}
+              ownCopies={ownCopies.map((c) => ({ id: c.id, work_id: c.work_id, title: c.title, authors: c.authors, cover_key: c.cover_key, photo_key: c.photo_key, photo_w: c.photo_w, photo_h: c.photo_h }))} />
+          </StepSection>
+
+          {wanted.length > 0 && (
+            <StepSection id="gesucht" n={++n} title={t.wanted.title} desc={t.wanted.desc}>
+              <WantedBoard items={wanted} l={l} inShelf={ownCopies.map((c) => c.id)} />
+            </StepSection>
+          )}
+
           <StepSection id="mitglieder" n={++n} title={d.members} aside={d.activeN(active.length)}
             desc={admin ? d.membersAdmin : d.membersMember}>
             <MemberList circleId={circle.id} me={user.id} admin={admin} members={members} />

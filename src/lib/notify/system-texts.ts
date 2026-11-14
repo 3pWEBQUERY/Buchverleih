@@ -29,6 +29,10 @@ const de: Record<string, Fn> = {
   circle_name: (a) => `Kreis «${a.name}»`,
   title_alarm_free: (a) => `Ein Exemplar ist ${dist(a.meters, "de")} entfernt frei.`,
   chat_proposal: () => "Terminvorschlag",
+  pin_search: (a) => `Sucht «${a.title}».`,
+  pin_recommend: (a) => `Empfiehlt «${a.title}».`,
+  pin_thanks: () => "Sagt Danke.",
+  pin_want: () => "Will das auch lesen.",
 };
 
 const fr: typeof de = {
@@ -45,6 +49,10 @@ const fr: typeof de = {
   circle_name: (a) => `Cercle « ${a.name} »`,
   title_alarm_free: (a) => `Un exemplaire est libre à ${dist(a.meters, "fr")}.`,
   chat_proposal: () => "Proposition de rendez-vous",
+  pin_search: (a) => `Cherche « ${a.title} ».`,
+  pin_recommend: (a) => `Recommande « ${a.title} ».`,
+  pin_thanks: () => "Dit merci.",
+  pin_want: () => "Aimerait aussi le lire.",
 };
 
 const it: typeof de = {
@@ -61,6 +69,10 @@ const it: typeof de = {
   circle_name: (a) => `Cerchia «${a.name}»`,
   title_alarm_free: (a) => `Un esemplare è libero a ${dist(a.meters, "it")}.`,
   chat_proposal: () => "Proposta di appuntamento",
+  pin_search: (a) => `Cerca «${a.title}».`,
+  pin_recommend: (a) => `Consiglia «${a.title}».`,
+  pin_thanks: () => "Dice grazie.",
+  pin_want: () => "Vorrebbe leggerlo anche.",
 };
 
 const ALL: Record<Locale, typeof de> = { de, fr, it };

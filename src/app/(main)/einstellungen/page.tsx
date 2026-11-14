@@ -11,11 +11,12 @@ import { PageTitle, cx } from "@/components/ui";
 import { StepSection } from "@/components/step-section";
 import { Monogram } from "@/components/person/monogram";
 import {
-  AvatarEditor, BlockList, DeleteAccount, EmailPrefs, ExportData, Logout, PasskeyList, PhoneSection, ProfileForm, PushSettings, ShelfPause, SpotList, ThemeChoice,
+  AvatarEditor, BlockList, CommunityPrefs, DeleteAccount, EmailPrefs, ExportData, Logout, PasskeyList, PhoneSection, ProfileForm, PushSettings, ShelfPause, SpotList, ThemeChoice,
 } from "./sections";
 import { SettingsNav, type NavGroup } from "./settings-nav";
 import { LanguageChoice } from "@/components/language-switch";
 import { getLocale } from "@/lib/i18n/server";
+import { COMMUNITY } from "@/lib/i18n/messages/community";
 
 export async function generateMetadata() {
   return { title: SETTINGS[await getLocale()].title };
@@ -117,6 +118,9 @@ export default async function Page() {
               </Row>
               <Row id="benachrichtigungen" t={r.benachrichtigungen}>
                 <EmailPrefs categories={categories} prefs={user.email_prefs ?? {}} />
+              </Row>
+              <Row id="gemeinschaft" t={[COMMUNITY[l].settings.title, COMMUNITY[l].settings.desc]}>
+                <CommunityPrefs pulse={user.pulse_show_new_books} notify={user.pinboard_notify} />
               </Row>
               <Row id="darstellung" t={r.darstellung}>
                 <ThemeChoice />

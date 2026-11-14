@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { pageUser } from "@/lib/page";
 import * as moderation from "@/lib/moderation";
-import { correctionCurrent, targetLinks } from "@/lib/moderation-queries";
+import { correctionCurrent, targetLinks, reportContexts } from "@/lib/moderation-queries";
 import { ago, fmtDayTime } from "@/lib/dates";
 import { labels } from "@/lib/i18n/labels";
 import { getLocale } from "@/lib/i18n/server";
@@ -13,7 +13,7 @@ import { StatTile as StatTileNew, StepSection } from "@/components/step-section"
 import { Monogram } from "@/components/person/monogram";
 import { IconArrowRight, IconCheck, IconSearch } from "@/components/icons";
 import { Chip, PriorityChip, Quiet, StatTile, type Priority } from "@/components/moderation/ui";
-import { CorrectionActions, FlagSwitch, ReportActions } from "@/components/moderation/actions";
+import { CorrectionActions, FlagSwitch, ReportActions, HideContent } from "@/components/moderation/actions";
 import { ModTabs, TABS, type Tab } from "./tabs";
 import { caseStageLabel, modLabels } from "./labels";
 
@@ -72,7 +72,7 @@ async function Queue({ q, l }: { q: QueueData; l: Locale }) {
   const t = MOD[l].queue;
   const ml = modLabels(l);
   const L = labels(l);
-  const [links, current] = await Promise.all([targetLinks(q.reports), correctionCurrent(q.corrections.map((c) => c.id))]);
+  const [links, current, contexts] = await Promise.all([targetLinks(q.reports), correctionCurrent(q.corrections.map((c) => c.id)), reportContexts(q.reports)]);
   if (!q.cases.length && !q.reports.length && !q.corrections.length) {
     return (
       <div className="rounded-md border border-line px-6 py-8 md:px-8 md:py-10 flex flex-wrap items-center justify-between gap-6">
@@ -138,6 +138,18 @@ async function Queue({ q, l }: { q: QueueData; l: Locale }) {
                     {" · "}{r.reporter ? t.reportedBy(r.reporter) : t.autoFlagged}
                   </p>
                   {r.note && <p className="text-body mt-3 border-l-2 border-line-strong pl-3 text-ink-2">«{r.note}»</p>}
+                  {/* Pinnwand und Zettel im Buch: der gemeldete Text steht direkt bei der Meldung */}
+                  {(() => {
+                    const c = contexts[`${r.target_type}:${r.target_id}`];
+                    if (!c) return null;
+                    return (
+                      <div className="mt-3 rounded-md bg-paper-2 px-4 py-3">
+                        <p className="text-caption text-muted">{[c.author, c.where].filter(Boolean).join(" · ")}</p>
+                        {c.text && <p className="text-body-sm mt-1 break-words">{c.text}</p>}
+                        <HideContent targetType={r.target_type} targetId={r.target_id} hidden={c.hidden} />
+                      </div>
+                    );
+                  })()}
                   <div className="mt-auto pt-5"><ReportActions id={r.id} /></div>
                 </li>
               );

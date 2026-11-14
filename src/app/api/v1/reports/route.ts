@@ -12,7 +12,7 @@ export const POST = route(async (req) => {
   const b = await body(
     req,
     z.object({
-      targetType: z.enum(["user", "message", "copy", "photo", "edition", "loan"]),
+      targetType: z.enum(["user", "message", "copy", "photo", "edition", "loan", "circle_post", "circle_post_comment", "book_note"]),
       targetId: z.string().min(1).max(100),
       reason: z.enum(["harassment", "commercial", "inappropriate", "fake", "other"]),
       note: z.string().max(1000).optional(),
@@ -30,6 +30,14 @@ export const POST = route(async (req) => {
     : b.targetType === "copy" ? await sql`select 1 from copies where id = ${uuid} and copy_visible_to(id, ${u.id})`
     : b.targetType === "photo" ? await sql`select 1 from copy_photos p where p.id = ${uuid} and copy_visible_to(p.copy_id, ${u.id})`
     : b.targetType === "user" ? await sql`select 1 from users where id = ${uuid} and deleted_at is null`
+    // Pinnwand: nur aktive Mitglieder des Kreises
+    : b.targetType === "circle_post" ? await sql`select 1 from circle_posts p
+         join circle_members m on m.circle_id = p.circle_id and m.user_id = ${u.id} and m.status = 'active' where p.id = ${uuid}`
+    : b.targetType === "circle_post_comment" ? await sql`select 1 from circle_post_comments cm join circle_posts p on p.id = cm.post_id
+         join circle_members m on m.circle_id = p.circle_id and m.user_id = ${u.id} and m.status = 'active' where cm.id = ${uuid}`
+    // Zettel im Buch: wer das Exemplar sehen darf
+    : b.targetType === "book_note" ? await sql`select 1 from book_notes n join copies c on c.id = n.copy_id
+        where n.id = ${uuid} and (c.owner_id = ${u.id} or (n.hidden_at is null and copy_visible_to(c.id, ${u.id})))`
     : await sql`select 1 from editions where id = ${uuid}`;
   if (!visible) throw err.notFound();
   await sql`insert into reports (reporter_id, target_type, target_id, reason, note) values (${u.id}, ${b.targetType}, ${b.targetId}, ${b.reason}, ${b.note ?? null})`;

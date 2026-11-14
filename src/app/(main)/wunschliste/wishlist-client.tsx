@@ -8,7 +8,8 @@ import { IconArrowRight, IconBell, IconCheck, IconClose, IconSearch, IconSwap } 
 import { StepSection } from "@/components/step-section";
 import { Button, LinkButton, cx } from "@/components/ui";
 import { api } from "@/lib/client";
-import type { WishRow } from "@/lib/wishlist";
+import type { CircleHit, WishRow } from "@/lib/wishlist";
+import { COMMUNITY } from "@/lib/i18n/messages/community";
 import { fmtDistance } from "@/lib/geo";
 import { dayToDate, diffDays, fmtDay, todayCH } from "@/lib/dates";
 import { useLocale } from "@/components/locale-provider";
@@ -18,6 +19,8 @@ export type WishItem = WishRow & {
   cover_key: string | null;
   cover_w: number | null;
   cover_h: number | null;
+  /** Exemplar dieses Titels im Regal eines meiner Kreise */
+  circle_hit?: CircleHit | null;
 };
 export type Match = { id: string; other_name: string; their_copy: string; their_title: string; my_title: string };
 
@@ -27,6 +30,7 @@ export function WishlistClient({ items: initial, matches }: { items: WishItem[];
   const router = useRouter();
   const toast = useToast();
   const t = WISHLIST[useLocale()];
+  const tc = COMMUNITY[useLocale()].wish;
   const [items, setItems] = useState(initial);
   useEffect(() => setItems(initial), [initial]);
 
@@ -50,6 +54,18 @@ export function WishlistClient({ items: initial, matches }: { items: WishItem[];
       toast.show({ text: on ? t.alarmOn(it.title) : t.alarmOff(it.title) }, 3000);
     } catch (e) {
       patch(it.work_id, { alarm: it.alarm });
+      toast.error((e as Error).message);
+    }
+  }
+
+  /** Wunsch in den eigenen Kreisen als «gesucht» zeigen (Brett auf der Kreisseite, Hinweis beim Besitzer) */
+  async function setShare(it: WishItem, on: boolean) {
+    patch(it.work_id, { share_circles: on });
+    try {
+      await api("/wishlist", { method: "PATCH", body: { workId: it.work_id, shareCircles: on } });
+      toast.show({ text: on ? tc.shareOn(it.title) : tc.shareOff(it.title) }, 3000);
+    } catch (e) {
+      patch(it.work_id, { share_circles: it.share_circles });
       toast.error((e as Error).message);
     }
   }
@@ -121,7 +137,7 @@ export function WishlistClient({ items: initial, matches }: { items: WishItem[];
           </div>
         ) : (
           <ul className="grid xl:grid-cols-2 gap-3">
-            {items.map((it, i) => <WishCard key={it.work_id} it={it} i={i} onRadius={(r) => setRadius(it, r)} onAlarm={(v) => setAlarm(it, v)} onRemove={() => remove(it)} />)}
+            {items.map((it, i) => <WishCard key={it.work_id} it={it} i={i} onRadius={(r) => setRadius(it, r)} onAlarm={(v) => setAlarm(it, v)} onShare={(v) => setShare(it, v)} onRemove={() => remove(it)} />)}
           </ul>
         )}
       </StepSection>
@@ -130,7 +146,7 @@ export function WishlistClient({ items: initial, matches }: { items: WishItem[];
 }
 
 /** Eine Karte pro Wunschtitel: Buch, Verfügbarkeit im Umkreis, nächster Schritt, Umkreis und Titelalarm */
-function WishCard({ it, i, onRadius, onAlarm, onRemove }: { it: WishItem; i: number; onRadius: (r: number) => void; onAlarm: (v: boolean) => void; onRemove: () => void }) {
+function WishCard({ it, i, onRadius, onAlarm, onShare, onRemove }: { it: WishItem; i: number; onRadius: (r: number) => void; onAlarm: (v: boolean) => void; onShare: (v: boolean) => void; onRemove: () => void }) {
   const free = it.available_near > 0;
   const busy = !free && it.total_near > 0;
   const widen = !free && it.nearest_beyond != null ? RADII.find((r) => r * 1000 >= it.nearest_beyond!) ?? null : null;
@@ -138,6 +154,8 @@ function WishCard({ it, i, onRadius, onAlarm, onRemove }: { it: WishItem; i: num
   const cover = { title: it.title, authors: it.authors, coverKey: it.cover_key, seed: it.work_id };
   const l = useLocale();
   const c = WISHLIST[l].card;
+  const tc = COMMUNITY[l].wish;
+  const hit = it.circle_hit;
 
   return (
     <li className="min-w-0">
@@ -214,6 +232,15 @@ function WishCard({ it, i, onRadius, onAlarm, onRemove }: { it: WishItem; i: num
           )}
         </div>
 
+        {hit && (
+          <p className="text-body-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none", hit.free_now ? "bg-ok" : "bg-lent")} />
+            <span className="font-medium">{tc.inCircle(hit.circle_name)}</span>
+            <span className="text-muted">{hit.free_now ? tc.freeNow : hit.free_from ? tc.freeFrom(fmtDay(dayToDate(hit.free_from), l)) : tc.taken}</span>
+            <Link href={`/exemplar/${hit.copy_id}`} className="font-medium text-accent-hover underline underline-offset-4 min-h-11 md:min-h-0 inline-flex items-center">{tc.view}</Link>
+          </p>
+        )}
+
         {/* Einstellungen */}
         <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 sm:gap-x-5 gap-y-3">
           <div role="radiogroup" aria-label={c.radiusFor(it.title)} className="inline-flex p-0.5 rounded-md bg-paper-2 border border-line">
@@ -231,8 +258,15 @@ function WishCard({ it, i, onRadius, onAlarm, onRemove }: { it: WishItem; i: num
           <button type="button" role="switch" aria-checked={it.alarm} aria-label={c.alarmFor(it.title)} onClick={() => onAlarm(!it.alarm)}
             className="inline-flex items-center gap-2.5 h-9 text-body-sm font-medium">
             <span><span className="sm:hidden">{c.alarmShort}</span><span className="hidden sm:inline">{c.alarm}</span></span>
-            <span aria-hidden className={cx("relative h-6 w-10 flex-none rounded-full transition-colors duration-fast", it.alarm ? "bg-accent" : "bg-paper-3")}>
+            <span aria-hidden className={cx("relative h-6 w-10 flex-none rounded-full transition-colors duration-fast", it.alarm ? "bg-accent" : "bg-field")}>
               <span className={cx("absolute top-1 left-1 h-4 w-4 rounded-full bg-paper transition-transform duration-base ease-spring", it.alarm && "translate-x-4")} />
+            </span>
+          </button>
+          <button type="button" role="switch" aria-checked={it.share_circles} aria-label={tc.shareFor(it.title)} onClick={() => onShare(!it.share_circles)}
+            className="inline-flex items-center gap-2.5 h-9 text-body-sm font-medium">
+            <span>{tc.share}</span>
+            <span aria-hidden className={cx("relative h-6 w-10 flex-none rounded-full transition-colors duration-fast", it.share_circles ? "bg-accent" : "bg-field")}>
+              <span className={cx("absolute top-1 left-1 h-4 w-4 rounded-full bg-paper transition-transform duration-base ease-spring", it.share_circles && "translate-x-4")} />
             </span>
           </button>
         </div>

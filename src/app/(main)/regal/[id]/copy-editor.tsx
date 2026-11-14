@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { WishersHint } from "@/components/book-note";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import type { CopyDetail } from "@/lib/copies";
@@ -50,7 +51,7 @@ export type HistoryRow = {
 
 const SECTIONS = ["angebot", "leihe", "kalender", "weitergabe", "zustand", "verlauf"] as const;
 
-export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDetail; calendar: Calendar; circles: { id: string; name: string; loanDays: number }[]; history: HistoryRow[] }) {
+export function CopyEditor({ copy, calendar, circles, history, wishers = 0 }: { copy: CopyDetail; calendar: Calendar; circles: { id: string; name: string; loanDays: number }[]; history: HistoryRow[]; wishers?: number }) {
   const router = useRouter();
   const toast = useToast();
   const l = useLocale();
@@ -125,7 +126,7 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
   const photo = copy.photos[0];
   const locked = copy.transfer_locked_until && new Date(copy.transfer_locked_until) > new Date() ? copy.transfer_locked_until : null;
   const circleDays = circles.filter((c) => s.circleIds.includes(c.id));
-  const coverData = { title: copy.title, authors: copy.authors, photoKey: photo?.key, photoW: photo?.width, photoH: photo?.height, coverKey: copy.cover_key, seed: copy.work_id };
+  const coverData = { title: copy.title, authors: copy.authors, photoKey: photo?.key, photoW: photo?.width, photoH: photo?.height, coverKey: copy.cover_key, coverColor: copy.cover_color, seed: copy.work_id };
   const dot = { ok: "bg-ok", lent: "bg-lent", late: "bg-late", wait: "bg-wait", done: "bg-done", accent: "bg-accent" }[st.tone];
   const offered = s.offers.length > 0;
   const handed = history.filter((h) => h.handed_over_at);
@@ -161,6 +162,8 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
               <p className="text-body text-ink-2 mt-1.5">{copy.authors.join(", ")}</p>
             </div>
           </div>
+
+          <WishersHint copyId={copy.id} count={wishers} />
 
           <div className="rounded-md border border-line divide-y divide-line">
             <div className="px-4 py-3.5 flex items-center justify-between gap-3">

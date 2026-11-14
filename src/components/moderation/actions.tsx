@@ -40,6 +40,26 @@ export function ReportActions({ id }: { id: string }) {
   );
 }
 
+/** Gemeldeten Zettel, Kommentar oder Zettel im Buch ausblenden bzw. wieder zeigen (umkehrbar, darum ohne Rückfrage) */
+export function HideContent({ targetType, targetId, hidden }: { targetType: string; targetId: string; hidden: boolean }) {
+  const l = useLocale();
+  const t = useT();
+  const toast = useToast();
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const label = { de: ["Inhalt ausblenden", "Wieder zeigen"], fr: ["Masquer le contenu", "Afficher à nouveau"], it: ["Nascondi il contenuto", "Mostra di nuovo"] }[l];
+  return (
+    <button type="button" disabled={busy} className="min-h-9 text-body-sm font-medium underline underline-offset-4 hover:text-accent-hover disabled:opacity-50"
+      onClick={async () => {
+        setBusy(true);
+        try { await mod({ action: "hide_content", targetType, targetId, hidden: !hidden }); router.refresh(); }
+        catch (e) { toast.error(msg(e, t)); } finally { setBusy(false); }
+      }}>
+      {hidden ? label[1] : label[0]}
+    </button>
+  );
+}
+
 export function CorrectionActions({ id }: { id: string }) {
   const t = useT();
   const later = useLater();

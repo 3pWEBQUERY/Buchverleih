@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/client";
 import { useToast } from "@/components/toast";
-import { Button, Notice, Switch, cx } from "@/components/ui";
+import { Button, Notice, Segmented, Switch, cx } from "@/components/ui";
+import { COMMUNITY } from "@/lib/i18n/messages/community";
+import { useLocale } from "@/components/locale-provider";
 import { readTheme, saveTheme, type Theme } from "@/components/theme-sync";
 import { msg, useT } from "./sections-shared";
 
@@ -36,6 +38,34 @@ export function EmailPrefs({ categories, prefs }: { categories: { key: string; l
           hint={c.locked ? T.email.locked : undefined}
           onChange={(v) => set(c.key, c.label, v)} />
       ))}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------- Gemeinschaft */
+/** Puls («Neue Bücher von mir zeigen») und eigener Schalter für E-Mail/Push der Pinnwand */
+export function CommunityPrefs({ pulse, notify }: { pulse: boolean; notify: "replies" | "all" | "off" }) {
+  const T = useT();
+  const t = COMMUNITY[useLocale()].settings;
+  const toast = useToast();
+  const router = useRouter();
+  const [show, setShow] = useState(pulse);
+  const [mode, setMode] = useState(notify);
+  async function save(body: Record<string, unknown>, revert: () => void) {
+    try { await api("/me", { method: "PATCH", body }); router.refresh(); toast.show({ text: t.saved }, 2500); }
+    catch (e) { revert(); toast.error(msg(e, T)); }
+  }
+  return (
+    <div className="divide-y divide-line -my-3">
+      <Switch checked={show} label={t.pulse} hint={t.pulseHint}
+        onChange={(v) => { setShow(v); save({ pulseShowNewBooks: v }, () => setShow(!v)); }} />
+      <div className="py-4">
+        <p className="text-body" id="pinnwand-benachrichtigung">{t.notify}</p>
+        <p className="text-body-sm text-muted mt-0.5 mb-3">{t.notifyHint}</p>
+        <Segmented name={t.notify} value={mode} className="max-w-[460px]" size="lg"
+          options={(["replies", "all", "off"] as const).map((v) => ({ value: v, label: t.options[v] }))}
+          onChange={(v) => { const before = mode; setMode(v); save({ pinboardNotify: v }, () => setMode(before)); }} />
+      </div>
     </div>
   );
 }

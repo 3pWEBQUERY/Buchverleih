@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BookPathSection } from "@/components/book-path";
 import { notFound } from "next/navigation";
 import { getUser } from "@/lib/auth/session";
 import { sql } from "@/lib/db";
@@ -9,7 +10,8 @@ import { origin } from "@/lib/page";
 import { publicProfile } from "@/lib/profile";
 import { requestBlocker } from "@/lib/trust";
 import { Cover, imageUrl, CoverMorph, coverVt } from "@/components/cover";
-import { cx } from "@/components/ui";
+import { Notice, cx } from "@/components/ui";
+import { CIRCLES } from "@/lib/i18n/messages/circles";
 import { shelfStatusLocal } from "@/lib/i18n/messages/shelf-status";
 import { getLocale } from "@/lib/i18n/server";
 import { translateError } from "@/lib/i18n/messages/errors";
@@ -44,8 +46,9 @@ const toneDot = { ok: "bg-ok", lent: "bg-lent", late: "bg-late", wait: "bg-wait"
  * Exemplar (PRD 8.4): links das Produktblatt (Cover, Angaben, wer verleiht),
  * rechts die Anfrage in nummerierten Schritten mit Verleihkalender.
  */
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ zettel?: string | string[] }> }) {
   const { id } = await params;
+  const { zettel } = await searchParams;
   const user = await getUser();
   const l = await getLocale();
   const t = EXEMPLAR[l];
@@ -73,9 +76,16 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
          and (${user?.id ?? null}::uuid is null or c2.owner_id <> ${user?.id ?? null}::uuid)
          and copy_visible_to(c2.id, ${user?.id ?? null}::uuid)`,
   ]);
+  // «Ich hab's» von der Pinnwand: Der Parameter allein zählt nicht – gezeigt wird der Hinweis nur,
+  // wenn es dieses Angebot auf einen eigenen Suchzettel wirklich gibt. Sonst ändert sich nichts.
+  const pinOffer = user && !own && typeof zettel === "string" && /^[0-9a-f-]{36}$/i.test(zettel)
+    ? (await sql`
+        select 1 from circle_post_offers o join circle_posts p on p.id = o.post_id
+         where o.post_id = ${zettel} and o.copy_id = ${id} and p.author_id = ${user.id} and p.kind = 'search'`).length > 0
+    : false;
   const st = shelfStatusLocal(copy, l);
   const photo = copy.photos[0];
-  const cover = { title: copy.title, authors: copy.authors, photoKey: photo?.key, photoW: photo?.width, photoH: photo?.height, coverKey: copy.cover_key, seed: copy.work_id };
+  const cover = { title: copy.title, authors: copy.authors, photoKey: photo?.key, photoW: photo?.width, photoH: photo?.height, coverKey: copy.cover_key, coverColor: copy.cover_color, seed: copy.work_id };
   const dist = own ? null : fmtDistance(copy.dist, l);
   const loanDays = circles[0]?.loan_days ?? copy.loan_days;
   // Im Kreis gilt dessen Leihfrist – auch im Kalender
@@ -256,12 +266,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             </section>
           )}
 
+          <BookPathSection copyId={copy.id} viewerId={user?.id ?? null} own={own} l={l} />
+
           {!own && copy.owner_demo && (
             <div className="mt-8 rounded-md border border-dashed border-line-strong p-5 text-body-sm text-ink-2">
               <p className="font-medium text-ink">{t.demoTitle}</p>
               <p className="mt-1">{t.demoText}</p>
             </div>
           )}
+          {pinOffer && owner && !copy.owner_demo && <Notice className="mt-8">{CIRCLES[l].pin.offerNotice(owner.first_name)}</Notice>}
           {!own && cal && !copy.owner_demo && (
             <RequestPanel
               copyId={copy.id}

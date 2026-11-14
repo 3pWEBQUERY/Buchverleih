@@ -16,6 +16,7 @@ export const GET = route(async () => {
       id: u.id, email: u.email, firstName: u.first_name, role: u.role, trustLevel: u.trust_level, plz: u.plz,
       municipality: u.municipality, avatarKey: u.avatar_key, emailVerified: Boolean(u.email_verified_at), phoneVerified: Boolean(u.phone_verified_at),
       onboarded: Boolean(u.onboarded_at), shelfPaused: u.shelf_paused, emailPrefs: u.email_prefs,
+      pulseShowNewBooks: u.pulse_show_new_books, pinboardNotify: u.pinboard_notify,
     },
     stats,
     requestBlocker: await requestBlocker(sql, u),
@@ -39,6 +40,10 @@ export const PATCH = route(async (req) => {
       firstName: z.string().min(1).max(40).optional(),
       shelfPaused: z.boolean().optional(),
       emailPrefs: z.record(z.string(), z.boolean()).optional(),
+      /** Neue Bücher von mir im Puls der Kreise zeigen */
+      pulseShowNewBooks: z.boolean().optional(),
+      /** E-Mail und Push zur Pinnwand: nur Antworten auf eigene Zettel (Standard), alles, nichts */
+      pinboardNotify: z.enum(["replies", "all", "off"]).optional(),
       plz: z.string().regex(/^\d{4}$/).optional(),
       /** Profilbild: Id eines eigenen Uploads mit Zweck «avatar», null entfernt das Bild */
       avatarUploadId: z.string().uuid().nullable().optional(),
