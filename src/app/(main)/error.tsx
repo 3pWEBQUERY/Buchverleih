@@ -11,13 +11,13 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
   return (
     <div className="max-w-2xl py-6 md:py-10">
       <p className="eyebrow">{t.eyebrow}</p>
-      <h1 className="display text-[32px] md:text-[44px] mt-3">{t.heading[0]}<em>{t.heading[1]}</em></h1>
-      <p className="text-ink-2 text-[16px] leading-relaxed mt-4 max-w-prose">{t.text}</p>
+      <h1 className="display text-display mt-3">{t.heading[0]}<em>{t.heading[1]}</em></h1>
+      <p className="text-ink-2 text-body-lg leading-relaxed mt-4 max-w-prose">{t.text}</p>
       <div className="mt-8 flex flex-wrap items-center gap-2">
-        <button type="button" onClick={reset} className="h-11 px-5 rounded-[6px] bg-accent text-accent-ink font-medium hover:bg-accent-hover transition-colors">{t.retry}</button>
-        <Link href="/" className="h-11 px-5 rounded-[6px] bg-accent-soft text-accent-hover font-medium inline-flex items-center hover:bg-accent hover:text-accent-ink transition-colors">{t.home}</Link>
+        <button type="button" onClick={reset} className="h-11 px-5 rounded-sm bg-accent text-accent-ink font-medium hover:bg-accent-hover transition-colors">{t.retry}</button>
+        <Link href="/" className="h-11 px-5 rounded-sm bg-accent-soft text-accent-hover font-medium inline-flex items-center hover:bg-accent hover:text-accent-ink transition-colors">{t.home}</Link>
       </div>
-      {error.digest && <p className="mt-6 text-[13px] text-muted tnum">{t.id}{error.digest}</p>}
+      {error.digest && <p className="mt-6 text-meta text-muted tnum">{t.id}{error.digest}</p>}
     </div>
   );
 }

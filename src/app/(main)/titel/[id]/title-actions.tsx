@@ -20,7 +20,7 @@ export function WishButton({ workId, loggedIn, onList, alarm, next, primary, cla
   }
   if (onList) {
     return (
-      <Link href="/wunschliste" className={cx("inline-flex h-11 items-center justify-center gap-2 px-5 rounded-[6px] border border-line-strong text-[14.5px] font-medium hover:border-accent transition-colors", className)}>
+      <Link href="/wunschliste" className={cx("inline-flex h-11 items-center justify-center gap-2 px-5 rounded-sm border border-field text-body-sm font-medium hover:border-accent transition-colors", className)}>
         <span aria-hidden className={alarm ? "h-2 w-2 rounded-full bg-ok live-dot" : "h-2 w-2 rounded-full bg-done"} />
         {alarm ? w.onListAlarm : w.onList}
       </Link>
@@ -58,9 +58,9 @@ export function ShippingSignal() {
   const w = TITLE[useLocale()].wish;
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
-  if (done) return <p className="text-sm text-muted" role="status">{w.thanks}</p>;
+  if (done) return <p className="text-body-sm text-muted" role="status">{w.thanks}</p>;
   return (
-    <p className="text-sm text-muted">
+    <p className="text-body-sm text-muted">
       {w.tooFar}{" "}
       <button type="button" disabled={busy} className="font-medium text-accent-hover hover:underline underline-offset-4"
         onClick={async () => {

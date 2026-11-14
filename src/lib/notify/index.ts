@@ -50,7 +50,19 @@ export type NotificationType =
   | "swap_match"
   | "message"
   | "invite_own_books"
-  | "circle_join_request";
+  | "circle_join_request"
+  | "circle_post_new"
+  | "circle_post_reply"
+  | "circle_post_offer";
+
+/**
+ * Pinnwand-Aktivität hat einen eigenen Schalter (users.pinboard_notify) statt einer E-Mail-Kategorie:
+ * «off» = nichts per E-Mail und Push (in der App bleibt die Benachrichtigung sichtbar).
+ * Neue Zettel (circle_post_new) gehen ohnehin nur an Mitglieder mit «all».
+ */
+export const PINBOARD_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>(["circle_post_new", "circle_post_reply", "circle_post_offer"]);
+export const PINBOARD_NOTIFY = ["replies", "all", "off"] as const;
+export type PinboardNotify = (typeof PINBOARD_NOTIFY)[number];
 
 /** Kategorien für die E-Mail-Einstellungen */
 export const EMAIL_CATEGORY: Partial<Record<NotificationType, "requests" | "accepts" | "deadlines" | "cases" | "matches">> = {
@@ -107,6 +119,8 @@ export type NotifyData = {
   textArgs?: Record<string, string | number>;
   href?: string;
   count?: number;
+  /** Name des Kreises (Pinnwand) */
+  circle?: string;
 };
 
 export async function notify(
@@ -114,23 +128,27 @@ export async function notify(
   n: { userId: string; type: NotificationType; loanId?: string | null; data?: NotifyData; sms?: boolean },
 ) {
   const data = n.data ?? {};
-  const [row] = await tx<{ id: string; email: string; email_prefs: Record<string, boolean>; phone_e164: string | null; has_push: boolean }[]>`
+  const [row] = await tx<{ id: string; email: string; email_prefs: Record<string, boolean>; phone_e164: string | null; has_push: boolean; pinboard_notify: string }[]>`
     with ins as (
       insert into notifications (user_id, type, channel, loan_id, payload)
       values (${n.userId}, ${n.type}, 'app', ${n.loanId ?? null}, ${tx.json(data as never)})
       returning id, user_id
     )
-    select ins.id, u.email, u.email_prefs, u.phone_e164,
+    select ins.id, u.email, u.email_prefs, u.phone_e164, u.pinboard_notify,
            (exists (select 1 from push_subscriptions p where p.user_id = ins.user_id)
              or exists (select 1 from apns_devices a where a.user_id = ins.user_id)) as has_push
       from ins join users u on u.id = ins.user_id`;
   if (!row) return;
 
+  // Pinnwand: ein eigener Schalter gilt für E-Mail und Push zugleich
+  const pinboard = PINBOARD_TYPES.has(n.type);
+  if (pinboard && row.pinboard_notify === "off") return;
+
   // Push aufs Handy, sofern ein Gerät angemeldet ist (verweist auf die App-Benachrichtigung)
   if (row.has_push) await enqueue(tx, "send_push", { notificationId: row.id });
 
   const cat = EMAIL_CATEGORY[n.type];
-  if (cat && (cat === "cases" || row.email_prefs?.[cat] !== false)) {
+  if (pinboard || (cat && (cat === "cases" || row.email_prefs?.[cat] !== false))) {
     const [mail] = await tx<{ id: string }[]>`
       insert into notifications (user_id, type, channel, loan_id, payload)
       values (${n.userId}, ${n.type}, 'email', ${n.loanId ?? null}, ${tx.json(data as never)})

@@ -34,24 +34,24 @@ export function CircleFields({ v, set, nameError }: { v: CircleValues; set: (p: 
         <Textarea rows={3} maxLength={280} value={v.description} onChange={(e) => set({ description: e.target.value })} />
       </Field>
       <div>
-        <p className="font-medium text-[15px]">{f.loanDays}</p>
-        <p className="text-[13px] text-muted mt-0.5 mb-3">{f.loanDaysHint}</p>
+        <p className="font-medium text-body">{f.loanDays}</p>
+        <p className="text-meta text-muted mt-0.5 mb-3">{f.loanDaysHint}</p>
         <div role="radiogroup" aria-label={f.loanDays} className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {([14, 28, 42, 56] as const).map((d) => (
             <OptionCard key={d} compact on={v.loanDays === d} onClick={() => set({ loanDays: d })} title={f.days(d)} desc={f.weeks(d / 7)} />
           ))}
         </div>
       </div>
-      <div className="rounded-[10px] border border-line px-4">
-        <Switch checked={v.autoAccept} onChange={(b) => set({ autoAccept: b })} label={<span className="font-medium text-[15px]">{f.autoAccept}</span>}
+      <div className="rounded-md border border-line px-4">
+        <Switch checked={v.autoAccept} onChange={(b) => set({ autoAccept: b })} label={<span className="font-medium text-body">{f.autoAccept}</span>}
           hint={f.autoAcceptHint} />
       </div>
       <Field label={<>{f.spot} <span className="text-muted font-normal">{f.optional}</span></>} hint={f.spotHint}>
         <Input value={v.fixedSpot} maxLength={80} onChange={(e) => set({ fixedSpot: e.target.value })} autoComplete="off" />
       </Field>
       <div>
-        <p className="font-medium text-[15px]">{f.join}</p>
-        <p className="text-[13px] text-muted mt-0.5 mb-3">{f.joinHint}</p>
+        <p className="font-medium text-body">{f.join}</p>
+        <p className="text-meta text-muted mt-0.5 mb-3">{f.joinHint}</p>
         <div role="radiogroup" aria-label={f.join} className="grid sm:grid-cols-2 gap-2">
           <OptionCard on={v.joinMode === "link"} onClick={() => set({ joinMode: "link" })} title={f.byLink} desc={f.byLinkDesc} />
           <OptionCard on={v.joinMode === "approval"} onClick={() => set({ joinMode: "approval" })} title={f.byApproval} desc={f.byApprovalDesc} />
@@ -98,13 +98,13 @@ export function CircleForm() {
 
   return (
     <div className="max-w-3xl">
-      <Link href="/kreise" className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
+      <Link href="/kreise" className="inline-flex items-center gap-1.5 text-body-sm font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
         <IconArrowLeft width={16} height={16} /> {t.back}
       </Link>
       <header className="anim-rise">
         <p className="eyebrow">{t.title}</p>
-        <h1 className="display text-[32px] md:text-[44px] mt-2">{f.heading[0]}<em>{f.heading[1]}</em></h1>
-        <p className="text-[15.5px] md:text-[16px] text-ink-2 mt-3 leading-relaxed max-w-xl">{f.lead}</p>
+        <h1 className="display text-display mt-2">{f.heading[0]}<em>{f.heading[1]}</em></h1>
+        <p className="text-body-lg text-ink-2 mt-3 leading-relaxed max-w-xl">{f.lead}</p>
       </header>
       <form onSubmit={submit} noValidate className="mt-10">
         <StepSection n={1} first title={f.setup} desc={f.setupDesc}>

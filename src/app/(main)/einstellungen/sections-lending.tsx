@@ -63,22 +63,22 @@ export function SpotList({ spots }: { spots: Spot[] }) {
           {spots.map((s) => (
             <li key={s.id} className={itemCls}>
               <span className="min-w-0">
-                <span className="block text-[15px]">{s.label}</span>
-                <span className="block text-sm text-muted">
+                <span className="block text-body">{s.label}</span>
+                <span className="block text-body-sm text-muted">
                   {s.detail ? <>{t.visibleAfter}{s.detail}</> : t.noDetail}
                   {s.dropoff && t.dropoffAllowed}
                 </span>
               </span>
-              <Button variant="quiet" className="text-sm shrink-0 h-10 px-3" onClick={() => remove(s)}>{T.remove}</Button>
+              <Button variant="quiet" className="text-body-sm shrink-0 h-10 px-3" onClick={() => remove(s)}>{T.remove}</Button>
             </li>
           ))}
         </ul>
       ) : !open && (
-        <p className="text-ink-2 mb-5 text-[15px]">{t.none}</p>
+        <p className="text-ink-2 mb-5 text-body">{t.none}</p>
       )}
 
       {full ? (
-        <p className="text-sm text-muted">{t.full}</p>
+        <p className="text-body-sm text-muted">{t.full}</p>
       ) : open ? (
         <form onSubmit={add} className="flex flex-col gap-5 anim-rise border-t border-line pt-5" noValidate>
           <Field label={t.label} hint={t.labelHint} error={error}>
@@ -122,7 +122,7 @@ export function ShelfPause({ paused }: { paused: boolean }) {
   }
 
   return (
-    <div className={cx("rounded-[10px] border px-4 transition-colors duration-300", on ? "bg-lent/10 border-lent/30" : "bg-paper border-line")}>
+    <div className={cx("rounded-md border px-4 transition-colors duration-base", on ? "bg-lent/10 border-lent/30" : "bg-paper border-line")}>
       <Switch checked={on} onChange={(v) => set(v)} label={<span className="font-medium">{t.label}</span>} hint={on ? t.hintOn : t.hintOff} />
     </div>
   );
@@ -148,16 +148,16 @@ export function BlockList({ blocks }: { blocks: { id: string; name: string; sinc
     }
   }
 
-  if (!blocks.length) return <p className="text-ink-2 text-[15px]">{t.none}</p>;
+  if (!blocks.length) return <p className="text-ink-2 text-body">{t.none}</p>;
   return (
     <ul className="space-y-2">
       {blocks.map((b) => (
         <li key={b.id} className={itemCls}>
           <span className="min-w-0">
-            <span className="block text-[15px]">{b.name}</span>
-            <span className="block text-sm text-muted">{t.since(b.since)}</span>
+            <span className="block text-body">{b.name}</span>
+            <span className="block text-body-sm text-muted">{t.since(b.since)}</span>
           </span>
-          <Button variant="quiet" className="text-sm shrink-0 h-10 px-3" onClick={() => unblock(b)}>{t.lift}</Button>
+          <Button variant="quiet" className="text-body-sm shrink-0 h-10 px-3" onClick={() => unblock(b)}>{t.lift}</Button>
         </li>
       ))}
     </ul>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { pageUser } from "@/lib/page";
 import { sql } from "@/lib/db";
-import { listMessages, threadMembers } from "@/lib/chat";
+import { listMessages, threadMembers, threadReads } from "@/lib/chat";
 import { dayToDate, fmtDay, fmtDayTime } from "@/lib/dates";
 import { Cover } from "@/components/cover";
 import { Monogram } from "@/components/person/monogram";
@@ -48,7 +48,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       join copies c on c.id = n.copy_id join editions e on e.id = c.edition_id join works w on w.id = e.work_id
       left join lateral (select key, width, height from copy_photos x where x.copy_id = c.id order by position limit 1) ph on true
      where hc.id = ${id}`;
-  const messages = await listMessages({ type: "handover", id });
+  const [messages, reads] = await Promise.all([listMessages({ type: "handover", id }), threadReads({ type: "handover", id }, user.id)]);
   const myLoan = user.id === h.prev_bid ? h.prev_id : h.next_id;
   const cover = { title: h.title, authors: h.authors, coverKey: h.cover_key, photoKey: h.photo_key, photoW: h.photo_w, photoH: h.photo_h, seed: h.work_id };
   const settled = Boolean(h.route && h.agreed_place && h.agreed_at);
@@ -73,7 +73,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   return (
     <div>
-      <Link href={`/vorgaenge/${user.id === h.owner_id ? h.next_id : myLoan}`} className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
+      <Link href={`/vorgaenge/${user.id === h.owner_id ? h.next_id : myLoan}`} className="inline-flex items-center gap-1.5 text-body-sm font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
         <IconArrowLeft width={16} height={16} /> {t.toLoan}
       </Link>
 
@@ -81,27 +81,27 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         {/* ------------------------------------------------ Blatt: Buch, Vereinbart, Beteiligte */}
         <aside className="lg:col-start-1 lg:row-start-1 space-y-5 min-w-0">
           <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-5 items-end lg:block lg:space-y-5">
-            <div className="lg:rounded-[12px] lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center anim-cover">
+            <div className="lg:rounded-lg lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center anim-cover">
               <Link href={`/exemplar/${h.copy_id}`} className="book block" aria-label={D.viewCopy(h.title)}>
                 <span className="book-face block lg:hidden"><Cover l={l} priority data={cover} width={104} height={156} uniform /></span>
                 <span className="book-face hidden lg:block"><Cover l={l} priority large data={cover} width={220} height={330} uniform /></span>
               </Link>
             </div>
             <div className="anim-rise min-w-0">
-              <h1 lang="de" className="font-serif text-[24px] md:text-[32px] leading-[1.1] hyphens-auto break-words">{h.title}</h1>
-              {h.authors[0] && <p className="text-[14.5px] md:text-[15px] text-ink-2 mt-1.5">{h.authors.join(", ")}</p>}
+              <h1 lang="de" className="font-serif text-title leading-display hyphens-auto break-words">{h.title}</h1>
+              {h.authors[0] && <p className="text-body text-ink-2 mt-1.5">{h.authors.join(", ")}</p>}
             </div>
           </div>
 
-          <section aria-labelledby="vereinbart" className="rounded-[10px] border border-line divide-y divide-line">
+          <section aria-labelledby="vereinbart" className="rounded-md border border-line divide-y divide-line">
             <div className="px-4 py-3.5 flex items-center justify-between gap-3">
-              <h2 id="vereinbart" className="inline-flex items-center gap-2 text-[14px] font-medium">
+              <h2 id="vereinbart" className="inline-flex items-center gap-2 text-body-sm font-medium">
                 <span aria-hidden className={cx("h-2 w-2 rounded-full", settled ? "bg-ok" : "bg-wait")} />
                 {settled ? t.allAgreed : t.agreed}
               </h2>
-              {m.readOnly && <span className="text-[12.5px] text-muted">{t.closed}</span>}
+              {m.readOnly && <span className="text-meta text-muted">{t.closed}</span>}
             </div>
-            <dl className="px-4 py-3 text-[13.5px] grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
+            <dl className="px-4 py-3 text-body-sm grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
               {agreed.map(([k, v]) => (
                 <div key={k} className="contents">
                   <dt className="text-muted">{k}</dt>
@@ -109,7 +109,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                 </div>
               ))}
             </dl>
-            <p className="px-4 py-3 text-[12.5px] text-muted leading-snug">{t.allThree}</p>
+            <p className="px-4 py-3 text-meta text-muted leading-snug">{t.allThree}</p>
           </section>
 
         </aside>
@@ -118,19 +118,19 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <div className="lg:col-start-2 lg:row-start-1 lg:row-span-2 min-w-0">
           <header className="anim-rise">
             <p className="eyebrow">{t.eyebrow}</p>
-            <h2 className="display text-[28px] md:text-[38px] mt-2">{t.heading(h.prev_b, h.next_b)}<em>{settled ? t.settled : t.unsettled}</em></h2>
+            <h2 className="display text-display mt-2">{t.heading(h.prev_b, h.next_b)}<em>{settled ? t.settled : t.unsettled}</em></h2>
           </header>
 
           {/* Der Wechsel als drei Schritte */}
-          <ol className="mt-8 rounded-[10px] border border-line p-5 md:p-6 grid grid-cols-3 gap-2 md:gap-3 anim-rise" style={{ animationDelay: "60ms" }} aria-label={t.stepsAria}>
+          <ol className="mt-8 rounded-md border border-line p-5 md:p-6 grid grid-cols-3 gap-2 md:gap-3 anim-rise" aria-label={t.stepsAria}>
             {steps.map((s, i) => (
               <li key={i} className="min-w-0" aria-current={s.state === "current" ? "step" : undefined}>
                 <span aria-hidden className={cx("block h-1.5 rounded-full", s.state === "done" ? "bg-ink-2" : s.state === "current" ? (settled ? "bg-ok" : "bg-accent") : "bg-paper-3")} />
-                <span className="mt-3 flex items-center gap-1.5 text-[13.5px] font-medium leading-tight truncate">
+                <span className="mt-3 flex items-center gap-1.5 text-body-sm font-medium leading-tight truncate">
                   {s.state === "current" && <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none", settled ? "bg-ok" : "bg-accent live-dot")} />}
                   {s.label}
                 </span>
-                <span className="block text-[12.5px] text-muted mt-1 tnum leading-snug">{s.note}</span>
+                <span className="block text-meta text-muted mt-1 tnum leading-snug">{s.note}</span>
               </li>
             ))}
           </ol>
@@ -138,21 +138,21 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <StepSection id="chat" n={1} className="mt-10 md:mt-12" title={t.chatTitle}
             desc={m.readOnly ? t.chatClosed : t.chatOpen}
             aside={!m.readOnly && <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok live-dot" /> {D.live}</span>}>
-            <div className="rounded-[10px] border border-line overflow-hidden min-w-0">
-              <HandoverChat id={id} me={user.id} initial={JSON.parse(JSON.stringify(messages))} readOnly={m.readOnly} defaultPlace={h.agreed_place} />
+            <div className="rounded-md border border-line overflow-hidden min-w-0">
+              <HandoverChat id={id} me={user.id} initial={JSON.parse(JSON.stringify(messages))} initialReads={JSON.parse(JSON.stringify(reads))} quick={m.readOnly ? null : "arrange"} readOnly={m.readOnly} defaultPlace={h.agreed_place} />
             </div>
-            <Link href={`/vorgaenge/${user.id === h.owner_id ? h.next_id : myLoan}`} className="group mt-3 rounded-[10px] border border-line px-5 py-4 flex items-center justify-between gap-4 hover:border-accent transition-colors">
+            <Link href={`/vorgaenge/${user.id === h.owner_id ? h.next_id : myLoan}`} className="press-card group mt-3 rounded-md border border-line px-5 py-4 flex items-center justify-between gap-4 hover:border-accent">
               <span>
                 <span className="font-medium">{user.id === h.prev_bid ? t.myLoan : user.id === h.next_bid ? t.myNext : t.theNext}</span>
-                <span className="block text-[13.5px] text-muted">{t.loanText}</span>
+                <span className="block text-body-sm text-muted">{t.loanText}</span>
               </span>
               <IconArrowRight className="flex-none text-accent-hover transition-transform group-hover:translate-x-0.5" />
             </Link>
           </StepSection>
         </div>
         <aside className="lg:col-start-1 lg:row-start-2 min-w-0">
-          <section aria-labelledby="beteiligt" className="rounded-[10px] border border-line p-4">
-            <h2 id="beteiligt" className="text-[13px] text-muted mb-3">{t.involved}</h2>
+          <section aria-labelledby="beteiligt" className="rounded-md border border-line p-4">
+            <h2 id="beteiligt" className="text-meta text-muted mb-3">{t.involved}</h2>
             <ul className="space-y-3">
               {people.map((p) => (
                 <li key={p.id + p.role} className="flex items-center gap-3 min-w-0">
@@ -160,7 +160,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                   <span className="min-w-0 leading-tight">
                     <Link href={`/profil/${p.id}`} className="font-medium hover:underline underline-offset-4">{p.name}</Link>
                     {p.id === user.id && <span className="text-muted">{t.you}</span>}
-                    <span className="block text-[12.5px] text-muted mt-0.5 truncate">{p.role}</span>
+                    <span className="block text-meta text-muted mt-0.5 truncate">{p.role}</span>
                   </span>
                 </li>
               ))}

@@ -5,8 +5,8 @@ const B = ({ className }: { className?: string }) => <div className={cx("skeleto
 
 export default function Loading() {
   return (
-    <SkPage label="Suche wird geladen">
-      <SkTitle /><B className="h-[60px] rounded-[10px]" /><SkSection><SkShelf /></SkSection><SkSection><SkRows count={5} /></SkSection>
+    <SkPage k="search">
+      <SkTitle /><B className="h-[60px] rounded-md" /><SkSection><SkShelf /></SkSection><SkSection><SkRows count={5} /></SkSection>
     </SkPage>
   );
 }

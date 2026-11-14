@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/client";
 import { useToast } from "@/components/toast";
-import { Button, Notice, Switch, cx } from "@/components/ui";
+import { Button, Notice, Segmented, Switch, cx } from "@/components/ui";
+import { COMMUNITY } from "@/lib/i18n/messages/community";
+import { useLocale } from "@/components/locale-provider";
 import { readTheme, saveTheme, type Theme } from "@/components/theme-sync";
 import { msg, useT } from "./sections-shared";
 
@@ -40,6 +42,34 @@ export function EmailPrefs({ categories, prefs }: { categories: { key: string; l
   );
 }
 
+/* ------------------------------------------------------------- Gemeinschaft */
+/** Puls («Neue Bücher von mir zeigen») und eigener Schalter für E-Mail/Push der Pinnwand */
+export function CommunityPrefs({ pulse, notify }: { pulse: boolean; notify: "replies" | "all" | "off" }) {
+  const T = useT();
+  const t = COMMUNITY[useLocale()].settings;
+  const toast = useToast();
+  const router = useRouter();
+  const [show, setShow] = useState(pulse);
+  const [mode, setMode] = useState(notify);
+  async function save(body: Record<string, unknown>, revert: () => void) {
+    try { await api("/me", { method: "PATCH", body }); router.refresh(); toast.show({ text: t.saved }, 2500); }
+    catch (e) { revert(); toast.error(msg(e, T)); }
+  }
+  return (
+    <div className="divide-y divide-line -my-3">
+      <Switch checked={show} label={t.pulse} hint={t.pulseHint}
+        onChange={(v) => { setShow(v); save({ pulseShowNewBooks: v }, () => setShow(!v)); }} />
+      <div className="py-4">
+        <p className="text-body" id="pinnwand-benachrichtigung">{t.notify}</p>
+        <p className="text-body-sm text-muted mt-0.5 mb-3">{t.notifyHint}</p>
+        <Segmented name={t.notify} value={mode} className="max-w-[460px]" size="lg"
+          options={(["replies", "all", "off"] as const).map((v) => ({ value: v, label: t.options[v] }))}
+          onChange={(v) => { const before = mode; setMode(v); save({ pinboardNotify: v }, () => setMode(before)); }} />
+      </div>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------- Darstellung */
 export function ThemeChoice() {
   const t = useT().theme;
@@ -56,10 +86,10 @@ export function ThemeChoice() {
         const on = theme === o.value;
         return (
           <button key={o.value} type="button" role="radio" aria-checked={on} onClick={() => { setTheme(o.value); saveTheme(o.value); }}
-            className={cx("text-left rounded-[10px] border p-2.5 transition-colors", on ? "border-accent bg-accent-soft/35" : "border-line hover:border-ink-2")}>
-            <span aria-hidden className={cx("block h-12 rounded-[6px] border border-line", o.swatch)} />
-            <span className="block text-[14px] font-medium mt-2.5 px-0.5">{o.label}</span>
-            <span className="block text-[12px] text-muted px-0.5">{o.desc}</span>
+            className={cx("text-left rounded-md border p-2.5 transition-colors", on ? "border-accent bg-accent-soft/35" : "border-line hover:border-ink-2")}>
+            <span aria-hidden className={cx("block h-12 rounded-sm border border-line", o.swatch)} />
+            <span className="block text-body-sm font-medium mt-2.5 px-0.5">{o.label}</span>
+            <span className="block text-caption text-muted px-0.5">{o.desc}</span>
           </button>
         );
       })}
@@ -166,7 +196,7 @@ export function PushSettings() {
     }
   }
 
-  if (state === "loading") return <div className="skeleton h-[60px] rounded-[10px] max-w-[460px]" />;
+  if (state === "loading") return <div className="skeleton h-[60px] rounded-md max-w-[460px]" />;
   if (state === "ios-install") {
     return (
       <Notice>
@@ -181,12 +211,12 @@ export function PushSettings() {
   const on = state === "on";
   return (
     <div className="max-w-[560px]">
-      <div className={cx("rounded-[10px] border px-4 transition-colors duration-300", on ? "bg-accent-soft/35 border-accent/30" : "bg-paper border-line")}>
+      <div className={cx("rounded-md border px-4 transition-colors duration-base", on ? "bg-accent-soft/35 border-accent/30" : "bg-paper border-line")}>
         <Switch checked={on} disabled={busy} onChange={(v) => (v ? enable() : disable())}
           label={<span className="font-medium">{t.device}</span>}
           hint={on ? t.hintOn : t.hintOff} />
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-muted">
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-meta text-muted">
         <span>{t.devices(devices)}</span>
         {on && <button type="button" onClick={test} disabled={busy} className="font-medium text-accent-hover hover:underline underline-offset-4 disabled:opacity-50">{t.test}</button>}
       </div>
@@ -199,7 +229,7 @@ export function ExportData() {
   const t = useT().data;
   return (
     <a href="/api/v1/me/export" download
-      className="inline-flex items-center gap-2 h-11 px-5 rounded-[6px] bg-accent-soft text-accent-hover font-medium text-[15px] hover:bg-accent hover:text-accent-ink transition-colors duration-200">
+      className="inline-flex items-center gap-2 h-11 px-5 rounded-sm bg-accent-soft text-accent-hover font-medium text-body hover:bg-accent hover:text-accent-ink transition-colors duration-fast">
       <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 4v11" /><path d="m7 10 5 5 5-5" /><path d="M5 20h14" /></svg>
       {t.download}
     </a>
@@ -250,19 +280,19 @@ export function DeleteAccount() {
     <div className="min-w-0">
       {!confirm ? (
         <div>
-          <p className="text-[15px] text-ink-2 max-w-prose">{t.intro}</p>
+          <p className="text-body text-ink-2 max-w-prose">{t.intro}</p>
           <button type="button" onClick={() => { setConfirm(true); setError(null); }}
-            className="mt-5 inline-flex items-center h-11 px-5 rounded-[6px] border border-late/50 text-late font-medium text-[15px] hover:bg-late hover:text-paper hover:border-late transition-colors duration-200">
+            className="mt-5 inline-flex items-center h-11 px-5 rounded-sm border border-late/50 text-late font-medium text-body hover:bg-late hover:text-paper hover:border-late transition-colors duration-fast">
             {t.open}
           </button>
         </div>
       ) : (
-        <div className="rounded-[10px] bg-paper border border-late/40 p-5 anim-rise" role="group" aria-label={t.aria}>
-          <p className="ui-title text-[16px]">{t.really}</p>
-          <p className="text-[15px] text-ink-2 mt-1.5 max-w-prose">{t.text}</p>
+        <div className="rounded-md bg-paper border border-late/40 p-5 anim-rise" role="group" aria-label={t.aria}>
+          <p className="ui-title text-body-lg">{t.really}</p>
+          <p className="text-body text-ink-2 mt-1.5 max-w-prose">{t.text}</p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3 mt-5">
             <button type="button" onClick={destroy} disabled={busy} autoFocus
-              className="inline-flex items-center h-11 px-5 rounded-[6px] bg-late text-paper font-semibold text-[15px] hover:opacity-90 transition-opacity disabled:opacity-45">
+              className="inline-flex items-center h-11 px-5 rounded-sm bg-late text-paper font-semibold text-body hover:opacity-90 transition-opacity disabled:opacity-45">
               {busy ? t.busy : t.confirm}
             </button>
             <Button variant="quiet" className="h-11" onClick={() => setConfirm(false)} disabled={busy}>{T.cancel}</Button>
@@ -272,7 +302,7 @@ export function DeleteAccount() {
       {error && (
         <Notice tone="late" className="mt-4">
           <p role="alert">{error.text}</p>
-          {error.openLoans && <Link href="/vorgaenge" className="underline text-sm mt-1 inline-block">{t.toLoans}</Link>}
+          {error.openLoans && <Link href="/vorgaenge" className="underline text-body-sm mt-1 inline-block">{t.toLoans}</Link>}
         </Notice>
       )}
     </div>

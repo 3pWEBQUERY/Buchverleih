@@ -120,7 +120,7 @@ export function Scanner({ mode, onResult, continuous, paused, fallbackHint, clas
 
   if (error) {
     return (
-      <div className={cx("border border-dashed border-line-strong rounded-[8px] p-5 text-[15px] leading-snug flex items-start gap-3", className)} role="alert">
+      <div className={cx("border border-dashed border-line-strong rounded-md p-5 text-body leading-snug flex items-start gap-3", className)} role="alert">
         <svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={1.6} aria-hidden className="flex-none mt-0.5 opacity-60">
           <path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.4-2h5.8l1.4 2h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z" /><circle cx="12" cy="13" r="3.2" /><path d="M3 3l18 18" />
         </svg>
@@ -132,10 +132,10 @@ export function Scanner({ mode, onResult, continuous, paused, fallbackHint, clas
   return (
     <div className={cx("relative overflow-hidden rounded-sm bg-black aspect-[4/3]", className)}>
       <video ref={video} playsInline muted className="absolute inset-0 h-full w-full object-cover" />
-      {!ready && <div className="absolute inset-0 grid place-items-center text-sm text-white/70">{t.starting}</div>}
+      {!ready && <div className="absolute inset-0 grid place-items-center text-body-sm text-white/70">{t.starting}</div>}
       {/* Zielrahmen */}
       <div aria-hidden className={cx("absolute border-2 border-white/90 rounded-sm", mode === "qr" ? "inset-[18%] aspect-square mx-auto" : "left-[12%] right-[12%] top-[32%] bottom-[32%]")}>
-        <span className="absolute inset-x-0 top-1/2 h-px bg-[var(--accent)]" style={{ animation: "scan-line 1.6s ease-in-out infinite alternate" }} />
+        <span className="absolute inset-x-0 top-1/2 h-px bg-[var(--accent)]" style={{ animation: "scan-line 1.6s ease-out infinite alternate" }} />
       </div>
       {paused && <div className="absolute inset-0 bg-black/40" />}
     </div>

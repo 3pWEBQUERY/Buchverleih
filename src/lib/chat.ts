@@ -50,16 +50,84 @@ export async function assertMember(t: Thread, userId: string) {
   return m;
 }
 
-export async function listMessages(t: Thread, after?: string) {
+/**
+ * Nachrichten eines Threads. `after`: nur neuere als diese Nachricht (inkrementelles Nachladen),
+ * `only`: genau diese eine (wenn sich ein Terminvorschlag geändert hat).
+ */
+export async function listMessages(t: Thread, after?: string, only?: string) {
   const col = t.type === "loan" ? sql`m.loan_id` : sql`m.handover_chat_id`;
   return sql<Message[]>`
     select m.id, m.sender_id, u.first_name as sender_name, m.body, m.proposal_place, m.proposal_at, m.proposal_status,
            m.proposal_accepted_by, m.created_at
       from messages m left join users u on u.id = m.sender_id
      where ${col} = ${t.id}
-       ${after ? sql`and m.created_at > (select created_at from messages where id = ${after})` : sql``}
+       ${after ? sql`and (m.created_at, m.id) > (select created_at, id from messages where id = ${after})` : sql``}
+       ${only ? sql`and m.id = ${only}` : sql``}
      order by m.created_at, m.id
      limit 500`;
+}
+
+// ---------------------------------------------------------------------------
+// Lesestand
+// ---------------------------------------------------------------------------
+
+/** Lesestand eines anderen Mitglieds; `last_read_at` ist der Zeitpunkt der letzten gelesenen Nachricht (null: noch nie geöffnet) */
+export type ThreadRead = { user_id: string; last_read_at: Date | null };
+
+/**
+ * Setzt den Lesestand auf eine Nachricht des Threads (ohne `messageId`: auf die neueste).
+ * Der Stand wandert nur vorwärts; ein älterer Wert ändert nichts.
+ */
+async function setRead(tx: Tx, userId: string, t: Thread, messageId?: string | null) {
+  const col = t.type === "loan" ? tx`m.loan_id` : tx`m.handover_chat_id`;
+  const target = t.type === "loan" ? tx`(user_id, loan_id) where loan_id is not null` : tx`(user_id, handover_chat_id) where handover_chat_id is not null`;
+  await tx`
+    insert into thread_reads (user_id, loan_id, handover_chat_id, last_read_message_id, last_read_at)
+    select ${userId}, m.loan_id, m.handover_chat_id, m.id, m.created_at
+      from messages m
+     where ${col} = ${t.id} ${messageId ? tx`and m.id = ${messageId}` : tx``}
+     order by m.created_at desc, m.id desc limit 1
+    on conflict ${target} do update
+       set last_read_message_id = excluded.last_read_message_id, last_read_at = excluded.last_read_at
+     where thread_reads.last_read_at < excluded.last_read_at`;
+}
+
+/**
+ * Thread als gelesen markieren: bis zur Nachricht `messageId`, sonst bis zur neuesten.
+ * Nur für Mitglieder des Threads. Gibt den danach gültigen Stand zurück (null: der Thread hat noch keine Nachricht).
+ */
+export async function markRead(userId: string, t: Thread, messageId?: string | null): Promise<{ last_read_at: Date | null }> {
+  return sql.begin(async (tx) => {
+    const m = await threadMembers(tx, t);
+    if (!m.members.includes(userId)) throw err.notFound();
+    if (messageId) {
+      const [msg] = await tx<{ id: string }[]>`
+        select id from messages where id = ${messageId} and ${t.type === "loan" ? tx`loan_id` : tx`handover_chat_id`} = ${t.id}`;
+      if (!msg) throw err.notFound();
+    }
+    await setRead(tx, userId, t, messageId);
+    // Mit dem Chat sind auch die Hinweise auf neue Nachrichten in diesem Vorgang gesehen
+    if (t.type === "loan")
+      await tx`update notifications set read_at = now() where user_id = ${userId} and loan_id = ${t.id} and type = 'message' and read_at is null`;
+    const [r] = await tx<{ last_read_at: Date }[]>`
+      select last_read_at from thread_reads
+       where user_id = ${userId} and ${t.type === "loan" ? tx`loan_id` : tx`handover_chat_id`} = ${t.id}`;
+    return { last_read_at: r?.last_read_at ?? null };
+  });
+}
+
+/**
+ * Lesestand der anderen Mitglieder (für «Gelesen» unter der letzten eigenen Nachricht:
+ * gelesen ist sie, wenn jedes andere Mitglied mindestens bis zu ihrem Zeitpunkt gelesen hat).
+ */
+export async function threadReads(t: Thread, userId: string): Promise<ThreadRead[]> {
+  const m = await assertMember(t, userId);
+  const others = [...new Set(m.members.filter((x) => x !== userId))];
+  const rows = await sql<{ user_id: string; last_read_at: Date }[]>`
+    select user_id, last_read_at from thread_reads
+     where ${t.type === "loan" ? sql`loan_id` : sql`handover_chat_id`} = ${t.id} and user_id in ${sql(others)}`;
+  const at = new Map(rows.map((r) => [r.user_id, r.last_read_at]));
+  return others.map((id) => ({ user_id: id, last_read_at: at.get(id) ?? null }));
 }
 
 /** Muster wie Preisangaben im Chat werden zur Prüfung markiert (PRD 6.5). */
@@ -99,6 +167,8 @@ export async function sendMessage(
               ${input.proposalPlace?.trim() || null}, ${input.proposalAt ?? null}, ${input.proposalAt ? "open" : null},
               ${input.proposalAt ? [userId] : []}::uuid[], ${flagged})
       returning id`;
+    // Wer schreibt, hat den Thread bis hierhin gelesen
+    await setRead(tx, userId, t, msg.id);
     if (flagged) {
       await tx`insert into reports (reporter_id, target_type, target_id, reason, note)
                values (null, 'message', ${msg.id}, 'price_pattern', 'Automatisch markiert')`;

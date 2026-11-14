@@ -13,12 +13,14 @@ export default async function NotFound() {
   const t = COMMON[await getLocale()].notFound;
   return (
     <StandaloneShell homeLabel={SHELL[await getLocale()].home} motif={{ label: t.motif, gap: 6 }}>
-      <p className="eyebrow anim-rise">{t.eyebrow}</p>
-      <h1 className="display text-[32px] md:text-[44px] mt-4 anim-rise" style={{ animationDelay: "40ms" }}>{t.heading[0]}<em>{t.heading[1]}</em></h1>
-      <p className="text-ink-2 text-[17px] md:text-[19px] leading-relaxed mt-6 max-w-prose anim-rise" style={{ animationDelay: "80ms" }}>{t.text}</p>
-      <div className="mt-9 flex flex-wrap gap-2 anim-rise" style={{ animationDelay: "120ms" }}>
+      <div className="stagger">
+      <p className="eyebrow">{t.eyebrow}</p>
+      <h1 className="display text-display mt-4">{t.heading[0]}<em>{t.heading[1]}</em></h1>
+      <p className="text-ink-2 text-lead leading-relaxed mt-6 max-w-prose">{t.text}</p>
+      <div className="mt-9 flex flex-wrap gap-2">
         <LinkButton href="/" variant="primary" size="lg">{t.home}</LinkButton>
         <LinkButton href="/suche" variant="secondary" size="lg">{t.search}</LinkButton>
+      </div>
       </div>
     </StandaloneShell>
   );

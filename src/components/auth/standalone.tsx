@@ -30,7 +30,7 @@ export function StandaloneShell({ children, motif, homeLabel }: { children: Reac
 /** Dunkle Bühne mit einem Regal aus Buchrücken; optional mit einer Lücke im Regal */
 function Motif({ label, gap }: { label: ReactNode; gap?: number }) {
   return (
-    <div className="order-1 lg:order-2 surface-night rounded-[12px] overflow-hidden flex flex-col h-[148px] lg:h-[460px] anim-rise" aria-hidden>
+    <div className="order-1 lg:order-2 surface-night rounded-lg overflow-hidden flex flex-col h-[148px] lg:h-[460px] anim-rise" aria-hidden>
       <p className="eyebrow !text-night-muted px-5 pt-4 lg:px-9 lg:pt-8">{label}</p>
       {/* Mobil verkleinert gesetzt, damit die Proportionen gleich bleiben */}
       <div className="mt-auto overflow-hidden lg:hidden" style={{ height: 105 }}>
@@ -46,9 +46,9 @@ function Row({ gap }: { gap?: number }) {
   return (
     <div className="flex items-end gap-[6px] px-6 lg:px-9" style={{ height: 250 }}>
       {SHELF.map(([t, a], i) => (
-        <div key={t} className="anim-cover" style={{ animationDelay: `${120 + i * 30}ms` }}>
+        <div key={t} className="anim-cover">
           {i === gap
-            ? <div style={{ width: 46, height: 206 }} className="rounded-[3px] border-[1.5px] border-dashed border-night-muted/60" />
+            ? <div style={{ width: 46, height: 206 }} className="rounded-xs border-[1.5px] border-dashed border-night-muted/60" />
             : <Spine title={t} author={a} height={240} />}
         </div>
       ))}

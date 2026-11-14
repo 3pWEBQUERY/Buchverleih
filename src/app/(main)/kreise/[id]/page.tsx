@@ -16,6 +16,12 @@ import { InviteBox, LeaveCircle, MemberList, CircleSettings } from "./circle-cli
 import { getLocale } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/locale";
 import { CIRCLES } from "@/lib/i18n/messages/circles";
+import { listPosts, COMMENT_MAX, POST_TEXT_MAX } from "@/lib/pinboard";
+import { wantedInCircle } from "@/lib/wishlist";
+import { pulse } from "@/lib/pulse";
+import { Pinboard } from "@/components/kreise/pinboard";
+import { WantedBoard } from "@/components/kreise/wanted-board";
+import { PulseList } from "@/components/pulse";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -49,16 +55,19 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     return (
       <div className="max-w-2xl">
         <p className="eyebrow flex items-center gap-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-wait live-dot" /> {t.requestSent}</p>
-        <h1 className="display text-[32px] md:text-[44px] mt-3">{mine.name}<em>.</em></h1>
-        <div className="rounded-[10px] bg-paper-2 mt-8 p-6 md:p-8">
-          <p className="text-[17px] text-ink-2">{d.pendingText}</p>
+        <h1 className="display text-display mt-3">{mine.name}<em>.</em></h1>
+        <div className="rounded-md bg-paper-2 mt-8 p-6 md:p-8">
+          <p className="text-lead text-ink-2">{d.pendingText}</p>
           <LinkButton href="/kreise" className="mt-6">{d.toCircles}</LinkButton>
         </div>
       </div>
     );
   }
 
-  const [members, copies] = await Promise.all([circleMembers(id), circleShelf(id, user.id)]);
+  const [members, copies, board, wanted, pulseItems] = await Promise.all([
+    circleMembers(id), circleShelf(id, user.id), listPosts(id, user.id), wantedInCircle(id, user.id), pulse(user.id, { circleId: id }),
+  ]);
+  const ownCopies = copies.filter((c) => c.owner_id === user.id);
   const admin = circle.my_role === "admin";
   const inviteUrl = admin || circle.join_mode === "link" ? `${env.appUrl}/k/${circle.invite_code}` : null;
   const admins = members.filter((m) => m.role === "admin" && m.status === "active").length;
@@ -79,7 +88,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   return (
     <div>
-      <Link href="/kreise" className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
+      <Link href="/kreise" className="inline-flex items-center gap-1.5 text-body-sm font-medium text-muted hover:text-ink transition-colors mb-6 md:mb-8 min-h-11 -my-2">
         <IconArrowLeft width={16} height={16} /> {t.back}
       </Link>
 
@@ -92,17 +101,17 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               <span>{admin ? t.youAdmin : t.member}</span><span aria-hidden>·</span>
               <span>{circle.join_mode === "link" ? t.joinLink : t.joinApproval}</span>
               {admin && pendingCount > 0 && (
-                <a href="#mitglieder" className="inline-flex items-center gap-1.5 h-6 px-2 rounded-[6px] bg-accent-soft text-accent-hover text-[12px] font-semibold normal-case tracking-normal">
+                <a href="#mitglieder" className="inline-flex items-center gap-1.5 h-6 px-2 rounded-sm bg-accent-soft text-accent-hover text-caption font-semibold normal-case tracking-normal">
                   <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent live-dot" />{t.joinRequests(pendingCount)}
                 </a>
               )}
             </p>
-            <h1 className="display text-[32px] md:text-[44px] mt-2 break-words">{circle.name}<em>.</em></h1>
-            {circle.description && <p className="text-[15.5px] md:text-[16px] text-ink-2 mt-3 leading-relaxed max-w-2xl">{circle.description}</p>}
+            <h1 className="display text-display mt-2 break-words">{circle.name}<em>.</em></h1>
+            {circle.description && <p className="text-body-lg text-ink-2 mt-3 leading-relaxed max-w-2xl">{circle.description}</p>}
             <p className="sr-only">{settingsText(circle, l)}</p>
           </div>
         </div>
-        <dl className="grid grid-cols-4 gap-2 w-full lg:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
+        <dl className="grid grid-cols-4 gap-2 w-full lg:w-auto anim-rise">
           <StatTile n={circle.member_count} label={t.members(circle.member_count)} href="#mitglieder" live={admin && pendingCount > 0} />
           <StatTile n={circle.copy_count} label={t.books(circle.copy_count)} href="#regal" />
           <StatTile n={free} label={t.freeNow} href="#regal" />
@@ -110,14 +119,22 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </dl>
       </header>
 
+      {/* Puls: was diese Woche im Kreis passiert ist – nur Aggregiertes oder selbst Veröffentlichtes */}
+      {pulseItems.length > 0 && (
+        <section aria-labelledby="puls-t" className="mb-8 md:mb-10">
+          <h2 id="puls-t" className="eyebrow">{t.pulse.title}</h2>
+          <PulseList items={pulseItems.slice(0, 6)} l={l} className="mt-2 grid sm:grid-cols-2 xl:grid-cols-3 gap-x-10" />
+        </section>
+      )}
+
       {/* Das gemeinsame Regal auf der dunklen Bühne */}
-      <section id="regal" className="scroll-mt-24 surface-night rounded-[12px] px-5 md:px-9 pt-7 md:pt-9 pb-5 md:pb-7 -mx-1 md:mx-0" aria-labelledby="regal-t">
+      <section id="regal" className="scroll-mt-24 surface-night rounded-lg px-5 md:px-9 pt-7 md:pt-9 pb-5 md:pb-7 -mx-1 md:mx-0" aria-labelledby="regal-t">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[12.5px] text-night-muted">{d.shelfCount(copies.length, active.length)}</p>
-            <h2 id="regal-t" className="text-[26px] md:text-[32px] font-[560] tracking-[-0.03em] leading-none mt-2">{d.shelf}</h2>
+            <p className="text-meta text-night-muted">{d.shelfCount(copies.length, active.length)}</p>
+            <h2 id="regal-t" className="text-title font-title tracking-title leading-none mt-2">{d.shelf}</h2>
             {copies.length > 0 && (
-              <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-night-muted tnum">
+              <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-meta text-night-muted tnum">
                 <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-night-ok" />{d.free(free)}</span>
                 {lent > 0 && <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-night-lent" />{d.lent(lent)}</span>}
                 {mine > 0 && <span>{t.list.mine(mine)}</span>}
@@ -127,12 +144,13 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <Faces names={active.slice(0, 5).map((m) => m.first_name)} seeds={active.slice(0, 5).map((m) => m.user_id)} photos={active.slice(0, 5).map((m) => m.avatar_key)} total={active.length} ring="ring-night" l={l} />
         </div>
         {copies.length === 0 ? (
-          <div className="mt-6 mb-2 rounded-[8px] border border-night-line p-6 flex flex-wrap items-center justify-between gap-4">
+          <div className="mt-6 mb-2 rounded-md border border-night-line p-6 flex flex-wrap items-center justify-between gap-4">
             <p className="text-night-muted">{d.noBooks}</p>
-            <Link href="/regal" className="h-11 px-5 rounded-[6px] bg-accent text-accent-ink font-medium inline-flex items-center hover:bg-accent-hover transition-colors">{d.toShelf}</Link>
+            <Link href="/regal" className="h-11 px-5 rounded-sm bg-accent text-accent-ink font-medium inline-flex items-center hover:bg-accent-hover transition-colors">{d.toShelf}</Link>
           </div>
         ) : (
           <BookRow
+            morph="copy"
             label={d.shelfOf(circle.name)}
             height={160}
             items={copies.map((c) => ({
@@ -146,6 +164,17 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
       <div className="mt-6 md:mt-8 grid lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px] gap-x-10 xl:gap-x-16 gap-y-10 items-start">
         <div className="min-w-0">
+          <StepSection id="pinnwand" n={++n} title={t.pin.title} desc={t.pin.desc}>
+            <Pinboard circleId={circle.id} me={user.id} initial={board} limits={{ text: POST_TEXT_MAX, comment: COMMENT_MAX }}
+              ownCopies={ownCopies.map((c) => ({ id: c.id, work_id: c.work_id, title: c.title, authors: c.authors, cover_key: c.cover_key, photo_key: c.photo_key, photo_w: c.photo_w, photo_h: c.photo_h }))} />
+          </StepSection>
+
+          {wanted.length > 0 && (
+            <StepSection id="gesucht" n={++n} title={t.wanted.title} desc={t.wanted.desc}>
+              <WantedBoard items={wanted} l={l} inShelf={ownCopies.map((c) => c.id)} />
+            </StepSection>
+          )}
+
           <StepSection id="mitglieder" n={++n} title={d.members} aside={d.activeN(active.length)}
             desc={admin ? d.membersAdmin : d.membersMember}>
             <MemberList circleId={circle.id} me={user.id} admin={admin} members={members} />
@@ -154,10 +183,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <StepSection id="regeln" n={++n} title={d.rulesTitle} desc={d.rulesDesc}>
             <dl className="grid sm:grid-cols-2 gap-2">
               {rules.map(([k, v, desc]) => (
-                <div key={k} className="rounded-[10px] border border-line px-4 md:px-5 py-4 flex flex-col">
-                  <dt className="text-[12.5px] text-muted">{k}</dt>
-                  <dd className="text-[19px] font-[560] tracking-[-0.025em] mt-1 leading-tight break-words">{v}</dd>
-                  <dd className="text-[13.5px] text-muted mt-1 leading-snug">{desc}</dd>
+                <div key={k} className="rounded-md border border-line px-4 md:px-5 py-4 flex flex-col">
+                  <dt className="text-meta text-muted">{k}</dt>
+                  <dd className="text-title-sm font-title tracking-title mt-1 leading-tight break-words">{v}</dd>
+                  <dd className="text-body-sm text-muted mt-1 leading-snug">{desc}</dd>
                 </div>
               ))}
             </dl>

@@ -37,13 +37,14 @@ export type Edition = {
   cover_key: string | null;
   cover_w: number | null;
   cover_h: number | null;
+  cover_color: string | null;
   source: string;
   genre: string | null;
 };
 
 const EDITION_SELECT = sql`
   e.id, e.work_id, e.isbn13, e.title, w.authors, e.publisher, e.year, e.language, e.binding, e.pages,
-  e.cover_key, e.cover_w, e.cover_h, e.source, w.genre`;
+  e.cover_key, e.cover_w, e.cover_h, e.cover_color, e.source, w.genre`;
 
 export async function editionById(tx: Tx, id: string): Promise<Edition | null> {
   const [e] = await tx<Edition[]>`select ${EDITION_SELECT} from editions e join works w on w.id = e.work_id where e.id = ${id}`;

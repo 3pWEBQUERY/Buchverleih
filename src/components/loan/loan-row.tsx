@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { LoanListItem } from "@/lib/loans/queries";
 import { Cover } from "@/components/cover";
 import { type Tone } from "@/components/status";
-import { IconArrowRight } from "@/components/icons";
+import { IconArrowRight, IconChat } from "@/components/icons";
 import { cx } from "@/components/ui";
 import { labels } from "@/lib/i18n/labels";
 import type { Locale } from "@/lib/i18n/locale";
@@ -161,15 +161,15 @@ export function timeMeter(loan: MeterInput, l: Locale = "de"): Meter | null {
 export function TimeMeter({ m, className }: { m: Meter; className?: string }) {
   const late = m.tone === "late";
   return (
-    <div className={cx("rounded-[8px] px-4 py-3.5", late ? "bg-late/[0.07]" : "bg-paper-2", className)}>
+    <div className={cx("rounded-md px-4 py-3.5", late ? "bg-late/[0.07]" : "bg-paper-2", className)}>
       <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 items-end">
-        <p className={cx("text-[12px]", late ? "text-late" : "text-muted")}>{m.eyebrow}</p>
-        <p className="text-[12px] text-muted text-right">{m.sideLabel}</p>
+        <p className={cx("text-caption", late ? "text-late" : "text-muted")}>{m.eyebrow}</p>
+        <p className="text-caption text-muted text-right">{m.sideLabel}</p>
         <p className={cx("flex items-baseline gap-1.5 leading-none", late && "text-late")}>
-          <span className="text-[30px] md:text-[34px] font-[560] tracking-[-0.045em] tnum">{m.value}</span>
-          {m.unit && <span className="text-[15px] font-medium">{m.unit}</span>}
+          <span className="text-display font-title tracking-display tnum">{m.value}</span>
+          {m.unit && <span className="text-body font-medium">{m.unit}</span>}
         </p>
-        <p className={cx("text-[14px] font-medium tnum text-right truncate pb-0.5", late && "text-late")}>{m.side}</p>
+        <p className={cx("text-body-sm font-medium tnum text-right truncate pb-0.5", late && "text-late")}>{m.side}</p>
       </div>
       {m.pct != null && (
         <div className="relative mt-3 h-1.5 rounded-full bg-paper-3 overflow-hidden" role="presentation">
@@ -178,7 +178,7 @@ export function TimeMeter({ m, className }: { m: Meter; className?: string }) {
         </div>
       )}
       {m.foot && (m.foot[0] || m.foot[1]) && (
-        <div className="mt-2 flex justify-between gap-3 text-[12px] text-muted tnum">
+        <div className="mt-2 flex justify-between gap-3 text-caption text-muted tnum">
           <span className="truncate">{m.foot[0]}</span>
           {m.foot[1] && <span className="flex-none">{m.foot[1]}</span>}
         </div>
@@ -187,12 +187,21 @@ export function TimeMeter({ m, className }: { m: Meter; className?: string }) {
   );
 }
 
-const coverOf = (loan: LoanListItem) => ({ title: loan.title, authors: loan.authors, photoKey: loan.photo_key, photoW: loan.photo_w, photoH: loan.photo_h, coverKey: loan.cover_key, seed: loan.work_id });
+const coverOf = (loan: LoanListItem) => ({ title: loan.title, authors: loan.authors, photoKey: loan.photo_key, photoColor: loan.photo_color, photoW: loan.photo_w, photoH: loan.photo_h, coverKey: loan.cover_key, coverColor: loan.cover_color, seed: loan.work_id });
 const who = (loan: LoanListItem, l: Locale) => `${labels(l).offerNoun[loan.kind]} · ${loan.role === "owner" ? LOANS[l].row.to(loan.other_name) : LOANS[l].row.from(loan.other_name)}`;
+
+/** Ungelesene Chat-Nachrichten: Symbol und Zahl, ausgeschrieben für Screenreader */
+function UnreadMessages({ n, l }: { n: number; l: Locale }) {
+  return (
+    <span className="inline-flex items-center gap-1 h-6 px-2 rounded-sm bg-accent-soft text-accent-hover text-caption font-semibold tnum flex-none">
+      <IconChat width={13} height={13} aria-hidden /><span aria-hidden>{n}</span><span className="sr-only">{LOANS[l].row.unreadMessages(n)}</span>
+    </span>
+  );
+}
 
 function Unread({ n, l }: { n: number; l: Locale }) {
   if (n <= 0) return null;
-  return <span className="inline-flex items-center h-6 px-2 rounded-[6px] bg-accent-soft text-accent-hover text-[12px] font-semibold tnum flex-none">{LOANS[l].row.unread(n)}</span>;
+  return <span className="inline-flex items-center h-6 px-2 rounded-sm bg-accent-soft text-accent-hover text-caption font-semibold tnum flex-none">{LOANS[l].row.unread(n)}</span>;
 }
 
 /** Fortschritt als schmale Segmente, der laufende Schritt in der Markenfarbe */
@@ -206,7 +215,7 @@ function Progress({ loan, trouble, l }: { loan: LoanListItem; trouble: boolean; 
           <span key={i} className={cx("h-1 rounded-full", i < p.done ? "bg-ink-2" : i === p.done ? (trouble ? "bg-late" : "bg-accent") : "bg-paper-3")} />
         ))}
       </span>
-      <span className="text-[12px] text-muted tnum flex-none">{Math.min(p.done + 1, p.total)}/{p.total}</span>
+      <span className="text-caption text-muted tnum flex-none">{Math.min(p.done + 1, p.total)}/{p.total}</span>
     </div>
   );
 }
@@ -225,16 +234,16 @@ export function LoanRow({ loan, variant, i = 0, l = "de" }: { loan: LoanListItem
 
   if (v === "done") {
     return (
-      <li className="anim-rise" style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
+      <li>
         <Link href={`/vorgaenge/${loan.id}`} className="group grid grid-cols-[32px_minmax(0,1fr)_auto] md:grid-cols-[32px_minmax(0,1fr)_120px_120px_170px] gap-4 md:gap-6 items-center px-4 md:px-5 py-3 hover:bg-paper-2 transition-colors">
           <Cover l={l} data={coverOf(loan)} width={32} height={48} uniform />
           <div className="min-w-0">
-            <p className="font-serif text-[16.5px] leading-tight truncate group-hover:underline underline-offset-4 decoration-1">{loan.title}</p>
-            <p className="text-[13px] text-muted truncate mt-0.5"><span className="md:hidden">{who(loan, l)}</span><span className="hidden md:inline">{loan.authors.join(", ")}</span></p>
+            <p className="font-serif text-lead leading-tight truncate group-hover:underline underline-offset-4 decoration-1">{loan.title}</p>
+            <p className="text-meta text-muted truncate mt-0.5"><span className="md:hidden">{who(loan, l)}</span><span className="hidden md:inline">{loan.authors.join(", ")}</span></p>
           </div>
-          <span className="hidden md:block text-[13.5px] text-ink-2">{L.offerNoun[loan.kind]}</span>
-          <span className="hidden md:block text-[13.5px] text-ink-2 truncate">{loan.role === "owner" ? t.toShort : t.fromShort}{loan.other_name}</span>
-          <span className="text-[13px] text-right inline-flex items-center justify-end gap-2 text-muted tnum">
+          <span className="hidden md:block text-body-sm text-ink-2">{L.offerNoun[loan.kind]}</span>
+          <span className="hidden md:block text-body-sm text-ink-2 truncate">{loan.role === "owner" ? t.toShort : t.fromShort}{loan.other_name}</span>
+          <span className="text-meta text-right inline-flex items-center justify-end gap-2 text-muted tnum">
             <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none", toneDot(loanTone(loan.status, loan.due_at)))} />
             <span className="text-ink-2">{L.statusLabel[loan.status]}</span>
             {loan.closed_at && <span className="hidden sm:inline">{fmtDay(loan.closed_at, l)}</span>}
@@ -247,43 +256,43 @@ export function LoanRow({ loan, variant, i = 0, l = "de" }: { loan: LoanListItem
   const meter = timeMeter(loan, l);
   const p = loanProgress(loan.status, loan.kind);
   return (
-    <li className="anim-rise min-w-0" style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
+    <li className="min-w-0">
       <Link href={`/vorgaenge/${loan.id}`}
-        className={cx("group flex flex-col gap-4 rounded-[10px] border p-4 md:p-5 h-full transition-colors",
+        className={cx("press-card group flex flex-col gap-4 rounded-md border p-4 md:p-5 h-full",
           tone === "late" ? "border-late/50 hover:border-late" : v === "action" ? "border-line-strong hover:border-accent" : "border-line hover:border-ink-2")}>
         <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-4">
           <span className="book self-start"><span className="book-face block"><Cover l={l} data={coverOf(loan)} width={64} height={96} uniform /></span></span>
           <div className="min-w-0 flex flex-col">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-[12.5px] text-muted truncate inline-flex items-center gap-2 min-w-0">
+              <p className="text-meta text-muted truncate inline-flex items-center gap-2 min-w-0">
                 <Monogram name={loan.other_name} seed={loan.other_id} size={20} photo={loan.other_avatar} />
                 <span className="truncate">{who(loan, l)}</span>
               </p>
-              <Unread n={loan.unread} l={l} />
+              {loan.unread_messages > 0 ? <UnreadMessages n={loan.unread_messages} l={l} /> : <Unread n={loan.unread} l={l} />}
             </div>
-            <p className="font-serif text-[19px] md:text-[20px] leading-[1.15] mt-1.5 line-clamp-2 group-hover:underline underline-offset-4 decoration-1">{loan.title}</p>
-            {loan.authors[0] && <p className="text-[13px] text-muted truncate mt-0.5">{loan.authors.join(", ")}</p>}
+            <p className="font-serif text-title-sm leading-title mt-1.5 line-clamp-2 group-hover:underline underline-offset-4 decoration-1">{loan.title}</p>
+            {loan.authors[0] && <p className="text-meta text-muted truncate mt-0.5">{loan.authors.join(", ")}</p>}
             {!p.ended && <div className="mt-auto pt-3"><Progress loan={loan} trouble={tone === "late"} l={l} /></div>}
           </div>
         </div>
 
         {meter ? <TimeMeter m={meter} /> : when && (
-          <p className={cx("inline-flex items-center gap-1.5 text-[13px] tnum", overdue ? "text-late font-medium" : "text-ink-2")}>
+          <p className={cx("inline-flex items-center gap-1.5 text-meta tnum", overdue ? "text-late font-medium" : "text-ink-2")}>
             <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none", toneDot(tone))} />{when}
           </p>
         )}
 
         <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-          <span className="inline-flex items-center gap-1.5 text-[13px] text-ink-2 min-w-0">
+          <span className="inline-flex items-center gap-1.5 text-meta text-ink-2 min-w-0">
             <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none", toneDot(tone))} />
             <span className="truncate">{v === "action" ? t.yourTurn : (loan.waitingText ?? L.statusLabel[loan.status])}</span>
           </span>
           {v === "action" ? (
-            <span className="h-9 px-3.5 rounded-[6px] bg-accent text-accent-ink text-[13.5px] font-medium inline-flex items-center gap-1.5 whitespace-nowrap group-hover:bg-accent-hover transition-colors">
-              {loan.step!.label} <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+            <span className="h-9 px-3.5 rounded-sm bg-accent text-accent-ink text-body-sm font-medium inline-flex items-center gap-1.5 whitespace-nowrap group-hover:bg-accent-hover transition-colors">
+              {loan.step!.label} <IconArrowRight width={15} height={15} className="transition-transform duration-fast group-hover:translate-x-0.5" />
             </span>
           ) : (
-            <span className="text-[13px] font-medium text-accent-hover inline-flex items-center gap-1">{t.open} <IconArrowRight width={14} height={14} /></span>
+            <span className="text-meta font-medium text-accent-hover inline-flex items-center gap-1">{t.open} <IconArrowRight width={14} height={14} /></span>
           )}
         </div>
       </Link>
@@ -297,8 +306,8 @@ export function TimeMeterInline({ m, className, l = "de" }: { m: Meter; classNam
   // Französisch mit Leerzeichen vor dem Doppelpunkt
   const joined = m.flow ? `${m.eyebrow} ${m.value}${m.unit ? ` ${m.unit}` : ""}` : `${m.eyebrow}${l === "fr" ? " : " : ": "}${m.value}${m.unit ? ` ${m.unit}` : ""}`;
   return (
-    <span className={cx("flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12.5px] tnum", className)}>
-      <span className={cx("inline-flex items-center gap-1.5 h-6 px-2 rounded-[6px] font-semibold",
+    <span className={cx("flex flex-wrap items-center gap-x-3 gap-y-1.5 text-meta tnum", className)}>
+      <span className={cx("inline-flex items-center gap-1.5 h-6 px-2 rounded-sm font-semibold",
         late ? "bg-late/10 text-late" : m.tone === "accent" ? "bg-accent-soft text-accent-hover" : "bg-paper-2 text-ink-2")}>
         <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", late ? "bg-late live-dot" : m.tone === "accent" ? "bg-accent live-dot" : "bg-ink-2")} />
         {joined}

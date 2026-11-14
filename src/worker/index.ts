@@ -7,6 +7,7 @@ import path from "node:path";
 import { sql } from "@/lib/db";
 import { ensureCors } from "@/lib/storage";
 import { runTitleAlarms, runSwapMatches } from "@/lib/wishlist";
+import { refreshGenreStats } from "@/lib/home-data";
 import { runDeadlines, runRetention } from "./deadlines";
 import { nextJob, runJob } from "./jobs";
 
@@ -64,6 +65,19 @@ async function withLock(id: number, fn: () => Promise<void>) {
 
 const withDeadlineLock = (fn: () => Promise<void>) => withLock(424242, fn);
 const DAILY_LOCK = 434343;
+const HOURLY_LOCK = 444444;
+
+/** Stündlich: Kennzahlen über den ganzen Bestand (app_stats), die alle Web-Instanzen gemeinsam lesen */
+async function runHourly() {
+  const last = await lastRun("hourly_stats");
+  if (last && Date.now() - last.getTime() < 3600_000) return;
+  try {
+    const genres = await refreshGenreStats();
+    await heartbeat("hourly_stats", { genres: genres.length });
+  } catch (e) {
+    console.error("[hourly_stats]", (e as Error).message);
+  }
+}
 
 /**
  * Täglicher Lauf: jeder Schritt hat einen eigenen Merker. Scheitert einer, laufen die anderen
@@ -122,6 +136,7 @@ async function scheduler() {
       }
       // Täglicher Lauf für Titelalarm, Tauschtreffer und Aufbewahrung – nur ein Worker gleichzeitig
       await withLock(DAILY_LOCK, runDaily);
+      await withLock(HOURLY_LOCK, runHourly);
     } catch (e) {
       console.error("[scheduler]", (e as Error).message);
     }

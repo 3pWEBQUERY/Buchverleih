@@ -8,6 +8,7 @@ import { availableActions, type Action } from "./machine";
 import { nextStep, type NextInput, type NextStep, type Turn } from "./next";
 import { directionFor } from "./handover";
 import { getCalendar } from "./calendar";
+import { noteForLoan } from "@/lib/book-path";
 
 export type LoanListItem = {
   id: string;
@@ -35,7 +36,13 @@ export type LoanListItem = {
   photo_w: number | null;
   photo_h: number | null;
   cover_key: string | null;
+  /** dominante Farbe des Fotos bzw. des Originalcovers (#rrggbb), als Hintergrund bis zum Laden */
+  photo_color: string | null;
+  cover_color: string | null;
+  /** ungelesene Benachrichtigungen zu diesem Vorgang */
   unread: number;
+  /** ungelesene Chatnachrichten anderer (ohne Systemnachrichten), gemessen am eigenen Lesestand */
+  unread_messages: number;
   step: NextStep;
   turn: Turn;
   waitingText: string | null;
@@ -52,6 +59,9 @@ type Joined = LoanRow & {
   photo_w: number | null;
   photo_h: number | null;
   cover_key: string | null;
+  photo_color: string | null;
+  cover_color: string | null;
+  unread_messages: number;
   case_response: string | null;
   case_kind: string | null;
   rated_by_me: boolean;
@@ -62,10 +72,13 @@ type Joined = LoanRow & {
 
 const JOINED = (userId: string) => sql`
   select l.*, l.wanted::text as wanted, w.title, w.authors, e.work_id, o.first_name as owner_name, b.first_name as borrower_name, o.avatar_key as owner_avatar, b.avatar_key as borrower_avatar,
-         ph.key as photo_key, ph.width as photo_w, ph.height as photo_h, e.cover_key,
+         ph.key as photo_key, ph.width as photo_w, ph.height as photo_h, ph.color as photo_color, e.cover_key, e.cover_color,
          oc.response as case_response, oc.kind::text as case_kind,
          exists (select 1 from ratings r where r.loan_id = l.id and r.from_user = ${userId}) as rated_by_me,
          (select count(*)::int from notifications n where n.loan_id = l.id and n.user_id = ${userId} and n.channel = 'app' and n.read_at is null) as unread,
+         (select count(*)::int from messages m
+           where m.loan_id = l.id and m.sender_id is not null and m.sender_id <> ${userId}
+             and m.created_at > coalesce((select tr.last_read_at from thread_reads tr where tr.user_id = ${userId} and tr.loan_id = l.id), '-infinity')) as unread_messages,
          (select p.borrower_id from loans p where p.id = l.pass_on_candidate_id) as pass_prev_borrower
     from loans l
     join copies c on c.id = l.copy_id
@@ -73,7 +86,7 @@ const JOINED = (userId: string) => sql`
     join works w on w.id = e.work_id
     join users o on o.id = l.owner_id
     join users b on b.id = l.borrower_id
-    left join lateral (select key, width, height from copy_photos p where p.copy_id = c.id order by position limit 1) ph on true
+    left join lateral (select key, width, height, color from copy_photos p where p.copy_id = c.id order by position limit 1) ph on true
     left join lateral (select response, kind from cases cs where cs.loan_id = l.id and cs.closed_at is null limit 1) oc on true`;
 
 function passOnPendingFor(r: Joined, me: string) {
@@ -113,7 +126,8 @@ export async function myLoans(userId: string, loc: Locale = "de"): Promise<LoanL
       other_avatar: s.role === "owner" ? r.borrower_avatar : r.owner_avatar,
       wanted: r.wanted, due_at: r.due_at, respond_by: r.respond_by, requested_at: r.requested_at, closed_at: r.closed_at,
       handed_over_at: r.handed_over_at, handover_by: r.handover_by, returned_at: r.returned_at, inspection_until: r.inspection_until, extensions_used: r.extensions_used,
-      photo_key: r.photo_key, photo_w: r.photo_w, photo_h: r.photo_h, cover_key: r.cover_key, unread: r.unread, step: s.step, turn: s.turn, waitingText: s.waitingText,
+      photo_key: r.photo_key, photo_w: r.photo_w, photo_h: r.photo_h, cover_key: r.cover_key,
+      photo_color: r.photo_color, cover_color: r.cover_color, unread: r.unread, unread_messages: r.unread_messages, step: s.step, turn: s.turn, waitingText: s.waitingText,
     } satisfies LoanListItem;
   });
   const rank = (i: LoanListItem) => (i.turn === "me" && i.step ? 0 : i.turn === "other" || i.turn === "system" ? 1 : 2);
@@ -207,6 +221,9 @@ export async function loanView(loanId: string, userId: string, loc: Locale = "de
 
   const calendar = isOwner ? await getCalendar(sql, r.copy_id, userId) : null;
 
+  // Zettel im Buch: nur die leihende Person, im selben Fenster wie die Bewertung
+  const bookNote = await noteForLoan(sql, r, userId);
+
   return {
     id: r.id,
     kind: r.kind,
@@ -220,8 +237,11 @@ export async function loanView(loanId: string, userId: string, loc: Locale = "de
     authors: r.authors,
     copyId: r.copy_id,
     workId: r.work_id,
-    photo: r.photo_key ? { key: r.photo_key, w: r.photo_w, h: r.photo_h } : null,
+    photo: r.photo_key ? { key: r.photo_key, w: r.photo_w, h: r.photo_h, color: r.photo_color } : null,
     coverKey: r.cover_key,
+    coverColor: r.cover_color,
+    /** ungelesene Chatnachrichten anderer in diesem Vorgang (ohne Systemnachrichten) */
+    unreadMessages: r.unread_messages,
     wanted: parseRange(r.wanted),
     message: r.message,
     times: {
@@ -259,6 +279,8 @@ export async function loanView(loanId: string, userId: string, loc: Locale = "de
     myDirection,
     myOfferable,
     ratedByMe: r.rated_by_me,
+    canLeaveNote: bookNote.canLeaveNote,
+    bookNote: bookNote.note,
     calendar,
     events,
   };

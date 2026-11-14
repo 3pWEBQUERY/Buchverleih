@@ -4,6 +4,7 @@ import { sql } from "@/lib/db";
 import { copyDetail } from "@/lib/copies";
 import { getCalendar } from "@/lib/loans/calendar";
 import { myCircles } from "@/lib/circles";
+import { wishersCount } from "@/lib/wishlist";
 import { CopyEditor, type HistoryRow } from "./copy-editor";
 import { getLocale } from "@/lib/i18n/server";
 import { COPY } from "@/lib/i18n/messages/copy";
@@ -26,7 +27,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const copy = await copyDetail(id, user.id, origin(user));
   if (!copy) notFound();
   if (copy.owner_id !== user.id) redirect(`/exemplar/${id}`);
-  const [calendar, circles, history] = await Promise.all([
+  const [wishers, calendar, circles, history] = await Promise.all([
+    wishersCount(user.id, id).catch(() => 0),
     getCalendar(sql, id, user.id),
     myCircles(user.id),
     sql<HistoryRow[]>`
@@ -44,6 +46,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       calendar={calendar}
       circles={circles.filter((c) => c.my_status === "active").map((c) => ({ id: c.id, name: c.name, loanDays: c.loan_days }))}
       history={history}
+      wishers={wishers}
     />
   );
 }

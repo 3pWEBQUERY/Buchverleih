@@ -12,12 +12,12 @@ export function OfflineText() {
   // Die statische Seite trägt «de-CH»; Vorleseprogramme sollen die angezeigte Sprache kennen
   useEffect(() => { document.documentElement.lang = htmlLang[l]; }, [l]);
   return (
-    <>
-      <p className="eyebrow anim-rise">{t.eyebrow}</p>
-      <h1 className="display text-[32px] md:text-[44px] mt-4 anim-rise" style={{ animationDelay: "40ms" }}>{t.heading[0]}<em>{t.heading[1]}</em></h1>
-      <p className="text-ink-2 text-[17px] md:text-[19px] leading-relaxed mt-6 max-w-prose anim-rise" style={{ animationDelay: "80ms" }}>{t.text}</p>
-      <div className="mt-9 anim-rise" style={{ animationDelay: "120ms" }}><RetryButton retry={t.retry} waiting={t.waiting} /></div>
-    </>
+    <div className="stagger">
+      <p className="eyebrow">{t.eyebrow}</p>
+      <h1 className="display text-display mt-4">{t.heading[0]}<em>{t.heading[1]}</em></h1>
+      <p className="text-ink-2 text-lead leading-relaxed mt-6 max-w-prose">{t.text}</p>
+      <div className="mt-9"><RetryButton retry={t.retry} waiting={t.waiting} /></div>
+    </div>
   );
 }
 

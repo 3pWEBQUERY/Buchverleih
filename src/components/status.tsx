@@ -18,7 +18,7 @@ const dot: Record<Tone, string> = {
 
 export function StatusText({ tone, children, className }: { tone: Tone; children: React.ReactNode; className?: string }) {
   return (
-    <span className={cx("inline-flex items-center gap-1.5 text-[13px] leading-tight", className)}>
+    <span className={cx("inline-flex items-center gap-1.5 text-meta leading-tight", className)}>
       <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full flex-none", dot[tone])} />
       <span>{children}</span>
     </span>

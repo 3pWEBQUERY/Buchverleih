@@ -254,14 +254,14 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
 
   return (
     <div className="anim-rise">
-      <div className="relative rounded-[12px] border border-line overflow-hidden bg-paper-2 isolate">
+      <div className="relative rounded-lg border border-line overflow-hidden bg-paper-2 isolate">
         <div ref={box} className="search-map h-[62vh] min-h-[420px] max-h-[680px] w-full" role="region" aria-label={t.region} />
 
         <div className={cx("pointer-events-none absolute top-3 left-3 right-3 flex flex-wrap items-center gap-2 z-[500] transition-opacity", loading && "opacity-60")}>
-          <span className="pointer-events-auto inline-flex items-center gap-2 h-8 px-3 rounded-[6px] bg-paper/95 border border-line text-[13px] font-medium text-ink-2">
+          <span className="pointer-events-auto inline-flex items-center gap-2 h-8 px-3 rounded-sm bg-paper/95 border border-line text-meta font-medium text-ink-2">
             {spots.length === 0 ? t.noPlaces : t.summary(titles, spots.length)}
           </span>
-          <span className="pointer-events-auto hidden sm:inline-flex items-center gap-3 h-8 px-3 rounded-[6px] bg-paper/95 border border-line text-[12.5px] text-muted">
+          <span className="pointer-events-auto hidden sm:inline-flex items-center gap-3 h-8 px-3 rounded-sm bg-paper/95 border border-line text-meta text-muted">
             <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2.5 w-2.5 rounded-full bg-accent" /> {t.freeNow}</span>
             <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2.5 w-2.5 rounded-full border-[1.5px] border-ink-2 bg-paper" /> {t.taken}</span>
           </span>
@@ -269,14 +269,14 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
 
         {sel && (
           <section aria-label={t.panelAria}
-            className="absolute z-[1100] inset-x-2 bottom-2 max-h-[58%] md:inset-x-auto md:right-3 md:top-3 md:bottom-8 md:max-h-none md:w-[360px] flex flex-col rounded-[10px] border border-line bg-paper anim-rise">
+            className="absolute z-[1100] inset-x-2 bottom-2 max-h-[58%] md:inset-x-auto md:right-3 md:top-3 md:bottom-8 md:max-h-none md:w-[360px] flex flex-col rounded-md border border-line bg-paper anim-rise">
             <header className="flex items-start justify-between gap-3 px-4 pt-3.5 pb-3 border-b border-line">
               <div className="min-w-0">
-                <p ref={panelHead} tabIndex={-1} className="font-medium text-[15px] focus:outline-none">{t.inArea(sel.items.length)}</p>
-                <p className="text-[12.5px] text-muted mt-0.5">{selFree ? t.freeCount(selFree) : ""}{t.rounded}</p>
+                <p ref={panelHead} tabIndex={-1} className="font-medium text-body focus:outline-none">{t.inArea(sel.items.length)}</p>
+                <p className="text-meta text-muted mt-0.5">{selFree ? t.freeCount(selFree) : ""}{t.rounded}</p>
               </div>
               <button type="button" onClick={close} aria-label={t.close}
-                className="-mr-1.5 -mt-1 h-9 w-9 grid place-items-center rounded-[6px] text-ink-2 hover:bg-paper-2 hover:text-ink transition-colors">
+                className="-mr-1.5 -mt-1 h-9 w-9 grid place-items-center rounded-sm text-ink-2 hover:bg-paper-2 hover:text-ink transition-colors">
                 <IconClose width={18} height={18} />
               </button>
             </header>
@@ -285,12 +285,12 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
                 <li key={h.work_id}>
                   <Link href={href(h)} className="book group flex gap-3.5 px-4 py-3 hover:bg-paper-2 transition-colors">
                     <span className="book-face flex-none">
-                      <Cover l={l} data={{ title: h.title, authors: h.authors, photoKey: h.cover?.photo_key, photoW: h.cover?.photo_w, photoH: h.cover?.photo_h, coverKey: h.cover?.cover_key, seed: h.work_id }} width={44} height={66} uniform />
+                      <Cover l={l} data={{ title: h.title, authors: h.authors, photoKey: h.cover?.photo_key, photoColor: h.cover?.photo_color, photoW: h.cover?.photo_w, photoH: h.cover?.photo_h, coverKey: h.cover?.cover_key, coverColor: h.cover?.cover_color, seed: h.work_id }} width={44} height={66} uniform />
                     </span>
                     <span className="min-w-0 flex flex-col">
-                      <span className="font-serif text-[16.5px] leading-[1.2] line-clamp-2 group-hover:text-accent-hover transition-colors">{h.title}</span>
-                      {h.authors.length > 0 && <span className="text-[12.5px] text-muted truncate mt-0.5">{h.authors.join(", ")}</span>}
-                      <span className="mt-auto pt-1.5 flex flex-wrap items-center gap-x-2.5 text-[12.5px]">
+                      <span className="font-serif text-lead leading-title line-clamp-2 group-hover:text-accent-hover transition-colors">{h.title}</span>
+                      {h.authors.length > 0 && <span className="text-meta text-muted truncate mt-0.5">{h.authors.join(", ")}</span>}
+                      <span className="mt-auto pt-1.5 flex flex-wrap items-center gap-x-2.5 text-meta">
                         <span className={cx("inline-flex items-center gap-1.5 font-medium", free ? "text-ok" : "text-ink-2")}>
                           <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", free ? "bg-ok" : "bg-lent")} />
                           {SEARCH[l].avail.chipOne(free > 0)}
@@ -305,7 +305,7 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
           </section>
         )}
       </div>
-      <p className="mt-3 text-[13px] text-muted max-w-2xl">
+      <p className="mt-3 text-meta text-muted max-w-2xl">
         {t.note}
       </p>
     </div>

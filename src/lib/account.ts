@@ -45,11 +45,19 @@ export async function movePlz(userId: string, plz: string) {
      where id = ${userId} and onboarded_at is not null`;
 }
 
-export async function updateSettings(userId: string, s: { firstName?: string; shelfPaused?: boolean; emailPrefs?: Record<string, boolean>; avatarKey?: string | null }) {
+export async function updateSettings(userId: string, s: {
+  firstName?: string; shelfPaused?: boolean; emailPrefs?: Record<string, boolean>; avatarKey?: string | null;
+  /** Neue Bücher von mir im Puls der Kreise zeigen */
+  pulseShowNewBooks?: boolean;
+  /** E-Mail und Push zur Pinnwand: nur Antworten auf eigene Zettel, alles, oder nichts */
+  pinboardNotify?: "replies" | "all" | "off";
+}) {
   const row: Record<string, unknown> = {};
   if (s.firstName !== undefined) row.first_name = s.firstName.trim().slice(0, 40);
   if (s.shelfPaused !== undefined) row.shelf_paused = s.shelfPaused;
   if (s.avatarKey !== undefined) row.avatar_key = s.avatarKey;
+  if (s.pulseShowNewBooks !== undefined) row.pulse_show_new_books = s.pulseShowNewBooks;
+  if (s.pinboardNotify !== undefined) row.pinboard_notify = s.pinboardNotify;
   if (Object.keys(row).length) await sql`update users set ${sql(row)} where id = ${userId}`;
   if (s.emailPrefs) {
     const clean = Object.fromEntries(Object.entries(s.emailPrefs).filter(([k]) => k !== "cases").map(([k, v]) => [k, Boolean(v)]));
@@ -87,7 +95,8 @@ export async function joinWaitlist(email: string, plz: string) {
 /** Datenexport: alles, was zur Person gespeichert ist (DSG/DSGVO Auskunft) */
 export async function exportData(userId: string) {
   const [user] = await sql`select id, email, first_name, plz, municipality, phone_e164, trust_level, role, created_at, onboarded_at,
-                                  age_confirmed_at, email_prefs, shelf_paused, avatar_key, home_lat, home_lng, display_lat, display_lng
+                                  age_confirmed_at, email_prefs, shelf_paused, avatar_key, home_lat, home_lng, display_lat, display_lng,
+                                  pulse_show_new_books, pinboard_notify
                              from users where id = ${userId}`;
   const copies = await sql`select c.*, e.title, e.isbn13 from copies c join editions e on e.id = c.edition_id where c.owner_id = ${userId}`;
   const copyPhotos = await sql`select p.* from copy_photos p join copies c on c.id = p.copy_id where c.owner_id = ${userId}`;
@@ -101,8 +110,9 @@ export async function exportData(userId: string) {
   const ratingsReceived = await sql`select loan_id, verdict, reasons, created_at from ratings where for_user = ${userId} and visible_from <= now()`;
   const cases = await sql`select cs.* from cases cs join loans l on l.id = cs.loan_id where l.owner_id = ${userId} or l.borrower_id = ${userId}`;
   const circles = await sql`select c.name, m.role, m.joined_at from circle_members m join circles c on c.id = m.circle_id where m.user_id = ${userId}`;
-  const wishlist = await sql`select w.title, wi.radius_km, wi.created_at from wishlist_items wi join works w on w.id = wi.work_id where wi.user_id = ${userId}`;
+  const wishlist = await sql`select w.title, wi.radius_km, wi.alarm, wi.share_circles, wi.created_at from wishlist_items wi join works w on w.id = wi.work_id where wi.user_id = ${userId}`;
   const spots = await sql`select label, detail, dropoff from pickup_spots where user_id = ${userId}`;
+  const threadReads = await sql`select loan_id, handover_chat_id, last_read_at from thread_reads where user_id = ${userId}`;
   const notifications = await sql`select type, channel, payload, created_at, read_at from notifications where user_id = ${userId} order by created_at desc limit 1000`;
   const reports = await sql`select target_type, target_id, reason, note, status, created_at from reports where reporter_id = ${userId}`;
   const blocks = await sql`select blocked_id, created_at from blocks where blocker_id = ${userId}`;
@@ -110,9 +120,18 @@ export async function exportData(userId: string) {
   const passkeys = await sql`select name, created_at, last_used_at from passkeys where user_id = ${userId}`;
   const sessions = await sql`select kind, user_agent, created_at, last_seen_at, expires_at from sessions where user_id = ${userId}`;
   const searches = await sql`select q, created_at from search_log where user_id = ${userId} order by created_at desc limit 1000`;
+  // Gemeinschaft: Pinnwand (Zettel, Kommentare, Reaktionen, Angebote) und Zettel im Buch
+  const circlePosts = await sql`
+    select p.id, c.name as circle, p.kind, p.body, p.work_id, p.copy_id, p.needed_by, p.event_at, p.event_place, p.fulfilled_at, p.created_at
+      from circle_posts p join circles c on c.id = p.circle_id where p.author_id = ${userId}`;
+  const circlePostComments = await sql`select id, post_id, body, created_at from circle_post_comments where author_id = ${userId}`;
+  const circlePostReactions = await sql`select post_id, kind, created_at from circle_post_reactions where user_id = ${userId}`;
+  const circlePostOffers = await sql`select post_id, copy_id, created_at from circle_post_offers where user_id = ${userId}`;
+  const bookNotes = await sql`select id, copy_id, loan_id, body, anonymous, hidden_at, created_at from book_notes where author_id = ${userId}`;
   return {
     exportedAt: new Date().toISOString(), user, copies, copyPhotos, loans, events, messages, messagesReceived, ratingsGiven, ratingsReceived,
-    cases, circles, wishlist, spots, notifications, reports, blocks, uploads, passkeys, sessions, searches,
+    cases, circles, wishlist, spots, notifications, threadReads, reports, blocks, uploads, passkeys, sessions, searches,
+    circlePosts, circlePostComments, circlePostReactions, circlePostOffers, bookNotes,
   };
 }
 
@@ -133,8 +152,16 @@ export async function deleteAccount(userId: string) {
     await tx`update loans set pickup_spot_id = null where pickup_spot_id in (select id from pickup_spots where user_id = ${userId})`;
     await tx`delete from pickup_spots where user_id = ${userId}`;
     await tx`delete from wishlist_items where user_id = ${userId}`;
+    // Pinnwand: eigene Zettel, Kommentare, Reaktionen und Angebote verschwinden (wie freie Chatnachrichten)
+    await tx`delete from circle_post_reactions where user_id = ${userId}`;
+    await tx`delete from circle_post_offers where user_id = ${userId}`;
+    await tx`delete from circle_post_comments where author_id = ${userId}`;
+    await tx`delete from circle_posts where author_id = ${userId}`;
+    // Zettel im Buch bleiben beim Buch, aber ohne Bezug zur Person
+    await tx`update book_notes set author_id = null, anonymous = true where author_id = ${userId}`;
     await tx`delete from circle_members where user_id = ${userId}`;
     await tx`delete from notifications where user_id = ${userId}`;
+    await tx`delete from thread_reads where user_id = ${userId}`;
     await tx`delete from blocks where blocker_id = ${userId} or blocked_id = ${userId}`;
     await tx`delete from search_log where user_id = ${userId}`;
     await tx`delete from uploads where user_id = ${userId}`;
@@ -145,7 +172,7 @@ export async function deleteAccount(userId: string) {
     await tx`update users set email = ${"geloescht-" + userId + "@invalid"}, first_name = 'Ehemaliges Mitglied', phone_e164 = null,
                     plz = null, municipality = null,
                     home_lat = null, home_lng = null, display_lat = null, display_lng = null, avatar_key = null,
-                    email_prefs = '{}', deleted_at = now() where id = ${userId}`;
+                    email_prefs = '{}', pulse_show_new_books = true, pinboard_notify = 'replies', deleted_at = now() where id = ${userId}`;
   });
   // Eigene Dateien aus dem Bucket entfernen (Profilbild, Exemplarfotos, Rohdaten). Fotos in Vorgängen bleiben als Nachweis.
   const { deletePrefix } = await import("@/lib/storage");

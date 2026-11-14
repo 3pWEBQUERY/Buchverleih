@@ -15,6 +15,8 @@
     "seed": "tsx scripts/seed.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "tokens:check": "tsx scripts/tokens-check.ts",
+    "a11y": "tsx scripts/a11y.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -41,6 +43,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@tailwindcss/postcss": "4.1.16",
     "@types/leaflet": "1.9.22",
     "@types/node": "22.18.12",
@@ -51,6 +54,7 @@
     "@types/web-push": "3.6.4",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.6",
+    "playwright": "1.63.0",
     "tailwindcss": "4.1.16",
     "typescript": "5.9.3",
     "vitest": "5.1.0"

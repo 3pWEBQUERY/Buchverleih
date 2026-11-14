@@ -32,11 +32,11 @@ export function DocToc({ toc, label: given }: { toc: TocItem[]; label?: string }
     <nav aria-label={label} className="sticky top-24">
       <div className="flex items-center justify-between mb-4">
         <p className="eyebrow">{label}</p>
-        <span className="text-[12px] text-muted tnum">{idx + 1} / {toc.length}</span>
+        <span className="text-caption text-muted tnum">{idx + 1} / {toc.length}</span>
       </div>
       <div className="relative">
         <span aria-hidden className="absolute left-0 top-0 bottom-0 w-px bg-line" />
-        <span aria-hidden className="absolute left-0 top-0 w-[2px] -translate-x-[0.5px] bg-accent transition-[height] duration-300 ease-[var(--ease-out-quart)]" style={{ height: `${Math.max(6, progress)}%` }} />
+        <span aria-hidden className="absolute left-0 top-0 h-full w-[2px] -translate-x-[0.5px] bg-accent origin-top transition-transform duration-base ease-out" style={{ transform: `scaleY(${Math.max(6, progress) / 100})` }} />
         <ol className="flex flex-col">
           {toc.map(([id, label]) => {
             const on = id === active;
@@ -44,10 +44,10 @@ export function DocToc({ toc, label: given }: { toc: TocItem[]; label?: string }
               <li key={id}>
                 <a href={`#${id}`} aria-current={on ? "location" : undefined}
                   className={cx(
-                    "relative block py-[7px] pl-5 text-[14px] leading-snug transition-colors duration-200",
+                    "relative block py-[7px] pl-5 text-body-sm leading-snug transition-colors duration-fast",
                     on ? "text-accent-hover font-medium" : "text-muted hover:text-ink",
                   )}>
-                  <span aria-hidden className={cx("absolute left-[-3px] top-1/2 -translate-y-1/2 h-[7px] w-[7px] rounded-full transition-[background-color,transform] duration-200", on ? "bg-accent scale-100" : "bg-transparent scale-0")} />
+                  <span aria-hidden className={cx("absolute left-[-3px] top-1/2 -translate-y-1/2 h-[7px] w-[7px] rounded-full transition-[background-color,transform] duration-fast", on ? "bg-accent scale-100" : "bg-transparent scale-0")} />
                   {label}
                 </a>
               </li>
