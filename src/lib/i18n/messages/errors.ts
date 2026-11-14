@@ -46,6 +46,7 @@ export const ERRORS: Record<string, FrIt> = {
   "Gib eine Mobilnummer ein, zum Beispiel 079 123 45 67.": ["Saisis un numéro de mobile, par exemple 079 123 45 67.", "Inserisci un numero di cellulare, per esempio 079 123 45 67."],
   "Diese Nummer kann nicht verwendet werden. Melde dich bei der Moderation, wenn du das für einen Fehler hältst.": ["Ce numéro ne peut pas être utilisé. Contacte la modération si tu penses que c’est une erreur.", "Questo numero non può essere usato. Contatta la moderazione se pensi che sia un errore."],
   "Diese Nummer gehört bereits zu einem anderen Konto. Eine Nummer, ein Konto.": ["Ce numéro appartient déjà à un autre compte. Un numéro, un compte.", "Questo numero appartiene già a un altro conto. Un numero, un conto."],
+  "Die SMS konnte gerade nicht gesendet werden. Versuch es in ein paar Minuten nochmals.": ["Le SMS n’a pas pu être envoyé pour le moment. Réessaie dans quelques minutes.", "Al momento non è stato possibile inviare l’SMS. Riprova tra qualche minuto."],
   "Der Code ist abgelaufen. Fordere einen neuen an.": ["Le code a expiré. Demandes-en un nouveau.", "Il codice è scaduto. Richiedine uno nuovo."],
   "Zu viele Versuche. Fordere einen neuen Code an.": ["Trop de tentatives. Demande un nouveau code.", "Troppi tentativi. Richiedi un nuovo codice."],
   "Der Code stimmt nicht. Prüfe die sechs Ziffern aus der SMS.": ["Le code est incorrect. Vérifie les six chiffres du SMS.", "Il codice non è corretto. Controlla le sei cifre dell’SMS."],

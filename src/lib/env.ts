@@ -35,7 +35,7 @@ export const env = {
     return process.env.MAIL_FROM || "Leihregal <hallo@leihregal.ch>";
   },
   get smsProvider() {
-    return (process.env.SMS_PROVIDER || "console") as "console" | "webhook";
+    return (process.env.SMS_PROVIDER || "console").toLowerCase() as "console" | "webhook" | "aspsms";
   },
   /** Google Books API-Schlüssel (Railway-Variable, nie im Code). Ohne Schlüssel gilt das knappe anonyme Kontingent. */
   get googleBooksKey() {
