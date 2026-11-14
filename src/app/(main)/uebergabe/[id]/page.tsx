@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { pageUser } from "@/lib/page";
 import { sql } from "@/lib/db";
-import { listMessages, threadMembers } from "@/lib/chat";
+import { listMessages, threadMembers, threadReads } from "@/lib/chat";
 import { dayToDate, fmtDay, fmtDayTime } from "@/lib/dates";
 import { Cover } from "@/components/cover";
 import { Monogram } from "@/components/person/monogram";
@@ -48,7 +48,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       join copies c on c.id = n.copy_id join editions e on e.id = c.edition_id join works w on w.id = e.work_id
       left join lateral (select key, width, height from copy_photos x where x.copy_id = c.id order by position limit 1) ph on true
      where hc.id = ${id}`;
-  const messages = await listMessages({ type: "handover", id });
+  const [messages, reads] = await Promise.all([listMessages({ type: "handover", id }), threadReads({ type: "handover", id }, user.id)]);
   const myLoan = user.id === h.prev_bid ? h.prev_id : h.next_id;
   const cover = { title: h.title, authors: h.authors, coverKey: h.cover_key, photoKey: h.photo_key, photoW: h.photo_w, photoH: h.photo_h, seed: h.work_id };
   const settled = Boolean(h.route && h.agreed_place && h.agreed_at);
@@ -139,7 +139,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             desc={m.readOnly ? t.chatClosed : t.chatOpen}
             aside={!m.readOnly && <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok live-dot" /> {D.live}</span>}>
             <div className="rounded-md border border-line overflow-hidden min-w-0">
-              <HandoverChat id={id} me={user.id} initial={JSON.parse(JSON.stringify(messages))} readOnly={m.readOnly} defaultPlace={h.agreed_place} />
+              <HandoverChat id={id} me={user.id} initial={JSON.parse(JSON.stringify(messages))} initialReads={JSON.parse(JSON.stringify(reads))} quick={m.readOnly ? null : "arrange"} readOnly={m.readOnly} defaultPlace={h.agreed_place} />
             </div>
             <Link href={`/vorgaenge/${user.id === h.owner_id ? h.next_id : myLoan}`} className="press-card group mt-3 rounded-md border border-line px-5 py-4 flex items-center justify-between gap-4 hover:border-accent">
               <span>

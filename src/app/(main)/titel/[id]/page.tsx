@@ -80,7 +80,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
   const cover = {
     title: work.title,
     authors: work.authors,
-    coverKey: work.cover_key ?? copies.find((c) => c.cover_key)?.cover_key ?? null,
+    coverKey: work.cover_key, coverColor: work.cover_color ?? copies.find((c) => c.cover_key)?.cover_key ?? null,
     photoKey: work.cover_key ? null : copies.find((c) => c.photo_key)?.photo_key ?? null,
     photoW: work.cover_key ? null : copies.find((c) => c.photo_key)?.photo_w ?? null,
     photoH: work.cover_key ? null : copies.find((c) => c.photo_key)?.photo_h ?? null,
@@ -226,7 +226,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
                         next ? "border-accent bg-accent-soft/20" : "border-line hover:border-ink-2",
                       )}>
                         <Link href={`/exemplar/${c.id}`} tabIndex={-1} aria-hidden className="book self-start">
-                          <span className="book-face block"><Cover l={l} data={{ title: work.title, authors: work.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: work.id }} width={56} height={84} uniform /></span>
+                          <span className="book-face block"><Cover l={l} data={{ title: work.title, authors: work.authors, photoKey: c.photo_key, photoColor: c.photo_color, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, coverColor: c.cover_color, seed: work.id }} width={56} height={84} uniform /></span>
                         </Link>
                         <div className="min-w-0">
                           {next && <p className="text-meta font-medium text-accent-hover mb-1">{t.nextFreeCopy}</p>}

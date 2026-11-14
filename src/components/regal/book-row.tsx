@@ -22,7 +22,7 @@ const NIGHT_DOT: Record<Tone, string> = {
 };
 
 export type BookRowItem = Pick<ShelfCopy, "id" | "title" | "authors" | "photo_key" | "photo_w" | "photo_h" | "cover_key" | "work_id"> &
-  Partial<Pick<ShelfCopy, "status" | "lent_until" | "next_start" | "open_requests">> & { href?: string; note?: { tone: Tone; text: string } };
+  Partial<Pick<ShelfCopy, "status" | "lent_until" | "next_start" | "open_requests" | "photo_color" | "cover_color">> & { href?: string; note?: { tone: Tone; text: string } };
 
 /** `wrap`: statt seitlich zu scrollen, laufen die Bücher auf weiteren Brettern weiter (für schmale Spalten) */
 /** `morph`: Cover wandert beim Öffnen in den Kopf der Zielseite – nur am Hauptregal einer Seite setzen (Namen müssen eindeutig sein) */
@@ -30,7 +30,7 @@ export function BookRow({ items, height = 168, hrefBase = "/regal/", label, wrap
   return (
     <ul className={cx("shelf !gap-0 !items-stretch mt-1 !pb-1", wrap && "!flex-wrap !overflow-visible !gap-y-9")} aria-label={label}>
       {items.map((c, i) => {
-        const cover = { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id };
+        const cover = { title: c.title, authors: c.authors, photoKey: c.photo_key, photoColor: c.photo_color, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, coverColor: c.cover_color, seed: c.work_id };
         const bw = Math.round(height * (2 / 3)); // gleiche Grösse für alle Bücher
         const w = Math.max(128, bw);
         const st = c.note ?? (c.status ? shelfStatusLocal({ status: c.status, lent_until: c.lent_until ?? null, next_start: c.next_start ?? null, open_requests: c.open_requests ?? 0 }, l) : null);

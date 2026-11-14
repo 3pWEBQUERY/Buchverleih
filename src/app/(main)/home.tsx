@@ -1,7 +1,12 @@
 import Link from "next/link";
 import type { SessionUser } from "@/lib/auth/session";
 import { sql } from "@/lib/db";
-import { newNearby } from "@/lib/copies";
+import { nearestFreeCopy, newNearby } from "@/lib/copies";
+import { topGenres, wishlistMatches } from "@/lib/home-data";
+import { pulse } from "@/lib/pulse";
+import { PulseList } from "@/components/pulse";
+import { COMMUNITY } from "@/lib/i18n/messages/community";
+import { ExampleBook } from "@/components/example-book";
 import { myLoans } from "@/lib/loans/queries";
 import { requirePhone } from "@/lib/trust";
 import { LinkButton, Notice, cx } from "@/components/ui";
@@ -16,50 +21,23 @@ import { htmlLang } from "@/lib/i18n/locale";
 import { labels } from "@/lib/i18n/labels";
 import { HOME } from "@/lib/i18n/messages/home";
 
-/**
- * Häufigste Genres ohne die eigenen Bücher. Die Zählung über den ganzen Bestand ist teuer und
- * ändert sich langsam: sie wird pro Prozess 10 Minuten gehalten, nur die eigenen Bücher werden
- * jedes Mal (über den Index auf owner_id) abgezogen.
- */
-let genreCache: { at: number; rows: { genre: string; n: number }[] } | null = null;
-
-async function topGenres(userId: string) {
-  if (!genreCache || Date.now() - genreCache.at > 10 * 60_000) {
-    const rows = await sql<{ genre: string; n: number }[]>`
-      select w.genre, count(*)::int as n from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id
-       where c.removed_at is null and cardinality(c.offers) > 0 and w.genre is not null
-       group by w.genre`;
-    genreCache = { at: Date.now(), rows: [...rows] };
-  }
-  const own = await sql<{ genre: string; n: number }[]>`
-    select w.genre, count(*)::int as n from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id
-     where c.owner_id = ${userId} and c.removed_at is null and cardinality(c.offers) > 0 and w.genre is not null
-     group by w.genre`;
-  const mine = new Map(own.map((r) => [r.genre, r.n]));
-  return genreCache.rows
-    .map((r) => ({ genre: r.genre, n: r.n - (mine.get(r.genre) ?? 0) }))
-    .filter((r) => r.n > 0)
-    .sort((a, b) => b.n - a.n || a.genre.localeCompare(b.genre))
-    .slice(0, 10);
-}
-
 /** Start angemeldet (PRD 8.4): Handlungsbedarf zuoberst, darunter zwei Regalreihen. */
 export async function Home({ user }: { user: SessionUser }) {
   const origin = { lat: user.home_lat!, lng: user.home_lng! };
   const l = await getLocale();
   const t = HOME[l];
-  const [loans, nearby, circleCopies, [counts], genres] = await Promise.all([
+  const [loans, nearby, circleCopies, [counts], genres, matches, week] = await Promise.all([
     myLoans(user.id, l),
     newNearby(user.id, origin, 10, 24),
-    sql<{ id: string; work_id: string; title: string; authors: string[]; photo_key: string | null; photo_w: number | null; photo_h: number | null; cover_key: string | null; owner_name: string; circle: string }[]>`
+    sql<{ id: string; work_id: string; title: string; authors: string[]; photo_key: string | null; photo_w: number | null; photo_h: number | null; photo_color: string | null; cover_key: string | null; cover_color: string | null; owner_name: string; circle: string }[]>`
       select distinct on (c.id) c.id, e.work_id, w.title, w.authors, e.cover_key, o.first_name as owner_name, ci.name as circle,
-             ph.key as photo_key, ph.width as photo_w, ph.height as photo_h, c.created_at
+             ph.key as photo_key, ph.width as photo_w, ph.height as photo_h, ph.color as photo_color, e.cover_color, c.created_at
         from circle_members m
         join circles ci on ci.id = m.circle_id
         join circle_copies cc on cc.circle_id = m.circle_id
         join copies c on c.id = cc.copy_id and c.removed_at is null and c.owner_id <> ${user.id} and cardinality(c.offers) > 0
         join editions e on e.id = c.edition_id join works w on w.id = e.work_id join users o on o.id = c.owner_id
-        left join lateral (select key, width, height from copy_photos p where p.copy_id = c.id order by position limit 1) ph on true
+        left join lateral (select key, width, height, color from copy_photos p where p.copy_id = c.id order by position limit 1) ph on true
        where m.user_id = ${user.id} and m.status = 'active'
        order by c.id, c.created_at desc limit 18`,
     sql<{ shelf: number; lent: number; borrowed: number }[]>`
@@ -67,7 +45,11 @@ export async function Home({ user }: { user: SessionUser }) {
              (select count(*)::int from loans where owner_id = ${user.id} and status in ('active', 'return_reported', 'disputed')) as lent,
              (select count(*)::int from loans where borrower_id = ${user.id} and status in ('active', 'return_reported', 'disputed')) as borrowed`,
     topGenres(user.id),
+    wishlistMatches(user.id, 8),
+    pulse(user.id),
   ]);
+  // Leerer Zustand mit echtem Beispiel: nur abfragen, wenn wirklich nichts läuft
+  const example = loans.length === 0 ? await nearestFreeCopy(user.id) : null;
   const mine = loans.filter((x) => x.turn === "me" && x.step);
   const running = loans.filter((x) => !mine.includes(x) && ["requested", "accepted", "active", "return_reported", "returned", "disputed"].includes(x.status));
   const hour = Number(new Intl.DateTimeFormat("de-CH", { hour: "numeric", hour12: false, timeZone: "Europe/Zurich" }).format(new Date()));
@@ -133,6 +115,7 @@ export async function Home({ user }: { user: SessionUser }) {
         aside={loans.length > 0 && <Link href="/vorgaenge" className="inline-flex items-center gap-1 font-medium text-accent-hover hover:underline underline-offset-4">{t.allLoans} <IconArrowRight width={14} height={14} /></Link>}
         desc={mine.length ? t.yourTurn : undefined}>
         {mine.length === 0 ? (
+          <>
           <div className="rounded-md bg-paper-2 px-5 py-5 flex items-center gap-4">
             <span className="h-10 w-10 rounded-full bg-accent-soft text-accent-hover grid place-items-center flex-none"><IconCheck width={18} height={18} /></span>
             <div>
@@ -140,6 +123,8 @@ export async function Home({ user }: { user: SessionUser }) {
               <p className="text-ink-2 text-body-sm">{running.length > 0 ? t.othersTurn(running.length) : t.nothingOpen}</p>
             </div>
           </div>
+          {example && <div className="mt-3 rounded-md border border-line px-5 py-4"><ExampleBook copy={example} l={l} /></div>}
+          </>
         ) : (
           <ul className="grid xl:grid-cols-2 gap-3">
             {mine.slice(0, 4).map((x, i) => <LoanRow key={x.id} loan={x} variant="action" i={i} l={l} />)}
@@ -165,6 +150,16 @@ export async function Home({ user }: { user: SessionUser }) {
         )}
       </StepSection>
 
+      {matches.length > 0 && (
+        <StepSection id="wunsch" n={++n} title={t.matchTitle} desc={t.matchDesc}
+          aside={<Link href="/wunschliste" className="inline-flex items-center gap-1 font-medium text-accent-hover hover:underline underline-offset-4">{t.quick[2][0]} <IconArrowRight width={14} height={14} /></Link>}>
+          <div className="surface-night rounded-lg px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5 -mx-1 md:mx-0">
+            <BookRow l={l} label={t.matchTitle} height={150}
+              items={matches.map((c) => ({ ...c, note: { tone: c.reason === "swap" ? "accent" as const : "ok" as const, text: [c.reason === "swap" ? t.matchSwap : t.matchWish, c.distance_km != null ? fmtDistance(c.distance_km * 1000, l) : null].filter(Boolean).join(" · ") } }))} />
+          </div>
+        </StepSection>
+      )}
+
       <StepSection id="naehe" n={++n} title={t.nearTitle} desc={t.nearDesc}
         aside={<Link href="/suche" className="inline-flex items-center gap-1 font-medium text-accent-hover hover:underline underline-offset-4">{t.searchAll} <IconArrowRight width={14} height={14} /></Link>}>
         {nearby.length === 0 ? (
@@ -179,6 +174,14 @@ export async function Home({ user }: { user: SessionUser }) {
           </div>
         )}
       </StepSection>
+
+      {/* Puls: nur Aggregiertes oder selbst Veröffentlichtes – nie «X hat Y von Z geliehen» */}
+      {week.length > 0 && (
+        <StepSection id="puls" n={++n} title={COMMUNITY[l].pulseHome.title} desc={COMMUNITY[l].pulseHome.desc}
+          aside={<Link href="/kreise" className="inline-flex items-center gap-1 font-medium text-accent-hover hover:underline underline-offset-4">{t.circles} <IconArrowRight width={14} height={14} /></Link>}>
+          <PulseList items={week} l={l} showCircle />
+        </StepSection>
+      )}
 
       {circleCopies.length > 0 && (
         <StepSection id="kreise" n={++n} title={t.circlesTitle} desc={t.circlesDesc}

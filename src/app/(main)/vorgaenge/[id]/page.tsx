@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { pageUser } from "@/lib/page";
 import { loanView, type LoanView } from "@/lib/loans/queries";
-import { listMessages } from "@/lib/chat";
+import { listMessages, threadReads } from "@/lib/chat";
+import { quickReplySet } from "@/lib/loans/next";
 import { sql } from "@/lib/db";
 import { Cover, imageUrl } from "@/components/cover";
 import { Notice, cx } from "@/components/ui";
@@ -20,6 +21,7 @@ import type { Locale } from "@/lib/i18n/locale";
 import { getLocale } from "@/lib/i18n/server";
 import { LOANS } from "@/lib/i18n/messages/loans";
 import { HandoverStamp } from "@/components/motion";
+import { BookNoteForm } from "@/components/book-note";
 import { dayToDate, deadline, dueDay, fmtDay, fmtMonthYear, fmtRange } from "@/lib/dates";
 import { CalendarView } from "@/components/calendar";
 
@@ -49,7 +51,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const L = labels(l);
   const loan = await loanView(id, user.id, l).catch(() => null);
   if (!loan) notFound();
-  const messages = await listMessages({ type: "loan", id });
+  const [messages, reads] = await Promise.all([listMessages({ type: "loan", id }), threadReads({ type: "loan", id }, user.id)]);
   await sql`update notifications set read_at = now() where user_id = ${user.id} and loan_id = ${id} and read_at is null`;
   const owner = loan.role === "owner";
   const other = loan.other;
@@ -118,7 +120,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <aside className="lg:col-start-1 lg:row-start-1 space-y-5 min-w-0">
           <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-5 items-end lg:block lg:space-y-5">
             <div className="lg:rounded-lg lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center">
-              <Link href={`/exemplar/${loan.copyId}`} className="book block relative" aria-label={d.viewCopy(loan.title)}>
+              <Link href={`/exemplar/${loan.copyId}`} className="book block relative" title={d.viewCopy(loan.title)}>
                 {t.handed_over_at && <HandoverStamp text={LOANS[l].timeline.stamp(fmtDay(t.handed_over_at, l))} />}
                 <span className="book-face block lg:hidden"><Cover l={l} priority data={cover} width={104} height={156} uniform /></span>
                 <span className="book-face hidden lg:block"><Cover l={l} priority large data={cover} width={220} height={330} uniform /></span>
@@ -171,12 +173,18 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           )}
 
           <div className="mt-4 empty:hidden"><NextStep loan={loan} me={user.id} /></div>
+          {/* Zettel im Buch: im selben Moment wie die Bewertung, nur für die leihende Person nach Abschluss */}
+          {(loan.canLeaveNote || loan.bookNote) && (
+            <div className="rounded-md border border-line px-5 pb-6 md:px-8 mt-4">
+              <BookNoteForm loanId={loan.id} existing={loan.bookNote ? { body: loan.bookNote.body, anonymous: loan.bookNote.anonymous } : null} />
+            </div>
+          )}
 
           <StepSection id="chat" n={++n} title={d.chatWith(other?.first_name ?? d.otherSide)}
             desc={chatClosed ? d.chatClosed : d.chatOpen}
             aside={!chatClosed && <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok live-dot" /> {d.live}</span>}>
             <div className="rounded-md border border-line overflow-hidden min-w-0">
-              <LiveChat loanId={loan.id} me={user.id} initial={JSON.parse(JSON.stringify(messages))} readOnly={chatClosed} defaultPlace={loan.spot?.label ?? loan.circle?.fixed_spot ?? null} />
+              <LiveChat loanId={loan.id} me={user.id} initial={JSON.parse(JSON.stringify(messages))} initialReads={JSON.parse(JSON.stringify(reads))} quick={chatClosed ? null : quickReplySet(loan.status)} readOnly={chatClosed} defaultPlace={loan.spot?.label ?? loan.circle?.fixed_spot ?? null} />
             </div>
             {(loan.prevChat || loan.nextLoan?.chat_id) && (
               <div className="mt-3 grid gap-2">

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Monogram } from "@/components/person/monogram";
 import type { SessionUser } from "@/lib/auth/session";
 import { ViewTransition } from "react";
-import { MobileMore, NavLink, SearchTrigger, Shortcuts } from "./shell-client";
+import { MobileMore, NavLink, PaletteButton, SearchTrigger, Shortcuts } from "./shell-client";
 import { NavRail } from "./motion";
 import { LiveBell, LiveNotifications, UnreadBadge } from "./live-notifications";
 import { Wordmark, LogoMark } from "./brand";
@@ -57,7 +57,7 @@ export async function AppShell({ user, unread, children }: { user: SessionUser; 
           </Link>
           <div className="flex items-center justify-between px-2 mt-3 text-caption text-muted">
             <Link href="/einstellungen" className="inline-flex items-center gap-1.5 hover:text-ink"><IconSettings width={15} height={15} /> {n.settings}</Link>
-            <span className="inline-flex items-center gap-1"><kbd className="font-sans border border-line-strong rounded-xs px-1.5 leading-5">/</kbd> {n.search}</span>
+            <PaletteButton className="inline-flex items-center gap-1 hover:text-ink"><kbd className="font-sans border border-line-strong rounded-xs px-1.5 leading-5">⌘K</kbd> {m.palette.label}</PaletteButton>
           </div>
           <div className="flex items-center justify-between gap-2 px-2 mt-3">
             <nav aria-label={n.legal} className="flex flex-wrap gap-x-3 gap-y-1 text-caption text-muted">

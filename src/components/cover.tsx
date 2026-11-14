@@ -41,6 +41,9 @@ export type CoverData = {
   photoW?: number | null;
   photoH?: number | null;
   coverKey?: string | null;
+  /** Dominante Farbe des Bildes (#rrggbb, vom Worker gerechnet): Hintergrund, bis das Bild geladen ist */
+  coverColor?: string | null;
+  photoColor?: string | null;
   seed?: string;
 };
 
@@ -87,10 +90,11 @@ export function Cover({
         width={w}
         height={h}
         loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : undefined}
         decoding="async"
         className={cx("block bg-paper-3", uniform ? "object-cover" : "object-contain", "outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10 rounded-xs", className)}
         // Original-Cover im echten Seitenverhältnis: eine Seite fix, die andere ergibt sich
-        style={uniform ? { width: w, height: h } : natural ? (width && !height ? { width: w, height: "auto" } : { height: h, width: "auto", maxWidth: Math.round(h * 0.95) }) : { width: w, height: h, aspectRatio: `${w} / ${h}` }}
+        style={{ backgroundColor: (data.coverKey ? data.coverColor : data.photoColor) ?? undefined, ...(uniform ? { width: w, height: h } : natural ? (width && !height ? { width: w, height: "auto" } : { height: h, width: "auto", maxWidth: Math.round(h * 0.95) }) : { width: w, height: h, aspectRatio: `${w} / ${h}` }) }}
       />
     );
   }
@@ -122,7 +126,7 @@ export function Cover({
       </span>
       {variant === 2 && <span aria-hidden className="block h-px w-full my-2 mt-auto" style={{ background: fg, opacity: 0.5 }} />}
       {author && (
-        <span className={cx("uppercase tracking-[0.12em] font-sans", variant === 2 ? "" : "mt-auto pt-2")} style={{ fontSize: Math.max(7.5, w * 0.06), opacity: 0.85 }}>
+        <span className={cx("uppercase tracking-[0.12em] font-sans", variant === 2 ? "" : "mt-auto pt-2")} style={{ fontSize: Math.max(7.5, w * 0.06) }}>
           {author}
         </span>
       )}

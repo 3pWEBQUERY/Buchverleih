@@ -94,14 +94,14 @@ export function Segmented<T extends string | number>({
 
 export function Switch({ checked, onChange, label, hint, disabled }: { checked: boolean; onChange: (v: boolean) => void; label: ReactNode; hint?: ReactNode; disabled?: boolean }) {
   return (
-    <label className={cx("flex items-start justify-between gap-6 py-3 cursor-pointer", disabled && "opacity-50 pointer-events-none")}>
+    <label className={cx("flex items-start justify-between gap-6 py-3", disabled ? "pointer-events-none" : "cursor-pointer")}>
       <span>
         <span className="block text-body">{label}</span>
         {hint && <span className="block text-body-sm text-muted mt-0.5">{hint}</span>}
       </span>
       <button type="button" role="switch" aria-checked={checked} disabled={disabled} aria-disabled={disabled || undefined}
         onClick={() => { if (!disabled) onChange(!checked); }}
-        className={cx("relative mt-0.5 h-7 w-12 flex-none rounded-full transition-colors duration-fast disabled:cursor-not-allowed", checked ? "bg-accent" : "bg-field")}>
+        className={cx("relative mt-0.5 h-7 w-12 flex-none rounded-full transition-colors duration-fast disabled:cursor-not-allowed disabled:opacity-50", checked ? "bg-accent" : "bg-field")}>
         <span className={cx("absolute top-1 left-1 h-5 w-5 rounded-full bg-paper transition-transform duration-base ease-spring", checked && "translate-x-5")} />
       </button>
     </label>
@@ -141,12 +141,19 @@ export function PageTitle({ children, sub, aside, eyebrow }: { children: ReactNo
   );
 }
 
-/** Leerer Zustand: ein Satz und ein Knopf (PRD 8.1) */
-export function Empty({ text, action }: { text: ReactNode; action?: ReactNode }) {
+/**
+ * Leerer Zustand: ein Satz und ein Knopf (PRD 8.1). Mit `example` zeigt er zusätzlich etwas
+ * Konkretes aus echten Daten (z. B. das nächste freie Buch im Umkreis) – ein leerer Zustand,
+ * der etwas tut, statt nur zu erklären.
+ */
+export function Empty({ text, action, example }: { text: ReactNode; action?: ReactNode; example?: ReactNode }) {
   return (
-    <div className="border border-dashed border-line-strong rounded-md px-6 py-8 md:px-8 flex flex-wrap items-center justify-between gap-5">
-      <p className="text-ink-2 text-body-lg max-w-lg">{text}</p>
-      {action}
+    <div className="border border-dashed border-line-strong rounded-md px-6 py-8 md:px-8">
+      <div className="flex flex-wrap items-center justify-between gap-5">
+        <p className="text-ink-2 text-body-lg max-w-lg">{text}</p>
+        {action}
+      </div>
+      {example && <div className="mt-6 pt-6 border-t border-line">{example}</div>}
     </div>
   );
 }

@@ -9,7 +9,8 @@ export type JobKind =
   | "seed_demo"
   | "remove_demo"
   | "send_push"
-  | "send_push_test";
+  | "send_push_test"
+  | "backfill_image_colors";
 
 /** Reiht eine Aufgabe ein – idealerweise in derselben Transaktion wie die auslösende Änderung. */
 export async function enqueue(tx: Tx, kind: JobKind, payload: Record<string, unknown>, runAt?: Date) {

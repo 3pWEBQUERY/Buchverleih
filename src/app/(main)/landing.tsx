@@ -52,7 +52,7 @@ export async function Landing() {
             <p className="inline-flex items-center gap-2 h-8 px-3.5 rounded-sm border border-night-line text-meta font-medium text-night-muted">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" /> {m.beta}
             </p>
-            <h1 className="display mt-6 text-hero">
+            <h1 className="display mt-6 text-hero !animate-none">{/* grösstes Element der Seite: sofort zeichnen (LCP) */}
               {m.hero[0]}<em>{m.hero[1]}</em>
             </h1>
             <p className="mt-7 text-night-muted text-lead leading-relaxed max-w-xl">

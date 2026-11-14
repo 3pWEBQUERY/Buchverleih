@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { cx } from "./ui";
 import { IconDots, IconSearch } from "./icons";
 import { useLocale } from "./locale-provider";
 import { SHELL } from "@/lib/i18n/messages/shell";
+import { CommandPalette, PALETTE_EVENT, SHORTCUTS, ShortcutHelp, type Shortcut } from "./command-palette";
 
 export function NavLink({ href, icon, children, exact, tab }: { href: string; icon: ReactNode; children: ReactNode; exact?: boolean; tab?: boolean }) {
   const path = usePathname();
@@ -41,35 +42,66 @@ export function SearchTrigger() {
   );
 }
 
-/** Tastaturkürzel auf dem Desktop */
+/**
+ * Tastaturkürzel, Befehlspalette (⌘K / Ctrl+K) und Kürzel-Übersicht («?»).
+ * Welche Tasten etwas tun, steht allein in SHORTCUTS (command-palette.tsx) – dieselbe Liste zeigt die Übersicht.
+ */
 export function Shortcuts() {
   const router = useRouter();
+  const [view, setView] = useState<{ open: "palette" | "help" | null; seq: number }>({ open: null, seq: 0 });
+  const close = useCallback(() => setView((v) => (v.open ? { ...v, open: null } : v)), []);
+  const help = useCallback(() => setView((v) => ({ ...v, open: "help" })), []);
+
   useEffect(() => {
-    let g = false;
-    let gTimer: ReturnType<typeof setTimeout>;
-    const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement;
-      if (e.metaKey || e.ctrlKey || e.altKey || t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName)) return;
-      if (e.key === "/") {
-        e.preventDefault();
+    let typed: string[] = [];
+    let timer: ReturnType<typeof setTimeout>;
+    const palette = () => setView((v) => (v.open === "palette" ? { ...v, open: null } : { open: "palette", seq: v.seq + 1 }));
+    const fire = (s: Shortcut) => {
+      if (s.href) router.push(s.href);
+      else if (s.command === "palette") palette();
+      else if (s.command === "help") setView((v) => ({ ...v, open: "help" }));
+      else {
         const input = document.querySelector<HTMLInputElement>("[data-search-input]");
         if (input) input.focus();
         else router.push("/suche?fokus=1");
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      // Ein fremder Dialog (Scanner, Vollbild) hat Vorrang: dahinter löst nichts aus
+      if (document.querySelector("dialog[open]:not([data-shortcuts])")) return;
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod) {
+        // ⌘/Ctrl-Kürzel gelten überall, auch in Eingabefeldern
+        const s = !e.altKey && !e.shiftKey && SHORTCUTS.find((x) => x.keys[0] === "mod" && x.keys[1] === e.key.toLowerCase());
+        if (s) { e.preventDefault(); fire(s); }
         return;
       }
-      if (g) {
-        g = false;
-        const map: Record<string, string> = { s: "/", r: "/regal", v: "/vorgaenge", k: "/kreise", w: "/wunschliste", b: "/benachrichtigungen", e: "/einstellungen" };
-        if (map[e.key]) router.push(map[e.key]);
-        return;
-      }
-      if (e.key === "g") { g = true; clearTimeout(gTimer); gTimer = setTimeout(() => (g = false), 900); }
-      if (e.key === "n") router.push("/regal/neu");
+      const t = e.target as HTMLElement;
+      if (e.altKey || t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName) || document.querySelector("dialog[open]")) return;
+      // Tastenfolgen («g» dann «s»): nach der ersten Taste bleiben 900 ms für die zweite
+      const seq = [...typed, e.key];
+      const fits = SHORTCUTS.filter((x) => x.keys[0] !== "mod" && seq.every((k, i) => x.keys[i] === k));
+      clearTimeout(timer);
+      typed = [];
+      const exact = fits.find((x) => x.keys.length === seq.length);
+      if (exact) { e.preventDefault(); fire(exact); }
+      else if (fits.length) { typed = seq; timer = setTimeout(() => (typed = []), 900); }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener(PALETTE_EVENT, palette);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener(PALETTE_EVENT, palette);
+    };
   }, [router]);
-  return null;
+
+  return (
+    <>
+      <CommandPalette open={view.open === "palette"} seq={view.seq} onClose={close} onHelp={help} />
+      <ShortcutHelp open={view.open === "help"} onClose={close} />
+    </>
+  );
 }
 
 /**
@@ -90,10 +122,10 @@ export function MobileMore({ links, label = "Weitere Seiten" }: { links: { href:
     if (el?.matches(":popover-open")) el.hidePopover();
   }, [path]);
 
-  const items = () => [...(menu.current?.querySelectorAll<HTMLAnchorElement>("a") ?? [])];
+  const items = () => [...(menu.current?.querySelectorAll<HTMLElement>("a, button") ?? [])];
   const onKey = (e: React.KeyboardEvent) => {
     const list = items();
-    const i = list.indexOf(document.activeElement as HTMLAnchorElement);
+    const i = list.indexOf(document.activeElement as HTMLElement);
     const go = (n: number) => { e.preventDefault(); list[(n + list.length) % list.length]?.focus(); };
     if (e.key === "ArrowDown") go(i + 1);
     else if (e.key === "ArrowUp") go(i < 0 ? list.length - 1 : i - 1);
@@ -119,6 +151,7 @@ export function MobileMore({ links, label = "Weitere Seiten" }: { links: { href:
           else if (menu.current?.contains(document.activeElement)) trigger.current?.focus();
         }}
         className="more-menu fixed inset-auto top-[52px] right-2 m-0 w-56 rounded-md border border-field bg-paper text-ink py-1.5">
+        <PaletteButton className="w-full flex items-center h-11 px-4 text-body text-left hover:bg-paper-2 transition-colors border-b border-line mb-1.5" />
         {links.map((l) => {
           const active = path === l.href || path.startsWith(l.href + "/");
           return (
@@ -130,5 +163,15 @@ export function MobileMore({ links, label = "Weitere Seiten" }: { links: { href:
         })}
       </nav>
     </div>
+  );
+}
+
+/** Sichtbarer Zugang zur Befehlspalette (⌘K / Ctrl+K) – auch ohne Tastatur, z. B. im Mehr-Menü auf dem Telefon */
+export function PaletteButton({ className, children }: { className?: string; children?: ReactNode }) {
+  const l = useLocale();
+  return (
+    <button type="button" className={className} onClick={() => window.dispatchEvent(new Event(PALETTE_EVENT))}>
+      {children ?? SHELL[l].palette.label}
+    </button>
   );
 }

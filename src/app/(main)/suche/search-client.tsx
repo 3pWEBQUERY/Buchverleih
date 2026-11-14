@@ -74,7 +74,7 @@ function availabilityChip(h: Pick<WorkHit, "copies" | "available_now">, l: Local
 }
 
 const coverOf = (h: WorkHit) => ({
-  title: h.title, authors: h.authors, photoKey: h.cover?.photo_key, photoW: h.cover?.photo_w, photoH: h.cover?.photo_h, coverKey: h.cover?.cover_key, seed: h.work_id,
+  title: h.title, authors: h.authors, photoKey: h.cover?.photo_key, photoColor: h.cover?.photo_color, photoW: h.cover?.photo_w, photoH: h.cover?.photo_h, coverKey: h.cover?.cover_key, coverColor: h.cover?.cover_color, seed: h.work_id,
 });
 
 export function SearchClient({
@@ -198,7 +198,8 @@ export function SearchClient({
   const rest = results ? results.filter((h) => !onStage.has(h.work_id)) : [];
 
   return (
-    <div>
+    // Mindesthöhe: die Treffer kommen nach dem ersten Zeichnen – der Fuss der Seite soll dabei nicht springen (CLS)
+    <div className="min-h-[100dvh]">
       <header className="mb-8 md:mb-10 anim-rise">
         <p className="eyebrow">{t.eyebrow(place)}</p>
         <h1 className="display text-display mt-2">{t.heading[0]}<em>{t.heading[1]}</em></h1>

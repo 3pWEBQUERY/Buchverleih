@@ -4,6 +4,7 @@ import { sql } from "@/lib/db";
 export type CirclePreviewBook = {
   id: string; title: string; author: string; authors: string[]; work_id: string;
   cover_key: string | null; photo_key: string | null; photo_w: number | null; photo_h: number | null;
+  photo_color: string | null; cover_color: string | null;
 };
 export type CircleStats = { free_now: number; pending: number; active_loans: number; mine: number; new_week: number };
 export type CirclePreview = { names: { id: string; name: string; photo: string | null }[]; books: CirclePreviewBook[]; stats: CircleStats };
@@ -18,13 +19,13 @@ export async function circlePreviews(circleIds: string[], userId?: string) {
          where m.circle_id in ${sql(circleIds)} and m.status = 'active'
       ) x where n <= 5`,
     sql<(CirclePreviewBook & { circle_id: string })[]>`
-      select circle_id, id, title, authors, coalesce(authors[1], '') as author, work_id, cover_key, photo_key, photo_w, photo_h from (
-        select cc.circle_id, c.id, w.title, w.authors, e.work_id, e.cover_key, ph.key as photo_key, ph.width as photo_w, ph.height as photo_h,
+      select circle_id, id, title, authors, coalesce(authors[1], '') as author, work_id, cover_key, photo_key, photo_w, photo_h, photo_color, cover_color from (
+        select cc.circle_id, c.id, w.title, w.authors, e.work_id, e.cover_key, e.cover_color, ph.key as photo_key, ph.width as photo_w, ph.height as photo_h, ph.color as photo_color,
                row_number() over (partition by cc.circle_id order by c.created_at desc) as n
           from circle_copies cc
           join copies c on c.id = cc.copy_id and c.removed_at is null
           join editions e on e.id = c.edition_id join works w on w.id = e.work_id
-          left join lateral (select key, width, height from copy_photos p where p.copy_id = c.id order by position limit 1) ph on true
+          left join lateral (select key, width, height, color from copy_photos p where p.copy_id = c.id order by position limit 1) ph on true
          where cc.circle_id in ${sql(circleIds)}
       ) x where n <= 10`,
     sql<(CircleStats & { circle_id: string })[]>`

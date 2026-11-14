@@ -11,9 +11,10 @@ import { useToast } from "@/components/toast";
 import { useLocale } from "@/components/locale-provider";
 import { OptionCard } from "@/components/form-controls";
 import { StepSection } from "@/components/step-section";
-import { Button, Input, LinkButton, cx } from "@/components/ui";
+import { Button, Input, LinkButton, Notice, Segmented, cx } from "@/components/ui";
 import { IconArrowRight, IconScan, IconSearch } from "@/components/icons";
 import { LookupSkeleton, ManualTab, PendingCard, SearchTab, coverOf } from "./erfassen-parts";
+import { StackBar, StackNote, StackReview, useStack } from "./stapel";
 
 export type Added = { id: string; title: string; authors: string[]; condition: number; circlesOnly: boolean; cover: CoverData };
 type Tab = "scan" | "search" | "manual";
@@ -45,6 +46,16 @@ export function Erfassen({ initial }: { initial: Added[] }) {
   const [asked, setAsked] = useState(true);
   const [noCamera, setNoCamera] = useState(false);
   const step3 = useRef<HTMLDivElement>(null);
+  const step2 = useRef<HTMLDivElement>(null);
+  const camera = useRef<HTMLDivElement>(null);
+  // Stapel: mehrere Bücher am Stück, Zustand und Sichtbarkeit am Schluss gemeinsam
+  const s = useStack({
+    onCreated: (item) => { setAdded((a) => [item, ...a]); setFresh(item.id); },
+    onDeleted: (ids) => setAdded((a) => a.filter((x) => !ids.includes(x.id))),
+  });
+  const b = t.batch;
+  const batch = tab === "scan" && s.mode === "batch";
+  const reviewing = batch && s.phase === "review";
 
   // Die Frage nach dem Wert des Buchs kommt einmal pro Sitzung (PRD 6.1)
   useEffect(() => {
@@ -122,6 +133,18 @@ export function Erfassen({ initial }: { initial: Added[] }) {
     if (next !== "manual") setPrefill({});
   }
 
+  function byHand(isbn: string) {
+    s.dismiss();
+    setPrefill({ isbn, notFound: true });
+    setTab("manual");
+  }
+
+  function resumeScan() {
+    s.resume();
+    step2.current?.focus({ preventScroll: true });
+    step2.current?.scrollIntoView({ block: "start" });
+  }
+
   const done = async (cond: number, precious: boolean) => {
     if (!pending) return;
     await add(pending, cond, precious);
@@ -150,31 +173,61 @@ export function Erfassen({ initial }: { initial: Added[] }) {
           </StepSection>
 
           {/* 02 – Buch finden */}
-          <StepSection id="finden" n={2} title={t.step2[tab][0]} desc={t.step2[tab][1]}>
+          <div ref={step2} tabIndex={-1} className="outline-none">
+          <StepSection id="finden" n={2} title={batch ? b.step2[0] : t.step2[tab][0]} desc={batch ? b.step2[1] : t.step2[tab][1]}>
             {tab === "scan" && (
               <div className="space-y-4">
-                <div className="rounded-lg border border-line bg-paper-2 p-2.5 md:p-3">
-                  <div className="flex items-center justify-between gap-3 px-2 pt-1 pb-2.5">
-                    <p className="text-meta font-medium text-ink-2 flex items-center gap-2">
-                      <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", noCamera ? "bg-done" : pending || looking ? "bg-wait" : "bg-accent live-dot")} />
-                      {noCamera ? t.cam.none : looking ? t.cam.looking : pending ? t.cam.paused : t.cam.ready}
-                    </p>
-                    <p className="text-meta text-muted hidden sm:block">{t.ean}</p>
-                  </div>
-                  <div className={cx("overflow-hidden rounded-md", pending || looking ? "max-h-32" : "max-h-[70vh]")}>
-                    <Scanner mode="isbn" continuous paused={Boolean(pending || looking)} onResult={lookup} fallbackHint={t.fallback} className="!rounded-md bg-paper" onUnavailable={() => setNoCamera(true)} />
-                  </div>
+                <div>
+                  <Segmented name={b.modeAria} size="lg" className="sm:max-w-sm" value={s.mode}
+                    onChange={(m) => { s.setMode(m); setPending(null); }}
+                    options={[{ value: "single", label: b.single }, { value: "batch", label: s.stack.length ? b.stackN(s.stack.length) : b.stack }]} />
+                  {batch && <p className="text-body-sm text-muted mt-2 max-w-2xl">{b.hint}</p>}
                 </div>
 
-                {!pending && !looking && (
-                  <form className="rounded-md border border-line p-4 md:p-5" onSubmit={(e) => { e.preventDefault(); if (manualIsbn.trim()) lookup(manualIsbn); }}>
-                    <label htmlFor="isbn-hand" className="font-medium text-body block">{t.isbnHand}</label>
-                    <p className="text-meta text-muted mt-0.5 mb-3">{t.isbnHandHint}</p>
-                    <div className="flex gap-2">
-                      <Input id="isbn-hand" className="flex-1 min-w-0" value={manualIsbn} onChange={(e) => setManualIsbn(e.target.value)} inputMode="numeric" autoComplete="off" placeholder="978 3 15 009152 1" />
-                      <Button type="submit" variant="secondary" className="h-12 flex-none" disabled={manualIsbn.replace(/\D/g, "").length < 10}>{t.lookup}</Button>
+                {reviewing ? (
+                  <div className="rounded-md border border-dashed border-line-strong px-5 py-5 flex flex-wrap items-center justify-between gap-4">
+                    <p className="text-body text-ink-2">{b.summary(s.stack.length)}</p>
+                    <Button variant="ghost" disabled={s.run !== null} onClick={resumeScan}>{b.resume}</Button>
+                  </div>
+                ) : (
+                  <>
+                    {batch && !s.online && <Notice>{b.offline}</Notice>}
+                    <div className="rounded-lg border border-line bg-paper-2 p-2.5 md:p-3">
+                      <div className="flex items-center justify-between gap-3 px-2 pt-1 pb-2.5">
+                        <p className="text-meta font-medium text-ink-2 flex items-center gap-2">
+                          <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", noCamera ? "bg-done" : (batch ? s.looking || s.blocked : pending || looking) ? "bg-wait" : "bg-accent live-dot")} />
+                          {noCamera ? t.cam.none
+                            : batch ? (s.looking ? t.cam.looking : s.blocked ? b.camPaused : t.cam.ready)
+                            : looking ? t.cam.looking : pending ? t.cam.paused : t.cam.ready}
+                        </p>
+                        <p className="text-meta text-muted hidden sm:block">{t.ean}</p>
+                      </div>
+                      <div ref={camera} className={cx("overflow-hidden rounded-md", !batch && (pending || looking) ? "max-h-32" : "max-h-[70vh]")}>
+                        <Scanner mode="isbn" continuous paused={batch ? Boolean(s.looking || s.blocked) : Boolean(pending || looking)}
+                          onResult={batch ? (code) => { void s.lookup(code, "scan"); } : lookup}
+                          fallbackHint={t.fallback} className="!rounded-md bg-paper" onUnavailable={() => setNoCamera(true)} />
+                      </div>
                     </div>
-                  </form>
+
+                    {batch && <StackNote s={s} onManual={byHand} />}
+
+                    {(batch || (!pending && !looking)) && (
+                      <form className="rounded-md border border-line p-4 md:p-5"
+                        onSubmit={async (e) => {
+                          e.preventDefault();
+                          if (!manualIsbn.trim()) return;
+                          if (!batch) return lookup(manualIsbn);
+                          if (await s.lookup(manualIsbn, "manual")) setManualIsbn("");
+                        }}>
+                        <label htmlFor="isbn-hand" className="font-medium text-body block">{t.isbnHand}</label>
+                        <p className="text-meta text-muted mt-0.5 mb-3">{t.isbnHandHint}</p>
+                        <div className="flex gap-2">
+                          <Input id="isbn-hand" className="flex-1 min-w-0" value={manualIsbn} onChange={(e) => setManualIsbn(e.target.value)} inputMode="numeric" autoComplete="off" placeholder="978 3 15 009152 1" />
+                          <Button type="submit" variant="secondary" className="h-12 flex-none" disabled={manualIsbn.replace(/\D/g, "").length < 10 || Boolean(batch && s.looking)}>{t.lookup}</Button>
+                        </div>
+                      </form>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -187,9 +240,19 @@ export function Erfassen({ initial }: { initial: Added[] }) {
               <ManualTab key={`${prefill.isbn ?? ""}|${prefill.title ?? ""}`} prefill={prefill} ask={!asked} onAsked={markAsked} add={add} />
             )}
           </StepSection>
+          </div>
+
+          {/* 03 – Stapel: Zustand und Sichtbarkeit für alle */}
+          {batch && (
+            <StepSection n={3} title={b.step3} desc={b.step3Desc}>
+              {reviewing ? <StackReview s={s} /> : (
+                <div className="rounded-md border border-dashed border-line-strong px-5 py-6 text-body text-muted">{b.step3Wait}</div>
+              )}
+            </StepSection>
+          )}
 
           {/* 03 – Zustand */}
-          {tab !== "manual" && (
+          {tab !== "manual" && !batch && (
             <div ref={step3} className="scroll-mt-28">
               <StepSection n={3} title={t.step3} desc={t.step3Desc}>
                 {looking ? <LookupSkeleton isbn={looking} />
@@ -202,6 +265,8 @@ export function Erfassen({ initial }: { initial: Added[] }) {
               </StepSection>
             </div>
           )}
+
+          {batch && !reviewing && <StackBar s={s} origin={camera} />}
         </div>
 
         {/* ------------------------------------------------ Heute erfasst */}

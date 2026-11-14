@@ -88,7 +88,7 @@ export function PendingCard({ edition, ask, onAsked, onCancel, onDone }: {
 }
 
 /** Vier Karten; die Striche zeigen, wie viele Spuren das Buch hat. Gewählt in der Markenfarbe. */
-function ConditionGrid({ onPick, value }: { onPick: (c: number) => void; value?: number | null }) {
+export function ConditionGrid({ onPick, value }: { onPick: (c: number) => void; value?: number | null }) {
   const L = labels(useLocale());
   return (
     <div className="grid grid-cols-2 gap-2 md:gap-3">

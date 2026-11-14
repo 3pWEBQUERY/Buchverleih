@@ -30,24 +30,20 @@ export function StepSection({ id, n, title, desc, aside, children, first, classN
 
 /** Ruhige Kennzahl-Kachel: Zahl gross, Beschriftung darunter */
 export function StatTile({ n, label, href, live }: { n: ReactNode; label: string; href?: string | null; live?: boolean }) {
-  const inner = (
-    <>
+  // Innerhalb einer <dl> sind nur dt/dd-Gruppen erlaubt: der Link liegt als Fläche im dd, nicht daneben
+  const cover = "absolute inset-0 rounded-md";
+  return (
+    <div className={cx("relative rounded-md bg-paper-2 px-3 sm:px-4 py-3 min-w-0 sm:min-w-[92px] flex flex-col-reverse justify-end", href && "hover:bg-paper-3 press-card")}>
       <dt className="text-caption text-muted mt-1.5">{label}</dt>
       <dd className="text-title font-title tracking-display leading-none tnum flex items-center gap-2">
         {/* Zählt nur um, wenn sich der Wert bei offener Seite ändert (Live), nie beim Laden */}
         {typeof n === "number" || typeof n === "string" ? <RollingNumber value={n} /> : n}
         {live && <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent live-dot" />}
+        {/* Routen ohne vollen Seitenwechsel; reine Anker (#abschnitt) bleiben gewöhnliche Links */}
+        {href && (href.startsWith("#")
+          ? <a href={href} className={cover} aria-label={`${n} ${label}`} />
+          : <Link href={href} className={cover} aria-label={`${n} ${label}`} />)}
       </dd>
-    </>
-  );
-  // Innerhalb einer <dl>: dt/dd bleiben direkte Kinder des div, der Link liegt als Fläche darüber
-  return (
-    <div className={cx("relative rounded-md bg-paper-2 px-3 sm:px-4 py-3 min-w-0 sm:min-w-[92px] flex flex-col-reverse justify-end", href && "hover:bg-paper-3 press-card")}>
-      {inner}
-      {/* Routen ohne vollen Seitenwechsel; reine Anker (#abschnitt) bleiben gewöhnliche Links */}
-      {href && (href.startsWith("#")
-        ? <a href={href} className="absolute inset-0 rounded-md" aria-label={`${n} ${label}`} />
-        : <Link href={href} className="absolute inset-0 rounded-md" aria-label={`${n} ${label}`} />)}
     </div>
   );
 }

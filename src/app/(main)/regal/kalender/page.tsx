@@ -86,7 +86,7 @@ export default async function Page() {
                     return (
                       <li key={copy.id} className="px-4 md:px-5 py-3.5 md:grid md:grid-cols-[240px_minmax(0,1fr)] md:gap-6 md:items-center">
                         <Link href={`/regal/${copy.id}`} className="group mb-2.5 md:mb-0 min-w-0 flex items-center gap-3">
-                          <Cover data={{ title: copy.title, authors: copy.authors, photoKey: copy.photo_key, photoW: copy.photo_w, photoH: copy.photo_h, coverKey: copy.cover_key, seed: copy.work_id }} width={32} height={48} uniform l={l} />
+                          <Cover data={{ title: copy.title, authors: copy.authors, photoKey: copy.photo_key, photoColor: copy.photo_color, photoW: copy.photo_w, photoH: copy.photo_h, coverKey: copy.cover_key, coverColor: copy.cover_color, seed: copy.work_id }} width={32} height={48} uniform l={l} />
                           <span className="min-w-0">
                             <span className="block font-serif text-body-lg leading-tight group-hover:underline underline-offset-4 decoration-1 truncate">{copy.title}</span>
                             <span className="mt-0.5 flex items-center gap-1.5 text-meta text-muted truncate">
@@ -120,7 +120,7 @@ export default async function Page() {
                 {idle.map(({ copy, cal }) => (
                   <li key={copy.id}>
                     <Link href={`/regal/${copy.id}#kalender`} className="press-card group rounded-md border border-line p-3 flex items-center gap-3 hover:border-accent">
-                      <Cover data={{ title: copy.title, authors: copy.authors, photoKey: copy.photo_key, photoW: copy.photo_w, photoH: copy.photo_h, coverKey: copy.cover_key, seed: copy.work_id }} width={32} height={48} uniform l={l} />
+                      <Cover data={{ title: copy.title, authors: copy.authors, photoKey: copy.photo_key, photoColor: copy.photo_color, photoW: copy.photo_w, photoH: copy.photo_h, coverKey: copy.cover_key, coverColor: copy.cover_color, seed: copy.work_id }} width={32} height={48} uniform l={l} />
                       <span className="min-w-0 flex-1">
                         <span className="block font-serif text-body-lg leading-tight truncate">{copy.title}</span>
                         <span className="mt-0.5 flex items-center gap-1.5 text-meta text-ok"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok" />{t.freeLoan(cal.loanDays)}</span>

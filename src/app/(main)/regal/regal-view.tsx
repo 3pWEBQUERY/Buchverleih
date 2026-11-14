@@ -218,7 +218,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
                       <Link href={c.loan_id ? `/vorgaenge/${c.loan_id}` : `/regal/${c.id}`}
                         className={cx("group h-full rounded-md border p-4 grid grid-cols-[48px_minmax(0,1fr)_auto] gap-4 items-start transition-colors",
                           m?.tone === "late" ? "border-late/50 hover:border-late" : "border-line hover:border-accent")}>
-                        <Cover data={{ title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id }} width={48} height={72} uniform l={l} />
+                        <Cover data={{ title: c.title, authors: c.authors, photoKey: c.photo_key, photoColor: c.photo_color, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, coverColor: c.cover_color, seed: c.work_id }} width={48} height={72} uniform l={l} />
                         <div className="min-w-0">
                           <p className="text-meta text-muted">{t.at(c.lent_to ?? null)}</p>
                           <p className="font-serif text-lead leading-title mt-0.5 line-clamp-2 group-hover:underline underline-offset-4 decoration-1">{c.title}</p>
@@ -240,7 +240,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
                 {asked.map((c, i) => (
                   <li key={c.id}>
                     <Link href="/vorgaenge?seite=verleihe" className="press-card group h-full rounded-md border border-accent/40 bg-accent-soft/15 p-4 grid grid-cols-[40px_minmax(0,1fr)] gap-3.5 items-center hover:border-accent">
-                      <Cover data={{ title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id }} width={40} height={60} uniform l={l} />
+                      <Cover data={{ title: c.title, authors: c.authors, photoKey: c.photo_key, photoColor: c.photo_color, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, coverColor: c.cover_color, seed: c.work_id }} width={40} height={60} uniform l={l} />
                       <div className="min-w-0">
                         <p className="font-serif text-lead leading-tight truncate">{c.title}</p>
                         <p className="text-meta font-medium text-accent-hover mt-1 inline-flex items-center gap-1.5">
@@ -389,10 +389,10 @@ function SelectGrid({ copies, sel, toggle, setSel }: { copies: ShelfCopy[]; sel:
                 <div className="relative flex items-end justify-center h-[112px] md:h-[136px]">
                   <span className={cx("block rounded-xs transition-opacity duration-fast", on && "outline-2 outline-accent outline-offset-2", !on && sel.size > 0 && "opacity-60")}>
                     <span className="block md:hidden">
-                      <Cover data={{ title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id }} height={104} l={l} />
+                      <Cover data={{ title: c.title, authors: c.authors, photoKey: c.photo_key, photoColor: c.photo_color, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, coverColor: c.cover_color, seed: c.work_id }} height={104} l={l} />
                     </span>
                     <span className="hidden md:block">
-                      <Cover data={{ title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id }} height={128} l={l} />
+                      <Cover data={{ title: c.title, authors: c.authors, photoKey: c.photo_key, photoColor: c.photo_color, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, coverColor: c.cover_color, seed: c.work_id }} height={128} l={l} />
                     </span>
                   </span>
                   <span

@@ -177,3 +177,14 @@ function nextStepDe(l: NextInput): { step: NextStep; turn: Turn; waitingText: st
       return { step: null, turn: "done", waitingText: null };
   }
 }
+
+/**
+ * Schnellantworten im Chat, abhängig vom Zustand: vor der Übergabe geht es um den Termin,
+ * während der Leihe um die Rückgabe. In allen anderen Zuständen gibt es keine.
+ */
+export type QuickSet = "arrange" | "back";
+export function quickReplySet(status: string): QuickSet | null {
+  if (status === "accepted") return "arrange";
+  if (status === "active" || status === "return_reported") return "back";
+  return null;
+}

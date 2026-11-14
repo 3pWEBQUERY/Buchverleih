@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { LoanListItem } from "@/lib/loans/queries";
 import { Cover } from "@/components/cover";
 import { type Tone } from "@/components/status";
-import { IconArrowRight } from "@/components/icons";
+import { IconArrowRight, IconChat } from "@/components/icons";
 import { cx } from "@/components/ui";
 import { labels } from "@/lib/i18n/labels";
 import type { Locale } from "@/lib/i18n/locale";
@@ -187,8 +187,17 @@ export function TimeMeter({ m, className }: { m: Meter; className?: string }) {
   );
 }
 
-const coverOf = (loan: LoanListItem) => ({ title: loan.title, authors: loan.authors, photoKey: loan.photo_key, photoW: loan.photo_w, photoH: loan.photo_h, coverKey: loan.cover_key, seed: loan.work_id });
+const coverOf = (loan: LoanListItem) => ({ title: loan.title, authors: loan.authors, photoKey: loan.photo_key, photoColor: loan.photo_color, photoW: loan.photo_w, photoH: loan.photo_h, coverKey: loan.cover_key, coverColor: loan.cover_color, seed: loan.work_id });
 const who = (loan: LoanListItem, l: Locale) => `${labels(l).offerNoun[loan.kind]} · ${loan.role === "owner" ? LOANS[l].row.to(loan.other_name) : LOANS[l].row.from(loan.other_name)}`;
+
+/** Ungelesene Chat-Nachrichten: Symbol und Zahl, ausgeschrieben für Screenreader */
+function UnreadMessages({ n, l }: { n: number; l: Locale }) {
+  return (
+    <span className="inline-flex items-center gap-1 h-6 px-2 rounded-sm bg-accent-soft text-accent-hover text-caption font-semibold tnum flex-none">
+      <IconChat width={13} height={13} aria-hidden /><span aria-hidden>{n}</span><span className="sr-only">{LOANS[l].row.unreadMessages(n)}</span>
+    </span>
+  );
+}
 
 function Unread({ n, l }: { n: number; l: Locale }) {
   if (n <= 0) return null;
@@ -259,7 +268,7 @@ export function LoanRow({ loan, variant, i = 0, l = "de" }: { loan: LoanListItem
                 <Monogram name={loan.other_name} seed={loan.other_id} size={20} photo={loan.other_avatar} />
                 <span className="truncate">{who(loan, l)}</span>
               </p>
-              <Unread n={loan.unread} l={l} />
+              {loan.unread_messages > 0 ? <UnreadMessages n={loan.unread_messages} l={l} /> : <Unread n={loan.unread} l={l} />}
             </div>
             <p className="font-serif text-title-sm leading-title mt-1.5 line-clamp-2 group-hover:underline underline-offset-4 decoration-1">{loan.title}</p>
             {loan.authors[0] && <p className="text-meta text-muted truncate mt-0.5">{loan.authors.join(", ")}</p>}

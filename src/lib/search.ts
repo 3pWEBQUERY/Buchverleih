@@ -27,7 +27,7 @@ export type WorkHit = {
   copies: number;
   available_now: number;
   nearest_m: number | null;
-  cover: { copy_id: string; photo_key: string | null; photo_w: number | null; photo_h: number | null; cover_key: string | null } | null;
+  cover: { copy_id: string; photo_key: string | null; photo_w: number | null; photo_h: number | null; cover_key: string | null; photo_color: string | null; cover_color: string | null } | null;
   offers: OfferKind[];
   /** Orte der Exemplare, auf rund 1 km vergröbert: [Breite, Länge, davon jetzt frei] */
   cells: [number, number, number][];
@@ -58,8 +58,8 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
                  where b.copy_id = c.id and daterange(lower(b.period), upper(b.period) + b.buffer_days) @> today_ch()
              )) as free_now,
              st.median_response_seconds,
-             e.cover_key,
-             ph.key as photo_key, ph.width as photo_w, ph.height as photo_h,
+             e.cover_key, e.cover_color,
+             ph.key as photo_key, ph.width as photo_w, ph.height as photo_h, ph.color as photo_color,
              w.title, w.authors, w.genre,
              -- Für die Karte nur grobe Zellen (0.01° ≈ 1.1 km × 0.75 km), nie den Anzeigeort selbst
              round(o.display_lat::numeric, 2)::float8 as cell_lat, round(o.display_lng::numeric, 2)::float8 as cell_lng,
@@ -70,7 +70,7 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
         join users o on o.id = c.owner_id
         left join user_stats st on st.user_id = c.owner_id
         left join lateral (
-          select p.key, p.width, p.height from copy_photos p where p.copy_id = c.id order by p.position limit 1
+          select p.key, p.width, p.height, p.color from copy_photos p where p.copy_id = c.id order by p.position limit 1
         ) ph on true
        where c.removed_at is null
          -- Grobe Vorauswahl über den GiST-Index (Würfel um den Umkreis); die genaue Distanz prüft «hit»
@@ -97,7 +97,7 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
            count(*)::int as copies,
            count(*) filter (where free_now)::int as available_now,
            min(dist) as nearest_m,
-           (array_agg(json_build_object('copy_id', copy_id, 'photo_key', photo_key, 'photo_w', photo_w, 'photo_h', photo_h, 'cover_key', cover_key)
+           (array_agg(json_build_object('copy_id', copy_id, 'photo_key', photo_key, 'photo_w', photo_w, 'photo_h', photo_h, 'cover_key', cover_key, 'photo_color', photo_color, 'cover_color', cover_color)
                       order by (photo_key is null and cover_key is null), (photo_key is null), dist nulls last))[1] as cover,
            bool_or('lend' = any(offers)) as o_lend,
            bool_or('swap' = any(offers)) as o_swap,

@@ -11,6 +11,7 @@ import { removeDemo, seedDemo } from "./seed-demo";
 import { pushToUser } from "@/lib/push";
 import { MAIL } from "@/lib/notify/texts";
 import { isLocale, type Locale } from "@/lib/i18n/locale";
+import { dominantColor } from "./image-color";
 
 let warnedNoMail = false;
 const loc = (x: unknown): Locale => (isLocale(x) ? x : "de");
@@ -149,8 +150,10 @@ const handlers: Record<string, (p: Record<string, unknown>) => Promise<void>> = 
     const scale = Math.min(1, 1600 / Math.max(w, h));
     const fw = Math.round(w * scale);
     const fh = Math.round(h * scale);
-    await sql`update uploads set status = 'processed', width = ${fw}, height = ${fh}, processed_at = now() where id = ${u.id}`;
-    await sql`update copy_photos set width = ${fw}, height = ${fh} where key = ${u.key}`;
+    // Dominante Farbe: Hintergrund, bis das Bild geladen ist
+    const color = await dominantColor(raw);
+    await sql`update uploads set status = 'processed', width = ${fw}, height = ${fh}, color = ${color}, processed_at = now() where id = ${u.id}`;
+    await sql`update copy_photos set width = ${fw}, height = ${fh}, color = ${color} where key = ${u.key}`;
     await deleteObject(u.raw_key).catch(() => {});
   },
 
@@ -176,10 +179,50 @@ const handlers: Record<string, (p: Record<string, unknown>) => Promise<void>> = 
       const small = sharp(buf).rotate().resize({ width: 480, withoutEnlargement: true });
       await putObject(`${key}-480.webp`, await small.clone().webp({ quality: 80 }).toBuffer(), "image/webp");
       await putObject(`${key}-480.avif`, await small.clone().avif({ quality: 55 }).toBuffer(), "image/avif");
-      await sql`update editions set cover_key = ${key}, cover_w = ${out.info.width}, cover_h = ${out.info.height} where isbn13 = ${isbn}`;
+      const color = await dominantColor(out.data);
+      await sql`update editions set cover_key = ${key}, cover_w = ${out.info.width}, cover_h = ${out.info.height}, cover_color = ${color} where isbn13 = ${isbn}`;
       console.log(`[covers] ${isbn} gespeichert (${new URL(url).hostname})`);
       return;
     }
     console.log(`[covers] ${isbn} kein Cover gefunden (${urls.length} Quellen geprüft)`);
+  },
+
+  /**
+   * Dominante Farbe für bestehende Bilder nachtragen (neue bekommen sie beim Verarbeiten).
+   * Kleine Schritte: pro Lauf höchstens 20 Cover und 20 Fotos aus der kleinen Variante, dann reiht sich
+   * der Job mit einem Merker (letzte geprüfte ID) neu ein. Wiederholbar: nur Zeilen ohne Farbe werden
+   * angefasst; nicht lesbare Bilder bleiben ohne Farbe und werden übersprungen.
+   */
+  async backfill_image_colors(p) {
+    const BATCH = 20;
+    const afterEdition = (p.afterEdition as string | undefined) ?? null;
+    const afterPhoto = (p.afterPhoto as string | undefined) ?? null;
+    const colorOf = async (key: string) => {
+      try { return await dominantColor(await getObjectBytes(`${key}-480.webp`)); } catch { return null; }
+    };
+    const editions = await sql<{ id: string; cover_key: string }[]>`
+      select id, cover_key from editions
+       where cover_key is not null and cover_color is null and (${afterEdition}::uuid is null or id > ${afterEdition}::uuid)
+       order by id limit ${BATCH}`;
+    for (const e of editions) {
+      const color = await colorOf(e.cover_key);
+      if (color) await sql`update editions set cover_color = ${color} where id = ${e.id} and cover_color is null`;
+    }
+    const photos = await sql<{ id: string; key: string }[]>`
+      select id, key from copy_photos
+       where color is null and (${afterPhoto}::uuid is null or id > ${afterPhoto}::uuid)
+       order by id limit ${BATCH}`;
+    for (const ph of photos) {
+      const color = await colorOf(ph.key);
+      if (!color) continue;
+      await sql`update copy_photos set color = ${color} where id = ${ph.id} and color is null`;
+      await sql`update uploads set color = ${color} where key = ${ph.key} and color is null`;
+    }
+    if (editions.length === BATCH || photos.length === BATCH) {
+      await sql`insert into jobs (kind, payload) values ('backfill_image_colors', ${sql.json({
+        afterEdition: editions.at(-1)?.id ?? afterEdition,
+        afterPhoto: photos.at(-1)?.id ?? afterPhoto,
+      })})`;
+    }
   },
 };

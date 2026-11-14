@@ -528,3 +528,18 @@ body:has(.landing-stage) .public-header a:not([href="/anmelden"]):hover { backgr
   :root:not([data-theme="light"]) .search-map .map-tiles { filter: invert(1) hue-rotate(180deg) brightness(0.82) contrast(0.92) saturate(0.4); }
 }
 :root[data-theme="dark"] .search-map .map-tiles { filter: invert(1) hue-rotate(180deg) brightness(0.82) contrast(0.92) saturate(0.4); }
+
+/* ===================================================== Befehlspalette (6.1) – Anfang */
+/* Zentrierte Fläche statt Vollbild: kommt kurz von oben, flacher Schleier ohne Unschärfe */
+dialog.palette { opacity: 0; transform: translateY(-8px); transition: opacity var(--dur-fast) var(--ease-in-curve), transform var(--dur-fast) var(--ease-in-curve), display var(--dur-fast) allow-discrete, overlay var(--dur-fast) allow-discrete; }
+dialog.palette[open] { opacity: 1; transform: none; transition-timing-function: var(--ease-out-curve); transition-duration: var(--dur-base); }
+@starting-style { dialog.palette[open] { opacity: 0; transform: translateY(-8px); } }
+dialog.palette::backdrop { background: color-mix(in srgb, var(--night) 45%, transparent); opacity: 0; transition: opacity var(--dur-fast) var(--ease-in-curve), display var(--dur-fast) allow-discrete, overlay var(--dur-fast) allow-discrete; }
+dialog.palette[open]::backdrop { opacity: 1; transition-timing-function: var(--ease-out-curve); transition-duration: var(--dur-base); }
+@starting-style { dialog.palette[open]::backdrop { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  dialog.palette, dialog.palette[open] { transform: none !important; transition-duration: 120ms; }
+  dialog.palette::backdrop, dialog.palette[open]::backdrop { transition-duration: 120ms; }
+  @starting-style { dialog.palette[open] { transform: none; } }
+}
+/* ====================================================== Befehlspalette (6.1) – Ende */

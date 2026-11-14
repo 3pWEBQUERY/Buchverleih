@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { pageUser } from "@/lib/page";
 import { myLoans } from "@/lib/loans/queries";
+import { nearestFreeCopy } from "@/lib/copies";
+import { ExampleBook } from "@/components/example-book";
 import { LoanRow } from "@/components/loan/loan-row";
 import { LinkButton, cx } from "@/components/ui";
 import { StatTile, StepSection } from "@/components/step-section";
@@ -23,6 +25,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   const sp = await searchParams;
   const filter: Filter = FILTERS.some((f) => f.id === sp.seite) ? (sp.seite as Filter) : "alle";
   const all = await myLoans(user.id, l);
+  // Leerer Zustand mit echtem Beispiel aus dem Umkreis
+  const example = all.length === 0 ? await nearestFreeCopy(user.id) : null;
   const loans = all.filter((x) => filter === "alle" || (filter === "verleihe" ? x.role === "owner" : x.role === "borrower"));
   const mine = loans.filter((x) => x.turn === "me" && x.step);
   const open = loans.filter((x) => !mine.includes(x) && ["requested", "accepted", "active", "return_reported", "returned", "disputed"].includes(x.status));
@@ -76,6 +80,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
             <LinkButton href="/regal/neu" variant="secondary">{t.addBook}</LinkButton>
             <LinkButton href="/suche" variant="primary">{t.searchBooks}</LinkButton>
           </div>
+          {example && <div className="md:col-span-2 pt-6 border-t border-line"><ExampleBook copy={example} l={l} /></div>}
         </div>
       ) : (
         <div className="mt-4">

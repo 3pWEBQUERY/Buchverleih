@@ -10,6 +10,7 @@ import { IconCalendar, IconCheck, IconFlag } from "@/components/icons";
 import { useLocale } from "@/components/locale-provider";
 import { htmlLang } from "@/lib/i18n/locale";
 import { CHAT } from "@/lib/i18n/messages/loans-chat";
+import type { QuickSet } from "@/lib/loans/next";
 
 /**
  * Chat im Vorgang bzw. Übergabe-Chat (PRD 4.10, 7.4). Terminvorschläge sind antippbare Karten
@@ -28,6 +29,8 @@ type Msg = {
   pending?: boolean;
 };
 
+type Read = { user_id: string; last_read_at: string | null };
+
 /** Liste nach ID zusammenführen: Bekanntes ersetzen, Neues anhängen, zeitlich sortiert */
 function merge(list: Msg[], incoming: Msg[]) {
   if (!incoming.length) return list;
@@ -39,14 +42,21 @@ function merge(list: Msg[], incoming: Msg[]) {
 const MAX_ROWS = 6;
 
 export function Chat({
-  thread, me, initial, readOnly, memberCount = 2, defaultPlace, onEvent,
-}: { thread: { loan?: string; chat?: string }; me: string; initial: Msg[]; readOnly?: boolean; memberCount?: number; defaultPlace?: string | null; onEvent?: () => void }) {
+  thread, me, initial, initialReads = [], quick, readOnly, memberCount = 2, defaultPlace, onEvent,
+}: {
+  thread: { loan?: string; chat?: string }; me: string; initial: Msg[]; readOnly?: boolean; memberCount?: number; defaultPlace?: string | null; onEvent?: () => void;
+  /** Lesestand der anderen Beteiligten (für «Gelesen» unter der letzten eigenen Nachricht) */
+  initialReads?: Read[];
+  /** Schnellantworten passend zum Zustand des Vorgangs (lib/loans/next.ts: quickReplySet) */
+  quick?: QuickSet | null;
+}) {
   const [msgs, setMsgs] = useState<Msg[]>(initial);
   const [text, setText] = useState("");
   const [proposing, setProposing] = useState(false);
   const [place, setPlace] = useState(defaultPlace ?? "");
   const [when, setWhen] = useState("");
   const [unseen, setUnseen] = useState(0);
+  const [reads, setReads] = useState<Read[]>(initialReads);
   const list = useRef<HTMLOListElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const atEnd = useRef(true);
@@ -68,14 +78,23 @@ export function Chat({
     setUnseen(0);
   }, []);
 
+  /** Lesestand melden: nur, wenn die Seite sichtbar ist und die Person das Ende der Liste sieht */
+  const markRead = useCallback(() => {
+    if (document.visibilityState !== "visible" || !atEnd.current) return;
+    const last = [...known.current].reverse().find((m) => !m.pending);
+    if (!last || last.sender_id === me) return;
+    api("/messages/read", { body: { ...thread, upTo: last.id } }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me, thread.loan, thread.chat]);
+
   /** Neues von anderen: am Ende mitlaufen, sonst nur zählen (Pille «Neue Nachrichten») */
   const arrived = useCallback((incoming: Msg[]) => {
     const fresh = incoming.filter((m) => !known.current.some((k) => k.id === m.id));
     setMsgs((cur) => merge(cur, incoming));
     if (!fresh.length) return;
-    if (atEnd.current) requestAnimationFrame(toEnd);
+    if (atEnd.current) requestAnimationFrame(() => { toEnd(); markRead(); });
     else setUnseen((n) => n + fresh.filter((m) => m.sender_id !== me).length);
-  }, [me, toEnd]);
+  }, [me, toEnd, markRead]);
 
   /** Inkrementell: nur Nachrichten nach der letzten bestätigten; eine bekannte ID wird einzeln nachgeladen */
   const load = useCallback(async (changedId?: string) => {
@@ -101,13 +120,25 @@ export function Chat({
       load(id);
     });
     es.addEventListener("loan", () => onEvent?.());
+    es.addEventListener("read", (e) => {
+      try {
+        const r = JSON.parse((e as MessageEvent).data) as Read;
+        if (r.user_id !== me) setReads((cur) => [...cur.filter((x) => x.user_id !== r.user_id), { user_id: r.user_id, last_read_at: r.last_read_at }]);
+      } catch {}
+    });
     // Nach einem Verbindungsabbruch nachholen, was in der Lücke kam
     es.addEventListener("ready", () => { if (opened) load(); opened = true; });
     return () => es.close();
-  }, [qs, load, onEvent]);
+  }, [qs, load, onEvent, me]);
 
-  // Beim ersten Zeichnen ans Ende der Liste
-  useEffect(() => { toEnd(); }, [toEnd]);
+  // Beim ersten Zeichnen ans Ende der Liste; gelesen ist, was sichtbar war
+  useEffect(() => {
+    toEnd();
+    markRead();
+    const onVisible = () => markRead();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [toEnd, markRead]);
 
   // Eingabefeld wächst mit dem Text, höchstens sechs Zeilen
   useEffect(() => {
@@ -119,23 +150,26 @@ export function Chat({
     el.style.height = `${Math.min(el.scrollHeight, line * MAX_ROWS + pad)}px`;
   }, [text, proposing]);
 
-  async function send(e?: React.FormEvent) {
+  async function send(e?: React.FormEvent, quickText?: string) {
     e?.preventDefault();
-    if (proposing && !when) return;
-    if (!proposing && !text.trim()) return;
-    const body = proposing
+    if (!quickText && proposing && !when) return;
+    if (!quickText && !proposing && !text.trim()) return;
+    const body = quickText ? { ...thread, body: quickText }
+      : proposing
       ? { ...thread, body: text.trim() || null, proposalPlace: place || null, proposalAt: new Date(when).toISOString() }
       : { ...thread, body: text.trim() };
     const temp: Msg = {
-      id: `tmp-${Date.now()}`, sender_id: me, sender_name: null, body: body.body ?? null, proposal_place: proposing ? place : null,
-      proposal_at: proposing ? new Date(when).toISOString() : null, proposal_status: proposing ? "open" : null, proposal_accepted_by: [me],
+      id: `tmp-${Date.now()}`, sender_id: me, sender_name: null, body: body.body ?? null, proposal_place: proposing && !quickText ? place : null,
+      proposal_at: proposing && !quickText ? new Date(when).toISOString() : null, proposal_status: proposing && !quickText ? "open" : null, proposal_accepted_by: [me],
       created_at: new Date().toISOString(), pending: true,
     };
     const before = { text, proposing, when, place };
     setMsgs((m) => [...m, temp]);
-    setText("");
-    setProposing(false);
-    setWhen("");
+    if (!quickText) {
+      setText("");
+      setProposing(false);
+      setWhen("");
+    }
     requestAnimationFrame(toEnd);
     try {
       const r = await api<{ id: string }>("/messages", { body });
@@ -147,10 +181,12 @@ export function Chat({
     } catch (err) {
       // Nicht gesendet: Nachricht entfernen und das Getippte zurückgeben
       setMsgs((m) => m.filter((x) => x.id !== temp.id));
-      setText((cur) => cur || before.text);
-      setProposing(before.proposing);
-      setWhen(before.when);
-      setPlace(before.place);
+      if (!quickText) {
+        setText((cur) => cur || before.text);
+        setProposing(before.proposing);
+        setWhen(before.when);
+        setPlace(before.place);
+      }
       toast.error((err as Error).message);
     }
   }
@@ -186,6 +222,10 @@ export function Chat({
   const minDate = new Date(Date.now() + 15 * 60_000);
   const minLocal = new Date(minDate.getTime() - minDate.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 
+  // «Gelesen»: alle anderen Beteiligten haben bis zu meiner letzten Nachricht gelesen
+  const lastMine = [...msgs].reverse().find((m) => m.sender_id === me && !m.pending);
+  const lastMineRead = lastMine && reads.length > 0 && reads.every((r) => r.last_read_at && r.last_read_at >= lastMine.created_at) ? lastMine.id : null;
+
   // Aufeinanderfolgende Nachrichten derselben Person werden gruppiert; Tageswechsel als Trenner
   const dayKey = (d: string) => new Date(d).toDateString();
   const dayLabel = (d: string) => {
@@ -204,11 +244,12 @@ export function Chat({
         </div>
       ) : (
         <div className="relative">
-        <ol ref={list} tabIndex={0} className="px-4 md:px-6 py-5 space-y-1 max-h-[62vh] overflow-y-auto overscroll-contain" role="log" aria-live="polite" aria-label={t.messages}
+        <div role="log" aria-live="polite" aria-label={t.messages}>
+        <ol ref={list} tabIndex={0} aria-label={t.messages} className="px-4 md:px-6 py-5 space-y-1 max-h-[62vh] overflow-y-auto overscroll-contain"
           onScroll={(e) => {
             const el = e.currentTarget;
             atEnd.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
-            if (atEnd.current && unseen) setUnseen(0);
+            if (atEnd.current && unseen) { setUnseen(0); markRead(); }
           }}>
           {msgs.map((m, i) => {
             const mine = m.sender_id === me;
@@ -226,7 +267,7 @@ export function Chat({
               return [sep, <li key={m.id} className="flex justify-center py-2"><span className="chip !h-auto py-1 text-center !whitespace-normal">{systemChatText(m.body, l)}</span></li>];
             }
             return [sep, (
-              <li key={m.id} className={cx("group flex flex-col max-w-[85%] md:max-w-[75%]", mine ? "ml-auto items-end" : "items-start", firstOfGroup && !newDay && "pt-3", m.pending && "opacity-60")}>
+              <li key={m.id} className={cx("group flex flex-col max-w-[85%] md:max-w-[75%]", !seen.has(m.id) && "anim-rise", mine ? "ml-auto items-end" : "items-start", firstOfGroup && !newDay && "pt-3", m.pending && "opacity-60")}>
                 {firstOfGroup && <span className="text-caption text-muted mb-1 px-1">{mine ? t.you : m.sender_name}</span>}
                 {m.proposal_at && (
                   <div className={cx(
@@ -267,6 +308,7 @@ export function Chat({
                 )}
                 <span className="flex items-center gap-2 mt-1 px-1 text-caption text-muted">
                   <time dateTime={m.created_at}>{m.pending ? t.sending : ago(m.created_at, l)}</time>
+                  {m.id === lastMineRead && <span className="inline-flex items-center gap-1 text-ink-2"><IconCheck width={12} height={12} aria-hidden />{t.read}</span>}
                   {!mine && !m.pending && (
                     <button onClick={() => report(m.id)} className="opacity-0 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100 inline-flex items-center gap-1 min-h-8 hover:text-ink transition-opacity">
                       <IconFlag width={12} height={12} /> {t.report}
@@ -277,6 +319,7 @@ export function Chat({
             )];
           })}
         </ol>
+        </div>
         {unseen > 0 && (
           <button type="button" onClick={toEnd}
             className="press anim-sheet absolute left-1/2 -translate-x-1/2 bottom-3 h-9 px-4 rounded-full bg-ink text-paper text-meta font-medium inline-flex items-center gap-2">
@@ -302,6 +345,16 @@ export function Chat({
               </label>
             </div>
           </Presence>
+          {quick && !proposing && !text && (
+            <ul aria-label={t.quickLabel} className="flex gap-2 mb-2.5 overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0 md:flex-wrap [scrollbar-width:none]">
+              {t.quick[quick].map((q) => (
+                <li key={q} className="flex-none">
+                  <button type="button" onClick={() => send(undefined, q)}
+                    className="press h-11 md:h-9 px-3.5 rounded-full border border-field text-body-sm font-medium text-ink-2 hover:border-ink hover:text-ink whitespace-nowrap">{q}</button>
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="flex items-end gap-1.5 rounded-md border border-field bg-paper p-1 focus-within:border-accent transition-[border-color]">
             <button type="button" onClick={() => setProposing((p) => !p)} aria-pressed={proposing}
               className={cx("press h-10 w-10 flex-none grid place-items-center rounded-sm", proposing ? "bg-accent text-accent-ink" : "text-ink-2 hover:bg-paper-2")}

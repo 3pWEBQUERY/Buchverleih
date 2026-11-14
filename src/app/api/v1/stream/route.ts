@@ -6,6 +6,9 @@ import { acquireStream } from "@/lib/live";
 /**
  * GET /api/v1/stream?loan=… oder ?chat=… – Server-Sent Events, gespeist über
  * Postgres LISTEN/NOTIFY (PRD 10.2). Kein WebSocket-Dienst nötig.
+ * Ereignisse: «message» (neue oder geänderte Nachricht: { loan_id, handover_chat_id, id }),
+ * «loan» (Statuswechsel: { loan_id, event }) und «read» (Lesestand eines Mitglieds:
+ * { loan_id, handover_chat_id, user_id, last_read_at, read: true }).
  */
 export async function GET(req: Request) {
   const u = await getUser();
@@ -39,7 +42,7 @@ export async function GET(req: Request) {
       const l = await sql.listen("chat", (payload) => {
         try {
           const msg = JSON.parse(payload);
-          if ((loan && msg.loan_id === loan) || (chat && msg.handover_chat_id === chat)) send(msg.event ? "loan" : "message", msg);
+          if ((loan && msg.loan_id === loan) || (chat && msg.handover_chat_id === chat)) send(msg.read ? "read" : msg.event ? "loan" : "message", msg);
         } catch {}
       });
       unlisten = l.unlisten;

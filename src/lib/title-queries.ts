@@ -13,6 +13,8 @@ export type WorkInfo = {
   cover_key: string | null;
   cover_w: number | null;
   cover_h: number | null;
+  /** dominante Farbe des Covers (#rrggbb) */
+  cover_color: string | null;
   editions: number;
 };
 
@@ -20,10 +22,10 @@ export async function workById(id: string): Promise<WorkInfo | null> {
   if (!isUuid(id)) return null;
   const [w] = await sql<WorkInfo[]>`
     select w.id, w.title, w.subtitle, w.authors, w.genre, w.original_language,
-           cv.cover_key, cv.cover_w, cv.cover_h,
+           cv.cover_key, cv.cover_w, cv.cover_h, cv.cover_color,
            (select count(*)::int from editions e where e.work_id = w.id) as editions
       from works w
-      left join lateral (select e.cover_key, e.cover_w, e.cover_h from editions e
+      left join lateral (select e.cover_key, e.cover_w, e.cover_h, e.cover_color from editions e
                           where e.work_id = w.id and e.cover_key is not null
                           order by e.year desc nulls last limit 1) cv on true
      where w.id = ${id}`;
@@ -39,9 +41,9 @@ export async function wishFor(userId: string, workId: string) {
 
 /** Ein Cover pro Werk (neueste Ausgabe mit Cover) */
 export async function coversForWorks(workIds: string[]) {
-  if (!workIds.length) return new Map<string, { cover_key: string; cover_w: number | null; cover_h: number | null }>();
-  const rows = await sql<{ work_id: string; cover_key: string; cover_w: number | null; cover_h: number | null }[]>`
-    select distinct on (e.work_id) e.work_id, e.cover_key, e.cover_w, e.cover_h
+  if (!workIds.length) return new Map<string, { cover_key: string; cover_w: number | null; cover_h: number | null; cover_color: string | null }>();
+  const rows = await sql<{ work_id: string; cover_key: string; cover_w: number | null; cover_h: number | null; cover_color: string | null }[]>`
+    select distinct on (e.work_id) e.work_id, e.cover_key, e.cover_w, e.cover_h, e.cover_color
       from editions e
      where e.work_id in ${sql(workIds)} and e.cover_key is not null
      order by e.work_id, e.year desc nulls last`;
