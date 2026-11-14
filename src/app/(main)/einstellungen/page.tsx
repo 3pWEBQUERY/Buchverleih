@@ -11,7 +11,7 @@ import { PageTitle, cx } from "@/components/ui";
 import { StepSection } from "@/components/step-section";
 import { Monogram } from "@/components/person/monogram";
 import {
-  AvatarEditor, BlockList, CommunityPrefs, DeleteAccount, EmailPrefs, ExportData, Logout, PasskeyList, PasswordSection, PhoneSection, ProfileForm, PushSettings, ShelfPause, SpotList, ThemeChoice,
+  AvatarEditor, BlockList, CommunityPrefs, SmsAlarmPref, DeleteAccount, EmailPrefs, ExportData, Logout, PasskeyList, PasswordSection, PhoneSection, ProfileForm, PushSettings, ShelfPause, SpotList, ThemeChoice,
 } from "./sections";
 import { SettingsNav, type NavGroup } from "./settings-nav";
 import { LanguageChoice } from "@/components/language-switch";
@@ -123,6 +123,7 @@ export default async function Page() {
               </Row>
               <Row id="benachrichtigungen" t={r.benachrichtigungen}>
                 <EmailPrefs categories={categories} prefs={user.email_prefs ?? {}} />
+                <SmsAlarmPref on={user.email_prefs?.sms_title_alarm !== false} phoneVerified={Boolean(user.phone_verified_at)} />
               </Row>
               <Row id="gemeinschaft" t={[COMMUNITY[l].settings.title, COMMUNITY[l].settings.desc]}>
                 <CommunityPrefs pulse={user.pulse_show_new_books} notify={user.pinboard_notify} />

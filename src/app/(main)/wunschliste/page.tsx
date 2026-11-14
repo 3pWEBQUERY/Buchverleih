@@ -40,6 +40,7 @@ export default async function WunschlistePage() {
         {t.heading[0]}<em>{t.heading[1]}</em>
       </PageTitle>
       <WishlistClient
+        sms={!user.phone_verified_at ? "no_phone" : user.email_prefs?.sms_title_alarm === false ? "off" : "on"}
         items={list}
         matches={matches.map((m) => ({ id: m.id, other_name: m.other_name, their_copy: m.their_copy, their_title: m.their_title, my_title: m.my_title }))}
       />
