@@ -207,8 +207,8 @@ export const SMS_ALARM_PREF = "sms_title_alarm";
 
 /**
  * Titelalarm: Benachrichtigung, sobald irgendein Exemplar im Umkreis verfügbar wird – in der App,
- * per E-Mail/Push und per SMS an die bestätigte Mobilnummer. Läuft stündlich im Worker, aber nur
- * tagsüber (8–20 Uhr Schweizer Zeit), damit keine SMS nachts ankommt. Pro Titel höchstens ein Alarm in 7 Tagen.
+ * per E-Mail/Push und per SMS an die bestätigte Mobilnummer. Läuft stündlich rund um die Uhr im Worker.
+ * Pro Titel höchstens ein Alarm in 7 Tagen.
  */
 export async function runTitleAlarms() {
   const hits = await sql<{ user_id: string; work_id: string; title: string; dist: number; sms: boolean }[]>`
