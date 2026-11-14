@@ -1,25 +1,28 @@
 "use client";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import "maplibre-gl/dist/maplibre-gl.css";
+import type { GeoJSONSource, Map as GlMap, Marker, StyleSpecification } from "maplibre-gl";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Cover } from "@/components/cover";
-import { IconClose } from "@/components/icons";
+import { IconClose, IconPlus } from "@/components/icons";
 import { cx } from "@/components/ui";
 import { labels } from "@/lib/i18n/labels";
 import { useLocale } from "@/components/locale-provider";
 import { SEARCH } from "@/lib/i18n/messages/search";
 import type { WorkHit } from "@/lib/search";
+import { STYLE_URL, circlePolygon, fallbackStyle, leihregalStyle } from "./map-style";
 
 export type Center = { lat: number; lng: number };
 
 type Spot = { key: string; lat: number; lng: number; free: number; items: { h: WorkHit; free: number }[] };
 
-/** Graue Landeskarte von swisstopo (frei nutzbar mit Quellenangabe); fällt bei Fehlern auf OpenStreetMap zurück */
-const SWISSTOPO = "https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-grau/default/current/3857/{z}/{x}/{y}.jpeg";
-const OSM = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-const ATTR_SWISSTOPO = '© <a href="https://www.swisstopo.admin.ch/" target="_blank" rel="noopener">swisstopo</a>';
-const ATTR_OSM = '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+type Theme = "light" | "dark";
+/** Gewählte Darstellung (data-theme), sonst die des Systems */
+function currentTheme(): Theme {
+  const t = document.documentElement.dataset.theme;
+  if (t === "light" || t === "dark") return t;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
 
 function spotsOf(hits: WorkHit[]): Spot[] {
   const m = new Map<string, Spot>();
@@ -51,15 +54,14 @@ function mergeItems(cells: Spot[]) {
 }
 
 /** Nahe Gebiete je nach Zoomstufe zusammenfassen, damit sich Punkte nicht überdecken */
-function clusterSpots(m: L.Map, spots: Spot[], px = 44): Cluster[] {
-  const z = m.getZoom();
-  const groups: { p: L.Point; cells: Spot[] }[] = [];
+function clusterSpots(m: GlMap, spots: Spot[], px = 44): Cluster[] {
+  const groups: { x: number; y: number; cells: Spot[] }[] = [];
   const sorted = [...spots].sort((a, b) => b.items.length - a.items.length);
   for (const s of sorted) {
-    const p = m.project([s.lat, s.lng], z);
-    const g = groups.find((g) => g.p.distanceTo(p) < px);
+    const p = m.project([s.lng, s.lat]);
+    const g = groups.find((g) => Math.hypot(g.x - p.x, g.y - p.y) < px);
     if (g) g.cells.push(s);
-    else groups.push({ p, cells: [s] });
+    else groups.push({ x: p.x, y: p.y, cells: [s] });
   }
   return groups.map(({ cells }) => {
     const items = mergeItems(cells);
@@ -75,16 +77,8 @@ function clusterSpots(m: L.Map, spots: Spot[], px = 44): Cluster[] {
   });
 }
 
-function pinIcon(s: { titles: number; free: number }, on: boolean) {
-  const n = s.titles;
-  const size = n >= 20 ? 46 : n >= 8 ? 40 : n >= 3 ? 34 : 30;
-  return L.divIcon({
-    className: "",
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-    html: `<span class="map-pin${s.free ? " is-free" : ""}${on ? " is-on" : ""}" style="width:${size}px;height:${size}px">${n}</span>`,
-  });
-}
+const pinSize = (n: number) => (n >= 20 ? 46 : n >= 8 ? 40 : n >= 3 ? 34 : 30);
+const MAX_ZOOM = 16;
 
 /**
  * Kartenansicht der Suche. Zeigt Titel pro Gebiet von rund einem Kilometer, nie den genauen Ort
@@ -102,45 +96,73 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
   const tRef = useRef(t);
   tRef.current = t;
   const box = useRef<HTMLDivElement>(null);
-  const map = useRef<L.Map | null>(null);
-  const layer = useRef<L.LayerGroup | null>(null);
-  const ring = useRef<L.LayerGroup | null>(null);
+  const map = useRef<GlMap | null>(null);
+  const gl = useRef<typeof import("maplibre-gl") | null>(null);
+  const home = useRef<Marker | null>(null);
   /** Aktuelle Punkte mit ihren Gebieten, damit die Auswahl ohne Neuaufbau (und ohne Fokusverlust) aktualisiert werden kann */
-  const markers = useRef<{ marker: L.Marker; cluster: Cluster }[]>([]);
+  const markers = useRef<{ marker: Marker; el: HTMLButtonElement; cluster: Cluster }[]>([]);
   const panelHead = useRef<HTMLParagraphElement>(null);
   const lastPicked = useRef<string[] | null>(null);
   const spots = useMemo(() => spotsOf(hits), [hits]);
   const [zoom, setZoom] = useState(0);
+  const [ready, setReady] = useState(0);
   const [built, setBuilt] = useState(0);
   const [selected, setSelected] = useState<string[] | null>(null);
+  const [osm, setOsm] = useState(false);
   const selCells = selected ? spots.filter((s) => selected.includes(s.key)) : [];
   const sel = selCells.length ? { items: mergeItems(selCells) } : null;
   const selFree = sel ? sel.items.filter((i) => i.free > 0).length : 0;
 
-  // Karte einmal anlegen
+  // Karte einmal anlegen. MapLibre wird erst geladen, wenn jemand die Kartenansicht öffnet.
   useEffect(() => {
     if (!box.current || map.current) return;
-    const m = L.map(box.current, { zoomControl: false, attributionControl: false, minZoom: 8, maxZoom: 16, zoomSnap: 0.5, scrollWheelZoom: true });
-    L.control.zoom({ position: "bottomleft", zoomInTitle: tRef.current.zoomIn, zoomOutTitle: tRef.current.zoomOut }).addTo(m);
-    const attribution = L.control.attribution({ prefix: false, position: "bottomright" }).addTo(m);
-    let tiles = L.tileLayer(SWISSTOPO, { attribution: ATTR_SWISSTOPO, className: "map-tiles", maxZoom: 16, crossOrigin: true }).addTo(m);
-    let loaded = false;
-    let errors = 0;
-    tiles.on("tileload", () => (loaded = true));
-    tiles.on("tileerror", () => {
-      if (loaded || ++errors < 3) return;
-      m.removeLayer(tiles);
-      attribution.removeAttribution(ATTR_SWISSTOPO);
-      tiles = L.tileLayer(OSM, { attribution: ATTR_OSM, className: "map-tiles", maxZoom: 16 }).addTo(m);
-    });
-    m.setView([47.42, 8.55], 11);
-    m.on("click", () => setSelected(null));
-    m.on("zoomend", () => setZoom(m.getZoom()));
-    layer.current = L.layerGroup().addTo(m);
-    ring.current = L.layerGroup().addTo(m);
-    map.current = m;
+    let dead = false;
+    let m: GlMap | null = null;
+    let base: StyleSpecification | null = null;
+    let theme = currentTheme();
+    const apply = () => {
+      if (!m) return;
+      m.setStyle(base ? leihregalStyle(base, theme) : fallbackStyle());
+    };
+    const watch = new MutationObserver(() => { const t = currentTheme(); if (t !== theme) { theme = t; apply(); } });
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onScheme = () => { const t = currentTheme(); if (t !== theme) { theme = t; apply(); } };
+
+    (async () => {
+      const lib = await import("maplibre-gl");
+      try {
+        const res = await fetch(STYLE_URL, { signal: AbortSignal.timeout(8000) });
+        if (!res.ok) throw new Error(String(res.status));
+        base = (await res.json()) as StyleSpecification;
+      } catch {
+        // Vektorkarte nicht erreichbar: schlichtes Rasterbild von OpenStreetMap
+        base = null;
+        setOsm(true);
+      }
+      if (dead || !box.current) return;
+      gl.current = lib;
+      m = new lib.Map({
+        container: box.current,
+        style: base ? leihregalStyle(base, theme) : fallbackStyle(),
+        center: [8.55, 47.42], zoom: 10, minZoom: 7, maxZoom: MAX_ZOOM,
+        attributionControl: false, dragRotate: false, pitchWithRotate: false, touchPitch: false,
+        fadeDuration: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 200,
+      });
+      m.touchZoomRotate.disableRotation();
+      m.keyboard.disableRotation();
+      m.on("click", () => setSelected(null));
+      m.on("zoomend", () => setZoom(m!.getZoom()));
+      // Nach jedem Stilwechsel (hell/dunkel) liegen eigene Quellen und Ebenen nicht mehr auf der Karte
+      m.on("style.load", () => setReady((n) => n + 1));
+      map.current = m;
+      watch.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+      mq.addEventListener("change", onScheme);
+    })();
     return () => {
-      m.remove();
+      dead = true;
+      watch.disconnect();
+      mq.removeEventListener("change", onScheme);
+      m?.remove();
       map.current = null;
     };
   }, []);
@@ -148,81 +170,93 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
   // Umkreis und eigener Ort
   useEffect(() => {
     const m = map.current;
-    if (!m || !ring.current) return;
-    ring.current.clearLayers();
+    const lib = gl.current;
+    if (!m || !lib || !ready) return;
+    home.current?.remove();
+    home.current = null;
+    const data = center
+      ? { type: "Feature" as const, properties: {}, geometry: { type: "Polygon" as const, coordinates: [circlePolygon(center.lat, center.lng, radiusKm)] } }
+      : { type: "FeatureCollection" as const, features: [] };
+    const src = m.getSource("umkreis") as GeoJSONSource | undefined;
+    if (src) src.setData(data);
+    else {
+      const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+      m.addSource("umkreis", { type: "geojson", data });
+      m.addLayer({ id: "umkreis-flaeche", type: "fill", source: "umkreis", paint: { "fill-color": accent, "fill-opacity": 0.04 } });
+      m.addLayer({ id: "umkreis-linie", type: "line", source: "umkreis", paint: { "line-color": accent, "line-width": 1.5, "line-dasharray": [2, 3], "line-opacity": 0.8 } });
+    }
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!center) {
-      if (spots.length) m.fitBounds(L.latLngBounds(spots.map((s) => [s.lat, s.lng])).pad(0.2), { maxZoom: 13 });
+      if (spots.length) {
+        const b = new lib.LngLatBounds();
+        for (const s of spots) b.extend([s.lng, s.lat]);
+        m.fitBounds(b, { padding: 56, maxZoom: 13, animate: !reduce });
+      }
       return;
     }
-    const c = L.circle([center.lat, center.lng], { radius: radiusKm * 1000, className: "map-ring", interactive: false }).addTo(ring.current);
-    L.marker([center.lat, center.lng], {
-      interactive: false, keyboard: false,
-      icon: L.divIcon({ className: "", iconSize: [18, 18], iconAnchor: [9, 9], html: '<span class="map-home" aria-hidden="true"></span>' }),
-    }).addTo(ring.current);
-    m.fitBounds(c.getBounds(), { padding: [16, 16] });
+    const el = document.createElement("span");
+    el.className = "map-home";
+    el.setAttribute("aria-hidden", "true");
+    home.current = new lib.Marker({ element: el }).setLngLat([center.lng, center.lat]).addTo(m);
+    const ring = circlePolygon(center.lat, center.lng, radiusKm, 8);
+    const b = new lib.LngLatBounds();
+    for (const c of ring) b.extend(c);
+    m.fitBounds(b, { padding: 20, animate: !reduce });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [center?.lat, center?.lng, radiusKm, center ? null : spots]);
+  }, [ready, center?.lat, center?.lng, radiusKm, center ? null : spots]);
 
   // Auswahl verwerfen, wenn die Gebiete nach einer neuen Suche nicht mehr da sind
   useEffect(() => {
     setSelected((k) => (k && k.some((x) => spots.some((s) => s.key === x)) ? k.filter((x) => spots.some((s) => s.key === x)) : null));
   }, [spots]);
 
-  // Punkte (bei jeder Zoomstufe neu zusammengefasst). Die Auswahl ändert nur Symbole, siehe unten.
+  // Punkte (bei jeder Zoomstufe neu zusammengefasst). Echte Knöpfe: Tastatur und Screenreader ohne Zutun.
   useEffect(() => {
     const m = map.current;
-    const g = layer.current;
-    if (!m || !g) return;
+    const lib = gl.current;
+    if (!m || !lib || !ready) return;
     // Hatte ein Punkt den Fokus, bekommt ihn nach dem Neuaufbau der Punkt mit denselben Gebieten
-    const focused = markers.current.find((x) => x.marker.getElement() === document.activeElement)?.cluster.cells.map((c) => c.key);
-    g.clearLayers();
+    const focused = markers.current.find((x) => x.el === document.activeElement)?.cluster.cells.map((c) => c.key);
+    for (const x of markers.current) x.marker.remove();
     markers.current = [];
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     for (const c of clusterSpots(m, spots)) {
       const title = t.pin(c.titles, c.free);
-      const activate = () => {
+      const size = pinSize(c.titles);
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = `map-pin${c.free ? " is-free" : ""}`;
+      el.style.width = el.style.height = `${size}px`;
+      el.textContent = String(c.titles);
+      el.title = title;
+      el.setAttribute("aria-label", title);
+      el.setAttribute("aria-expanded", "false");
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
         // Mehrere Gebiete unter einem Punkt: erst hineinzoomen, bis sie sich trennen
-        if (c.cells.length > 1 && m.getZoom() < m.getMaxZoom() - 1) {
-          const b = L.latLngBounds(c.cells.map((x) => [x.lat, x.lng]));
-          const next = Math.min(m.getBoundsZoom(b.pad(0.6)), m.getMaxZoom());
-          if (next > m.getZoom()) return void m.flyTo(b.getCenter(), next, { duration: 0.4 });
+        if (c.cells.length > 1 && m.getZoom() < MAX_ZOOM - 1) {
+          const b = new lib.LngLatBounds();
+          for (const x of c.cells) b.extend([x.lng, x.lat]);
+          const cam = m.cameraForBounds(b, { padding: 120, maxZoom: MAX_ZOOM });
+          if (cam?.zoom !== undefined && cam.zoom > m.getZoom() + 0.2) return void m.easeTo({ center: b.getCenter(), zoom: cam.zoom, duration: reduce ? 0 : 400 });
         }
         const keys = c.cells.map((x) => x.key);
         lastPicked.current = keys;
         setSelected((k) => (k && k.join("|") === keys.join("|") ? null : keys));
-      };
-      const marker = L.marker([c.lat, c.lng], { icon: pinIcon(c, false), title, alt: title, riseOnHover: true, zIndexOffset: c.free ? 100 : 0 })
-        .on("click", (e) => {
-          L.DomEvent.stopPropagation(e);
-          activate();
-        })
-        .addTo(g);
-      const el = marker.getElement();
-      if (el) {
-        el.setAttribute("aria-label", title);
-        el.setAttribute("aria-expanded", "false");
-        // Tastatur: Enter und Leertaste wie ein Klick
-        el.addEventListener("keydown", (e) => {
-          if (e.key !== "Enter" && e.key !== " ") return;
-          e.preventDefault();
-          e.stopPropagation();
-          activate();
-        });
-      }
-      markers.current.push({ marker, cluster: c });
+      });
+      const marker = new lib.Marker({ element: el }).setLngLat([c.lng, c.lat]).addTo(m);
+      markers.current.push({ marker, el, cluster: c });
     }
-    if (focused) {
-      const again = markers.current.find((x) => x.cluster.cells.some((c) => focused.includes(c.key)));
-      again?.marker.getElement()?.focus();
-    }
+    if (focused) markers.current.find((x) => x.cluster.cells.some((c) => focused.includes(c.key)))?.el.focus();
     setBuilt((n) => n + 1);
-  }, [spots, zoom, t]);
+  }, [spots, zoom, t, ready]);
 
-  // Auswahl: Symbole an Ort und Stelle tauschen (DivIcon behält das Element, der Fokus bleibt)
+  // Auswahl: Zustand am bestehenden Knopf ändern (der Fokus bleibt)
   useEffect(() => {
-    for (const { marker, cluster } of markers.current) {
+    for (const { el, cluster } of markers.current) {
       const on = !!selected && cluster.cells.some((x) => selected.includes(x.key));
-      marker.setIcon(pinIcon(cluster, on)).setZIndexOffset(on ? 1000 : cluster.free ? 100 : 0);
-      marker.getElement()?.setAttribute("aria-expanded", on ? "true" : "false");
+      el.classList.toggle("is-on", on);
+      el.setAttribute("aria-expanded", on ? "true" : "false");
     }
   }, [selected, built]);
 
@@ -239,7 +273,7 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
     if (!keys) return;
     requestAnimationFrame(() => {
       const back = markers.current.find((x) => x.cluster.cells.some((c) => keys.includes(c.key)));
-      back?.marker.getElement()?.focus();
+      back?.el.focus();
     });
   }, []);
 
@@ -256,6 +290,16 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
     <div className="anim-rise">
       <div className="relative rounded-lg border border-line overflow-hidden bg-paper-2 isolate">
         <div ref={box} className="search-map h-[62vh] min-h-[420px] max-h-[680px] w-full" role="region" aria-label={t.region} />
+
+        <div className="absolute left-3 bottom-3 z-[500] flex flex-col rounded-sm border border-line bg-paper overflow-hidden divide-y divide-line">
+          <button type="button" onClick={() => map.current?.zoomIn()} aria-label={t.zoomIn} title={t.zoomIn} className="h-10 w-10 grid place-items-center text-ink hover:bg-paper-2 transition-colors"><IconPlus width={16} height={16} /></button>
+          <button type="button" onClick={() => map.current?.zoomOut()} aria-label={t.zoomOut} title={t.zoomOut} className="h-10 w-10 grid place-items-center text-ink hover:bg-paper-2 transition-colors"><span aria-hidden className="block h-[1.5px] w-3.5 bg-current" /></button>
+        </div>
+        <p className="absolute right-2 bottom-2 z-[500] text-caption text-muted bg-paper/90 rounded-xs px-1.5 py-0.5">
+          © {osm
+            ? <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" className="text-ink-2 underline underline-offset-2">OpenStreetMap</a>
+            : <a href="https://www.swisstopo.admin.ch/" target="_blank" rel="noopener" className="text-ink-2 underline underline-offset-2">swisstopo</a>}
+        </p>
 
         <div className={cx("pointer-events-none absolute top-3 left-3 right-3 flex flex-wrap items-center gap-2 z-[500] transition-opacity", loading && "opacity-60")}>
           <span className="pointer-events-auto inline-flex items-center gap-2 h-8 px-3 rounded-sm bg-paper/95 border border-line text-meta font-medium text-ink-2">
