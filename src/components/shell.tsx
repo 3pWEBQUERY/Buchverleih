@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Monogram } from "@/components/person/monogram";
 import type { SessionUser } from "@/lib/auth/session";
+import { ViewTransition } from "react";
 import { MobileMore, NavLink, SearchTrigger, Shortcuts } from "./shell-client";
+import { NavRail } from "./motion";
 import { LiveBell, LiveNotifications, UnreadBadge } from "./live-notifications";
 import { Wordmark, LogoMark } from "./brand";
 import { IconBell, IconBookmark, IconCircles, IconHome, IconLoans, IconScan, IconSearch, IconSettings, IconShelf, IconShield } from "./icons";
@@ -28,10 +30,11 @@ export async function AppShell({ user, unread, children }: { user: SessionUser; 
       <aside className="hidden md:flex flex-col sticky top-0 h-dvh border-r border-line bg-paper-2/60 px-4 py-6">
         <Wordmark className="px-2 mb-8" label={m.home} />
         <SearchTrigger />
-        <Link href="/regal/neu" className="mt-3 mb-7 h-11 rounded-sm bg-accent text-accent-ink font-medium text-body flex items-center justify-center gap-2 hover:bg-accent-hover transition-colors">
+        <Link href="/regal/neu" className="mt-3 mb-7 h-11 rounded-sm bg-accent text-accent-ink font-medium text-body flex items-center justify-center gap-2 hover:bg-accent-hover press">
           <IconScan width={18} height={18} /> {m.addBook}
         </Link>
-        <nav className="flex flex-col gap-0.5 text-body" aria-label={n.main}>
+        <nav aria-label={n.main}>
+        <NavRail className="flex flex-col gap-0.5 text-body" marker="rounded-sm bg-paper outline outline-1 outline-line-strong">
           <NavLink href="/" exact icon={<IconHome />}>{n.start}</NavLink>
           <NavLink href="/vorgaenge" icon={<IconLoans />}>{n.loans}</NavLink>
           <NavLink href="/regal" icon={<IconShelf />}>{n.shelf}</NavLink>
@@ -41,6 +44,7 @@ export async function AppShell({ user, unread, children }: { user: SessionUser; 
             {n.notifications} <UnreadBadge />
           </NavLink>
           {mod && <NavLink href="/moderation" icon={<IconShield />}>{n.moderation}</NavLink>}
+        </NavRail>
         </nav>
 
         <div className="mt-auto">
@@ -85,21 +89,21 @@ export async function AppShell({ user, unread, children }: { user: SessionUser; 
             ]} />
           </div>
         </header>
-        <main id="inhalt" className="flex-1 px-4 md:px-12 lg:px-16 pt-7 md:pt-14 pb-32 md:pb-20 w-full max-w-[1240px]">{children}</main>
+        <main id="inhalt" className="flex-1 px-4 md:px-12 lg:px-16 pt-7 md:pt-14 pb-32 md:pb-20 w-full max-w-[1240px]"><ViewTransition default="page">{children}</ViewTransition></main>
       </div>
 
       <nav aria-label={n.main} className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-paper/95 backdrop-blur-md border-t border-line pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-5 h-[68px] text-caption items-center">
+        <NavRail className="grid grid-cols-5 h-[68px] text-caption items-center" marker="rounded-sm bg-paper-3">
           <NavLink href="/" exact icon={<IconHome />} tab>{n.start}</NavLink>
           <NavLink href="/vorgaenge" icon={<IconLoans />} tab>{n.loans}</NavLink>
           <div className="flex justify-center">
-            <Link href="/regal/neu" aria-label={m.addBook} className="-mt-7 h-14 w-14 rounded-full bg-accent text-accent-ink grid place-items-center ring-[5px] ring-paper active:scale-95 transition-transform">
+            <Link href="/regal/neu" aria-label={m.addBook} className="-mt-7 h-14 w-14 rounded-full bg-accent text-accent-ink grid place-items-center ring-[5px] ring-paper press">
               <IconScan width={24} height={24} />
             </Link>
           </div>
           <NavLink href="/regal" icon={<IconShelf />} tab>{n.shelfShort}</NavLink>
           <NavLink href={`/profil/${user.id}`} icon={<Monogram name={user.first_name || "?"} seed={user.id} size={24} photo={user.avatar_key} />} tab>{n.profile}</NavLink>
-        </div>
+        </NavRail>
       </nav>
     </div>
     </LiveNotifications>
@@ -123,7 +127,7 @@ export async function PublicShell({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
       </header>
-      <main id="inhalt" className="flex-1 w-full max-w-[1320px] mx-auto px-4 md:px-10 py-10 md:py-16">{children}</main>
+      <main id="inhalt" className="flex-1 w-full max-w-[1320px] mx-auto px-4 md:px-10 py-10 md:py-16"><ViewTransition default="page">{children}</ViewTransition></main>
       <footer className="surface-night">
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 py-14 grid gap-10 md:grid-cols-[1.3fr_1fr_1fr_1fr]">
           <div>

@@ -102,7 +102,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <p className="sr-only">{settingsText(circle, l)}</p>
           </div>
         </div>
-        <dl className="grid grid-cols-4 gap-2 w-full lg:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
+        <dl className="grid grid-cols-4 gap-2 w-full lg:w-auto anim-rise">
           <StatTile n={circle.member_count} label={t.members(circle.member_count)} href="#mitglieder" live={admin && pendingCount > 0} />
           <StatTile n={circle.copy_count} label={t.books(circle.copy_count)} href="#regal" />
           <StatTile n={free} label={t.freeNow} href="#regal" />
@@ -133,6 +133,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           </div>
         ) : (
           <BookRow
+            morph="copy"
             label={d.shelfOf(circle.name)}
             height={160}
             items={copies.map((c) => ({

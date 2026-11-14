@@ -1,5 +1,5 @@
 "use client";
-import { Modal } from "@/components/modal";
+import { Modal, ModalClose } from "@/components/modal";
 import { useCallback, useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { api } from "@/lib/client";
@@ -72,12 +72,12 @@ export function HandoverCode({ loanId, label, onClose, onDone }: { loanId: strin
   const pct = Math.max(0, Math.min(100, (left / 600) * 100));
 
   return (
-    <Modal label={label} onClose={onClose} className="bg-white text-black flex flex-col anim-sheet" style={{ colorScheme: "light" }}>
+    <Modal label={label} onClose={onClose} className="bg-white text-black flex flex-col" style={{ colorScheme: "light" }}>
       <div className="flex items-center justify-between px-5 md:px-8 h-16 flex-none">
         <span className="text-meta font-medium text-[#525252] inline-flex items-center gap-2">
           <span aria-hidden className="h-2 w-2 rounded-full bg-[#d23c1a] animate-pulse" /> {t.screenOn}
         </span>
-        <button onClick={onClose} className="h-11 w-11 -mr-2 grid place-items-center rounded-md hover:bg-[#f5f5f5] transition-colors" aria-label={t.close}><IconClose width={24} height={24} /></button>
+        <ModalClose className="press h-11 w-11 -mr-2 grid place-items-center rounded-md hover:bg-[#f5f5f5] transition-colors" label={t.close}><IconClose width={24} height={24} /></ModalClose>
       </div>
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-10 text-center">
         <h2 className="text-display font-title leading-tight tracking-title">{label}</h2>
@@ -98,7 +98,7 @@ export function HandoverCode({ loanId, label, onClose, onDone }: { loanId: strin
               ))}
             </p>
             <div className="mt-8 w-[min(68vw,320px)]">
-              <div className="h-1 rounded-full bg-[#e5e5e5] overflow-hidden"><div className="h-full bg-[#d23c1a] rounded-full transition-[width] duration-1000 ease-linear" style={{ width: `${pct}%` }} /></div>
+              <div className="h-1 rounded-full bg-[#e5e5e5] overflow-hidden"><div className="h-full w-full bg-[#d23c1a] rounded-full origin-left transition-transform duration-1000 ease-linear" style={{ transform: `scaleX(${pct / 100})` }} /></div>
               <p className="mt-2.5 text-meta text-[#525252] tnum">{t.valid(mm, ss)}</p>
             </div>
           </>

@@ -161,7 +161,7 @@ export function Erfassen({ initial }: { initial: Added[] }) {
                     </p>
                     <p className="text-meta text-muted hidden sm:block">{t.ean}</p>
                   </div>
-                  <div className={cx("overflow-hidden rounded-md transition-[max-height] duration-base ease-out", pending || looking ? "max-h-32" : "max-h-[70vh]")}>
+                  <div className={cx("overflow-hidden rounded-md", pending || looking ? "max-h-32" : "max-h-[70vh]")}>
                     <Scanner mode="isbn" continuous paused={Boolean(pending || looking)} onResult={lookup} fallbackHint={t.fallback} className="!rounded-md bg-paper" onUnavailable={() => setNoCamera(true)} />
                   </div>
                 </div>

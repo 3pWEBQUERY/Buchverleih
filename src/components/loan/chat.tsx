@@ -4,6 +4,7 @@ import { api } from "@/lib/client";
 import { ago, fmtDayTime } from "@/lib/dates";
 import { Button, Input, cx } from "@/components/ui";
 import { useToast } from "@/components/toast";
+import { Presence } from "@/components/motion";
 import { systemChatText } from "@/lib/i18n/messages/chat-system";
 import { IconCalendar, IconCheck, IconFlag } from "@/components/icons";
 import { useLocale } from "@/components/locale-provider";
@@ -50,6 +51,8 @@ export function Chat({
   const input = useRef<HTMLTextAreaElement>(null);
   const atEnd = useRef(true);
   const known = useRef(msgs);
+  /** Was beim Laden schon da war, steht still; nur neu Eintreffendes steigt auf */
+  const [seen] = useState(() => new Set(initial.map((m) => m.id)));
   const toast = useToast();
   const l = useLocale();
   const t = CHAT[l].chat;
@@ -223,7 +226,7 @@ export function Chat({
               return [sep, <li key={m.id} className="flex justify-center py-2"><span className="chip !h-auto py-1 text-center !whitespace-normal">{systemChatText(m.body, l)}</span></li>];
             }
             return [sep, (
-              <li key={m.id} className={cx("group flex flex-col max-w-[85%] md:max-w-[75%] anim-rise", mine ? "ml-auto items-end" : "items-start", firstOfGroup && !newDay && "pt-3", m.pending && "opacity-60")}>
+              <li key={m.id} className={cx("group flex flex-col max-w-[85%] md:max-w-[75%]", mine ? "ml-auto items-end" : "items-start", firstOfGroup && !newDay && "pt-3", m.pending && "opacity-60")}>
                 {firstOfGroup && <span className="text-caption text-muted mb-1 px-1">{mine ? t.you : m.sender_name}</span>}
                 {m.proposal_at && (
                   <div className={cx(
@@ -287,18 +290,18 @@ export function Chat({
         <p className="text-body-sm text-muted border-t border-line px-5 md:px-6 py-4">{t.closed}</p>
       ) : (
         <form onSubmit={send} className="border-t border-line px-3 md:px-4 pt-3 pb-3">
-          {proposing && (
-            <div className="grid sm:grid-cols-2 gap-3 mb-3 p-3 rounded-md bg-paper-2 anim-rise">
+          <Presence show={proposing}>
+            <div className="grid sm:grid-cols-2 gap-3 mb-3 p-3 rounded-md bg-paper-2">
               <label className="block">
                 <span className="block text-meta font-semibold mb-1.5">{t.dateTime}</span>
-                <Input type="datetime-local" required min={minLocal} value={when} onChange={(e) => setWhen(e.target.value)} />
+                <Input type="datetime-local" required={proposing} min={minLocal} value={when} onChange={(e) => setWhen(e.target.value)} />
               </label>
               <label className="block">
                 <span className="block text-meta font-semibold mb-1.5">{t.place}</span>
                 <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder={t.placePlaceholder} maxLength={120} />
               </label>
             </div>
-          )}
+          </Presence>
           <div className="flex items-end gap-1.5 rounded-md border border-field bg-paper p-1 focus-within:border-accent transition-[border-color]">
             <button type="button" onClick={() => setProposing((p) => !p)} aria-pressed={proposing}
               className={cx("press h-10 w-10 flex-none grid place-items-center rounded-sm", proposing ? "bg-accent text-accent-ink" : "text-ink-2 hover:bg-paper-2")}

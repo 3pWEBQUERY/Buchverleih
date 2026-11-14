@@ -38,7 +38,7 @@ export function VerifyLink({ token, next, app = false }: { token: string; next: 
       </div>
     );
   return (
-    <div className="anim-rise" style={{ animationDelay: "60ms" }}>
+    <div className="anim-rise">
       <p className="text-ink-2 text-lead mb-8">{app && token ? t.appLead : t.oneTap}</p>
       {app && token && (
         // Eigenes Schema statt Link-Komponente: führt aus dem Browser in die App

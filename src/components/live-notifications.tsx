@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "@/lib/client";
+import { RollingNumber } from "./motion";
 import { cx } from "./ui";
 import { IconBell, IconClose } from "./icons";
 import { useLocale } from "./locale-provider";
@@ -168,8 +169,8 @@ export function UnreadBadge({ compact }: { compact?: boolean }) {
   const label = t.unread(unread);
   if (compact) return <span key={bump} className="block h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-paper anim-pop"><span className="sr-only">, {label}</span></span>;
   return (
-    <span key={bump} className="min-w-6 h-6 px-1.5 rounded-sm bg-accent text-accent-ink text-caption font-bold tnum grid place-items-center anim-pop">
-      <span aria-hidden>{unread > 99 ? "99+" : unread}</span><span className="sr-only">{label}</span>
+    <span className="min-w-6 h-6 px-1.5 rounded-sm bg-accent text-accent-ink text-caption font-bold tnum grid place-items-center">
+      <span aria-hidden>{unread > 99 ? "99+" : <RollingNumber value={unread} />}</span><span className="sr-only">{label}</span>
     </span>
   );
 }

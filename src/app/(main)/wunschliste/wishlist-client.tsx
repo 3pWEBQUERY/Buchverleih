@@ -89,8 +89,8 @@ export function WishlistClient({ items: initial, matches }: { items: WishItem[];
           desc={t.matchesDesc}>
           <ul className="grid xl:grid-cols-2 gap-3">
             {matches.map((m, i) => (
-              <li key={m.id} className="anim-rise" style={{ animationDelay: `${i * 40}ms` }}>
-                <Link href={`/exemplar/${m.their_copy}`} className="group rounded-md border border-line p-5 h-full flex flex-col gap-4 hover:border-accent transition-colors">
+              <li key={m.id}>
+                <Link href={`/exemplar/${m.their_copy}`} className="press-card group rounded-md border border-line p-5 h-full flex flex-col gap-4 hover:border-accent">
                   <p className="text-meta text-muted flex items-center gap-2">
                     <span aria-hidden className="h-7 w-7 rounded-sm bg-accent-soft text-accent-hover grid place-items-center"><IconSwap width={15} height={15} /></span>
                     {t.swapWith(m.other_name)}
@@ -140,7 +140,7 @@ function WishCard({ it, i, onRadius, onAlarm, onRemove }: { it: WishItem; i: num
   const c = WISHLIST[l].card;
 
   return (
-    <li className="anim-rise min-w-0" style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
+    <li className="min-w-0">
       <article className={cx("h-full rounded-md border p-4 md:p-5 flex flex-col gap-4 transition-colors", free ? "border-ok/40" : "border-line")}>
         {/* Buch */}
         <div className="grid grid-cols-[64px_minmax(0,1fr)_auto] gap-4">
@@ -232,7 +232,7 @@ function WishCard({ it, i, onRadius, onAlarm, onRemove }: { it: WishItem; i: num
             className="inline-flex items-center gap-2.5 h-9 text-body-sm font-medium">
             <span><span className="sm:hidden">{c.alarmShort}</span><span className="hidden sm:inline">{c.alarm}</span></span>
             <span aria-hidden className={cx("relative h-6 w-10 flex-none rounded-full transition-colors duration-fast", it.alarm ? "bg-accent" : "bg-paper-3")}>
-              <span className={cx("absolute top-1 h-4 w-4 rounded-full bg-paper transition-[left] duration-base ease-spring", it.alarm ? "left-5" : "left-1")} />
+              <span className={cx("absolute top-1 left-1 h-4 w-4 rounded-full bg-paper transition-transform duration-base ease-spring", it.alarm && "translate-x-4")} />
             </span>
           </button>
         </div>

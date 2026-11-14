@@ -122,7 +122,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           </header>
 
           {/* Der Wechsel als drei Schritte */}
-          <ol className="mt-8 rounded-md border border-line p-5 md:p-6 grid grid-cols-3 gap-2 md:gap-3 anim-rise" style={{ animationDelay: "60ms" }} aria-label={t.stepsAria}>
+          <ol className="mt-8 rounded-md border border-line p-5 md:p-6 grid grid-cols-3 gap-2 md:gap-3 anim-rise" aria-label={t.stepsAria}>
             {steps.map((s, i) => (
               <li key={i} className="min-w-0" aria-current={s.state === "current" ? "step" : undefined}>
                 <span aria-hidden className={cx("block h-1.5 rounded-full", s.state === "done" ? "bg-ink-2" : s.state === "current" ? (settled ? "bg-ok" : "bg-accent") : "bg-paper-3")} />
@@ -141,7 +141,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <div className="rounded-md border border-line overflow-hidden min-w-0">
               <HandoverChat id={id} me={user.id} initial={JSON.parse(JSON.stringify(messages))} readOnly={m.readOnly} defaultPlace={h.agreed_place} />
             </div>
-            <Link href={`/vorgaenge/${user.id === h.owner_id ? h.next_id : myLoan}`} className="group mt-3 rounded-md border border-line px-5 py-4 flex items-center justify-between gap-4 hover:border-accent transition-colors">
+            <Link href={`/vorgaenge/${user.id === h.owner_id ? h.next_id : myLoan}`} className="press-card group mt-3 rounded-md border border-line px-5 py-4 flex items-center justify-between gap-4 hover:border-accent">
               <span>
                 <span className="font-medium">{user.id === h.prev_bid ? t.myLoan : user.id === h.next_bid ? t.myNext : t.theNext}</span>
                 <span className="block text-body-sm text-muted">{t.loanText}</span>

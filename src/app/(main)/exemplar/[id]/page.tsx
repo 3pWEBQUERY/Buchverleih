@@ -8,7 +8,7 @@ import { getCalendar } from "@/lib/loans/calendar";
 import { origin } from "@/lib/page";
 import { publicProfile } from "@/lib/profile";
 import { requestBlocker } from "@/lib/trust";
-import { Cover, imageUrl } from "@/components/cover";
+import { Cover, imageUrl, CoverMorph, coverVt } from "@/components/cover";
 import { cx } from "@/components/ui";
 import { shelfStatusLocal } from "@/lib/i18n/messages/shelf-status";
 import { getLocale } from "@/lib/i18n/server";
@@ -110,9 +110,13 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         {/* ------------------------------------------------ Produktblatt */}
         <aside className="lg:sticky lg:top-8 space-y-5">
           <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-5 items-end lg:block lg:space-y-5">
-            <div className="lg:rounded-lg lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center anim-cover">
-              <span className="block lg:hidden"><Cover priority data={cover} width={104} height={156} uniform l={l} /></span>
-              <span className="hidden lg:block"><Cover priority large data={cover} width={220} height={330} uniform l={l} /></span>
+            <div className="lg:rounded-lg lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center">
+              <CoverMorph name={coverVt("copy", copy.id)}>
+                <span className="block">
+                  <span className="block lg:hidden"><Cover priority data={cover} width={104} height={156} uniform l={l} /></span>
+                  <span className="hidden lg:block"><Cover priority large data={cover} width={220} height={330} uniform l={l} /></span>
+                </span>
+              </CoverMorph>
             </div>
             <div className="anim-rise min-w-0">
               <h1 lang="de" className="font-serif text-title leading-display hyphens-auto break-words">{copy.title}</h1>
@@ -198,7 +202,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           </header>
 
           {/* Wer verleiht – vor der Anfrage sichtbar (PRD 6.1) */}
-          <section aria-labelledby="verleiher" className="mt-10 rounded-md border border-line p-5 md:p-6 grid sm:grid-cols-[minmax(0,1fr)_auto] gap-6 items-center anim-rise" style={{ animationDelay: "60ms" }}>
+          <section aria-labelledby="verleiher" className="mt-10 rounded-md border border-line p-5 md:p-6 grid sm:grid-cols-[minmax(0,1fr)_auto] gap-6 items-center anim-rise">
             <div className="flex items-center gap-4 min-w-0">
               <Monogram name={copy.owner_name} seed={copy.owner_id} size={56} photo={copy.owner_avatar} />
               <div className="min-w-0">
@@ -230,7 +234,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
           {/* So läuft es ab */}
           {!own && copy.offers.length > 0 && (
-            <section aria-labelledby="ablauf" className="mt-8 anim-rise" style={{ animationDelay: "90ms" }}>
+            <section aria-labelledby="ablauf" className="mt-8 anim-rise">
               <h3 id="ablauf" className="eyebrow mb-3">{t.flow}</h3>
               <ol className="grid grid-cols-2 xl:grid-cols-4 gap-2">
                 {[

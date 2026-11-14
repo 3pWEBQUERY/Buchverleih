@@ -225,7 +225,7 @@ export function LoanRow({ loan, variant, i = 0, l = "de" }: { loan: LoanListItem
 
   if (v === "done") {
     return (
-      <li className="anim-rise" style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
+      <li>
         <Link href={`/vorgaenge/${loan.id}`} className="group grid grid-cols-[32px_minmax(0,1fr)_auto] md:grid-cols-[32px_minmax(0,1fr)_120px_120px_170px] gap-4 md:gap-6 items-center px-4 md:px-5 py-3 hover:bg-paper-2 transition-colors">
           <Cover l={l} data={coverOf(loan)} width={32} height={48} uniform />
           <div className="min-w-0">
@@ -247,9 +247,9 @@ export function LoanRow({ loan, variant, i = 0, l = "de" }: { loan: LoanListItem
   const meter = timeMeter(loan, l);
   const p = loanProgress(loan.status, loan.kind);
   return (
-    <li className="anim-rise min-w-0" style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
+    <li className="min-w-0">
       <Link href={`/vorgaenge/${loan.id}`}
-        className={cx("group flex flex-col gap-4 rounded-md border p-4 md:p-5 h-full transition-colors",
+        className={cx("press-card group flex flex-col gap-4 rounded-md border p-4 md:p-5 h-full",
           tone === "late" ? "border-late/50 hover:border-late" : v === "action" ? "border-line-strong hover:border-accent" : "border-line hover:border-ink-2")}>
         <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-4">
           <span className="book self-start"><span className="book-face block"><Cover l={l} data={coverOf(loan)} width={64} height={96} uniform /></span></span>

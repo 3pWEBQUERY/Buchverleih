@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Modal } from "@/components/modal";
+import { Modal, ModalClose } from "@/components/modal";
 import { api } from "@/lib/client";
 import { Scanner } from "@/components/scanner";
 import { Button } from "@/components/ui";
@@ -28,10 +28,10 @@ export function ScanOverlay({ loanId, label, onClose, onDone }: { loanId: string
   }
 
   return (
-    <Modal label={label} onClose={onClose} className="surface-night flex flex-col anim-sheet">
+    <Modal label={label} onClose={onClose} className="surface-night flex flex-col">
       <div className="flex items-center justify-between px-5 md:px-8 h-16 flex-none">
         <span className="text-meta font-medium text-night-muted">{t.camera}</span>
-        <button onClick={onClose} className="h-11 w-11 -mr-2 grid place-items-center rounded-md hover:bg-night-2 transition-colors" aria-label={t.close}><IconClose width={24} height={24} /></button>
+        <ModalClose className="press h-11 w-11 -mr-2 grid place-items-center rounded-md hover:bg-night-2 transition-colors" label={t.close}><IconClose width={24} height={24} /></ModalClose>
       </div>
       <div className="flex-1 overflow-y-auto px-5 pb-8 max-w-lg w-full mx-auto">
         <h2 className="text-display font-title leading-tight tracking-title">{label}</h2>

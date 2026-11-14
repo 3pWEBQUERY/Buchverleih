@@ -23,7 +23,7 @@ export function Shelf({ items, height = 176, className, label, l = "de" }: { ite
         {items.map((it, i) => {
           const w = Math.round(height * (2 / 3));
           return (
-            <li key={it.id} style={{ width: Math.max(w, 96), animationDelay: `${Math.min(i, 10) * 24}ms` }} className="anim-rise">
+            <li key={it.id} style={{ width: Math.max(w, 96) }}>
               <Link href={it.href} className="book block group">
                 <div className="flex items-end" style={{ height }}>
                   <div className="book-face">

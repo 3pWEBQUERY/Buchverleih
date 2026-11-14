@@ -99,7 +99,7 @@ export function Timeline({ loan, l = "de" }: { loan: LoanView; l?: Locale }) {
           const last = i === steps.length - 1;
           const bad = isCur && (trouble || st.late);
           return (
-            <li key={st.key} className="min-w-0 flex md:flex-col gap-3.5 md:gap-0 anim-rise" style={{ animationDelay: `${i * 50}ms` }} aria-current={isCur ? "step" : undefined}>
+            <li key={st.key} className="min-w-0 flex md:flex-col gap-3.5 md:gap-0" aria-current={isCur ? "step" : undefined}>
               {/* Knoten und Verbindung zum nächsten Schritt */}
               <div aria-hidden className="flex flex-col md:flex-row items-center flex-none">
                 <span className={cx(
@@ -111,10 +111,16 @@ export function Timeline({ loan, l = "de" }: { loan: LoanView; l?: Locale }) {
                   {st.done ? <IconCheck width={14} height={14} /> : i + 1}
                   {isCur && <span className={cx("absolute -inset-1 rounded-full border-2", bad ? "border-late/30" : "border-accent/30")} />}
                 </span>
-                {!last && (
-                  <span className={cx("flex-1 w-[2px] min-h-6 my-1.5 md:my-0 md:mx-2.5 md:h-[2px] md:w-auto md:min-h-0 rounded-full",
-                    st.done && (steps[i + 1].done || i + 1 === cur) ? "bg-ink-2" : "bg-line")} />
-                )}
+                {!last && (() => {
+                  const filled = st.done && (steps[i + 1].done || i + 1 === cur);
+                  // Die Verbindung in den zuletzt erreichten Schritt füllt sich bei der Übergabe von links (.tl-latest)
+                  const latest = filled && steps[i + 1].done && i + 1 === reached - 1;
+                  return (
+                    <span className="flex-1 w-[2px] min-h-6 my-1.5 md:my-0 md:mx-2.5 md:h-[2px] md:w-auto md:min-h-0 rounded-full bg-line overflow-hidden flex">
+                      {filled && <span className={cx("flex-1 bg-ink-2", latest && "tl-latest")} />}
+                    </span>
+                  );
+                })()}
               </div>
               <div className={cx("min-w-0 pt-0.5 md:pt-3.5 md:pr-4", !last && "pb-5 md:pb-0")}>
                 <p className={cx("text-body-sm leading-tight", st.done || isCur ? "font-semibold text-ink" : "font-medium text-muted")}>

@@ -11,7 +11,7 @@ import { labels } from "@/lib/i18n/labels";
 import { COPY } from "@/lib/i18n/messages/copy";
 import { shelfStatusLocal } from "@/lib/i18n/messages/shelf-status";
 import { CalendarView } from "@/components/calendar";
-import { Cover } from "@/components/cover";
+import { Cover, CoverMorph, coverVt } from "@/components/cover";
 import { useToast } from "@/components/toast";
 import { useLocale } from "@/components/locale-provider";
 import { Field, Notice, Switch, Textarea, cx } from "@/components/ui";
@@ -146,10 +146,14 @@ export function CopyEditor({ copy, calendar, circles, history }: { copy: CopyDet
         {/* ------------------------------------------------ Produktblatt */}
         <aside className="lg:sticky lg:top-8 space-y-5">
           <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-5 items-end lg:block lg:space-y-5">
-            <div className="lg:rounded-lg lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center anim-cover">
+            <div className="lg:rounded-lg lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center">
               <Link href={`/exemplar/${copy.id}`} className="book block" aria-label={t.asOthers}>
-                <span className="book-face block lg:hidden"><Cover priority data={coverData} width={104} height={156} uniform l={l} /></span>
-                <span className="book-face hidden lg:block"><Cover priority large data={coverData} width={220} height={330} uniform l={l} /></span>
+                <CoverMorph name={coverVt("copy", copy.id)}>
+                  <span className="block">
+                    <span className="book-face block lg:hidden"><Cover priority data={coverData} width={104} height={156} uniform l={l} /></span>
+                    <span className="book-face hidden lg:block"><Cover priority large data={coverData} width={220} height={330} uniform l={l} /></span>
+                  </span>
+                </CoverMorph>
               </Link>
             </div>
             <div className="anim-rise min-w-0">

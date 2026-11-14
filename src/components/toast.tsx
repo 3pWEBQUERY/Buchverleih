@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useLocale } from "./locale-provider";
 import { COMMON } from "@/lib/i18n/messages/common";
 
@@ -8,7 +8,7 @@ import { COMMON } from "@/lib/i18n/messages/common";
  * und «Rückgängig» anbieten. Für Wechsel, die sich in der Zustandsmaschine nicht
  * umkehren lassen, wird das Senden um wenige Sekunden verzögert.
  */
-type Toast = { id: number; text: string; undo?: () => void | Promise<void>; tone?: "neutral" | "error" };
+type Toast = { id: number; text: string; undo?: () => void | Promise<void>; tone?: "neutral" | "error"; ms?: number; leaving?: boolean };
 type Ctx = {
   show: (t: Omit<Toast, "id">, ms?: number) => void;
   error: (text: string) => void;
@@ -40,8 +40,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts(next);
   }, []);
 
+  const remove = useCallback((id: number) => set(list.current.filter((x) => x.id !== id)), [set]);
+
+  /** Meldung verabschieden: erst die Austritts-Animation, dann aus der Liste (ToastItem ruft remove) */
   const dismiss = useCallback((id: number) => {
-    set(list.current.filter((x) => x.id !== id));
+    set(list.current.map((x) => (x.id === id ? { ...x, leaving: true } : x)));
     const tm = timers.current.get(id);
     if (tm) clearTimeout(tm);
     timers.current.delete(id);
@@ -65,7 +68,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const show = useCallback<Ctx["show"]>((t, ms = 5000) => {
     const id = ++seq.current;
-    push({ ...t, id });
+    push({ ...t, id, ms });
     timers.current.set(id, setTimeout(() => dismiss(id), ms));
   }, [dismiss, push]);
 
@@ -80,7 +83,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       try { await commit(); } catch (e) { error((e as Error).message); }
     };
     flushers.current.set(id, () => { void run(); });
-    push({ id, text, undo: () => { if (state === "pending") state = "cancelled"; } });
+    push({ id, text, ms, undo: () => { if (state === "pending") state = "cancelled"; } });
     timers.current.set(id, setTimeout(() => {
       dismiss(id);
       void run();
@@ -95,30 +98,67 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastCtx.Provider value={{ show, error, deferred }}>
       {children}
-      <div aria-live="polite" className="fixed z-50 inset-x-0 bottom-[calc(76px+env(safe-area-inset-bottom))] md:bottom-6 in-data-sheet:bottom-[calc(196px+env(safe-area-inset-bottom))] md:in-data-sheet:bottom-28 flex flex-col items-center gap-2 px-4 pointer-events-none">
-        {toasts.map((t) => <ToastItem key={t.id} t={t} undoLabel={undoLabel} onDone={() => dismiss(t.id)} />)}
-      </div>
+      <ToastStack toasts={toasts} undoLabel={undoLabel} dismiss={dismiss} remove={remove} />
     </ToastCtx.Provider>
   );
 }
 
-function ToastItem({ t, undoLabel, onDone }: { t: Toast; undoLabel: string; onDone: () => void }) {
-  const [used, setUsed] = useState(false);
+/**
+ * Der Stapel. Fällt eine Meldung weg oder kommt eine dazu, rücken die übrigen nach – per transform
+ * (FLIP: Lage vorher/nachher messen, Differenz als Verschiebung abspielen), nie über Layout.
+ */
+function ToastStack({ toasts, undoLabel, dismiss, remove }: { toasts: Toast[]; undoLabel: string; dismiss: (id: number) => void; remove: (id: number) => void }) {
+  const box = useRef<HTMLDivElement>(null);
+  const tops = useRef(new Map<string, number>());
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const next = new Map<string, number>();
+    for (const child of [...el.children] as HTMLElement[]) {
+      const id = child.dataset.toast!;
+      const top = child.getBoundingClientRect().top;
+      next.set(id, top);
+      const before = tops.current.get(id);
+      if (!reduce && before !== undefined && Math.abs(before - top) > 1 && !child.classList.contains("anim-out")) {
+        child.animate([{ transform: `translateY(${before - top}px)` }, { transform: "none" }], { duration: 240, easing: "cubic-bezier(0.25, 1, 0.5, 1)" });
+      }
+    }
+    tops.current = next;
+  }, [toasts]);
   return (
-    <div role={t.tone === "error" ? "alert" : "status"}
-      className={`anim-sheet pointer-events-auto max-w-md w-full flex items-center justify-between gap-4 px-4 py-3 rounded-md border text-body ${t.tone === "error" ? "bg-paper border-late/50 text-late" : "bg-paper border-line-strong text-ink"}`}>
+    <div ref={box} aria-live="polite" className="fixed z-50 inset-x-0 bottom-[calc(76px+env(safe-area-inset-bottom))] md:bottom-6 in-data-sheet:bottom-[calc(196px+env(safe-area-inset-bottom))] md:in-data-sheet:bottom-28 flex flex-col items-center gap-2 px-4 pointer-events-none">
+      {toasts.map((t) => <ToastItem key={t.id} t={t} undoLabel={undoLabel} onDismiss={() => dismiss(t.id)} onGone={() => remove(t.id)} />)}
+    </div>
+  );
+}
+
+function ToastItem({ t, undoLabel, onDismiss, onGone }: { t: Toast; undoLabel: string; onDismiss: () => void; onGone: () => void }) {
+  const [used, setUsed] = useState(false);
+  // Ohne Animation (z. B. Tab im Hintergrund) trotzdem aufräumen
+  useEffect(() => {
+    if (!t.leaving) return;
+    const tm = setTimeout(onGone, 400);
+    return () => clearTimeout(tm);
+  }, [t.leaving, onGone]);
+  return (
+    <div data-toast={t.id} role={t.tone === "error" ? "alert" : "status"}
+      onAnimationEnd={(e) => { if (t.leaving && e.target === e.currentTarget) onGone(); }}
+      className={`${t.leaving ? "anim-out" : "anim-sheet"} relative overflow-hidden pointer-events-auto max-w-md w-full flex items-center justify-between gap-4 px-4 py-3 rounded-md border text-body ${t.tone === "error" ? "bg-paper border-late/50 text-late" : "bg-paper border-field text-ink"}`}>
       <span>{t.text}</span>
       {t.undo && (
-        <button className="font-semibold text-accent-hover underline underline-offset-4 flex-none min-h-9 disabled:opacity-50" disabled={used}
+        <button className="font-semibold text-accent-hover underline underline-offset-4 flex-none min-h-9 disabled:opacity-50" disabled={used || t.leaving}
           onClick={async () => {
             if (used) return;
             setUsed(true);
             await t.undo?.();
-            onDone();
+            onDismiss();
           }}>
           {undoLabel}
         </button>
       )}
+      {/* Rückgängig-Frist: der Strich läuft in genau der Zeit ab, die zum Zurücknehmen bleibt */}
+      {t.undo && t.ms && !t.leaving && <span aria-hidden className="toast-timer" style={{ animationDuration: `${t.ms}ms` }} />}
     </div>
   );
 }

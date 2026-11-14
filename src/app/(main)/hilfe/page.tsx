@@ -37,8 +37,8 @@ function QuickStart({ q }: { q: HelpContent["quick"] }) {
       </div>
       <ol className="grid grid-flow-col auto-cols-[78%] sm:auto-cols-[46%] lg:grid-flow-row lg:grid-cols-4 gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 scroll-px-4 sm:mx-0 sm:px-0 sm:scroll-px-0 pb-1" style={{ scrollbarWidth: "none" }}>
         {q.steps.map(([n, title, text, href, more], i) => (
-          <li key={n} className="snap-start anim-rise" style={{ animationDelay: `${80 + i * 50}ms` }}>
-            <Link href={href} className="group rounded-md border border-line p-5 flex flex-col h-full min-h-[210px] hover:border-accent transition-colors duration-fast">
+          <li key={n} className="snap-start">
+            <Link href={href} className="press-card group rounded-md border border-line p-5 flex flex-col h-full min-h-[210px] hover:border-accent duration-fast">
               <span className="text-meta tnum text-accent-hover font-medium">{n}</span>
               <span className="font-medium text-lead mt-3">{title}</span>
               <span className="text-muted text-body-sm mt-1.5 leading-relaxed">{text}</span>

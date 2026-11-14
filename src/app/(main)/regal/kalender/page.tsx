@@ -51,7 +51,7 @@ export default async function Page() {
         eyebrow={s.title}
         sub={t.sub}
         aside={rows.length > 0 && (
-          <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
+          <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise">
             <StatTile n={rows.length} label={s.bookWord(rows.length)} />
             <StatTile n={lentNow} label={t.away} href={busy.length ? "#belegung" : null} />
             <StatTile n={booked} label={t.booked} href={busy.length ? "#belegung" : null} />
@@ -84,7 +84,7 @@ export default async function Page() {
                   {busy.map(({ copy, cal }, i) => {
                     const st = shelfStatusLocal(copy, l);
                     return (
-                      <li key={copy.id} className="px-4 md:px-5 py-3.5 md:grid md:grid-cols-[240px_minmax(0,1fr)] md:gap-6 md:items-center anim-rise" style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
+                      <li key={copy.id} className="px-4 md:px-5 py-3.5 md:grid md:grid-cols-[240px_minmax(0,1fr)] md:gap-6 md:items-center">
                         <Link href={`/regal/${copy.id}`} className="group mb-2.5 md:mb-0 min-w-0 flex items-center gap-3">
                           <Cover data={{ title: copy.title, authors: copy.authors, photoKey: copy.photo_key, photoW: copy.photo_w, photoH: copy.photo_h, coverKey: copy.cover_key, seed: copy.work_id }} width={32} height={48} uniform l={l} />
                           <span className="min-w-0">
@@ -119,7 +119,7 @@ export default async function Page() {
               <ul className="grid sm:grid-cols-2 xl:grid-cols-3 gap-2">
                 {idle.map(({ copy, cal }) => (
                   <li key={copy.id}>
-                    <Link href={`/regal/${copy.id}#kalender`} className="group rounded-md border border-line p-3 flex items-center gap-3 hover:border-accent transition-colors">
+                    <Link href={`/regal/${copy.id}#kalender`} className="press-card group rounded-md border border-line p-3 flex items-center gap-3 hover:border-accent">
                       <Cover data={{ title: copy.title, authors: copy.authors, photoKey: copy.photo_key, photoW: copy.photo_w, photoH: copy.photo_h, coverKey: copy.cover_key, seed: copy.work_id }} width={32} height={48} uniform l={l} />
                       <span className="min-w-0 flex-1">
                         <span className="block font-serif text-body-lg leading-tight truncate">{copy.title}</span>

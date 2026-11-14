@@ -61,7 +61,7 @@ export function LoginForm({ next }: { next: string | null }) {
   }
 
   return (
-    <div className="anim-rise" style={{ animationDelay: "60ms" }}>
+    <div className="anim-rise">
       <form onSubmit={submit} className="space-y-4">
         <Field label={a.email} error={error}>
           <Input type="email" required autoComplete="email webauthn" autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder={a.emailPlaceholder} />

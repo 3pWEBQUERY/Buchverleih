@@ -29,7 +29,7 @@ export default async function WunschlistePage() {
     <div>
       <PageTitle eyebrow={t.eyebrow} sub={t.sub}
         aside={list.length > 0 && (
-          <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
+          <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise">
             <StatTile n={list.length} label={t.statTitles} href="#titel" />
             <StatTile n={free} label={t.statFree} href="#titel" live={free > 0} />
             <StatTile n={alarms} label={t.statAlarms} />

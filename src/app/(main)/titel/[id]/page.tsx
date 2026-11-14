@@ -16,7 +16,7 @@ import type { Locale } from "@/lib/i18n/locale";
 import { getLocale } from "@/lib/i18n/server";
 import { TITLE } from "@/lib/i18n/messages/title";
 import { responseTextL } from "@/lib/i18n/messages/profile";
-import { Cover } from "@/components/cover";
+import { Cover, CoverMorph, coverVt } from "@/components/cover";
 import { shelfStatusText } from "@/components/status";
 import { Monogram } from "@/components/person/monogram";
 import { LinkButton, cx } from "@/components/ui";
@@ -98,9 +98,13 @@ export default async function TitelPage({ params, searchParams }: Params) {
       {/* ------------------------------------------------ Produktblatt */}
       <aside className="lg:sticky lg:top-8 space-y-5 min-w-0">
         <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-5 items-end lg:block lg:space-y-5">
-          <div className="lg:rounded-lg lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center anim-cover">
-            <span className="block lg:hidden"><Cover l={l} priority data={cover} width={104} height={156} uniform /></span>
-            <span className="hidden lg:block"><Cover l={l} priority large data={cover} width={220} height={330} uniform /></span>
+          <div className="lg:rounded-lg lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center">
+            <CoverMorph name={coverVt("work", work.id)}>
+              <span className="block">
+                <span className="block lg:hidden"><Cover l={l} priority data={cover} width={104} height={156} uniform /></span>
+                <span className="hidden lg:block"><Cover l={l} priority large data={cover} width={220} height={330} uniform /></span>
+              </span>
+            </CoverMorph>
           </div>
           <div className="anim-rise min-w-0">
             <h1 lang="de" className="font-serif text-title leading-display hyphens-auto break-words">{work.title}</h1>
@@ -216,7 +220,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
                   const resp = responseHint(c.median_response_seconds, l);
                   const freeAgain = !c.free_now && c.lent_until ? t.lentUntil(fmtDay(dayToDate(dueDay(c.lent_until)), l)) : null;
                   return (
-                    <li key={c.id} id={`ex-${c.id}`} className="anim-rise scroll-mt-28" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
+                    <li key={c.id} id={`ex-${c.id}`} className="scroll-mt-28">
                       <div className={cx(
                         "rounded-md border p-4 md:p-5 grid grid-cols-[56px_minmax(0,1fr)] md:grid-cols-[56px_minmax(0,1fr)_auto] gap-x-4 md:gap-x-5 gap-y-4 items-start transition-colors duration-fast",
                         next ? "border-accent bg-accent-soft/20" : "border-line hover:border-ink-2",

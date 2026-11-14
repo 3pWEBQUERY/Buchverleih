@@ -177,7 +177,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
     <div className={cx(selecting ? "pb-48" : "")}>
       <PageTitle eyebrow={summary}
         aside={
-          <dl className="grid grid-cols-4 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
+          <dl className="grid grid-cols-4 gap-2 w-full sm:w-auto anim-rise">
             <StatTile n={copies.length} label={t.bookWord(copies.length)} href="#regal" />
             <StatTile n={free} label={t.stat.free} href="#regal" />
             <StatTile n={lent} label={t.stat.lent} href={lent ? "#unterwegs" : null} />
@@ -187,7 +187,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
         {t.heading[0]}<em>{t.heading[1]}</em>
       </PageTitle>
 
-      <div className="flex flex-wrap items-center gap-2 mb-2 anim-rise" style={{ animationDelay: "100ms" }}>
+      <div className="flex flex-wrap items-center gap-2 mb-2 anim-rise">
         <Link href="/regal/neu" title={t.shortcut} className="h-11 px-4 rounded-sm bg-accent text-accent-ink font-medium text-body-sm hidden md:inline-flex items-center gap-2 hover:bg-accent-hover transition-colors">
           <IconScan width={18} height={18} /> {t.addBook} <kbd className="hidden md:inline font-sans text-caption opacity-75 border border-current/40 rounded-xs px-1 leading-4">n</kbd>
         </Link>
@@ -214,7 +214,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
                   const m = c.lent_until ? timeMeter({ status: "active", kind: "lend", role: "owner", other_name: c.lent_to ?? t.thePerson, wanted: "", due_at: c.lent_until,
                     respond_by: new Date(), requested_at: new Date(), handed_over_at: c.lent_since ?? null, handover_by: null, returned_at: null, inspection_until: null }, l) : null;
                   return (
-                    <li key={c.id} className="anim-rise min-w-0" style={{ animationDelay: `${i * 40}ms` }}>
+                    <li key={c.id} className="min-w-0">
                       <Link href={c.loan_id ? `/vorgaenge/${c.loan_id}` : `/regal/${c.id}`}
                         className={cx("group h-full rounded-md border p-4 grid grid-cols-[48px_minmax(0,1fr)_auto] gap-4 items-start transition-colors",
                           m?.tone === "late" ? "border-late/50 hover:border-late" : "border-line hover:border-accent")}>
@@ -238,8 +238,8 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
               desc={t.waitingDesc} className={n === 1 ? "mt-8" : undefined}>
               <ul className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
                 {asked.map((c, i) => (
-                  <li key={c.id} className="anim-rise" style={{ animationDelay: `${i * 40}ms` }}>
-                    <Link href="/vorgaenge?seite=verleihe" className="group h-full rounded-md border border-accent/40 bg-accent-soft/15 p-4 grid grid-cols-[40px_minmax(0,1fr)] gap-3.5 items-center hover:border-accent transition-colors">
+                  <li key={c.id}>
+                    <Link href="/vorgaenge?seite=verleihe" className="press-card group h-full rounded-md border border-accent/40 bg-accent-soft/15 p-4 grid grid-cols-[40px_minmax(0,1fr)] gap-3.5 items-center hover:border-accent">
                       <Cover data={{ title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id }} width={40} height={60} uniform l={l} />
                       <div className="min-w-0">
                         <p className="font-serif text-lead leading-tight truncate">{c.title}</p>
@@ -298,7 +298,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
                       <h3 id={`g-${g.key}`} className="text-title-sm font-title tracking-title leading-none">{g.label}</h3>
                       <span className="text-meta text-night-muted tnum">{t.books(g.items.length)}</span>
                     </div>
-                    <BookRow items={g.items} height={156} l={l} />
+                    <BookRow items={g.items} height={156} l={l} morph="copy" />
                   </section>
                 ))}
               </div>

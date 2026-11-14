@@ -38,7 +38,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
         eyebrow={t.eyebrow(user.role === "admin")}
         sub={t.sub}
         aside={
-          <dl className="grid grid-cols-2 gap-2 anim-rise" style={{ animationDelay: "60ms" }}>
+          <dl className="grid grid-cols-2 gap-2 anim-rise">
             <StatTileNew n={open} label={t.open} href="/moderation" />
             <div className={cx("relative rounded-md px-4 py-3 min-w-[92px] flex flex-col-reverse justify-end", urgent > 0 ? "bg-late/10 text-late" : "bg-paper-2")}>
               <dt className={cx("text-caption mt-1.5", urgent > 0 ? "text-late" : "text-muted")}>{t.urgent}</dt>
@@ -94,7 +94,7 @@ async function Queue({ q, l }: { q: QueueData; l: Locale }) {
         {q.cases.length ? (
           <ul className="grid gap-3 md:grid-cols-2">
             {q.cases.map((c, i) => (
-              <li key={c.id} className="anim-rise" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
+              <li key={c.id}>
                 <Link href={`/moderation/vorgang/${c.loan_id}`}
                   className={cx("group rounded-md border p-5 flex flex-col h-full transition-colors", c.needs_decision ? "border-late/40 hover:border-late" : "border-line hover:border-accent")}>
                   <div className="flex items-center justify-between gap-3">
@@ -126,7 +126,7 @@ async function Queue({ q, l }: { q: QueueData; l: Locale }) {
               const href = links[`${r.target_type}:${r.target_id}`];
               const p = reportPriority(r);
               return (
-                <li key={r.id} className={cx("rounded-md border p-5 flex flex-col anim-rise", p === "hoch" ? "border-late/40" : "border-line")} style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
+                <li key={r.id} className={cx("rounded-md border p-5 flex flex-col", p === "hoch" ? "border-late/40" : "border-line")}>
                   <div className="flex items-center justify-between gap-3">
                     <PriorityChip p={p} l={l} />
                     <span className="text-meta text-muted">{ago(r.created_at, l)}</span>
@@ -262,7 +262,7 @@ function KpiTile({ k, i, l }: { k: Kpi; i: number; l: Locale }) {
   const fill = k.value === null ? 0 : Math.max(2, Math.min(100, (k.value / max) * 100));
   const mark = (k.goal / max) * 100;
   return (
-    <li className="rounded-md border border-line p-5 flex flex-col sm:min-h-[210px] anim-rise" style={{ animationDelay: `${i * 35}ms` }}>
+    <li className="rounded-md border border-line p-5 flex flex-col sm:min-h-[210px]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-medium text-body">{k.label}</p>
@@ -299,7 +299,7 @@ async function Flags({ l }: { l: Locale }) {
   return (
     <div className="grid gap-3 xl:grid-cols-2 items-start">
       {regions.map((r, i) => (
-        <section key={r.id} className="rounded-md border border-line overflow-hidden anim-rise" style={{ animationDelay: `${i * 50}ms` }}>
+        <section key={r.id} className="rounded-md border border-line overflow-hidden anim-rise">
           <div className="flex items-center justify-between gap-4 px-5 md:px-6 pt-5 pb-4">
             <div>
               <p className="eyebrow">{t.region}</p>

@@ -322,35 +322,152 @@
 }
 
 /* -------------------------------------------------------------- Bewegung */
+/*
+ * Regeln (README «Designsystem»):
+ *  – animiert werden nur transform, opacity, clip-path und background-size, nie Layout
+ *  – Dauer und Kurve nur aus den Tokens; Austritt ≈ 70 % des Eintritts mit --ease-in
+ *  – jede Bewegung beantwortet: Woher kommt das? Was hat sich geändert? Was ist als Nächstes dran?
+ */
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-@keyframes cover-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes sink { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(10px); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes flash { from { background-color: var(--accent-soft); } to { background-color: transparent; } }
 @keyframes pulse-line { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
 @keyframes scan-line { from { transform: translateY(-40%); } to { transform: translateY(40%); } }
-@keyframes sheet-in { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-@keyframes pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes bell { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(14deg); } 30% { transform: rotate(-12deg); } 45% { transform: rotate(8deg); } 60% { transform: rotate(-5deg); } 75% { transform: rotate(2deg); } }
 @keyframes timer { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+@keyframes grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes grow-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes flip { from { transform: perspective(240px) rotateX(-88deg); opacity: 0; } to { transform: perspective(240px) rotateX(0); opacity: 1; } }
+@keyframes stamp { from { transform: rotate(-9deg) scale(1.7); opacity: 0; } to { transform: rotate(-9deg) scale(1); opacity: 1; } }
+@keyframes roll-up { from { transform: translateY(70%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes roll-down { from { transform: translateY(-70%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes snap { from { transform: scaleX(0.94); } to { transform: scaleX(1); } }
+@keyframes skeleton-in { from { opacity: 0; } to { opacity: 1; } }
 
-.anim-rise { animation: rise var(--dur-slow) var(--ease-out) both; }
-.anim-cover { animation: cover-in var(--dur-slow) var(--ease-out) both; }
+/* Eintritt: nur für Inhalte im ersten Sichtbereich oder als Antwort auf eine Handlung */
+.anim-rise { animation: rise var(--dur-base) var(--ease-out-curve) both; }
+.anim-cover { animation: rise var(--dur-slow) var(--ease-out-curve) both; }
+.anim-sheet { animation: rise var(--dur-base) var(--ease-out-curve) both; }
+.anim-pop { animation: pop var(--dur-base) var(--ease-spring-curve) both; }
+/* Austritt: rund 70 % der Eintrittsdauer, beschleunigend */
+.anim-out { animation: sink var(--dur-fast) var(--ease-in-curve) both; pointer-events: none; }
 .anim-flash { animation: flash 900ms ease-out both; }
-.anim-sheet { animation: sheet-in var(--dur-base) var(--ease-out) both; }
-.anim-pop { animation: pop var(--dur-base) var(--ease-spring) both; }
-.bell-ring { animation: bell 900ms ease-in-out both; transform-origin: 50% 10%; }
-.toast-timer { width: 100%; animation-name: timer; animation-timing-function: linear; animation-fill-mode: both; }
+.bell-ring { animation: bell 900ms ease-out both; transform-origin: 50% 10%; }
 .live-dot { animation: blink 1.6s ease-in-out infinite; }
-.skeleton { background: var(--paper-3); animation: pulse-line 1.4s ease-in-out infinite; border-radius: var(--radius-xs); }
+
+/*
+ * Staffelung: eine Utility, eine Variable. Höchstens acht Elemente, zusammen höchstens 240 ms
+ * (7 Schritte × 30 ms + Einsatz). Ab dem neunten Kind läuft alles mit dem achten.
+ * --i lässt sich bei Bedarf von aussen setzen (Kalenderbalken in Zeitreihenfolge).
+ */
+.stagger > * { animation: rise var(--dur-base) var(--ease-out-curve) both; animation-delay: calc(min(var(--i, 7), 7) * 30ms); }
+.stagger > :nth-child(1) { --i: 0; }
+.stagger > :nth-child(2) { --i: 1; }
+.stagger > :nth-child(3) { --i: 2; }
+.stagger > :nth-child(4) { --i: 3; }
+.stagger > :nth-child(5) { --i: 4; }
+.stagger > :nth-child(6) { --i: 5; }
+.stagger > :nth-child(7) { --i: 6; }
+
+/*
+ * Unterhalb des ersten Sichtbereichs: an den Bildlauf gebunden statt an die Uhr. Was beim Laden
+ * schon sichtbar ist, steht still; was hereinscrollt, kommt die letzten Pixel von unten.
+ * Ohne Unterstützung: statisch. Kein IntersectionObserver.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
+  }
+}
+
+/* Skelett → Inhalt: Puls erst nach 300 ms, damit schnelle Antworten nicht flackern */
+.skeleton { background: var(--paper-3); border-radius: var(--radius-xs); animation: skeleton-in var(--dur-fast) 300ms both, pulse-line 1.4s ease-in-out 300ms infinite; }
+.skeleton-wait { animation: skeleton-in var(--dur-fast) 300ms both; }
 
 /* Endloses Band der Buchrücken */
 .marquee { display: flex; width: max-content; animation: marquee 60s linear infinite; }
 .marquee-wrap:hover .marquee { animation-play-state: paused; }
 
+/* Rückgängig-Frist im Toast: läuft von voller Breite auf null */
+.toast-timer { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--accent); transform-origin: left; animation: timer linear both; }
+
+/* Zahlen rollen nur bei Live-Änderung (Signatur-Moment 6) */
+.roll { display: inline-flex; overflow: clip; vertical-align: bottom; font-variant-numeric: tabular-nums; }
+.roll > span { display: inline-block; }
+.roll > .roll-up { animation: roll-up var(--dur-base) var(--ease-out-curve) both; }
+.roll > .roll-down { animation: roll-down var(--dur-base) var(--ease-out-curve) both; }
+
+/* Navigation: eine Markierung gleitet zum aktiven Eintrag (Signatur-Moment 4) */
+.nav-rail { position: relative; }
+.nav-marker { position: absolute; top: 0; left: 0; pointer-events: none; opacity: 0; transform: translate(var(--nav-x, 0px), var(--nav-y, 0px)); width: var(--nav-w, 0px); height: var(--nav-h, 0px); }
+.nav-rail[data-ready] .nav-marker { opacity: 1; }
+.nav-rail[data-moving] .nav-marker { transition: transform var(--dur-base) var(--ease-spring-curve); }
+/* Bis die Position gemessen ist, trägt der aktive Eintrag die Fläche selbst */
+.nav-rail:not([data-ready]) .nav-side[aria-current="page"] { background: var(--paper); outline: 1px solid var(--line-strong); }
+.nav-rail:not([data-ready]) .nav-tab[aria-current="page"] .nav-tab-icon { background: var(--paper-3); }
+
+/* Mehr-Menü (Popover): Ein- und Austritt über den diskreten Übergang von display */
+.more-menu { opacity: 0; transform: translateY(-6px); transition: opacity var(--dur-fast) var(--ease-in-curve), transform var(--dur-fast) var(--ease-in-curve), display var(--dur-fast) allow-discrete, overlay var(--dur-fast) allow-discrete; }
+.more-menu:popover-open { opacity: 1; transform: none; transition-timing-function: var(--ease-out-curve); transition-duration: var(--dur-base); }
+@starting-style { .more-menu:popover-open { opacity: 0; transform: translateY(-6px); } }
+
+/* Vollbild-Dialoge: Eintritt von unten, Austritt beim Schliessen */
+dialog.modal { opacity: 0; transform: translateY(18px); transition: opacity var(--dur-fast) var(--ease-in-curve), transform var(--dur-fast) var(--ease-in-curve), display var(--dur-fast) allow-discrete, overlay var(--dur-fast) allow-discrete; }
+dialog.modal[open] { opacity: 1; transform: none; transition-timing-function: var(--ease-out-curve); transition-duration: var(--dur-base); }
+@starting-style { dialog.modal[open] { opacity: 0; transform: translateY(18px); } }
+
+/* ------------------------------------------------------------- Übergabe */
+/* Der einzige feierliche Moment (Signatur-Moment 2): Schritt füllt sich, Chip blättert um, Stempel setzt auf */
+html[data-ceremony] .tl-latest { transform-origin: top; animation: grow-y var(--dur-slow) var(--ease-out-curve) both; }
+@media (min-width: 768px) {
+  html[data-ceremony] .tl-latest { transform-origin: left; animation-name: grow-x; }
+}
+html[data-ceremony] .status-flip { animation: flip var(--dur-base) var(--ease-out-curve) both; transform-origin: 50% 0; backface-visibility: hidden; }
+.stamp { position: absolute; right: -6px; bottom: 10%; padding: 3px 7px 2px; border: 1.5px solid var(--accent); border-radius: var(--radius-xs); background: var(--paper); color: var(--accent-hover);
+  font-size: var(--fs-caption); font-weight: 600; letter-spacing: var(--tracking-caps); text-transform: uppercase; line-height: 1.3; white-space: nowrap; transform: rotate(-9deg); transform-origin: 70% 60%; }
+html[data-ceremony] .stamp { animation: stamp var(--dur-slow) var(--ease-spring-curve) 200ms both; }
+
+/* -------------------------------------------------------------- Kalender */
+/* Balken wachsen beim ersten Zeichnen von links, in Zeitreihenfolge gestaffelt (Signatur-Moment 3) */
+.cal-bar { transform-origin: left; animation: grow-x var(--dur-base) var(--ease-out-curve) both; animation-delay: calc(min(var(--i, 0), 7) * 30ms); }
+.cal-select { transform-origin: left; animation: snap var(--dur-base) var(--ease-spring-curve) both; }
+.cal-today { animation: blink 1.6s ease-in-out infinite; }
+
+/* ------------------------------------------------------ Seitenübergänge */
+/* View Transitions: ohne Unterstützung gibt es schlicht keinen Übergang. */
+::view-transition-old(.page) { animation: fade-out 110ms var(--ease-in-curve) both; }
+::view-transition-new(.page) { animation: fade-in var(--dur-fast) var(--ease-out-curve) both; }
+/* Buch aus dem Regal ziehen (Signatur-Moment 1): das Cover wandert als gemeinsames Element */
+::view-transition-group(.cover-morph) { animation-duration: var(--dur-slow); animation-timing-function: var(--ease-out-curve); z-index: 2; }
+::view-transition-old(.cover-morph), ::view-transition-new(.cover-morph) { height: 100%; width: 100%; object-fit: cover; animation-duration: var(--dur-fast); }
+
+/* ---------------------------------------------------- Weniger Bewegung */
+/*
+ * Nicht pauschal abschalten: Bewegung wird durch eine reine Überblendung (≤ 120 ms) ersetzt,
+ * damit Zustandswechsel weiterhin erkennbar sind. Marquee, Federn, Morphs, Zähler und
+ * Dauerbewegungen entfallen ganz.
+ */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
-  .marquee { animation: none; }
+  html { scroll-behavior: auto !important; }
+  .anim-rise, .anim-cover, .anim-sheet, .anim-pop, .stagger > *, .cal-bar { animation: fade-in 120ms linear both; animation-delay: 0s; }
+  .anim-out { animation: fade-out 80ms linear both; }
+  .cal-select, .roll > .roll-up, .roll > .roll-down, .bell-ring, .marquee, .live-dot, .cal-today, .toast-timer,
+  html[data-ceremony] .tl-latest, html[data-ceremony] .stamp { animation: none; }
+  html[data-ceremony] .status-flip { animation: fade-in 120ms linear both; }
+  .skeleton { animation: skeleton-in 120ms 300ms both; }
+  .more-menu, dialog.modal { transform: none !important; transition-duration: 120ms; }
+  .press:active:not(:disabled), .press-card:active, .book:hover .book-face, .book:focus-visible .book-face, .spine:hover, .spine:focus-visible { transform: none; }
+  .nav-rail[data-moving] .nav-marker { transition: none; }
+  .link-grow { transition-duration: 1ms; }
+  ::view-transition-group(*) { animation: none !important; }
+  ::view-transition-old(*) { animation: fade-out 80ms linear both !important; }
+  ::view-transition-new(*) { animation: fade-in 120ms linear both !important; }
+  *, *::before, *::after { scroll-behavior: auto !important; }
 }
 
 /* ----------------------------------------------------------- Bücherreihe */
@@ -359,11 +476,13 @@
 .shelf > * { scroll-snap-align: start; flex: none; }
 .shelf-board { height: 2px; background: var(--ink); }
 
-.book-face { transition: transform var(--dur-base) var(--ease-spring); transform-origin: bottom center; }
+/* Das Buch hebt sich beim Hover aus dem Regal und setzt beim Drücken wieder auf */
+.book-face { transition: transform var(--dur-base) var(--ease-spring-curve); transform-origin: bottom center; }
 .book:hover .book-face, .book:focus-visible .book-face { transform: translateY(-6px); }
+.book:active .book-face { transform: translateY(0); transition-duration: var(--dur-instant); transition-timing-function: var(--ease-out-curve); }
 
 /* Buchrücken (Spine) */
-.spine { transition: transform var(--dur-base) var(--ease-spring); transform-origin: bottom center; }
+.spine { transition: transform var(--dur-base) var(--ease-spring-curve); transform-origin: bottom center; }
 .spine:hover, .spine:focus-visible { transform: translateY(-8px); }
 
 /* Startseite: Kopf geht nahtlos in die dunkle Bühne über */

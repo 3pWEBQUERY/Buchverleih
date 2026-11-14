@@ -102,7 +102,7 @@ export function Switch({ checked, onChange, label, hint, disabled }: { checked: 
       <button type="button" role="switch" aria-checked={checked} disabled={disabled} aria-disabled={disabled || undefined}
         onClick={() => { if (!disabled) onChange(!checked); }}
         className={cx("relative mt-0.5 h-7 w-12 flex-none rounded-full transition-colors duration-fast disabled:cursor-not-allowed", checked ? "bg-accent" : "bg-field")}>
-        <span className={cx("absolute top-1 h-5 w-5 rounded-full bg-paper transition-[left] duration-base ease-spring", checked ? "left-6" : "left-1")} />
+        <span className={cx("absolute top-1 left-1 h-5 w-5 rounded-full bg-paper transition-transform duration-base ease-spring", checked && "translate-x-5")} />
       </button>
     </label>
   );

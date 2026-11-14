@@ -48,7 +48,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
         <div className="surface-night rounded-t-lg px-6 md:px-10 pt-8 md:pt-10 pb-8 md:pb-10 text-center">
           <div aria-hidden className="flex items-end justify-center gap-[3px] h-[112px] overflow-hidden">
             {DECOR.map(([t, a], i) => (
-              <span key={t} className="anim-rise" style={{ animationDelay: `${120 + i * 40}ms` }}><Spine title={t} author={a} height={112} /></span>
+              <span key={t} className="anim-rise"><Spine title={t} author={a} height={112} /></span>
             ))}
           </div>
           <div aria-hidden className="h-[3px] bg-night-ink/90 rounded-full max-w-[420px] mx-auto" />

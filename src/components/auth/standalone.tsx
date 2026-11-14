@@ -46,7 +46,7 @@ function Row({ gap }: { gap?: number }) {
   return (
     <div className="flex items-end gap-[6px] px-6 lg:px-9" style={{ height: 250 }}>
       {SHELF.map(([t, a], i) => (
-        <div key={t} className="anim-cover" style={{ animationDelay: `${120 + i * 30}ms` }}>
+        <div key={t} className="anim-cover">
           {i === gap
             ? <div style={{ width: 46, height: 206 }} className="rounded-xs border-[1.5px] border-dashed border-night-muted/60" />
             : <Spine title={t} author={a} height={240} />}

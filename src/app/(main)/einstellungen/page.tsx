@@ -56,7 +56,7 @@ export default async function Page() {
     <div>
       <PageTitle eyebrow={m.eyebrow} sub={m.sub}
         aside={
-          <div className="rounded-md border border-line flex items-center gap-3.5 pl-3 pr-5 py-3 anim-rise min-w-0 max-w-full" style={{ animationDelay: "60ms" }}>
+          <div className="rounded-md border border-line flex items-center gap-3.5 pl-3 pr-5 py-3 anim-rise min-w-0 max-w-full">
             <Monogram name={user.first_name || "?"} seed={user.id} size={44} photo={user.avatar_key} />
             <span className="min-w-0 leading-tight">
               <span className="block font-medium truncate">{user.first_name} <span className="text-muted font-normal">· {labels(l).trustLabel[user.trust_level]}</span></span>

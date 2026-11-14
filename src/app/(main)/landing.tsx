@@ -48,17 +48,17 @@ export async function Landing() {
       {/* ------------------------------------------------------------ Bühne */}
       <section className="landing-stage full-bleed surface-night relative overflow-clip">
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 pt-12 md:pt-16 pb-10 grid lg:grid-cols-[1.25fr_1fr] gap-12 items-center">
-          <div>
-            <p className="inline-flex items-center gap-2 h-8 px-3.5 rounded-sm border border-night-line text-meta font-medium text-night-muted anim-rise">
+          <div className="stagger">
+            <p className="inline-flex items-center gap-2 h-8 px-3.5 rounded-sm border border-night-line text-meta font-medium text-night-muted">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" /> {m.beta}
             </p>
-            <h1 className="display mt-6 text-hero anim-rise" style={{ animationDelay: "60ms" }}>
+            <h1 className="display mt-6 text-hero">
               {m.hero[0]}<em>{m.hero[1]}</em>
             </h1>
-            <p className="mt-7 text-night-muted text-lead leading-relaxed max-w-xl anim-rise" style={{ animationDelay: "120ms" }}>
+            <p className="mt-7 text-night-muted text-lead leading-relaxed max-w-xl">
               {m.lead}
             </p>
-            <dl className="mt-9 flex gap-9 md:gap-12 anim-rise" style={{ animationDelay: "160ms" }}>
+            <dl className="mt-9 flex gap-9 md:gap-12">
               {[[stats.copies, m.stats.books], [stats.members, m.stats.members], ["0", m.stats.fee]].map(([n, l]) => (
                 <div key={String(l)}>
                   <dt className="sr-only">{l}</dt>
@@ -208,7 +208,7 @@ export async function Landing() {
 function HeroPreview({ m }: { m: LM["preview"] }) {
   return (
     <div className="relative hidden lg:block h-[480px]" aria-hidden>
-      <div className="absolute right-0 top-0 w-[350px] rounded-md bg-paper text-ink p-6 anim-cover" style={{ animationDelay: "200ms" }}>
+      <div className="absolute right-0 top-0 w-[350px] rounded-md bg-paper text-ink p-6 anim-cover">
         <div className="flex gap-4">
           <div className="w-[74px] h-[108px] rounded-xs flex-none p-2.5 flex flex-col" style={{ background: "#2e4a3b", color: "#eee4cc" }}>
             <span className="block h-px w-6 bg-current opacity-70" />
@@ -231,7 +231,7 @@ function HeroPreview({ m }: { m: LM["preview"] }) {
           <span className="h-9 px-4 rounded-sm bg-accent text-accent-ink text-meta font-semibold grid place-items-center whitespace-nowrap">{m.scan}</span>
         </div>
       </div>
-      <div className="absolute left-0 bottom-0 w-[196px] rounded-md bg-white text-black p-4 anim-cover" style={{ animationDelay: "320ms" }}>
+      <div className="absolute left-0 bottom-0 w-[196px] rounded-md bg-white text-black p-4 anim-cover">
         <p className="font-serif text-lead">{m.code}</p>
         <div className="mt-3 grid grid-cols-9 gap-[2px]">
           {"111011101011010010111101001110110100101110010110101111001011101110110100101111010011101".split("").map((c, i) => <span key={i} className={`aspect-square ${c === "1" ? "bg-black" : ""}`} />)}

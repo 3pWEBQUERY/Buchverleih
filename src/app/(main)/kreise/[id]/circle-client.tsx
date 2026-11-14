@@ -132,7 +132,7 @@ export function MemberList({ circleId, me, admin, members }: { circleId: string;
           </h3>
           <ul className="divide-y divide-accent/20">
             {pending.map((m) => (
-              <li key={m.user_id} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 md:px-5 py-3.5 anim-rise">
+              <li key={m.user_id} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 md:px-5 py-3.5">
                 <Person m={m} />
                 <div className="flex items-center gap-2">
                   <Button variant="quiet" className="text-body-sm" onClick={() => remove(m, true)}>{t.decline}</Button>
@@ -148,7 +148,7 @@ export function MemberList({ circleId, me, admin, members }: { circleId: string;
         {active.map((m, i) => {
           const self = m.user_id === me;
           return (
-            <li key={m.user_id} className={cx("rounded-md border p-4 flex flex-col gap-3 anim-rise", self ? "border-line-strong" : "border-line")} style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
+            <li key={m.user_id} className={cx("rounded-md border p-4 flex flex-col gap-3", self ? "border-line-strong" : "border-line")}>
               <Person m={m} me={self} />
               <dl className="grid grid-cols-2 gap-1.5 text-meta">
                 <div className="rounded-sm bg-paper-2 px-2.5 py-2">

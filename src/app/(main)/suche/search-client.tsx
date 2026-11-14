@@ -3,7 +3,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Cover } from "@/components/cover";
+import { Cover, CoverMorph, coverVt } from "@/components/cover";
 import { BookRow } from "@/components/regal/book-row";
 import { StepSection } from "@/components/step-section";
 import { useToast } from "@/components/toast";
@@ -205,7 +205,7 @@ export function SearchClient({
         <p className="text-body-lg text-ink-2 mt-3 max-w-xl leading-relaxed">{t.lead}</p>
       </header>
 
-      <form role="search" onSubmit={(e) => e.preventDefault()} className="relative anim-rise" style={{ animationDelay: "40ms" }}>
+      <form role="search" onSubmit={(e) => e.preventDefault()} className="relative anim-rise">
         <label htmlFor="suche-q" className="sr-only">{t.inputLabel}</label>
         <span aria-hidden className="absolute left-5 top-1/2 -translate-y-1/2 text-muted pointer-events-none">
           <IconSearch width={20} height={20} />
@@ -316,7 +316,7 @@ function FilterChips({ f, set, reset, n, hasOrigin }: { f: Filters; set: <K exte
   const t = SEARCH[l];
   const L = labels(l);
   return (
-    <div className="mt-3 -mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto md:overflow-visible anim-rise [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ animationDelay: "80ms" }}>
+    <div className="mt-3 -mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto md:overflow-visible anim-rise [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <div role="group" aria-label={t.filters} className="flex md:flex-wrap items-center gap-2 w-max md:w-full pb-1 md:p-2 md:rounded-md md:bg-paper-2">
         <div role="radiogroup" aria-label={t.radiusAria}
           className={cx("flex-none inline-flex items-center h-9 pl-3 pr-1 gap-0.5 rounded-sm border border-line bg-paper", !hasOrigin && "opacity-50 pointer-events-none")}>
@@ -404,11 +404,15 @@ function ResultCard({ h, href, i }: { h: WorkHit; href: string; i: number }) {
   const l = useLocale();
   const dist = fmtDistance(h.nearest_m, l);
   return (
-    <li className="anim-rise min-w-0" style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
-      <Link href={href} className="book group rounded-md border border-line h-full grid grid-cols-[64px_minmax(0,1fr)] md:grid-cols-[72px_minmax(0,1fr)] gap-4 md:gap-5 p-4 md:p-5 hover:border-accent transition-colors duration-fast">
+    <li className="min-w-0">
+      <Link href={href} className="press-card book group rounded-md border border-line h-full grid grid-cols-[64px_minmax(0,1fr)] md:grid-cols-[72px_minmax(0,1fr)] gap-4 md:gap-5 p-4 md:p-5 hover:border-accent duration-fast">
         <span className="self-start">
-          <span className="book-face block md:hidden"><Cover l={l} data={coverOf(h)} width={64} height={96} uniform /></span>
-          <span className="book-face hidden md:block"><Cover l={l} data={coverOf(h)} width={72} height={108} uniform /></span>
+          <CoverMorph name={coverVt("work", h.work_id)}>
+            <span className="block">
+              <span className="book-face block md:hidden"><Cover l={l} data={coverOf(h)} width={64} height={96} uniform /></span>
+              <span className="book-face hidden md:block"><Cover l={l} data={coverOf(h)} width={72} height={108} uniform /></span>
+            </span>
+          </CoverMorph>
         </span>
         <div className="min-w-0 flex flex-col">
           <div className="flex items-start justify-between gap-3">

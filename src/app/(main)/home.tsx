@@ -98,13 +98,13 @@ export async function Home({ user }: { user: SessionUser }) {
             <h1 className="display text-display mt-1.5">{greet}, <em>{user.first_name}.</em></h1>
           </div>
         </div>
-        <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
+        <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise">
           <StatTile n={counts.borrowed} label={t.stats.borrowed} href="/vorgaenge?seite=leihe" />
           <StatTile n={counts.lent} label={t.stats.lent} href="/vorgaenge?seite=verleihe" />
           <StatTile n={counts.shelf} label={t.stats.shelf} href="/regal" />
         </dl>
       </header>
-      <p className="text-body-lg text-ink-2 mt-4 max-w-2xl leading-relaxed anim-rise" style={{ animationDelay: "40ms" }}>{summary}</p>
+      <p className="text-body-lg text-ink-2 mt-4 max-w-2xl leading-relaxed anim-rise">{summary}</p>
 
       {requirePhone() && !user.phone_verified_at && (
         <Notice tone="accent" className="mt-6">
@@ -113,10 +113,10 @@ export async function Home({ user }: { user: SessionUser }) {
       )}
 
       {/* Schnellzugriff */}
-      <ul className="mt-8 grid sm:grid-cols-3 gap-2 anim-rise" style={{ animationDelay: "80ms" }}>
+      <ul className="mt-8 grid sm:grid-cols-3 gap-2 anim-rise">
         {quick.map(([href, title, text, icon], i) => (
           <li key={href}>
-            <Link href={href} className={cx("group h-full rounded-md border p-4 flex items-center gap-3.5 transition-colors",
+            <Link href={href} className={cx("press-card group h-full rounded-md border p-4 flex items-center gap-3.5",
               i === 0 && counts.shelf === 0 ? "border-accent bg-accent-soft/30 hover:bg-accent-soft/50" : "border-line hover:border-accent")}>
               <span className="h-10 w-10 rounded-md bg-accent-soft text-accent-hover grid place-items-center flex-none transition-colors group-hover:bg-accent group-hover:text-accent-ink">{icon}</span>
               <span className="min-w-0 flex-1">
@@ -174,7 +174,7 @@ export async function Home({ user }: { user: SessionUser }) {
           </div>
         ) : (
           <div className="surface-night rounded-lg px-5 md:px-7 pt-5 md:pt-6 pb-4 md:pb-5 -mx-1 md:mx-0">
-            <BookRow l={l} label={t.nearTitle} height={165} hrefBase="/exemplar/"
+            <BookRow l={l} morph="copy" label={t.nearTitle} height={165} hrefBase="/exemplar/"
               items={nearby.map((c) => ({ ...c, note: { tone: c.status === "available" ? "ok" as const : "lent" as const, text: `${c.status === "available" ? t.free : t.taken} · ${fmtDistance(c.dist, l)}` } }))} />
           </div>
         )}

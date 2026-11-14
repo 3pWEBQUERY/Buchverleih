@@ -1,3 +1,4 @@
+import { ViewTransition, type ReactNode } from "react";
 import { cx } from "./ui";
 import type { Locale } from "@/lib/i18n/locale";
 
@@ -51,6 +52,17 @@ export function coverRatio(c: CoverData) {
 
 export function imageUrl(key: string, small = true) {
   return `/api/v1/images/${key}${small ? "?w=480" : ""}`;
+}
+
+/**
+ * «Buch aus dem Regal ziehen»: Cover mit demselben Namen in Liste und Detailseite wandern beim
+ * Seitenwechsel als ein Element (View Transitions). Ohne Unterstützung im Browser passiert nichts.
+ * Der Name muss auf einer Seite eindeutig sein – darum nur am Hauptregal einer Seite setzen.
+ */
+export const coverVt = (kind: "copy" | "work", id: string) => `cover-${kind}-${id}`;
+export function CoverMorph({ name, children }: { name?: string | null; children: ReactNode }) {
+  if (!name) return <>{children}</>;
+  return <ViewTransition name={name} share="cover-morph" default="none">{children}</ViewTransition>;
 }
 
 export function Cover({

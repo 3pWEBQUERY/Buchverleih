@@ -13,6 +13,7 @@ import { Button, Check, Field, Input, Notice, Select, Textarea, cx } from "@/com
 import { useToast } from "@/components/toast";
 import { HandoverCode } from "./handover-code";
 import { ScanOverlay } from "./scan-overlay";
+import { Presence, celebrateHandover } from "@/components/motion";
 
 /**
  * Der nächste Schritt: genau ein hervorgehobener Knopf (PRD 8.3). Alles andere ist sekundär
@@ -26,6 +27,8 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
   const L = labels(l);
   const [busy, setBusy] = useState(false);
   const [overlay, setOverlay] = useState<null | { kind: "code" | "scan"; label: string; loanId?: string }>(null);
+  // Vor der Übergabe (angenommen bzw. Weitergabe): der erfolgreiche Scan ist der feierliche Moment
+  const handingOver = loan.status === "accepted" || Boolean(loan.nextLoan?.received_from_loan_id === loan.id && loan.status === "active");
   const [panel, setPanel] = useState<string | null>(null);
   const owner = loan.role === "owner";
 
@@ -247,12 +250,12 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
         </div>
       )}
 
-      {panel === "report" && (
+      <Presence show={panel === "report"}>
         <ReportHandover loan={loan} busy={busy} onReport={(dropoffPhotoKey) => act({ action: "report_handover", dropoffPhotoKey }, m.handoverReported)} />
-      )}
-      {panel === "damage" && <DamageForm loan={loan} busy={busy} onSubmit={(description, photoKeys) => act({ action: "report_damage", description, photoKeys }, m.damageReported)} />}
-      {panel === "swap" && (
-        <div className="mt-6 border-t border-line pt-5 max-w-md anim-rise">
+      </Presence>
+      <Presence show={panel === "damage"}><DamageForm loan={loan} busy={busy} onSubmit={(description, photoKeys) => act({ action: "report_damage", description, photoKeys }, m.damageReported)} /></Presence>
+      <Presence show={panel === "swap"}>
+        <div className="mt-6 border-t border-line pt-5 max-w-md">
           <Field label={m.whichBook}>
             <Select defaultValue="" onChange={(e) => e.target.value && act({ action: "offer_swap", copyId: e.target.value }, m.swapOffered)}>
               <option value="" disabled>{m.chooseBook}</option>
@@ -260,15 +263,15 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
             </Select>
           </Field>
         </div>
-      )}
-      {panel === "reschedule" && loan.wanted && <Reschedule loan={loan} busy={busy} onSubmit={(start, end) => act({ action: "reschedule", start, end }, m.rescheduled)} onCancelFree={() => act({ action: "cancel_without_penalty" }, m.cancelled)} />}
+      </Presence>
+      <Presence show={panel === "reschedule" && Boolean(loan.wanted)}>{loan.wanted && <Reschedule loan={loan} busy={busy} onSubmit={(start, end) => act({ action: "reschedule", start, end }, m.rescheduled)} onCancelFree={() => act({ action: "cancel_without_penalty" }, m.cancelled)} />}</Presence>
 
       {overlay?.kind === "code" && (
-        <HandoverCode loanId={overlay.loanId ?? loan.id} label={overlay.label} onClose={() => setOverlay(null)} onDone={() => { setOverlay(null); toast.show({ text: m.scanned }); refresh(); }} />
+        <HandoverCode loanId={overlay.loanId ?? loan.id} label={overlay.label} onClose={() => setOverlay(null)} onDone={() => { setOverlay(null); if (handingOver) celebrateHandover(); toast.show({ text: m.scanned }); refresh(); }} />
       )}
       {overlay?.kind === "scan" && (
         <ScanOverlay loanId={loan.id} label={overlay.label} onClose={() => setOverlay(null)}
-          onDone={(r) => { setOverlay(null); toast.show({ text: r.waitingForOther ? m.scannedShowYours : m.confirmed }); refresh(); }} />
+          onDone={(r) => { setOverlay(null); if (handingOver && !r.waitingForOther) celebrateHandover(); toast.show({ text: r.waitingForOther ? m.scannedShowYours : m.confirmed }); refresh(); }} />
       )}
     </section>
   );
@@ -380,7 +383,7 @@ function DamageForm({ loan, busy, onSubmit }: { loan: LoanView; busy: boolean; o
   const [keys, setKeys] = useState<string[]>([]);
   const m = STEPS[useLocale()];
   return (
-    <div className="mt-6 border-t border-line pt-5 space-y-4 max-w-xl anim-rise">
+    <div className="mt-6 border-t border-line pt-5 space-y-4 max-w-xl">
       <p className="text-body text-ink-2">{m.damageIntro(Boolean(loan.conditionNote))}<Link href="/hilfe#schaden" className="underline underline-offset-4">{m.examples}</Link></p>
       <Textarea aria-label={m.describeDamage} value={d} onChange={(e) => setD(e.target.value)} placeholder={m.damagePlaceholder} maxLength={1000} />
       <PhotoPicker loanId={loan.id} purpose="case" keys={keys} setKeys={setKeys} />
@@ -396,7 +399,7 @@ function ReportHandover({ loan, busy, onReport }: { loan: LoanView; busy: boolea
   const dropoff = loan.role === "owner" && loan.copySettings.dropoff_allowed;
   const m = STEPS[useLocale()];
   return (
-    <div className="mt-6 border-t border-line pt-5 space-y-4 max-w-xl anim-rise">
+    <div className="mt-6 border-t border-line pt-5 space-y-4 max-w-xl">
       {dropoff && (
         <div className="grid sm:grid-cols-2 gap-2 text-body">
           <label className={radioCard}><input type="radio" checked={mode === "report"} onChange={() => setMode("report")} className="accent-[var(--ink)] h-4 w-4" /> {m.inPerson}</label>
@@ -489,7 +492,7 @@ function Reschedule({ loan, busy, onSubmit, onCancelFree }: { loan: LoanView; bu
   const m = STEPS[l];
   const [days, setDays] = useState(Math.max(1, Math.round((dayToDate(loan.wanted!.end!).getTime() - dayToDate(loan.wanted!.start).getTime()) / 86400_000)));
   return (
-    <div className="mt-6 border-t border-line pt-5 space-y-4 max-w-xl anim-rise">
+    <div className="mt-6 border-t border-line pt-5 space-y-4 max-w-xl">
       <p className="text-body text-ink-2">{m.rescheduleText}</p>
       <div className="flex flex-wrap gap-4 items-end">
         <Field label={m.start}><Input type="date" value={start} onChange={(e) => setStart(e.target.value)} className="w-48" /></Field>

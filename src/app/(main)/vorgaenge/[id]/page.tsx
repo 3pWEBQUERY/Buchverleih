@@ -19,6 +19,7 @@ import { labels } from "@/lib/i18n/labels";
 import type { Locale } from "@/lib/i18n/locale";
 import { getLocale } from "@/lib/i18n/server";
 import { LOANS } from "@/lib/i18n/messages/loans";
+import { HandoverStamp } from "@/components/motion";
 import { dayToDate, deadline, dueDay, fmtDay, fmtMonthYear, fmtRange } from "@/lib/dates";
 import { CalendarView } from "@/components/calendar";
 
@@ -116,8 +117,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         {/* ------------------------------------------------ Produktblatt */}
         <aside className="lg:col-start-1 lg:row-start-1 space-y-5 min-w-0">
           <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-5 items-end lg:block lg:space-y-5">
-            <div className="lg:rounded-lg lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center anim-cover">
-              <Link href={`/exemplar/${loan.copyId}`} className="book block" aria-label={d.viewCopy(loan.title)}>
+            <div className="lg:rounded-lg lg:bg-paper-2 lg:border lg:border-line lg:p-8 flex justify-center">
+              <Link href={`/exemplar/${loan.copyId}`} className="book block relative" aria-label={d.viewCopy(loan.title)}>
+                {t.handed_over_at && <HandoverStamp text={LOANS[l].timeline.stamp(fmtDay(t.handed_over_at, l))} />}
                 <span className="book-face block lg:hidden"><Cover l={l} priority data={cover} width={104} height={156} uniform /></span>
                 <span className="book-face hidden lg:block"><Cover l={l} priority large data={cover} width={220} height={330} uniform /></span>
               </Link>
@@ -130,7 +132,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
           <div className="rounded-md border border-line divide-y divide-line">
             <div className="px-4 py-3.5 flex items-center justify-between gap-3">
-              <span className={cx("inline-flex items-center gap-2 text-body-sm font-medium", overdue && "text-late")}>
+              <span key={loan.status} className={cx("status-flip inline-flex items-center gap-2 text-body-sm font-medium", overdue && "text-late")}>
                 <span aria-hidden className={cx("h-2 w-2 rounded-full", toneDot(tone))} />{status}
               </span>
               <Link href={`/exemplar/${loan.copyId}`} className="inline-flex items-center gap-1 text-meta font-medium text-accent-hover hover:underline underline-offset-4">
@@ -155,9 +157,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <h2 className="display text-display mt-2">{headline(loan, l)} <em>{overdue ? d.overdue : `${L.statusLabel[loan.status]}.`}</em></h2>
           </header>
 
-          {meter && <div className="mt-8 anim-rise" style={{ animationDelay: "40ms" }}><TimeMeter m={meter} className="md:px-6 md:py-5" /></div>}
+          {meter && <div className="mt-8 anim-rise"><TimeMeter m={meter} className="md:px-6 md:py-5" /></div>}
 
-          <div className={cx(meter ? "mt-4" : "mt-8", "rounded-md border border-line p-5 md:p-6 anim-rise")} style={{ animationDelay: "60ms" }}>
+          <div className={cx(meter ? "mt-4" : "mt-8", "rounded-md border border-line p-5 md:p-6 anim-rise")}>
             <Timeline loan={loan} l={l} />
           </div>
 
@@ -179,13 +181,13 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             {(loan.prevChat || loan.nextLoan?.chat_id) && (
               <div className="mt-3 grid gap-2">
                 {loan.prevChat && (
-                  <Link href={`/uebergabe/${loan.prevChat.id}`} className="group rounded-md border border-line px-5 py-4 flex items-center justify-between gap-4 hover:border-accent transition-colors">
+                  <Link href={`/uebergabe/${loan.prevChat.id}`} className="press-card group rounded-md border border-line px-5 py-4 flex items-center justify-between gap-4 hover:border-accent">
                     <span><span className="font-medium">{d.prevChat(loan.prevChat.prev_name)}</span><span className="block text-body-sm text-muted">{d.prevChatText}</span></span>
                     <IconArrowRight className="flex-none text-accent-hover transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 )}
                 {loan.nextLoan?.chat_id && (
-                  <Link href={`/uebergabe/${loan.nextLoan.chat_id}`} className="group rounded-md border border-line px-5 py-4 flex items-center justify-between gap-4 hover:border-accent transition-colors">
+                  <Link href={`/uebergabe/${loan.nextLoan.chat_id}`} className="press-card group rounded-md border border-line px-5 py-4 flex items-center justify-between gap-4 hover:border-accent">
                     <span><span className="font-medium">{d.nextChat}</span><span className="block text-body-sm text-muted">{d.nextChatText(loan.nextLoan.borrower_name, fmtDay(dayToDate(loan.nextLoan.start), l))}</span></span>
                     <IconArrowRight className="flex-none text-accent-hover transition-transform group-hover:translate-x-0.5" />
                   </Link>

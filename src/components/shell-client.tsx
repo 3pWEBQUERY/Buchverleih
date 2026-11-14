@@ -10,18 +10,19 @@ import { SHELL } from "@/lib/i18n/messages/shell";
 export function NavLink({ href, icon, children, exact, tab }: { href: string; icon: ReactNode; children: ReactNode; exact?: boolean; tab?: boolean }) {
   const path = usePathname();
   const active = exact ? path === href : path === href || path.startsWith(href + "/");
+  // Die Fläche des aktiven Eintrags zeichnet die gleitende Marke der NavRail (globals.css: .nav-marker)
   if (tab) {
     return (
       <Link href={href} aria-current={active ? "page" : undefined}
-        className={cx("flex flex-col items-center justify-center gap-1 transition-colors", active ? "text-ink" : "text-muted")}>
-        <span className={cx("grid place-items-center h-8 w-12 rounded-sm transition-colors duration-fast", active && "bg-paper-3")}>{icon}</span>
+        className={cx("nav-tab relative z-[1] h-full flex flex-col items-center justify-center gap-1 transition-colors", active ? "text-ink" : "text-muted")}>
+        <span data-nav-target className="nav-tab-icon grid place-items-center h-8 w-12 rounded-sm">{icon}</span>
         <span className={cx("leading-none", active && "font-semibold")}>{children}</span>
       </Link>
     );
   }
   return (
     <Link href={href} aria-current={active ? "page" : undefined}
-      className={cx("relative flex items-center gap-3 px-3 h-10 rounded-sm transition-colors duration-fast", active ? "bg-paper text-ink font-medium outline outline-1 outline-line-strong" : "text-ink-2 hover:text-ink hover:bg-paper-3")}>
+      className={cx("nav-side relative z-[1] flex items-center gap-3 px-3 h-10 rounded-sm transition-colors", active ? "text-ink font-medium" : "text-ink-2 hover:text-ink hover:bg-paper-3")}>
       <span className={active ? "text-ink" : "text-muted"}>{icon}</span>
       <span className="flex-1 flex items-center justify-between gap-2">{children}</span>
     </Link>

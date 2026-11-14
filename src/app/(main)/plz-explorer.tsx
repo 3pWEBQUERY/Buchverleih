@@ -96,7 +96,7 @@ export function PlzExplorer() {
                 const cover = { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id };
                 const w = 110;
                 return (
-                  <li key={c.id} style={{ width: w, animationDelay: `${i * 35}ms` }} className="anim-rise">
+                  <li key={c.id} style={{ width: w }}>
                     <Link href={`/titel/${c.work_id}`} className="book block group">
                       <div className="flex items-end" style={{ height: 176 }}><div className="book-face"><Cover l={l} data={cover} width={110} height={165} uniform /></div></div>
                       <div className="h-[3px] bg-night-ink/90 rounded-full" />

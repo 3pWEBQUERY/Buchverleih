@@ -100,7 +100,7 @@ export default async function BenachrichtigungenPage({ searchParams }: { searchP
         eyebrow={<>{unreadAll > 0 && <span aria-hidden className="h-2 w-2 rounded-full bg-accent live-dot" />}{unreadAll > 0 ? m.newSince(unreadAll) : m.allRead}</>}
         sub={m.sub}
         aside={all.length > 0 && (
-          <dl className="grid grid-cols-2 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
+          <dl className="grid grid-cols-2 gap-2 w-full sm:w-auto anim-rise">
             <StatTile n={unreadAll} label={m.statNew} live={unreadAll > 0} />
             <StatTile n={all.length} label={m.statAll} />
           </dl>
@@ -183,7 +183,7 @@ function List({ items, unread, l }: { items: Item[]; unread?: boolean; l: Locale
         );
         const cls = cx("group grid grid-cols-[36px_minmax(0,1fr)_auto] gap-x-4 px-4 md:px-5 py-3.5 items-start transition-colors", unread && "bg-accent-soft/15", n.href && "hover:bg-paper-2");
         return (
-          <li key={n.id} className={unread ? "anim-flash" : "anim-rise"} style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
+          <li key={n.id} className={unread ? "anim-flash" : undefined}>
             {n.href ? <Link href={n.href} className={cls}>{inner}</Link> : <div className={cls}>{inner}</div>}
           </li>
         );

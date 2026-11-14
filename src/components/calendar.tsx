@@ -81,6 +81,7 @@ export function CalendarView({
   }, [selStart, fit, start, days]);
 
   const free = cal.free.filter((f) => f.start < cal.horizonEnd);
+  const byStart = useMemo(() => [...cal.bars].sort((a, b) => a.start.localeCompare(b.start)).map((b) => b.id), [cal.bars]);
   const freeNow = free.find((f) => f.start <= cal.today && cal.today < f.end);
   const nextFree = freeNow ?? free[0];
   const trackH = compact ? 32 : 44;
@@ -107,7 +108,7 @@ export function CalendarView({
         <div className="relative select-none w-full" style={{ minWidth: fit ? undefined : days * minPx, height }}>
           {/* Monate */}
           {!bare && months.map((m) => (
-            <span key={m.left} className={cx("absolute top-0 font-medium text-ink-2 whitespace-nowrap", compact ? "text-caption" : "text-caption")} style={{ left: `${m.left}%` }}>
+            <span key={m.left} className={cx("absolute top-0 font-medium text-ink-2 whitespace-nowrap text-caption")} style={{ left: `${m.left}%` }}>
               <span className="absolute top-[16px] w-px bg-line-strong" style={{ height: top - 16 }} />
               <span className="pl-1.5">{m.label}</span>
             </span>
@@ -144,14 +145,16 @@ export function CalendarView({
 
           {/* Balken */}
           {cal.bars.map((b) => {
+            // Staffelung in Zeitreihenfolge, unabhängig von der Reihenfolge im Datensatz
+            const order = byStart.indexOf(b.id);
             const bEnd = b.end ?? end;
             const bufEnd = b.end ? addDays(b.end, b.bufferDays) : null;
             const label = b.kind === "block" ? b.note || t.blocked : b.name ?? (b.mine ? t.yourLoan : t.taken);
             const range = fmtRange({ start: b.start, end: b.end }, l);
             return (
               <div key={b.id}>
-                <div className={cx("absolute rounded-sm px-2 flex items-center gap-2 overflow-hidden whitespace-nowrap", compact ? "text-caption" : "text-caption", barTone(b), b.mine && "ring-2 ring-accent ring-offset-1 ring-offset-paper")}
-                  style={{ top: top + 2, height: trackH - 4, left: `${pct(b.start)}%`, width: `${Math.max(0.6, span(b.start, bEnd))}%`, ...(b.kind === "block" ? { backgroundImage: HATCH } : {}) }}
+                <div className={cx("cal-bar absolute rounded-sm px-2 flex items-center gap-2 overflow-hidden whitespace-nowrap text-caption", barTone(b), b.mine && "ring-2 ring-accent ring-offset-1 ring-offset-paper")}
+                  style={{ "--i": order, top: top + 2, height: trackH - 4, left: `${pct(b.start)}%`, width: `${Math.max(0.6, span(b.start, bEnd))}%`, ...(b.kind === "block" ? { backgroundImage: HATCH } : {}) } as React.CSSProperties}
                   title={`${label}: ${range}${b.status ? ` · ${labels(l).statusLabel[b.status]}` : ""}`}>
                   <span className="font-medium flex-none max-w-full truncate">{label}</span>
                   {!compact && b.end && <span className="opacity-75 min-w-0 truncate tnum hidden md:inline">{range}</span>}
@@ -172,7 +175,7 @@ export function CalendarView({
 
           {/* Gewählter Zeitraum der Anfrage */}
           {selection && (
-            <div aria-hidden className={cx("absolute rounded-sm border-2 pointer-events-none transition-[left,width] duration-fast", selection.ok ? "border-accent bg-accent/[0.12]" : "border-late bg-late/10")}
+            <div aria-hidden key={`${selection.start}-${selection.end}`} className={cx("cal-select absolute rounded-sm border-2 pointer-events-none", selection.ok ? "border-accent bg-accent/[0.12]" : "border-late bg-late/10")}
               style={{ top: top - 2, height: trackH + 4, left: `${pct(selection.start)}%`, width: `${Math.max(0.8, span(selection.start, selection.end))}%` }}>
               <span className={cx("absolute left-0 whitespace-nowrap text-caption font-medium px-1.5 h-[18px] inline-flex items-center rounded-xs", selection.ok ? "bg-accent text-accent-ink" : "bg-late text-paper")}
                 style={{ top: trackH + 6 }}>
@@ -189,7 +192,9 @@ export function CalendarView({
           ))}
 
           {/* Heute */}
-          <div className="absolute w-[2px] -translate-x-1/2 bg-accent pointer-events-none" style={{ left: `${pct(cal.today)}%`, top: top - 4, height: trackH + 8 }} aria-hidden>
+          <div className="absolute w-[2px] -translate-x-1/2 pointer-events-none" style={{ left: `${pct(cal.today)}%`, top: top - 4, height: trackH + 8 }} aria-hidden>
+            {/* Der Strich ist das einzige dauerhaft bewegte Element des Kalenders */}
+            <span className="cal-today absolute inset-0 bg-accent" />
             {!bare && (
               <span className={cx("absolute -top-[15px] text-caption font-semibold uppercase tracking-caps bg-accent text-accent-ink rounded-xs px-1 py-px leading-none",
                 pct(cal.today) < 6 ? "-left-px" : pct(cal.today) > 94 ? "-right-px" : "left-1/2 -translate-x-1/2")}>{t.today}</span>

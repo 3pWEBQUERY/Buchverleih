@@ -181,7 +181,7 @@ export async function DocSummary({ eyebrow, title, items, note, germanOnly }: { 
       </div>
       <ol className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {items.map(([t, text, href], i) => (
-          <li key={t} className="anim-rise" style={{ animationDelay: `${80 + i * 50}ms` }}>
+          <li key={t}>
             <a href={href} className="group rounded-md border border-line p-5 flex flex-col h-full sm:min-h-[176px] hover:border-accent transition-colors duration-fast">
               <span className="text-meta tnum text-accent-hover font-medium">{String(i + 1).padStart(2, "0")}</span>
               <span className="font-medium text-lead mt-3">{t}</span>

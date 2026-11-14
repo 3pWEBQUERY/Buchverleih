@@ -39,7 +39,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
           <p className="text-body-lg text-ink-2 mt-3 leading-relaxed max-w-xl">{t.lead}</p>
         </div>
         {all.length > 0 && (
-          <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
+          <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise">
             <StatTile n={mine.length} label={t.stat.mine} href={mine.length ? "#wartet" : null} live={mine.length > 0} />
             <StatTile n={open.length} label={t.stat.open} href={open.length ? "#laufend" : null} />
             <StatTile n={done.length} label={t.stat.done} href={done.length ? "#abgeschlossen" : null} />

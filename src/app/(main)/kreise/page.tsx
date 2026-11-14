@@ -39,7 +39,7 @@ export default async function Page() {
           </p>
         </div>
         {circles.length > 0 && (
-          <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise" style={{ animationDelay: "60ms" }}>
+          <dl className="grid grid-cols-3 gap-2 w-full sm:w-auto anim-rise">
             <StatTile n={active.length} label={t.circles(active.length)} />
             <StatTile n={people} label={t.membersWord} />
             <StatTile n={books} label={t.booksWord} />
@@ -71,8 +71,8 @@ export default async function Page() {
             desc={m.yoursDesc}>
             <ul className="grid xl:grid-cols-2 gap-3">
               {circles.map((c, i) => <CircleCard key={c.id} c={c} p={previews[c.id]} i={i} l={l} />)}
-              <li className="anim-rise" style={{ animationDelay: `${Math.min(circles.length, 8) * 50}ms` }}>
-                <Link href="/kreise/neu" className="group h-full min-h-[260px] rounded-md border border-dashed border-line-strong flex flex-col items-center justify-center gap-3 p-8 text-center hover:border-accent transition-colors">
+              <li>
+                <Link href="/kreise/neu" className="press-card group h-full min-h-[260px] rounded-md border border-dashed border-line-strong flex flex-col items-center justify-center gap-3 p-8 text-center hover:border-accent">
                   <span className="h-11 w-11 rounded-sm bg-accent-soft text-accent-hover group-hover:bg-accent group-hover:text-accent-ink grid place-items-center transition-colors"><IconPlus /></span>
                   <span className="font-medium text-body-lg">{m.newCard}</span>
                   <span className="text-body-sm text-muted max-w-[30ch]">{m.newCardText}</span>
@@ -190,11 +190,11 @@ function CircleCard({ c, p, i, l }: { c: CircleRow; p: Preview | undefined; i: n
     </>
   );
   return (
-    <li className="anim-rise min-w-0" style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}>
+    <li className="min-w-0">
       {pending ? (
         <div className="rounded-md border border-dashed border-line-strong p-5 md:p-6 h-full">{body}</div>
       ) : (
-        <Link href={`/kreise/${c.id}`} className={cx("group rounded-md border p-5 md:p-6 h-full block transition-colors", admin && st.pending > 0 ? "border-accent/50 hover:border-accent" : "border-line hover:border-accent")}>{body}</Link>
+        <Link href={`/kreise/${c.id}`} className={cx("press-card group rounded-md border p-5 md:p-6 h-full block", admin && st.pending > 0 ? "border-accent/50 hover:border-accent" : "border-line hover:border-accent")}>{body}</Link>
       )}
     </li>
   );

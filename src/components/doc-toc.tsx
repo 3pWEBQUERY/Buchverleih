@@ -36,7 +36,7 @@ export function DocToc({ toc, label: given }: { toc: TocItem[]; label?: string }
       </div>
       <div className="relative">
         <span aria-hidden className="absolute left-0 top-0 bottom-0 w-px bg-line" />
-        <span aria-hidden className="absolute left-0 top-0 w-[2px] -translate-x-[0.5px] bg-accent transition-[height] duration-base ease-out" style={{ height: `${Math.max(6, progress)}%` }} />
+        <span aria-hidden className="absolute left-0 top-0 h-full w-[2px] -translate-x-[0.5px] bg-accent origin-top transition-transform duration-base ease-out" style={{ transform: `scaleY(${Math.max(6, progress) / 100})` }} />
         <ol className="flex flex-col">
           {toc.map(([id, label]) => {
             const on = id === active;
