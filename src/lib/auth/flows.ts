@@ -12,7 +12,7 @@ import {
 } from "@simplewebauthn/server";
 import { sql } from "@/lib/db";
 import { env } from "@/lib/env";
-import { err } from "@/lib/errors";
+import { AppError, err } from "@/lib/errors";
 import { hashToken, randomToken, sixDigits } from "@/lib/crypto";
 import { rateLimit } from "@/lib/ratelimit";
 import { sendMail } from "@/lib/notify/mail";
@@ -202,7 +202,15 @@ export async function requestPhoneCode(user: SessionUser, raw: string, ip = "unb
             values (${user.id}, ${phone}, ${hashToken(`${user.id}:${code}`)}, now() + interval '10 minutes')`;
   // Gehört die Nummer schon einem anderen Konto, geht keine SMS raus – die Antwort ist aber dieselbe,
   // damit sich nicht abfragen lässt, welche Nummern registriert sind. Die Bestätigung scheitert später.
-  if (!(await phoneTaken(phone, user.id))) await sendSms(phone, `Dein Leihregal-Code: ${code}. Gültig 10 Minuten.`);
+  if (!(await phoneTaken(phone, user.id))) {
+    try {
+      await sendSms(phone, `Dein Leihregal-Code: ${code}. Gültig 10 Minuten.`);
+    } catch (e) {
+      // Anbieter nicht erreichbar oder lehnt ab: sagen, was zu tun ist, statt eines allgemeinen Fehlers
+      console.error("[sms] Code nicht gesendet:", (e as Error).message);
+      throw new AppError(503, "sms_failed", "Die SMS konnte gerade nicht gesendet werden. Versuch es in ein paar Minuten nochmals.");
+    }
+  }
   return { devCode: env.showCodes ? code : undefined };
 }
 
