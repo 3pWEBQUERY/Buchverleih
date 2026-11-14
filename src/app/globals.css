@@ -543,3 +543,10 @@ dialog.palette[open]::backdrop { opacity: 1; transition-timing-function: var(--e
   @starting-style { dialog.palette[open] { transform: none; } }
 }
 /* ====================================================== Befehlspalette (6.1) – Ende */
+
+/* ----------------------------------------------------------- Druck: QR-Einladung */
+@media print {
+  body:has(.invite-qr) * { visibility: hidden; }
+  body:has(.invite-qr) .invite-qr, body:has(.invite-qr) .invite-qr * { visibility: visible; }
+  body:has(.invite-qr) .invite-qr { position: absolute; inset: 0 auto auto 0; width: 100%; background: #fff; }
+}

@@ -1,3 +1,4 @@
+import { apnsConfigured } from "@/lib/apns";
 import { sql } from "@/lib/db";
 import { env } from "@/lib/env";
 
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
     const appUrl = env.appUrlConfigured;
     const ok = !stale && r.dead === 0 && (!env.production || (mail && appUrl));
     return Response.json(
-      { ok: strict ? ok : true, db: true, mailConfigured: mail, appUrlConfigured: appUrl, deadlinesLastRun: r.last, deadlinesStale: stale, deadJobs: r.dead, overdueJobs: r.queued },
+      { ok: strict ? ok : true, db: true, mailConfigured: mail, apnsConfigured: apnsConfigured(), appUrlConfigured: appUrl, deadlinesLastRun: r.last, deadlinesStale: stale, deadJobs: r.dead, overdueJobs: r.queued },
       { status: strict && !ok ? 503 : 200 },
     );
   } catch {

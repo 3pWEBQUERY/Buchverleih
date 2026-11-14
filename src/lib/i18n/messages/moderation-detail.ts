@@ -129,6 +129,10 @@ const de = {
     roleCan: "Darf Meldungen, Fälle und Konten bearbeiten, sobald ernannt.",
     revoke: "Rechte entziehen",
     appoint: "Zur Moderation ernennen",
+    pwTitle: "Einmal-Passwort",
+    pwHint: "Für Konten ohne Passwort, solange kein Mailversand läuft. Gib es der Person persönlich weiter; sie ändert es danach in den Einstellungen.",
+    pwCreate: "Einmal-Passwort erzeugen",
+    pwShown: "Nur jetzt sichtbar. Ein bisheriges Passwort gilt nicht mehr.",
   },
 };
 export type ModDetailMsg = typeof de;
@@ -260,6 +264,10 @@ const fr: ModDetailMsg = {
     roleIsMod: "Peut traiter les signalements, litiges et comptes. Seuls les admins attribuent les rôles.",
     roleCan: "Pourra traiter les signalements, litiges et comptes une fois nommé·e.",
     revoke: "Retirer les droits",
+    pwTitle: "Mot de passe à usage unique",
+    pwHint: "Pour les comptes sans mot de passe, tant que l’envoi d’e-mails n’est pas en place. Transmets-le en personne ; la personne le change ensuite dans les réglages.",
+    pwCreate: "Créer un mot de passe à usage unique",
+    pwShown: "Visible uniquement maintenant. L’ancien mot de passe n’est plus valable.",
     appoint: "Nommer à la modération",
   },
 };
@@ -391,6 +399,10 @@ const it: ModDetailMsg = {
     roleIsMod: "Può gestire segnalazioni, casi e conti. Solo gli admin assegnano i ruoli.",
     roleCan: "Potrà gestire segnalazioni, casi e conti una volta nominato/a.",
     revoke: "Revoca i diritti",
+    pwTitle: "Password monouso",
+    pwHint: "Per i conti senza password, finché l’invio di e-mail non è attivo. Consegnala di persona; la persona la cambia poi nelle impostazioni.",
+    pwCreate: "Crea password monouso",
+    pwShown: "Visibile solo ora. La password precedente non è più valida.",
     appoint: "Nomina alla moderazione",
   },
 };

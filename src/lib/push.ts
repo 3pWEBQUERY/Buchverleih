@@ -1,3 +1,4 @@
+import { apnsToUser } from "@/lib/apns";
 import webpush from "web-push";
 import { sql } from "@/lib/db";
 import { env } from "@/lib/env";
@@ -65,7 +66,9 @@ export async function unsubscribe(u: SessionUser, endpoint: string) {
 }
 
 export async function deviceCount(userId: string) {
-  const [r] = await sql<{ n: number }[]>`select count(*)::int as n from push_subscriptions where user_id = ${userId}`;
+  const [r] = await sql<{ n: number }[]>`
+    select (select count(*)::int from push_subscriptions where user_id = ${userId})
+         + (select count(*)::int from apns_devices where user_id = ${userId}) as n`;
   return r.n;
 }
 
@@ -84,6 +87,12 @@ function withDeadline<T>(p: Promise<T>, ms: number): Promise<T> {
 
 /** Schickt eine Nachricht an alle Geräte eines Kontos, parallel. Abgelaufene Abos werden entfernt. */
 export async function pushToUser(userId: string, msg: PushMessage) {
+  // iOS-App (APNs) und Web-Push parallel
+  const [ios, web] = await Promise.all([apnsToUser(userId, msg), webPushToUser(userId, msg)]);
+  return { sent: ios.sent + web.sent };
+}
+
+async function webPushToUser(userId: string, msg: PushMessage) {
   const subs = await sql<{ id: string; endpoint: string; p256dh: string; auth: string }[]>`
     select id, endpoint, p256dh, auth from push_subscriptions where user_id = ${userId}`;
   if (!subs.length) return { sent: 0 };

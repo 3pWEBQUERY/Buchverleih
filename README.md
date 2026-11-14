@@ -132,13 +132,13 @@ und 390/1440 px gegen eine laufende Instanz mit Beispieldaten (CI-Job `a11y`).
 Kreise haben neben Regal und Regeln einen Ort, an dem etwas passiert – ohne Follower, Direktnachrichten,
 öffentliche Lese-Historie, Ranglisten, Abzeichen oder Streaks.
 
-| Baustein | Tabellen (Migration `0020_gemeinschaft.sql`) | Code |
+| Baustein | Tabellen (Migration `0022_gemeinschaft.sql`) | Code |
 | --- | --- | --- |
 | Pinnwand: Suche, Empfehlung, Ankündigung | `circle_posts`, `circle_post_reactions`, `circle_post_comments`, `circle_post_offers` | `lib/pinboard.ts`, `/api/v1/circles/:id/posts…`, SSE `/circles/:id/stream` |
 | Wünsche im Kreis | `wishlist_items.share_circles` | `lib/wishlist.ts` (`wishersInMyCircles`, `circleHitsForWishlist`, `wantedInCircle`) |
 | Weg eines Buches, Zettel im Buch | `book_notes` (Weg aus `loans` abgeleitet) | `lib/book-path.ts`, `/copies/:id/path`, `/copies/:id/notes`, `/loans/:id/note` |
 | Puls | `users.pulse_show_new_books`, `users.pinboard_notify` | `lib/pulse.ts`, `/me/pulse` |
-| Lesestand im Chat | `thread_reads` (`0021`) | `lib/chat.ts` (`markRead`, `threadReads`) |
+| Lesestand im Chat | `thread_reads` (`0023`) | `lib/chat.ts` (`markRead`, `threadReads`) |
 
 Privatsphäre-Regeln (als Constraints und Trigger in der Datenbank, zusätzlich im Code):
 - Pinnwand nur für aktive Mitglieder; Ankündigungen nur Admins; Empfehlungen nur mit eigenem Exemplar im Kreisregal.
