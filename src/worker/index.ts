@@ -67,16 +67,11 @@ const withDeadlineLock = (fn: () => Promise<void>) => withLock(424242, fn);
 const DAILY_LOCK = 434343;
 const HOURLY_LOCK = 444444;
 
-/** Stunde in der Schweiz (0–23) */
-const hourCH = () => Number(new Intl.DateTimeFormat("de-CH", { hour: "numeric", hour12: false, timeZone: "Europe/Zurich" }).format(new Date()));
-
 /**
- * Titelalarm stündlich, damit ein frei gewordenes Wunschbuch nicht bis zum nächsten Tag wartet –
- * aber nur zwischen 8 und 20 Uhr: der Alarm geht auch per SMS raus. Was nachts frei wird, meldet der Lauf um 8 Uhr.
+ * Titelalarm stündlich und rund um die Uhr, damit ein frei gewordenes Wunschbuch sofort gemeldet wird
+ * (App, E-Mail, Push und SMS).
  */
 async function runAlarms() {
-  const h = hourCH();
-  if (h < 8 || h >= 20) return;
   const last = await lastRun("hourly_alarms");
   if (last && Date.now() - last.getTime() < 3600_000) return;
   try {
