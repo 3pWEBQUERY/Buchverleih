@@ -202,13 +202,18 @@ export async function removeWish(userId: string, workId: string) {
   await sql`delete from wishlist_items where user_id = ${userId} and work_id = ${workId}`;
 }
 
+/** SMS beim Titelalarm: an, solange die Person sie nicht ausschaltet (email_prefs.sms_title_alarm = false) */
+export const SMS_ALARM_PREF = "sms_title_alarm";
+
 /**
- * Titelalarm: Benachrichtigung, sobald irgendein Exemplar im Umkreis verfügbar wird.
- * Läuft täglich im Worker; pro Titel höchstens ein Alarm in 7 Tagen.
+ * Titelalarm: Benachrichtigung, sobald irgendein Exemplar im Umkreis verfügbar wird – in der App,
+ * per E-Mail/Push und per SMS an die bestätigte Mobilnummer. Läuft stündlich im Worker, aber nur
+ * tagsüber (8–20 Uhr Schweizer Zeit), damit keine SMS nachts ankommt. Pro Titel höchstens ein Alarm in 7 Tagen.
  */
 export async function runTitleAlarms() {
-  const hits = await sql<{ user_id: string; work_id: string; title: string; dist: number }[]>`
-    select wi.user_id, wi.work_id, w.title, min(earth_distance(ll_to_earth(me.home_lat, me.home_lng), ll_to_earth(o.display_lat, o.display_lng))) as dist
+  const hits = await sql<{ user_id: string; work_id: string; title: string; dist: number; sms: boolean }[]>`
+    select wi.user_id, wi.work_id, w.title, min(earth_distance(ll_to_earth(me.home_lat, me.home_lng), ll_to_earth(o.display_lat, o.display_lng))) as dist,
+           bool_and(me.phone_verified_at is not null and coalesce((me.email_prefs ->> ${SMS_ALARM_PREF})::boolean, true)) as sms
       from wishlist_items wi
       join works w on w.id = wi.work_id
       join users me on me.id = wi.user_id and me.deleted_at is null and me.home_lat is not null
@@ -227,7 +232,7 @@ export async function runTitleAlarms() {
   for (const h of hits) {
     await sql.begin(async (tx) => {
       await tx`update wishlist_items set last_alerted_at = now() where user_id = ${h.user_id} and work_id = ${h.work_id}`;
-      await notify(tx, { userId: h.user_id, type: "title_alarm", data: { title: h.title, ...systemText("title_alarm_free", { meters: Math.round(h.dist) }), href: `/titel/${h.work_id}` } });
+      await notify(tx, { userId: h.user_id, type: "title_alarm", sms: h.sms, data: { title: h.title, ...systemText("title_alarm_free", { meters: Math.round(h.dist) }), href: `/titel/${h.work_id}` } });
     });
   }
   return hits.length;

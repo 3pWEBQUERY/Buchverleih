@@ -113,7 +113,9 @@ const handlers: Record<string, (p: Record<string, unknown>) => Promise<void>> = 
       select n.id, n.type, n.payload, u.phone_e164 as phone, n.sent_at, u.locale from notifications n join users u on u.id = n.user_id where n.id = ${p.notificationId as string}`;
     if (!n?.phone || n.sent_at) return;
     const { title } = renderNotification(n.type, n.payload, loc(n.locale));
-    await sendSms(n.phone, `Leihregal: ${title}. ${env.appUrl}`);
+    // Link direkt zum Ziel (z. B. Titelseite beim Titelalarm), sonst zur Startseite
+    const link = `${env.appUrl}${n.payload.href?.startsWith("/") ? n.payload.href : ""}`;
+    await sendSms(n.phone, `Leihregal: ${title}. ${link}`);
     await sql`update notifications set sent_at = now() where id = ${n.id}`;
   },
 

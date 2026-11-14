@@ -67,6 +67,28 @@ const withDeadlineLock = (fn: () => Promise<void>) => withLock(424242, fn);
 const DAILY_LOCK = 434343;
 const HOURLY_LOCK = 444444;
 
+/** Stunde in der Schweiz (0–23) */
+const hourCH = () => Number(new Intl.DateTimeFormat("de-CH", { hour: "numeric", hour12: false, timeZone: "Europe/Zurich" }).format(new Date()));
+
+/**
+ * Titelalarm stündlich, damit ein frei gewordenes Wunschbuch nicht bis zum nächsten Tag wartet –
+ * aber nur zwischen 8 und 20 Uhr: der Alarm geht auch per SMS raus. Was nachts frei wird, meldet der Lauf um 8 Uhr.
+ */
+async function runAlarms() {
+  const h = hourCH();
+  if (h < 8 || h >= 20) return;
+  const last = await lastRun("hourly_alarms");
+  if (last && Date.now() - last.getTime() < 3600_000) return;
+  try {
+    const n = await runTitleAlarms();
+    await heartbeat("hourly_alarms", { alarms: n });
+    if (n) console.log("[hourly_alarms]", n);
+  } catch (e) {
+    console.error("[hourly_alarms]", (e as Error).message);
+    await heartbeat("hourly_alarms", { error: (e as Error).message.slice(0, 300) }).catch(() => {});
+  }
+}
+
 /** Stündlich: Kennzahlen über den ganzen Bestand (app_stats), die alle Web-Instanzen gemeinsam lesen */
 async function runHourly() {
   const last = await lastRun("hourly_stats");
@@ -85,7 +107,6 @@ async function runHourly() {
  */
 async function runDaily() {
   const steps: [string, () => Promise<unknown>][] = [
-    ["daily_alarms", runTitleAlarms],
     ["daily_matches", runSwapMatches],
     ["daily_retention", runRetention],
   ];
@@ -134,9 +155,10 @@ async function scheduler() {
           if (covers) console.log(`[covers] ${covers} Cover zum Nachladen eingereiht`);
         });
       }
-      // Täglicher Lauf für Titelalarm, Tauschtreffer und Aufbewahrung – nur ein Worker gleichzeitig
+      // Täglicher Lauf für Tauschtreffer und Aufbewahrung, Titelalarm stündlich tagsüber – nur ein Worker gleichzeitig
       await withLock(DAILY_LOCK, runDaily);
       await withLock(HOURLY_LOCK, runHourly);
+      await withLock(HOURLY_LOCK, runAlarms);
     } catch (e) {
       console.error("[scheduler]", (e as Error).message);
     }

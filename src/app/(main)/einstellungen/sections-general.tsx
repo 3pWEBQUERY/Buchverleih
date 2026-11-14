@@ -6,6 +6,7 @@ import { api, ApiError } from "@/lib/client";
 import { useToast } from "@/components/toast";
 import { Button, Notice, Segmented, Switch, cx } from "@/components/ui";
 import { COMMUNITY } from "@/lib/i18n/messages/community";
+import { WISHLIST } from "@/lib/i18n/messages/wishlist";
 import { useLocale } from "@/components/locale-provider";
 import { readTheme, saveTheme, type Theme } from "@/components/theme-sync";
 import { msg, useT } from "./sections-shared";
@@ -38,6 +39,31 @@ export function EmailPrefs({ categories, prefs }: { categories: { key: string; l
           hint={c.locked ? T.email.locked : undefined}
           onChange={(v) => set(c.key, c.label, v)} />
       ))}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------- SMS beim Titelalarm */
+/** SMS, sobald ein Wunschbuch im Umkreis frei wird. Nur mit bestätigter Mobilnummer. */
+export function SmsAlarmPref({ on, phoneVerified }: { on: boolean; phoneVerified: boolean }) {
+  const T = useT();
+  const t = WISHLIST[useLocale()].addTitle;
+  const toast = useToast();
+  const router = useRouter();
+  const [state, setState] = useState(on);
+  async function set(v: boolean) {
+    setState(v);
+    try {
+      await api("/me", { method: "PATCH", body: { emailPrefs: { sms_title_alarm: v } } });
+      router.refresh();
+      toast.show({ text: v ? t.smsOn : t.smsOff, undo: () => set(!v) });
+    } catch (e) { setState(!v); toast.error(msg(e, T)); }
+  }
+  return (
+    <div className="border-t border-line mt-3 pt-1">
+      <Switch checked={phoneVerified && state} disabled={!phoneVerified} label={t.smsSetting}
+        hint={phoneVerified ? t.smsSettingHint : <>{t.smsNoPhone[0]}<Link href="/einstellungen#mobilnummer" className="underline underline-offset-4">{t.smsNoPhone[1]}</Link>{t.smsNoPhone[2]}</>}
+        onChange={set} />
     </div>
   );
 }

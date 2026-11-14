@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Cover } from "@/components/cover";
 import { useToast } from "@/components/toast";
-import { IconArrowRight, IconBell, IconCheck, IconClose, IconSearch, IconSwap } from "@/components/icons";
+import { IconArrowRight, IconBell, IconCheck, IconClose, IconScan, IconSearch, IconSwap } from "@/components/icons";
+import { Modal, ModalClose } from "@/components/modal";
+import { Scanner } from "@/components/scanner";
 import { StepSection } from "@/components/step-section";
 import { Button, LinkButton, cx } from "@/components/ui";
 import { api } from "@/lib/client";
@@ -26,7 +28,7 @@ export type Match = { id: string; other_name: string; their_copy: string; their_
 
 const RADII = [2, 5, 10, 25];
 
-export function WishlistClient({ items: initial, matches }: { items: WishItem[]; matches: Match[] }) {
+export function WishlistClient({ items: initial, matches, sms = "on" }: { items: WishItem[]; matches: Match[]; sms?: "on" | "off" | "no_phone" }) {
   const router = useRouter();
   const toast = useToast();
   const t = WISHLIST[useLocale()];
@@ -98,6 +100,13 @@ export function WishlistClient({ items: initial, matches }: { items: WishItem[];
     <div>
       <StepSection id="hinzufuegen" n={++n} first title={t.add} desc={t.addDesc}>
         <AddTitle onList={new Set(items.map((i) => i.work_id))} autoFocus={items.length === 0} />
+        {/* Titelalarm per SMS: was passiert, wenn ein Wunschbuch frei wird */}
+        {sms === "on" && <p className="text-meta text-muted mt-3 flex items-start gap-2"><IconBell width={14} height={14} className="mt-0.5 flex-none" aria-hidden />{t.addTitle.smsHint}</p>}
+        {sms === "no_phone" && (
+          <p className="text-meta text-muted mt-3 flex items-start gap-2"><IconBell width={14} height={14} className="mt-0.5 flex-none" aria-hidden />
+            <span>{t.addTitle.smsNoPhone[0]}<Link href="/einstellungen#mobilnummer" className="text-ink-2 underline underline-offset-4">{t.addTitle.smsNoPhone[1]}</Link>{t.addTitle.smsNoPhone[2]}</span>
+          </p>
+        )}
       </StepSection>
 
       {matches.length > 0 && (
@@ -275,14 +284,21 @@ function WishCard({ it, i, onRadius, onAlarm, onShare, onRemove }: { it: WishIte
   );
 }
 
-type Edition = { id: string; work_id: string; title: string; authors: string[]; year: number | null; cover_key: string | null; cover_w: number | null; cover_h: number | null };
+type Edition = { id: string; work_id: string; title: string; authors: string[]; year: number | null; cover_key: string | null; cover_color?: string | null; cover_w: number | null; cover_h: number | null };
+
+/** ISBN-10/-13 mit Bindestrichen oder Leerzeichen erkennen (Prüfziffer prüft der Server) */
+const ISBN_LIKE = /^(97[89][\s-]?)?\d[\d\s-]{7,15}[\dXx]$/;
+const isbnDigits = (q: string) => q.replace(/[^0-9Xx]/g, "").toUpperCase();
+const looksLikeIsbn = (q: string) => ISBN_LIKE.test(q.trim()) && [10, 13].includes(isbnDigits(q).length);
 
 function AddTitle({ onList, autoFocus }: { onList: Set<string>; autoFocus: boolean }) {
   const router = useRouter();
   const toast = useToast();
   const [q, setQ] = useState("");
   const [hits, setHits] = useState<Edition[] | null>(null);
+  const [isbnState, setIsbnState] = useState<null | "looking" | "invalid" | "none" | "found">(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
   const l = useLocale();
   const w = WISHLIST[l];
@@ -292,19 +308,33 @@ function AddTitle({ onList, autoFocus }: { onList: Set<string>; autoFocus: boole
     const needle = q.trim();
     if (needle.length < 2) {
       setHits(null);
+      setIsbnState(null);
       return;
     }
     let alive = true;
+    const isbn = looksLikeIsbn(needle);
+    if (isbn) setIsbnState("looking");
+    else setIsbnState(null);
     const t = setTimeout(async () => {
       try {
+        if (isbn) {
+          // ISBN: eigene Datenbank, dann DNB, Open Library, Google Books – das Cover lädt der Worker nach
+          const d = await api<{ edition: Edition | null }>(`/catalog/isbn/${isbnDigits(needle)}`);
+          if (!alive) return;
+          setHits(d.edition ? [d.edition] : []);
+          setIsbnState(d.edition ? "found" : "none");
+          return;
+        }
         const d = await api<{ editions: Edition[] }>(`/catalog/search?q=${encodeURIComponent(needle)}`);
         if (!alive) return;
         const seen = new Set<string>();
         setHits(d.editions.filter((e) => (seen.has(e.work_id) ? false : (seen.add(e.work_id), true))).slice(0, 6));
-      } catch {
-        if (alive) setHits([]);
+      } catch (e) {
+        if (!alive) return;
+        setHits([]);
+        if (isbn) setIsbnState((e as { code?: string }).code === "invalid" ? "invalid" : "none");
       }
-    }, 220);
+    }, isbn ? 320 : 220);
     return () => {
       alive = false;
       clearTimeout(t);
@@ -318,7 +348,10 @@ function AddTitle({ onList, autoFocus }: { onList: Set<string>; autoFocus: boole
       toast.show({ text: a.added(e.title) });
       setQ("");
       setHits(null);
+      setIsbnState(null);
       router.refresh();
+      // Das Original-Cover holt der Worker im Hintergrund; danach die Liste noch einmal auffrischen
+      if (!e.cover_key) window.setTimeout(() => router.refresh(), 6000);
       ref.current?.focus();
     } catch (err) {
       toast.error((err as Error).message);
@@ -332,22 +365,42 @@ function AddTitle({ onList, autoFocus }: { onList: Set<string>; autoFocus: boole
       <label htmlFor="wunsch-q" className="sr-only">{w.add}</label>
       <div className="relative">
         <span aria-hidden className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none"><IconSearch width={19} height={19} /></span>
+        <button type="button" onClick={() => setScanning(true)} aria-label={a.scan} title={a.scan}
+          className="press absolute right-1.5 top-1/2 -translate-y-1/2 h-10 w-10 grid place-items-center rounded-sm text-ink-2 hover:bg-paper-2 hover:text-ink">
+          <IconScan width={20} height={20} />
+        </button>
         <input id="wunsch-q" ref={ref} type="search" autoComplete="off" autoFocus={autoFocus} value={q} onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Escape") setQ(""); if (e.key === "Enter" && hits?.[0] && !onList.has(hits[0].work_id)) { e.preventDefault(); add(hits[0]); } }}
-          placeholder={a.placeholder}
-          className="w-full h-13 bg-paper border border-field rounded-md pl-12 pr-5 [&::-webkit-search-cancel-button]:appearance-none text-body-lg placeholder:text-muted hover:border-ink-2 focus:outline-none focus:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20 transition-colors" />
+          placeholder={a.placeholderIsbn} inputMode="search"
+          className="w-full h-13 bg-paper border border-field rounded-md pl-12 pr-14 [&::-webkit-search-cancel-button]:appearance-none text-body-lg placeholder:text-muted hover:border-ink-2 focus:outline-none focus:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20 transition-colors" />
       </div>
-      {hits && (
+      {scanning && (
+        <Modal label={a.scanTitle} onClose={() => setScanning(false)} className="surface-night flex flex-col">
+          <div className="flex items-center justify-between px-5 md:px-8 h-16 flex-none">
+            <span className="text-meta font-medium text-night-muted">{a.scanTitle}</span>
+            <ModalClose className="press h-11 w-11 -mr-2 grid place-items-center rounded-md hover:bg-night-2" label={a.close}><IconClose width={24} height={24} /></ModalClose>
+          </div>
+          <div className="flex-1 overflow-y-auto px-5 pb-8 max-w-lg w-full mx-auto">
+            <p className="text-body text-night-muted">{a.scanHint}</p>
+            <Scanner mode="isbn" fallbackHint={a.scanFallback} className="mt-6 !rounded-md !border-night-line"
+              onResult={(code) => { setScanning(false); setQ(code); ref.current?.focus(); }} />
+          </div>
+        </Modal>
+      )}
+      {isbnState === "looking" && <p className="text-body-sm text-muted mt-2 px-5" aria-live="polite">{a.isbnLooking}</p>}
+      {isbnState === "invalid" && <p className="text-body-sm text-late mt-2 px-5" role="alert">{a.isbnInvalid}</p>}
+      {hits && isbnState !== "looking" && isbnState !== "invalid" && (
         <div className="anim-rise mt-2" aria-live="polite">
+          {isbnState === "found" && <p className="eyebrow mb-2 px-1">{a.isbnFound}</p>}
           {hits.length === 0 ? (
-            <p className="text-body-sm text-muted py-3 px-5">{a.notFound(q.trim())}</p>
+            <p className="text-body-sm text-muted py-3 px-5">{isbnState === "none" ? a.isbnNotFound(isbnDigits(q)) : a.notFound(q.trim())}</p>
           ) : (
             <ul className="rounded-md border border-line divide-y divide-line overflow-hidden">
               {hits.map((e) => {
                 const on = onList.has(e.work_id);
                 return (
                   <li key={e.work_id} className="px-4 md:px-5 py-3 grid grid-cols-[36px_minmax(0,1fr)_auto] gap-4 items-center">
-                    <Cover l={l} data={{ title: e.title, authors: e.authors, coverKey: e.cover_key, seed: e.work_id }} width={36} height={54} uniform />
+                    <Cover l={l} data={{ title: e.title, authors: e.authors, coverKey: e.cover_key, coverColor: e.cover_color, seed: e.work_id }} width={36} height={54} uniform />
                     <div className="min-w-0">
                       <div className="font-serif text-lead leading-tight truncate">{e.title}</div>
                       <div className="text-body-sm text-muted truncate">{e.authors.join(", ")}</div>
