@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import type { ExternalHit } from "@/lib/catalog/lookup";
 import type { Edition } from "@/lib/catalog/works";
 import { api } from "@/lib/client";
 import { labels } from "@/lib/i18n/labels";
@@ -142,6 +143,9 @@ export function SearchTab({ hidden, onPick, onIsbn, onManual }: {
   const [q, setQ] = useState("");
   const [res, setRes] = useState<{ q: string; editions: Edition[] } | null>(null);
   const [loading, setLoading] = useState(false);
+  /** Treffer aus Google Books / Open Library, wenn der eigene Katalog nichts (Passendes) hat */
+  const [ext, setExt] = useState<{ q: string; state: "loading" | "done" | "error"; hits: ExternalHit[] } | null>(null);
+  const [taking, setTaking] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const toast = useToast();
   const l = useLocale();
@@ -161,7 +165,12 @@ export function SearchTab({ hidden, onPick, onIsbn, onManual }: {
     const timer = setTimeout(async () => {
       try {
         const r = await api<{ editions: Edition[] }>(`/catalog/search?q=${encodeURIComponent(needle)}`);
-        if (alive) setRes({ q: needle, editions: r.editions });
+        if (alive) {
+          setRes({ q: needle, editions: r.editions });
+          // Nichts bei uns: gleich in den Katalogen weitersuchen
+          if (r.editions.length === 0) void searchExternal(needle, () => alive);
+          else setExt((x) => (x && x.q === needle ? x : null));
+        }
       } catch (e) {
         if (alive) toast.error((e as Error).message);
       } finally {
@@ -173,6 +182,33 @@ export function SearchTab({ hidden, onPick, onIsbn, onManual }: {
       clearTimeout(timer);
     };
   }, [q, toast]);
+
+  async function searchExternal(needle: string, alive: () => boolean = () => true) {
+    setExt({ q: needle, state: "loading", hits: [] });
+    try {
+      const r = await api<{ results: ExternalHit[] }>(`/catalog/search/external?q=${encodeURIComponent(needle)}`);
+      if (alive()) setExt({ q: needle, state: "done", hits: r.results });
+    } catch {
+      if (alive()) setExt({ q: needle, state: "error", hits: [] });
+    }
+  }
+
+  /** Treffer übernehmen: über die ISBN in unseren Katalog (Titeldaten aus DNB/Open Library/Google, Cover lädt der Worker) */
+  async function take(h: ExternalHit) {
+    setTaking(h.isbn13);
+    try {
+      const r = await api<{ edition: Edition | null }>(`/catalog/isbn/${h.isbn13}`);
+      if (!r.edition) throw new Error(t.external.failed);
+      toast.show({ text: t.external.taken(r.edition.title) });
+      onPick(r.edition);
+    } catch (e) {
+      toast.error((e as Error).message || t.external.failed);
+    } finally {
+      setTaking(null);
+    }
+  }
+
+  const extHere = ext && res && ext.q === res.q ? ext : null;
 
   return (
     <div>
@@ -219,12 +255,62 @@ export function SearchTab({ hidden, onPick, onIsbn, onManual }: {
         </ul>
       )}
 
+      {/* Treffer aus externen Katalogen: übernehmen legt die Ausgabe mit Original-Cover bei uns an */}
+      {!hidden && extHere && (
+        <section aria-labelledby="kataloge-t" className="mt-6" aria-busy={extHere.state === "loading"}>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h3 id="kataloge-t" className="text-title-sm font-title tracking-title">{t.external.title}</h3>
+            {extHere.state === "done" && extHere.hits.length > 0 && <span className="text-meta text-muted tnum">{extHere.hits.length}</span>}
+          </div>
+          <p className="text-body-sm text-muted mt-0.5">{t.external.desc}</p>
+          {extHere.state === "loading" && (
+            <ul className="mt-3 rounded-md border border-line divide-y divide-line px-4" aria-label={t.external.searching}>
+              {[0, 1, 2].map((i) => (
+                <li key={i} className="flex gap-4 py-3">
+                  <div className="skeleton w-[40px] h-[60px] flex-none" />
+                  <div className="flex-1 pt-1"><div className="skeleton h-4 w-2/3" /><div className="skeleton h-3 w-1/3 mt-2" /></div>
+                </li>
+              ))}
+            </ul>
+          )}
+          {extHere.state === "error" && (
+            <p className="mt-3 text-body-sm text-ink-2 flex flex-wrap items-center gap-x-3">{t.external.error}
+              <button type="button" onClick={() => searchExternal(extHere.q)} className="font-medium underline underline-offset-4 min-h-11">{t.external.retry}</button></p>
+          )}
+          {extHere.state === "done" && extHere.hits.length === 0 && <p className="mt-3 text-body-sm text-muted" role="status">{t.external.none(extHere.q)}</p>}
+          {extHere.state === "done" && extHere.hits.length > 0 && (
+            <ul className="mt-3 rounded-md border border-line divide-y divide-line overflow-hidden" role="list">
+              {extHere.hits.map((h) => (
+                <li key={h.isbn13}>
+                  <button type="button" disabled={taking !== null} onClick={() => take(h)}
+                    className="group w-full flex items-center gap-4 py-3 px-4 text-left hover:bg-paper-2 focus-visible:bg-paper-2 transition-colors disabled:opacity-60 disabled:cursor-wait">
+                    <ExternalThumb hit={h} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-serif text-lead leading-tight">{h.title}</span>
+                      <span className="block text-meta text-muted truncate mt-0.5">
+                        {[h.authors.join(", "), h.publisher, h.year, `ISBN ${h.isbn13}`].filter(Boolean).join(" · ")}
+                      </span>
+                    </span>
+                    <span className="h-9 px-3.5 rounded-sm bg-accent-soft text-accent-hover text-body-sm font-medium flex-none hidden sm:inline-flex items-center gap-1.5 group-hover:bg-accent group-hover:text-accent-ink transition-colors">
+                      {taking === h.isbn13 ? t.external.taking : t.external.take} <IconArrowRight width={14} height={14} />
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
       {!hidden && res && (
         <div className={cx("flex flex-wrap items-center justify-between gap-4", res.editions.length ? "mt-4" : "mt-4 rounded-md border border-dashed border-line-strong px-5 py-5")}>
           <p className={res.editions.length ? "text-body-sm text-muted" : "text-ink-2 text-body"}>
             {res.editions.length ? t.notThere : t.unknown(res.q)}
           </p>
-          <Button size="sm" variant="secondary" onClick={() => onManual(res.q)}>{t.withoutIsbn}</Button>
+          <div className="flex flex-wrap gap-2">
+            {res.editions.length > 0 && !extHere && <Button size="sm" variant="ghost" onClick={() => searchExternal(res.q)}>{t.external.more}</Button>}
+            <Button size="sm" variant="secondary" onClick={() => onManual(res.q)}>{t.withoutIsbn}</Button>
+          </div>
         </div>
       )}
     </div>
@@ -378,5 +464,16 @@ export function ManualTab({ prefill, ask, onAsked, add }: {
         <p className="text-meta text-muted">{t.ready}</p>
       </div>
     </form>
+  );
+}
+
+/** Vorschaubild der Quelle; lädt es nicht, steht das typografische Ersatzcover da (kein kaputtes Bild) */
+function ExternalThumb({ hit }: { hit: ExternalHit }) {
+  const l = useLocale();
+  const [failed, setFailed] = useState(false);
+  if (!hit.thumb || failed) return <Cover data={{ title: hit.title, authors: hit.authors, seed: hit.isbn13 }} width={40} height={60} uniform l={l} />;
+  return (
+    <img src={hit.thumb} alt="" width={40} height={60} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)}
+      className="w-[40px] h-[60px] flex-none object-cover rounded-xs bg-paper-3 outline outline-1 -outline-offset-1 outline-black/10" />
   );
 }

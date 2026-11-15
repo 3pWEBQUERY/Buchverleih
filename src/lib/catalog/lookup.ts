@@ -5,6 +5,7 @@
  */
 import { sql } from "@/lib/db";
 import { env } from "@/lib/env";
+import { normalizeIsbn } from "./isbn";
 
 export type CatalogRecord = {
   isbn13: string;
@@ -168,4 +169,118 @@ export async function lookupExternal(isbn: string, opts: { covers: boolean }): P
     values (${isbn}, ${Boolean(rec)}, ${rec?.source ?? null}, ${rec ? sql.json(rec as never) : null}, now())
     on conflict (isbn13) do update set found = excluded.found, source = excluded.source, payload = excluded.payload, fetched_at = now()`;
   return rec;
+}
+
+/** Treffer der Titelsuche in externen Katalogen: nur mit ISBN, damit die Ausgabe sauber übernommen werden kann */
+export type ExternalHit = {
+  isbn13: string;
+  title: string;
+  authors: string[];
+  year: number | null;
+  publisher: string | null;
+  language: string | null;
+  /** Vorschaubild der Quelle (nur zur Anzeige; das Original-Cover lädt der Worker nach der Übernahme) */
+  thumb: string | null;
+  source: "google" | "openlibrary";
+};
+
+const searchCache = new Map<string, { at: number; hits: ExternalHit[] }>();
+
+/**
+ * Titelsuche in Google Books und Open Library, wenn unser Katalog nichts hat.
+ * Ergebnisse nach ISBN-13 zusammengeführt; Ausgaben ohne ISBN fallen weg. 10 Minuten im Speicher gehalten.
+ */
+export async function searchExternal(q: string, limit = 12, locale = "de"): Promise<ExternalHit[]> {
+  const needle = q.trim().replace(/\s+/g, " ");
+  if (needle.length < 2) return [];
+  const ck = `${locale}:${needle.toLowerCase()}`;
+  /** Ausgaben in der Sprache der Person zuerst (Open-Library-Codes) */
+  const prefer: Record<string, string[]> = { de: ["ger", "gsw"], fr: ["fre"], it: ["ita"], en: ["eng"] };
+  const wanted = prefer[locale] ?? prefer.de;
+  const c = searchCache.get(ck);
+  if (c && Date.now() - c.at < 10 * 60_000) return c.hits;
+
+  const google = async (): Promise<ExternalHit[]> => {
+    const key = env.googleBooksKey ? `&key=${encodeURIComponent(env.googleBooksKey)}` : "";
+    const json = JSON.parse(await fetchText(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(needle)}&printType=books&maxResults=20${key}`));
+    return (json.items ?? []).flatMap((it: { volumeInfo?: Record<string, unknown> }) => {
+      const v = (it.volumeInfo ?? {}) as { title?: string; subtitle?: string; authors?: string[]; publishedDate?: string; publisher?: string; language?: string;
+        industryIdentifiers?: { type: string; identifier: string }[]; imageLinks?: { thumbnail?: string; smallThumbnail?: string } };
+      const raw = v.industryIdentifiers?.find((x) => x.type === "ISBN_13")?.identifier ?? v.industryIdentifiers?.find((x) => x.type === "ISBN_10")?.identifier;
+      const isbn = raw ? normalizeIsbn(raw) : null;
+      if (!isbn || !v.title) return [];
+      const thumb = (v.imageLinks?.thumbnail ?? v.imageLinks?.smallThumbnail ?? null)?.replace(/^http:/, "https:") ?? null;
+      return [{ isbn13: isbn, title: v.subtitle ? `${v.title}. ${v.subtitle}` : v.title, authors: v.authors ?? [], year: Number(String(v.publishedDate ?? "").slice(0, 4)) || null,
+        publisher: v.publisher ?? null, language: v.language ?? null, thumb, source: "google" as const }];
+    });
+  };
+  /**
+   * Open Library: ein Werk hat ISBN aller Ausgaben in allen Sprachen. Darum die am besten passende
+   * Ausgabe (editions) nehmen – mit ihrer eigenen ISBN, ihrem Titel und Cover.
+   */
+  /** Open Library antwortet manchmal mit abgebrochener Verbindung: einmal nachfassen */
+  const olText = async (url: string) => { try { return await fetchText(url, 9000); } catch { return await fetchText(url, 9000); } };
+  const openLibrary = async (): Promise<ExternalHit[]> => {
+    const fields = "key,title,author_name,first_publish_year,editions,editions.title,editions.isbn,editions.language,editions.publisher,editions.cover_i,editions.publish_date";
+    const json = JSON.parse(await olText(`https://openlibrary.org/search.json?q=${encodeURIComponent(needle)}&limit=12&fields=${fields}`));
+    type Ed = { title?: string; isbn?: string[]; isbn_13?: string[]; isbn_10?: string[]; language?: (string | { key: string })[]; languages?: { key: string }[]; publisher?: string[]; publishers?: string[]; cover_i?: number; covers?: number[]; publish_date?: string | string[] };
+    type Doc = { key?: string; title?: string; author_name?: string[]; first_publish_year?: number; editions?: { docs?: Ed[] } };
+    const flat = (t: string) => t.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const isbnOf = (e: Ed) => [...(e.isbn ?? []), ...(e.isbn_13 ?? []), ...(e.isbn_10 ?? [])].map((x) => normalizeIsbn(x)).find(Boolean) ?? null;
+    const codes = (e: Ed) => [...(e.language ?? []), ...(e.languages ?? [])].map((x) => (typeof x === "string" ? x : x.key.split("/").pop() ?? ""));
+    const preferred = (e: Ed) => codes(e).some((c) => wanted.includes(c));
+    const langOf = (e: Ed) => { const x = e.language?.[0] ?? e.languages?.[0]; const code = typeof x === "string" ? x : x?.key?.split("/").pop(); return code ? LANG[code] ?? null : null; };
+    /** Aus allen Ausgaben des Werks die mit dem Werktitel (Original statt Übersetzung) */
+    const fromWork = async (d: Doc): Promise<Ed | null> => {
+      if (!d.key) return null;
+      const all = (JSON.parse(await olText(`https://openlibrary.org${d.key}/editions.json?limit=50`)).entries ?? []) as Ed[];
+      const withIsbn = all.filter((e) => isbnOf(e));
+      const t = d.title ? flat(d.title) : "";
+      const matches = withIsbn.filter((e) => t && e.title && flat(e.title).startsWith(t));
+      return matches.find(preferred) ?? matches[0] ?? null;
+    };
+    const docs = (json.docs ?? []) as Doc[];
+    const out = await Promise.all(docs.map(async (d, i): Promise<ExternalHit | null> => {
+      let e: Ed | null = d.editions?.docs?.find((x) => isbnOf(x)) ?? null;
+      // Die gefundene Ausgabe ist eine Übersetzung oder Neuausgabe mit anderem Titel: lieber die Ausgabe mit dem Werktitel
+      const sameTitle = e?.title && d.title && flat(e.title).startsWith(flat(d.title));
+      // Übersetzung, andere Ausgabe oder andere Sprache gefunden: unter allen Ausgaben des Werks die passendere suchen
+      if ((!e || !sameTitle || !preferred(e)) && i < 4) {
+        const w = await fromWork(d).catch(() => null);
+        if (w && (!e || preferred(w) || !sameTitle)) e = w;
+      }
+      // Nichts mit dem Werktitel und keine passende Ausgabe: irgendeine Ausgabe des Werks mit ISBN
+      if (!e && i < 4 && d.key) e = ((JSON.parse(await olText(`https://openlibrary.org${d.key}/editions.json?limit=20`).catch(() => "{}")).entries ?? []) as Ed[]).find((x) => isbnOf(x)) ?? null;
+      const isbn = e ? isbnOf(e) : null;
+      if (!e || !isbn) return null;
+      const cover = e.cover_i ?? e.covers?.find((c) => c > 0);
+      const date = Array.isArray(e.publish_date) ? e.publish_date[0] : e.publish_date;
+      return { isbn13: isbn, title: e.title ?? d.title ?? "", authors: d.author_name ?? [],
+        year: Number(String(date ?? "").match(/\d{4}/)?.[0]) || d.first_publish_year || null,
+        publisher: (e.publisher ?? e.publishers)?.[0] ?? null, language: langOf(e),
+        thumb: cover ? `https://covers.openlibrary.org/b/id/${cover}-M.jpg` : null, source: "openlibrary" as const };
+    }));
+    return out.filter((h): h is ExternalHit => Boolean(h && h.title));
+  };
+
+  const settled = await Promise.allSettled([google(), openLibrary()]);
+  for (const s of settled) if (s.status === "rejected") console.warn("[catalog-search]", (s.reason as Error).message);
+  const seen = new Set<string>();
+  const hits: ExternalHit[] = [];
+  // Google zuerst (meist bessere Cover und Sprachangaben), dann ergänzend Open Library
+  for (const s of settled) if (s.status === "fulfilled") for (const h of s.value) {
+    if (seen.has(h.isbn13)) continue;
+    seen.add(h.isbn13);
+    hits.push(h);
+  }
+  // Was wir schon haben, kommt aus der eigenen Suche; hier nur Neues zeigen
+  const have = hits.length ? new Set((await sql<{ isbn13: string }[]>`select isbn13 from editions where isbn13 = any(${hits.map((h) => h.isbn13)})`).map((r) => r.isbn13)) : new Set<string>();
+  // Ausgaben in der Sprache der Person zuerst, dann ohne Angabe, dann andere Sprachen (Reihenfolge sonst wie geliefert)
+  const rank = (h: ExternalHit) => (h.language === locale ? 0 : h.language == null ? 1 : 2);
+  const out = hits.filter((h) => !have.has(h.isbn13)).map((h, i) => ({ h, i })).sort((a, b) => rank(a.h) - rank(b.h) || a.i - b.i).map((x) => x.h).slice(0, limit);
+  if (settled.some((s) => s.status === "fulfilled")) {
+    searchCache.set(ck, { at: Date.now(), hits: out });
+    if (searchCache.size > 500) searchCache.delete(searchCache.keys().next().value!);
+  }
+  return out;
 }
