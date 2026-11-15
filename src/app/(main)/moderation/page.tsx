@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { pageUser } from "@/lib/page";
+import { areasOverview } from "@/lib/areas";
+import { AreaManager } from "@/components/moderation/areas";
 import * as moderation from "@/lib/moderation";
 import { correctionCurrent, targetLinks, reportContexts } from "@/lib/moderation-queries";
 import { ago, fmtDayTime } from "@/lib/dates";
@@ -52,7 +54,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
       <div className="mt-4">
         {tab === "warteschlange" && <Queue q={q} l={l} />}
         {tab === "kennzahlen" && <Kpis l={l} />}
-        {tab === "schalter" && <Flags l={l} />}
+        {tab === "schalter" && <Flags l={l} admin={user.role === "admin"} />}
         {tab === "konten" && <Accounts q={sp.q ?? ""} l={l} />}
         {tab === "protokoll" && <Log l={l} />}
       </div>
@@ -304,35 +306,37 @@ function KpiTile({ k, i, l }: { k: Kpi; i: number; l: Locale }) {
 }
 
 /* ------------------------------------------------------------------ Schalter */
-async function Flags({ l }: { l: Locale }) {
+async function Flags({ l, admin }: { l: Locale; admin: boolean }) {
   const t = MOD[l].flags;
+  const ta = MOD[l].areas;
   const ml = modLabels(l);
-  const flags = await moderation.flags();
-  const regions = [...new Map(flags.map((f) => [f.region_id, { id: f.region_id, name: f.region_name, enabled: f.region_enabled }])).values()];
-  if (!regions.length) return <Empty text={t.noRegions} />;
+  const [areas, flags] = await Promise.all([areasOverview(), moderation.flags()]);
+  const regions = [...new Map(flags.map((f) => [f.region_id, { id: f.region_id, name: f.region_name }])).values()];
   return (
-    <div className="grid gap-3 xl:grid-cols-2 items-start">
-      {regions.map((r, i) => (
-        <section key={r.id} className="rounded-md border border-line overflow-hidden anim-rise">
-          <div className="flex items-center justify-between gap-4 px-5 md:px-6 pt-5 pb-4">
-            <div>
-              <p className="eyebrow">{t.region}</p>
-              <h2 className="text-title-sm font-title tracking-title mt-1">{r.name}</h2>
-            </div>
-            <Chip tone={r.enabled ? "ok" : "done"} strong={r.enabled}>{r.enabled ? t.open : t.closed}</Chip>
-          </div>
-          <div className="mx-5 md:mx-6 mb-2 px-4 rounded-md bg-paper-2">
-            <FlagSwitch regionId={r.id} flagKey="__region" checked={r.enabled} label={<span className="font-medium">{t.regionOpen}</span>}
-              hint={t.regionHint} />
-          </div>
-          <div className="divide-y divide-line px-5 md:px-6 pb-2">
-            {flags.filter((f) => f.region_id === r.id).map((f) => (
-              <FlagSwitch key={f.key} regionId={r.id} flagKey={f.key} checked={f.enabled}
-                label={ml.flag[f.key]?.[0] ?? f.key} hint={ml.flag[f.key]?.[1]} />
+    <div>
+      <AreaManager data={areas} admin={admin} />
+      {regions.length > 0 && (
+        <section aria-labelledby="funktionen-t" className="mt-14 pt-10 border-t border-line">
+          <h2 id="funktionen-t" className="text-title-sm font-title tracking-title">{ta.flagsTitle}</h2>
+          <p className="text-body-sm text-muted mt-1 max-w-2xl">{ta.flagsDesc}</p>
+          <div className="mt-5 grid gap-3 xl:grid-cols-2 items-start">
+            {regions.map((r) => (
+              <section key={r.id} className="rounded-md border border-line overflow-hidden">
+                <div className="px-5 md:px-6 pt-5 pb-2">
+                  <p className="eyebrow">{t.region}</p>
+                  <h3 className="text-title-sm font-title tracking-title mt-1">{r.name}</h3>
+                </div>
+                <div className="divide-y divide-line px-5 md:px-6 pb-2">
+                  {flags.filter((f) => f.region_id === r.id).map((f) => (
+                    <FlagSwitch key={f.key} regionId={r.id} flagKey={f.key} checked={f.enabled}
+                      label={ml.flag[f.key]?.[0] ?? f.key} hint={ml.flag[f.key]?.[1]} />
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         </section>
-      ))}
+      )}
     </div>
   );
 }

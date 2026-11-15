@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { body, query, route } from "@/lib/api";
+import { areasOverview, setAreaRule } from "@/lib/areas";
 import { requireModerator } from "@/lib/auth/session";
 import * as mod from "@/lib/moderation";
 import { correctionCurrent, targetLinks } from "@/lib/moderation-queries";
@@ -11,7 +12,7 @@ import { correctionCurrent, targetLinks } from "@/lib/moderation-queries";
  */
 export const GET = route(async (req) => {
   await requireModerator();
-  const q = query(req, z.object({ view: z.enum(["queue", "kpis", "flags", "log", "users", "team"]), q: z.string().max(100).optional() }));
+  const q = query(req, z.object({ view: z.enum(["queue", "kpis", "flags", "areas", "log", "users", "team"]), q: z.string().max(100).optional() }));
   switch (q.view) {
     case "queue": {
       const r = await mod.queue();
@@ -27,6 +28,7 @@ export const GET = route(async (req) => {
     }
     case "kpis": return mod.kpis();
     case "flags": return { flags: await mod.flags() };
+    case "areas": return await areasOverview();
     case "log": {
       const log = (await mod.moderationLog()) as unknown as { target_type: string; target_id: string }[];
       const links = await targetLinks(log);
@@ -50,6 +52,7 @@ export const POST = route(async (req) => {
       z.object({ action: z.literal("remove_avatar"), userId: z.string().uuid(), note: z.string().max(300).optional() }),
       z.object({ action: z.literal("correction"), id: z.string().uuid(), apply: z.boolean() }),
       z.object({ action: z.literal("flag"), key: z.string().max(40), regionId: z.string().max(40), enabled: z.boolean() }),
+      z.object({ action: z.literal("area"), level: z.enum(["canton", "district", "commune"]), code: z.string().max(10), enabled: z.boolean().nullable(), clearBelow: z.boolean().optional() }),
       z.object({ action: z.literal("role"), userId: z.string().uuid(), role: z.enum(["member", "moderator"]) }),
       z.object({ action: z.literal("hide_content"), targetType: z.enum(mod.HIDEABLE), targetId: z.string().uuid(), hidden: z.boolean(), note: z.string().max(300).optional() }),
       z.object({ action: z.literal("temp_password"), userId: z.string().uuid() }),
@@ -63,6 +66,7 @@ export const POST = route(async (req) => {
     case "remove_avatar": await mod.removeAvatar(m, b.userId, b.note); break;
     case "correction": await mod.applyCorrection(m, b.id, b.apply); break;
     case "flag": await mod.setFlag(m, b.key, b.regionId, b.enabled); break;
+    case "area": await setAreaRule(m, b.level, b.code, b.enabled, b.clearBelow); break;
     case "role": await mod.setRole(m, b.userId, b.role); break;
     case "hide_content": await mod.hideContent(m, b.targetType, b.targetId, b.hidden, b.note); break;
     case "temp_password": return { ok: true, password: await mod.temporaryPassword(m, b.userId) };
