@@ -5,7 +5,7 @@ import { homeFromPlz } from "@/lib/geo";
 
 export async function plzInfo(plz: string) {
   const [p] = await sql<{ plz: string; municipality: string; lat: number; lng: number; region_id: string | null; region_name: string | null; enabled: boolean | null }[]>`
-    select p.plz, p.municipality, p.lat, p.lng, p.region_id, r.name as region_name, r.enabled
+    select p.plz, p.municipality, p.lat, p.lng, p.region_id, r.name as region_name, plz_open(p.plz) as enabled
       from postal_codes p left join regions r on r.id = p.region_id where p.plz = ${plz}`;
   return p ?? null;
 }
