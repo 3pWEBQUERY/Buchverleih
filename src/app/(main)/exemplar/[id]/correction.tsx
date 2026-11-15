@@ -24,9 +24,8 @@ export function CorrectionForm({ editionId, loggedIn }: { editionId: string; log
             try { await api("/catalog/corrections", { body: { editionId, field, suggestion: value } }); setSent(true); }
             catch (err) { toast.error((err as Error).message); }
           }}>
-          <Select value={field} onChange={(e) => setField(e.target.value)} aria-label={t.field}>
-            {(["title", "authors", "publisher", "year", "language", "genre"] as const).map((f) => <option key={f} value={f}>{t.fields[f]}</option>)}
-          </Select>
+          <Select value={field} onChange={setField} aria-label={t.field}
+            options={(["title", "authors", "publisher", "year", "language", "genre"] as const).map((f) => ({ value: f, label: t.fields[f], text: t.fields[f] }))} />
           <Input required maxLength={300} value={value} onChange={(e) => setValue(e.target.value)} placeholder={t.value} aria-label={t.value} />
           <Button type="submit" variant="secondary" disabled={!value.trim()}>{t.send}</Button>
         </form>

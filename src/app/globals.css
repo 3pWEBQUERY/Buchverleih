@@ -542,3 +542,11 @@ dialog.palette[open]::backdrop { opacity: 1; transition-timing-function: var(--e
   body:has(.invite-qr) .invite-qr, body:has(.invite-qr) .invite-qr * { visibility: visible; }
   body:has(.invite-qr) .invite-qr { position: absolute; inset: 0 auto auto 0; width: 100%; background: #fff; }
 }
+
+/* ------------------------------------------------------------- Auswahlfeld (components/select.tsx) */
+/* Eigene Liste statt des Browser-Menüs: kurzer Eintritt in Öffnungsrichtung, Austritt per allow-discrete */
+.select-list { opacity: 0; transform: translateY(-4px); transition: opacity var(--dur-fast) var(--ease-in-curve), transform var(--dur-fast) var(--ease-in-curve), display var(--dur-fast) allow-discrete, overlay var(--dur-fast) allow-discrete; }
+.select-list[data-side="top"] { transform: translateY(4px); }
+.select-list:popover-open { opacity: 1; transform: none; transition-timing-function: var(--ease-out-curve); }
+@starting-style { .select-list:popover-open { opacity: 0; transform: translateY(-4px); } .select-list[data-side="top"]:popover-open { transform: translateY(4px); } }
+@media (prefers-reduced-motion: reduce) { .select-list, .select-list[data-side="top"], .select-list:popover-open { transform: none; transition-duration: 80ms; } }

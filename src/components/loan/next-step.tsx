@@ -276,10 +276,8 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
       <Presence show={panel === "swap"}>
         <div className="mt-6 border-t border-line pt-5 max-w-md">
           <Field label={m.whichBook}>
-            <Select defaultValue="" onChange={(e) => e.target.value && act({ action: "offer_swap", copyId: e.target.value }, m.swapOffered)}>
-              <option value="" disabled>{m.chooseBook}</option>
-              {loan.myOfferable.map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
-            </Select>
+            <Select value="" placeholder={m.chooseBook} onChange={(v) => v && act({ action: "offer_swap", copyId: v }, m.swapOffered)}
+              options={loan.myOfferable.map((o) => ({ value: o.id, label: <span className="font-serif">{o.title}</span>, text: o.title }))} />
           </Field>
         </div>
       </Presence>

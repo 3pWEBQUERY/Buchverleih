@@ -324,10 +324,8 @@ export function ManualTab({ prefill, ask, onAsked, add }: {
               <Input value={year} onChange={(e) => setYear(e.target.value.replace(/\D/g, "").slice(0, 4))} inputMode="numeric" placeholder="1962" />
             </Field>
             <Field label={t.language}>
-              <Select value={language} onChange={(e) => setLanguage(e.target.value)}>
-                {Object.entries(L.languageLabel).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                <option value="">{t.other}</option>
-              </Select>
+              <Select value={language} onChange={setLanguage}
+                options={[...Object.entries(L.languageLabel).map(([k, v]) => ({ value: k, label: v, text: v })), { value: "", label: t.other, text: t.other }]} />
             </Field>
           </div>
           <Field label={<>ISBN <span className="text-muted font-normal">{t.isbnIf}</span></>}>

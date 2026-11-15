@@ -56,15 +56,8 @@ export function Textarea({ className, ...p }: ComponentProps<"textarea">) {
   return <textarea className={cx(inputCls, "h-auto min-h-24 py-2.5 leading-relaxed", className)} {...p} />;
 }
 
-export function Select({ className, children, ...p }: ComponentProps<"select">) {
-  return (
-    <select className={cx(inputCls, "appearance-none pr-10 bg-[length:12px] bg-no-repeat bg-[right_14px_center]", className)}
-      style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%236b6558' stroke-width='1.5'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E\")" }}
-      {...p}>
-      {children}
-    </select>
-  );
-}
+/** Auswahlfeld mit eigener Oberfläche (components/select.tsx) */
+export { Select, type SelectOption } from "./select";
 
 /** Auswahl als Reihe antippbarer Felder (Zustand, Leihfrist …) */
 export function Segmented<T extends string | number>({
