@@ -431,7 +431,7 @@ const en: M = {
     swapSummary: (n) => `Swap, ${n} ${n === 1 ? "book" : "books"} to choose from`,
     gift2: "Gift",
     within72: "Reply within 72 hours, otherwise the request expires.",
-    login: "Sign in and request",
+    login: "Log in and request",
     sending: "Sending …",
     askSwap: "Request swap",
     askShort: "Request",
@@ -447,7 +447,7 @@ const en: M = {
     fields: { title: "Title", authors: "Authors", publisher: "Publisher", year: "Year", language: "Language", genre: "Genre" },
     value: "Correct value",
     send: "Send",
-    login: "Sign in",
+    login: "Log in",
     loginText: " to report a correction.",
   },
 };

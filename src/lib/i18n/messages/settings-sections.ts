@@ -432,7 +432,7 @@ const en: M = {
   },
   password: {
     set: "A password is set.",
-    none: "No password yet. Set one to sign in without an email link.",
+    none: "No password yet. Set one to log in without an email link.",
     label: "New password",
     hint: "At least 8 characters.",
     save: "Save password",
@@ -463,7 +463,7 @@ const en: M = {
     exists: "This device already has a passkey for your account.",
     removing: (n) => `Removing passkey “${n}”.`,
     meta: (created, last) => `Added on ${created}${last ? ` · last used on ${last}` : " · never used"}`,
-    none: "So far you sign in with an email link.",
+    none: "So far you log in with an email link.",
     waiting: "Waiting for your device …",
     add: "Add passkey",
     unsupported: "This browser doesn’t support passkeys. Signing in with an email link still works.",
@@ -525,7 +525,7 @@ const en: M = {
     test: "Send test notification",
   },
   data: { download: "Download data" },
-  logout: { busy: "Signing out …", label: "Sign out" },
+  logout: { busy: "Logging out …", label: "Log out" },
   del: {
     intro: "Your books disappear from all shelves. Your wishlist, circles and handover spots are deleted.",
     open: "Delete account …",
