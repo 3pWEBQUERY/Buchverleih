@@ -37,6 +37,16 @@ export function fmtDayTime(d: DateLike, l: Locale = "de") {
   return `${fmtDay(d, l)}, ${fmtTime(d, l)}`;
 }
 
+/**
+ * Frist anzeigen. Endet sie um Mitternacht, gilt der Vortag als letzter Tag: «Sa., 21. Nov.»
+ * statt «So., 22. Nov., 00:00» – so wie der Ablauf die Frist nennt.
+ */
+export function fmtDeadline(d: DateLike, l: Locale = "de") {
+  const date = toDate(d);
+  if (fmtTime(date, "de") === "00:00") return fmtDay(new Date(date.getTime() - 60_000), l);
+  return fmtDayTime(date, l);
+}
+
 /** «September 2026» */
 export function fmtMonthYear(d: DateLike, l: Locale = "de") {
   return fmt(l, "monthYear", { month: "long", year: "numeric" }).format(toDate(d));

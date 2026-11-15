@@ -35,6 +35,7 @@ const EXPECTED: Row[] = [
   ["report_return", ["active", "disputed"], ["borrower"], L, "return_reported"],
   ["confirm_return", ["return_reported"], ["owner"], L, "returned"],
   ["object_return", ["return_reported"], ["owner"], L, "active"],
+  ["object_return_case", ["return_reported"], ["owner"], L, "disputed"],
   ["return_report_lapse", ["return_reported"], ["system"], L, "returned"],
   ["pass_on", ["active"], ["borrower"], L, "returned"],
   ["complete", ["returned"], ["owner", "system"], L, "completed"],

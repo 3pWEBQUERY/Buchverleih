@@ -30,7 +30,7 @@ export function LanguageSwitch({ tone = "paper", className }: { tone?: "paper" |
               start(() => router.refresh());
               setBusy(null);
             }}
-            className={cx("h-7 min-w-8 px-1.5 rounded-xs text-caption font-semibold uppercase tracking-caps transition-colors",
+            className={cx("relative h-7 min-w-8 px-1.5 rounded-xs text-caption font-semibold uppercase tracking-caps transition-colors after:absolute after:content-[''] after:-inset-y-2 after:-inset-x-px",
               tone === "night"
                 ? on ? "bg-night-2 text-night-ink" : "text-night-muted hover:text-night-ink"
                 : on ? "bg-paper text-ink outline outline-1 outline-line-strong" : "text-muted hover:text-ink")}>

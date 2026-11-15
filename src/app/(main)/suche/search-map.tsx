@@ -130,6 +130,8 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
 
     (async () => {
       const lib = await import("maplibre-gl");
+      // Worker-Datei liegt unter public/vendor (scripts/vendor-maplibre.mjs); die Version verhindert alte Caches
+      lib.setWorkerUrl(`/vendor/maplibre-gl-worker.mjs?v=${lib.getVersion()}`);
       try {
         const res = await fetch(STYLE_URL, { signal: AbortSignal.timeout(8000) });
         if (!res.ok) throw new Error(String(res.status));

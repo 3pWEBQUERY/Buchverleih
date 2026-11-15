@@ -31,6 +31,11 @@ export const env = {
   get smtpUrl() {
     return process.env.SMTP_URL || "";
   },
+  /** Kontaktadresse fürs Impressum (UWG Art. 3 Abs. 1 lit. s). Sonst die Absenderadresse, falls gesetzt. */
+  get contactEmail() {
+    const from = process.env.MAIL_FROM?.match(/<([^>]+)>/)?.[1] ?? process.env.MAIL_FROM;
+    return process.env.CONTACT_EMAIL || (from?.includes("@") ? from : "");
+  },
   get mailFrom() {
     return process.env.MAIL_FROM || "Leihregal <hallo@leihregal.ch>";
   },

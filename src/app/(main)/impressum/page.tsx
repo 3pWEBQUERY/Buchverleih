@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DocPage, DocSection, type TocItem } from "@/components/doc";
+import { env } from "@/lib/env";
 
 export const metadata = {
   title: "Impressum",
@@ -15,7 +16,10 @@ const TOC: TocItem[] = [
   ["hosting", "Hosting"],
 ];
 
+export const dynamic = "force-dynamic";
+
 export default function Page() {
+  const email = env.contactEmail;
   return (
     <DocPage germanOnly eyebrow="Rechtliches" title={<>Impressum. <em>Wer hinter Leihregal steht.</em></>} toc={TOC} updated="12. November 2026"
       lead="Leihregal ist eine kostenlose Plattform, auf der Privatpersonen einander Bücher leihen, tauschen und verschenken.">
@@ -26,14 +30,15 @@ export default function Page() {
           Schaffhauserstrasse 6<br />
           8180 Bülach<br />
           Schweiz
+          {email && <><br />E-Mail: <a href={`mailto:${email}`}>{email}</a></>}
         </address>
         <p>Verantwortlich für den Inhalt dieser Website ist Alexander Sulschani, Anschrift wie oben.</p>
       </DocSection>
 
       <DocSection id="kontakt" title="Kontakt">
         <p>
-          Am schnellsten erreichst du uns über die Funktion <em>Melden</em> in der App, wenn es um ein Buch, eine Person oder einen Vorgang geht.
-          Für alles andere schreib uns per Post an die Adresse oben.
+          Am schnellsten erreichst du uns über die Funktion <em>Melden</em> in der App, wenn es um ein Buch, eine Person oder einen Vorgang geht.{" "}
+          {email ? <>Für alles andere schreib uns an <a href={`mailto:${email}`}>{email}</a> oder per Post an die Adresse oben.</> : <>Für alles andere schreib uns per Post an die Adresse oben.</>}
         </p>
         <p>Fragen zum Datenschutz beantworten wir gemäss der <Link href="/datenschutz">Datenschutzerklärung</Link>.</p>
       </DocSection>

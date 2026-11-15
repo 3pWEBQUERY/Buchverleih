@@ -10,20 +10,21 @@ type Variant = "primary" | "secondary" | "ghost" | "quiet" | "danger";
 type Size = "sm" | "md" | "lg";
 
 const base =
-  "press inline-flex items-center justify-center gap-2 font-medium tracking-ui select-none disabled:opacity-40 disabled:pointer-events-none whitespace-nowrap";
+  "press inline-flex items-center justify-center gap-2 font-medium tracking-ui select-none disabled:opacity-40 disabled:pointer-events-none";
 const variants: Record<Variant, string> = {
   // Die Akzentfarbe gehört allein dem nächsten Schritt
   primary: "bg-accent text-accent-ink hover:bg-accent-hover rounded-sm",
   // Zweitknopf: getönt in der Markenfarbe – nie Schwarz
   secondary: "bg-accent-soft text-accent-hover hover:bg-accent hover:text-accent-ink rounded-sm",
   ghost: "text-ink border border-field hover:border-ink rounded-sm",
-  quiet: "text-muted font-medium hover:text-ink underline-offset-4 hover:underline",
-  danger: "text-late font-medium hover:underline underline-offset-4",
+  // Textknöpfe dürfen umbrechen (lange Übersetzungen auf schmalen Bildschirmen)
+  quiet: "text-muted font-medium hover:text-ink underline-offset-4 hover:underline px-2 py-1.5 text-center text-balance",
+  danger: "text-late font-medium hover:underline underline-offset-4 px-2 py-1.5 text-center text-balance",
 };
 const sizes: Record<Size, string> = {
-  sm: "h-9 px-3.5 text-body-sm",
-  md: "h-11 px-5 text-body",
-  lg: "h-12 px-6 text-body",
+  sm: "h-9 px-3.5 text-body-sm whitespace-nowrap",
+  md: "h-11 px-5 text-body whitespace-nowrap",
+  lg: "h-12 px-6 text-body whitespace-nowrap",
 };
 
 export function Button({ variant = "secondary", size = "md", className, ...p }: ComponentProps<"button"> & { variant?: Variant; size?: Size }) {

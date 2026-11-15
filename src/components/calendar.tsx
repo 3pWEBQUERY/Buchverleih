@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type { Calendar, CalendarBar, FreeSlot } from "@/lib/loans/calendar";
 import { addDays, dayToDate, diffDays, fmtDay, fmtRange } from "@/lib/dates";
 import { labels } from "@/lib/i18n/labels";
@@ -25,6 +25,38 @@ function barTone(b: CalendarBar) {
   if (b.status === "active" || b.status === "return_reported") return "bg-lent text-paper";
   if (b.status === "disputed") return "bg-late text-paper";
   return "bg-wait text-paper";
+}
+
+/** Breite eines Elements in Pixeln, aktualisiert bei Grössenänderung */
+function useWidth(ref: RefObject<HTMLElement | null>) {
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setW(e.contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+  return w;
+}
+
+/**
+ * Beschriftungen ausdünnen, damit sie sich auf schmalen Bildschirmen nicht überlappen:
+ * von rechts nach links, eine Marke nur, wenn sie genug Abstand zur nächsten behaltenen hat.
+ * `avoid` hält zusätzlich Abstand zu festen Stellen (z. B. dem Heute-Schild).
+ */
+function spaced<T extends { left: number }>(items: T[], width: number, minPx: number, avoid: { at: number; px: number }[] = []) {
+  if (!width) return items;
+  const out: T[] = [];
+  let next = Infinity;
+  for (const it of [...items].sort((a, b) => b.left - a.left)) {
+    const x = (it.left / 100) * width;
+    if (next - x < minPx) continue;
+    if (avoid.some((a) => Math.abs((a.at / 100) * width - x) < a.px)) continue;
+    out.push(it);
+    next = x;
+  }
+  return out.reverse();
 }
 
 /** Wochentag 0 = Montag */
@@ -72,6 +104,10 @@ export function CalendarView({
 
   // Auf schmalen Bildschirmen den gewählten Zeitraum ins Bild scrollen
   const scroller = useRef<HTMLDivElement>(null);
+  const track = useRef<HTMLDivElement>(null);
+  const width = useWidth(track);
+  const monthMarks = spaced(months, width, 72);
+  const mondayMarks = spaced(mondays, width, 26);
   const selStart = selection?.start;
   useEffect(() => {
     const el = scroller.current;
@@ -105,9 +141,9 @@ export function CalendarView({
       )}
 
       <div ref={scroller} className={cx(!fit && "overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0")} style={{ scrollbarWidth: "thin" }}>
-        <div className="relative select-none w-full" style={{ minWidth: fit ? undefined : days * minPx, height }}>
+        <div ref={track} className="relative select-none w-full" style={{ minWidth: fit ? undefined : days * minPx, height }}>
           {/* Monate */}
-          {!bare && months.map((m) => (
+          {!bare && monthMarks.map((m) => (
             <span key={m.left} className={cx("absolute top-0 font-medium text-ink-2 whitespace-nowrap text-caption")} style={{ left: `${m.left}%` }}>
               <span className="absolute top-[16px] w-px bg-line-strong" style={{ height: top - 16 }} />
               <span className="pl-1.5">{m.label}</span>
@@ -185,7 +221,7 @@ export function CalendarView({
           )}
 
           {/* Datumsleiste: Montage */}
-          {!compact && mondays.map((w) => (
+          {!compact && mondayMarks.map((w) => (
             <span key={w.day} aria-hidden className="absolute text-caption text-muted tnum -translate-x-1/2" style={{ left: `${w.left}%`, top: top + trackH + 4 + selH }}>
               {Number(w.day.slice(8))}{l === "de" ? "." : ""}
             </span>
@@ -242,15 +278,20 @@ export function CalendarAxis({ start, end, today }: { start: string; end: string
     if (!months.length || months[0].left > 10) months.unshift({ label: monthFmt(l, "short").format(dayToDate(start)), left: 0 });
     return { months, mondays };
   }, [start, days, l]);
+  const ref = useRef<HTMLDivElement>(null);
+  const width = useWidth(ref);
+  const months = spaced(marks.months, width, 72);
+  // Montage nicht unter das Heute-Schild legen
+  const mondays = spaced(marks.mondays, width, 26, [{ at: pct(today), px: 30 }]);
   return (
-    <div className="relative h-[60px] select-none" aria-hidden>
-      {marks.months.map((m) => (
+    <div ref={ref} className="relative h-[60px] select-none" aria-hidden>
+      {months.map((m) => (
         <span key={m.left} className="absolute top-0 text-caption font-medium text-ink-2 whitespace-nowrap" style={{ left: `${m.left}%` }}>
           <span className="absolute top-[16px] w-px h-[44px] bg-line-strong" /><span className="pl-1.5">{m.label}</span>
         </span>
       ))}
-      {marks.mondays.map((w, i) => (
-        <span key={w.day} className={cx("absolute top-[22px] text-caption text-muted tnum -translate-x-1/2", i % 2 === 1 && "hidden sm:inline")} style={{ left: `${w.left}%` }}>{Number(w.day.slice(8))}{l === "de" ? "." : ""}</span>
+      {mondays.map((w) => (
+        <span key={w.day} className="absolute top-[22px] text-caption text-muted tnum -translate-x-1/2" style={{ left: `${w.left}%` }}>{Number(w.day.slice(8))}{l === "de" ? "." : ""}</span>
       ))}
       <span className="absolute bottom-0 w-[2px] h-[14px] -translate-x-1/2 bg-accent" style={{ left: `${pct(today)}%` }} />
       <span className={cx("absolute bottom-[14px] text-caption font-semibold uppercase tracking-caps bg-accent text-accent-ink rounded-xs px-1 py-px leading-none", pct(today) < 6 ? "" : "-translate-x-1/2")} style={{ left: `${pct(today)}%` }}>{CALENDAR[l].today}</span>

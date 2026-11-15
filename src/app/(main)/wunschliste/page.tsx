@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { features } from "@/lib/features";
 import { pageUser } from "@/lib/page";
 import { circleHitsForWishlist, listWishlist, mySwapMatches } from "@/lib/wishlist";
 import { coversForWorks } from "@/lib/title-queries";
@@ -15,6 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 /** Wunschliste, Titelalarm und Tauschtreffer (PRD 4.6, 5.3) */
 export default async function WunschlistePage() {
   const user = await pageUser("/wunschliste");
+  if (!(await features()).wishlist) notFound();
   const t = WISHLIST[await getLocale()];
   const [items, matches, hits] = await Promise.all([listWishlist(user.id), mySwapMatches(user.id), circleHitsForWishlist(user.id)]);
   const covers = await coversForWorks(items.map((i) => i.work_id));

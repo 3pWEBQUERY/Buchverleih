@@ -8,7 +8,7 @@ import { rateLimit } from "@/lib/ratelimit";
 export const POST = route(async (req) => {
   const u = await requireUser();
   await rateLimit(`setpw:${u.id}`, 10, 3600);
-  const b = await body(req, z.object({ password: z.string().min(1).max(500) }));
-  await setPassword(u.id, b.password);
+  const b = await body(req, z.object({ password: z.string().min(1).max(500), current: z.string().max(500).optional() }));
+  await setPassword(u.id, b.password, b.current, u.session_id);
   return { ok: true };
 });

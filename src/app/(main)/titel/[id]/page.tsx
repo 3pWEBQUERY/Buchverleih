@@ -22,6 +22,7 @@ import { Monogram } from "@/components/person/monogram";
 import { LinkButton, cx } from "@/components/ui";
 import { StatTile, StepSection } from "@/components/step-section";
 import { ShippingSignal, WishButton } from "./title-actions";
+import { features } from "@/lib/features";
 
 type Params = { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -63,9 +64,10 @@ export default async function TitelPage({ params, searchParams }: Params) {
     }
   }
 
-  const [copies, wish] = await Promise.all([
+  const [copies, wish, f] = await Promise.all([
     copiesOfWork(work.id, viewer?.id ?? null, o),
     viewer ? wishFor(viewer.id, work.id) : Promise.resolve(null),
+    features(),
   ]);
   const others = copies.filter((c) => c.owner_id !== viewer?.id);
   const own = copies.filter((c) => c.owner_id === viewer?.id);
@@ -128,6 +130,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
           </dl>
         </div>
 
+        {f.wishlist && (
         <div className="rounded-md border border-line p-4">
           <p className="font-medium text-body">{t.alarm}</p>
           <p className="text-meta text-muted mt-0.5 mb-3 leading-snug">
@@ -135,10 +138,11 @@ export default async function TitelPage({ params, searchParams }: Params) {
               ? wish.alarm
                 ? t.alarmOn(wish.radius_km)
                 : t.alarmOff
-              : t.alarmAdd}
+              : freeCount ? t.alarmAddFree : t.alarmAdd}
           </p>
           <WishButton workId={work.id} loggedIn={!!viewer} onList={!!wish} alarm={wish?.alarm ?? false} next={nextPath} primary={!nextId} className="w-full" />
         </div>
+        )}
         <ShareButton title={work.title} text={t.shareText(work.title)} path={`/titel/${work.id}`} className="w-full" />
       </aside>
 
@@ -270,7 +274,7 @@ export default async function TitelPage({ params, searchParams }: Params) {
                 <Link href={`/exemplar/${own[0].id}`} className="font-medium text-accent-hover hover:underline underline-offset-4">{t.view}</Link>
               </p>
             ) : <span />}
-            <ShippingSignal />
+            {f.shipping && <ShippingSignal />}
           </div>
         </StepSection>
       </div>

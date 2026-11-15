@@ -40,6 +40,7 @@ const de = {
   },
   wish: {
     share: "Im Kreis zeigen",
+    shareHint: "Im Kreis zeigen: Mitglieder deiner Kreise sehen, dass du den Titel suchst, und können ihn dir anbieten.",
     shareFor: (title: string): string => `«${title}» in meinen Kreisen als gesucht zeigen`,
     shareOn: (title: string): string => `«${title}» ist in deinen Kreisen als gesucht sichtbar.`,
     shareOff: (title: string): string => `«${title}» ist in deinen Kreisen nicht mehr sichtbar.`,
@@ -101,6 +102,7 @@ const fr: CommunityMsg = {
   },
   wish: {
     share: "Montrer au cercle",
+    shareHint: "Montrer au cercle : les membres de tes cercles voient que tu cherches ce titre et peuvent te le proposer.",
     shareFor: (title) => `Montrer «${title}» comme recherché dans mes cercles`,
     shareOn: (title) => `«${title}» est visible comme recherché dans tes cercles.`,
     shareOff: (title) => `«${title}» n’est plus visible dans tes cercles.`,
@@ -161,6 +163,7 @@ const it: CommunityMsg = {
   },
   wish: {
     share: "Mostra alla cerchia",
+    shareHint: "Mostra alla cerchia: i membri delle tue cerchie vedono che cerchi il titolo e possono offrirtelo.",
     shareFor: (title) => `Mostra «${title}» come cercato nelle mie cerchie`,
     shareOn: (title) => `«${title}» è visibile come cercato nelle tue cerchie.`,
     shareOff: (title) => `«${title}» non è più visibile nelle tue cerchie.`,
@@ -222,6 +225,7 @@ const en: CommunityMsg = {
   },
   wish: {
     share: "Show in circle",
+    shareHint: "Show in circle: members of your circles see that you’re looking for the title and can offer it to you.",
     shareFor: (title: string): string => `Show “${title}” as wanted in my circles`,
     shareOn: (title: string): string => `“${title}” is visible as wanted in your circles.`,
     shareOff: (title: string): string => `“${title}” is no longer visible in your circles.`,

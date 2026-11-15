@@ -98,6 +98,7 @@ export const RULES = {
   report_return: { from: ["active", "disputed"], to: "return_reported", actors: ["borrower"], kinds: LEND, label: "Rückgabe gemeldet" },
   confirm_return: { from: ["return_reported"], to: "returned", actors: ["owner"], kinds: LEND, label: "Rückgabe bestätigt" },
   object_return: { from: ["return_reported"], to: "active", actors: ["owner"], kinds: LEND, label: "Einspruch gegen Rückgabemeldung" },
+  object_return_case: { from: ["return_reported"], to: "disputed", actors: ["owner"], kinds: LEND, label: "Einspruch gegen Rückgabemeldung im offenen Fall" },
   return_report_lapse: { from: ["return_reported"], to: "returned", actors: ["system"], kinds: LEND, label: "Rückgabe gilt nach 48 Stunden ohne Einspruch" },
   pass_on: { from: ["active"], to: "returned", actors: ["borrower"], kinds: LEND, label: "Direkt weitergegeben" },
 

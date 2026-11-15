@@ -11,7 +11,7 @@ export function ModTabs({ active, counts = {}, l = "de" }: { active: Tab; counts
   const m = modLabels(l);
   return (
     <nav aria-label={m.tabsAria} className="sticky top-14 md:top-0 z-20 -mx-4 px-4 md:mx-0 md:px-0 bg-paper/95 backdrop-blur-sm border-b border-line">
-      <ul className="flex gap-6 overflow-x-auto whitespace-nowrap" style={{ scrollbarWidth: "none" }}>
+      <ul className="flex gap-6 overflow-x-auto whitespace-nowrap scroll-x-fade" style={{ scrollbarWidth: "none" }}>
         {TABS.map((t) => {
           const on = t.id === active;
           const n = counts[t.id];

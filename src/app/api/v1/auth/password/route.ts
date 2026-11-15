@@ -9,7 +9,7 @@ import { rateLimit } from "@/lib/ratelimit";
 export const POST = route(async (req) => {
   await rateLimit(`pwloginip:${clientIp(req)}`, 30, 900);
   const b = await body(req, z.object({ email: z.string().min(3).max(200), password: z.string().min(1).max(500), client: z.enum(["web", "api"]).default("web") }));
-  const { userId, created } = await loginWithPassword(b.email, b.password);
+  const { userId, created } = await loginWithPassword(b.email, b.password, clientIp(req));
   const s = await createSession(userId, b.client);
   if (b.client === "web") {
     await setSessionCookie(s.token, s.maxAge);

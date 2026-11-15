@@ -18,11 +18,12 @@ export const GET = route(async () => {
   };
 });
 
-/** POST /api/v1/notifications – als gelesen markieren ({ ids } oder { all: true }) */
+/** POST /api/v1/notifications – als gelesen markieren ({ ids } oder { all: true }); mit unread: true wieder als ungelesen */
 export const POST = route(async (req) => {
   const u = await requireUser();
-  const b = await body(req, z.object({ ids: z.array(z.string().uuid()).optional(), all: z.boolean().optional(), loanId: z.string().uuid().optional() }));
-  if (b.all) await sql`update notifications set read_at = now() where user_id = ${u.id} and channel = 'app' and read_at is null`;
+  const b = await body(req, z.object({ ids: z.array(z.string().uuid()).max(100).optional(), all: z.boolean().optional(), loanId: z.string().uuid().optional(), unread: z.boolean().optional() }));
+  if (b.unread && b.ids?.length) await sql`update notifications set read_at = null where user_id = ${u.id} and channel = 'app' and id in ${sql(b.ids)}`;
+  else if (b.all) await sql`update notifications set read_at = now() where user_id = ${u.id} and channel = 'app' and read_at is null`;
   else if (b.loanId) await sql`update notifications set read_at = now() where user_id = ${u.id} and loan_id = ${b.loanId} and read_at is null`;
   else if (b.ids?.length) await sql`update notifications set read_at = now() where user_id = ${u.id} and id in ${sql(b.ids)}`;
   return { ok: true };

@@ -1,5 +1,5 @@
 import { route, body } from "@/lib/api";
-import { getUser, requireUser } from "@/lib/auth/session";
+import { getViewer, requireUser } from "@/lib/auth/session";
 import { copyDetail, copySettingsSchema, removeCopy, updateCopy } from "@/lib/copies";
 import { getCalendar } from "@/lib/loans/calendar";
 import { sql } from "@/lib/db";
@@ -7,7 +7,7 @@ import { err } from "@/lib/errors";
 
 /** GET /api/v1/copies/:id – Exemplar mit Verleihkalender */
 export const GET = route<{ id: string }>(async (_req, p) => {
-  const u = await getUser();
+  const u = await getViewer();
   const origin = u?.home_lat != null ? { lat: u.home_lat, lng: u.home_lng! } : null;
   const copy = await copyDetail(p.id, u?.id ?? null, origin);
   if (!copy) throw err.notFound("Dieses Buch ist nicht mehr verfügbar.");

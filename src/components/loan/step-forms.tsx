@@ -10,6 +10,7 @@ import { STEPS } from "@/lib/i18n/messages/loans-steps";
 import { addDays, dayToDate, fmtDay } from "@/lib/dates";
 import { Button, Check, Field, Input, Notice, Select, Textarea, cx } from "@/components/ui";
 import { useToast } from "@/components/toast";
+import { DateField, DateTimeField } from "@/components/date-field";
 
 /**
  * Teilformulare des nächsten Schritts – je Zustand eine Komponente: Annehmen, Zustand festhalten,
@@ -54,7 +55,7 @@ export function AcceptForm({ loan, busy, onAccept, onDecline }: { loan: LoanView
         <Notice className="self-end">{m.noSpot[0]}<Link href="/einstellungen#uebergabeorte" className="underline underline-offset-4">{m.noSpot[1]}</Link>{m.noSpot[2]}</Notice>
       )}
       <Field label={m.proposal} hint={m.proposalHint}>
-        <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
+        <DateTimeField value={when} onChange={setWhen} />
       </Field>
       </div>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-3 pt-1">
@@ -200,7 +201,7 @@ export function CaseResponse({ loan, onDone }: { loan: LoanView; onDone: () => v
           </label>
         ))}
       </div>
-      {choice === "return_date" && <Field label={m.returnOn}><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-52" /></Field>}
+      {choice === "return_date" && <Field label={m.returnOn}><DateField value={date} onChange={setDate} className="w-64 max-w-full" /></Field>}
       {choice === "swap_offer" && (
         <Field label={m.yourBook}>
           <Select value={swapCopy} onChange={setSwapCopy}
@@ -229,7 +230,7 @@ export function Reschedule({ loan, busy, onSubmit, onCancelFree }: { loan: LoanV
     <div className="mt-6 border-t border-line pt-5 space-y-4 max-w-xl">
       <p className="text-body text-ink-2">{m.rescheduleText}</p>
       <div className="flex flex-wrap gap-4 items-end">
-        <Field label={m.start}><Input type="date" value={start} onChange={(e) => setStart(e.target.value)} className="w-48" /></Field>
+        <Field label={m.start}><DateField value={start} onChange={setStart} className="w-64 max-w-full" /></Field>
         <Field label={m.days}><Input type="number" min={1} max={loan.copySettings.loan_days} value={days} onChange={(e) => setDays(Number(e.target.value) || 1)} className="w-24" /></Field>
         <Button variant="secondary" disabled={busy} onClick={() => onSubmit(start, addDays(start, days))}>{m.apply}</Button>
       </div>

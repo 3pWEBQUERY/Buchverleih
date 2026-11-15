@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Cover } from "@/components/cover";
 import { fmtDistance } from "@/lib/geo";
 import { IconArrowRight, IconSearch } from "@/components/icons";
@@ -19,10 +19,11 @@ export function PlzExplorer() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [joined, setJoined] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
 
   async function look(e?: React.FormEvent) {
     e?.preventDefault();
-    if (!/^\d{4}$/.test(plz)) return;
+    if (!/^\d{4}$/.test(plz)) { input.current?.focus(); return; }
     setLoading(true);
     try {
       const r = await fetch(`/api/v1/regions/plz/${plz}`);
@@ -47,11 +48,12 @@ export function PlzExplorer() {
         </div>
         <form onSubmit={look} className="min-w-0 flex items-center gap-2 p-1.5 pl-5 rounded-sm bg-night-2 border border-night-line focus-within:border-night-ink transition-colors w-full md:w-[420px]">
           <IconSearch width={20} height={20} className="text-night-muted flex-none" />
-          <input inputMode="numeric" autoComplete="postal-code" maxLength={4} size={6} placeholder={t.placeholder} value={plz} aria-label={t.aria}
+          <input ref={input} inputMode="numeric" autoComplete="postal-code" maxLength={4} size={6} placeholder={t.placeholder} value={plz} aria-label={t.aria}
             onChange={(e) => setPlz(e.target.value.replace(/\D/g, ""))}
             className="flex-1 min-w-0 bg-transparent h-12 text-title-sm tnum tracking-caps placeholder:text-night-muted/60 focus:outline-none" />
-          <button type="submit" disabled={plz.length !== 4}
-            className="h-12 px-6 flex-none rounded-sm bg-accent text-accent-ink font-semibold disabled:opacity-40 hover:bg-accent-hover transition-colors active:scale-[0.97]">
+          {/* Immer aktiv: ein ausgegrauter Knopf wirkt kaputt. Ohne vier Ziffern springt der Fokus ins Feld. */}
+          <button type="submit"
+            className="h-12 px-6 flex-none rounded-sm bg-accent text-accent-ink font-semibold hover:bg-accent-hover transition-colors active:scale-[0.97]">
             {t.look}
           </button>
         </form>

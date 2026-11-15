@@ -9,6 +9,7 @@ import type { SessionUser } from "@/lib/auth/session";
 import { notify } from "@/lib/notify";
 import { addDays, parseRange } from "@/lib/dates";
 import { getLoan, loanInfo, logEvent, type LoanRow } from "./core";
+import { requireFeature } from "@/lib/features";
 
 type TxSql = postgres.TransactionSql;
 
@@ -125,6 +126,7 @@ async function askBorrowers(tx: Tx, nextId: string, title: string, nextName: str
 
 /** Zustimmung oder Ablehnung einer der drei Beteiligten. */
 export async function passOnConsent(user: SessionUser, nextLoanId: string, agree: boolean) {
+  if (agree) await requireFeature("pass_on");
   return sql.begin(async (tx) => {
     const next = await getLoan(tx, nextLoanId, true);
     if (!next?.pass_on_candidate_id || next.status !== "accepted") throw err.conflict("no_pass_on", "Für diesen Vorgang steht keine Weitergabe an.");

@@ -149,6 +149,7 @@ export function WishlistClient({ items: initial, matches, sms = "on" }: { items:
             {items.map((it, i) => <WishCard key={it.work_id} it={it} i={i} onRadius={(r) => setRadius(it, r)} onAlarm={(v) => setAlarm(it, v)} onShare={(v) => setShare(it, v)} onRemove={() => remove(it)} />)}
           </ul>
         )}
+        {items.length > 0 && <p className="text-meta text-muted mt-4 max-w-2xl">{tc.shareHint}</p>}
       </StepSection>
     </div>
   );

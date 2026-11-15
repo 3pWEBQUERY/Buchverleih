@@ -51,13 +51,16 @@ export async function GET(req: Request) {
         if (closed) return;
         try { controller.enqueue(enc.encode(": ping\n\n")); } catch { closed = true; }
       }, 25_000);
-      req.signal.addEventListener("abort", () => {
+      const onAbort = () => {
         closed = true;
         release();
         if (ping) clearInterval(ping);
         unlisten?.().catch(() => {});
         try { controller.close(); } catch {}
-      });
+      };
+      // Brach die Verbindung schon während des Aufbaus ab, sofort aufräumen (sonst liefen Ping und LISTEN weiter)
+      if (req.signal.aborted) onAbort();
+      else req.signal.addEventListener("abort", onAbort);
     },
     cancel() {
       closed = true;

@@ -1,12 +1,15 @@
 import { z } from "zod";
 import { query, route } from "@/lib/api";
-import { getUser } from "@/lib/auth/session";
+import { getViewer } from "@/lib/auth/session";
 import { logSearch, searchWorks } from "@/lib/search";
 import { plzInfo } from "@/lib/account";
+import { rateLimit } from "@/lib/ratelimit";
+import { clientIp } from "@/lib/client-ip";
 
 /** GET /api/v1/search – Werke mit Exemplaren in der Nähe. Abgemeldet mit ?plz= */
 export const GET = route(async (req) => {
-  const u = await getUser();
+  const u = await getViewer();
+  await rateLimit(u ? `search:${u.id}` : `searchip:${clientIp(req)}`, 1200, 3600);
   const q = query(
     req,
     z.object({
@@ -27,7 +30,7 @@ export const GET = route(async (req) => {
   }
   const hits = await searchWorks(u?.id ?? null, origin, {
     q: q.q,
-    radiusKm: q.radius,
+    radiusKm: q.radius ?? u?.radius_km,
     offer: q.offer,
     availableNow: q.available === "1",
     language: q.language,

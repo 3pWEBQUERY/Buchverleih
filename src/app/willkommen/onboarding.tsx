@@ -9,6 +9,7 @@ import { AuthHead } from "@/components/auth/head";
 import { IconArrowRight, IconCalendar, IconCheck } from "@/components/icons";
 import { useLocale } from "@/components/locale-provider";
 import { ONBOARDING } from "@/lib/i18n/messages/onboarding";
+import { DateField } from "@/components/date-field";
 
 /** Anmeldung ohne Hürden: drei Angaben, dann die Mobilnummer (PRD 6.1, 6.6). */
 export function Onboarding({ initialStep, next, firstName, devCodes }: { initialStep: "profile" | "phone"; next: string; firstName: string; devCodes: boolean }) {
@@ -62,7 +63,7 @@ export function Onboarding({ initialStep, next, firstName, devCodes }: { initial
                 <Input required inputMode="numeric" autoComplete="postal-code" maxLength={4} value={plz} onChange={(e) => setPlz(e.target.value.replace(/\D/g, ""))} className="tnum" placeholder="8180" />
               </Field>
               <Field label={t.birth}>
-                <Input required type="date" value={birth} onChange={(e) => setBirth(e.target.value)} max={new Date().toISOString().slice(0, 10)} />
+                <DateField required value={birth} onChange={setBirth} max={new Date().toISOString().slice(0, 10)} />
               </Field>
             </div>
             <ul className="rounded-md bg-paper-2 p-4 space-y-3 text-body-sm text-ink-2 leading-snug [&_svg]:text-accent-hover">

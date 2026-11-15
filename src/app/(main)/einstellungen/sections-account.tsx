@@ -331,6 +331,7 @@ export function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
   const router = useRouter();
   const toast = useToast();
   const [pw, setPw] = useState("");
+  const [current, setCurrent] = useState("");
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -339,8 +340,9 @@ export function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
     setBusy(true);
     setError(null);
     try {
-      await api("/me/password", { body: { password: pw } });
+      await api("/me/password", { body: hasPassword ? { password: pw, current } : { password: pw } });
       setPw("");
+      setCurrent("");
       toast.show({ text: t.saved });
       router.refresh();
     } catch (e) {
@@ -351,7 +353,13 @@ export function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
   }
   return (
     <form onSubmit={save} className="space-y-3">
-      <p className="text-body-sm text-ink-2">{hasPassword ? t.set : t.none}</p>
+      <p className="text-body-sm text-ink-2">{hasPassword ? `${t.set} ${t.others}` : t.none}</p>
+      {hasPassword && (
+        <Field label={t.current}>
+          <Input type={show ? "text" : "password"} autoComplete="current-password" maxLength={200} required
+            value={current} onChange={(e) => setCurrent(e.target.value)} />
+        </Field>
+      )}
       <Field label={t.label} hint={t.hint} error={error}>
         <div className="relative">
           <Input type={show ? "text" : "password"} autoComplete="new-password" minLength={8} maxLength={200} required
@@ -362,7 +370,7 @@ export function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
           </button>
         </div>
       </Field>
-      <Button type="submit" variant="secondary" disabled={busy || pw.length < 8}>{busy ? T.saving : t.save}</Button>
+      <Button type="submit" variant="secondary" disabled={busy || pw.length < 8 || (hasPassword && !current)}>{busy ? T.saving : t.save}</Button>
     </form>
   );
 }

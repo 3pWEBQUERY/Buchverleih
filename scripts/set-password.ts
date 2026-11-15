@@ -5,7 +5,7 @@
  * Gibt das neue Passwort einmal aus. Die Person ändert es danach in den Einstellungen.
  */
 import { sql } from "@/lib/db";
-import { setPassword } from "@/lib/auth/flows";
+import { storePassword } from "@/lib/auth/flows";
 import { shortCode } from "@/lib/crypto";
 
 const email = (process.argv[2] ?? "").trim().toLowerCase();
@@ -20,6 +20,6 @@ if (!u) {
   process.exit(1);
 }
 const password = `${shortCode(4)}-${shortCode(4)}-${shortCode(4)}`;
-await setPassword(u.id, password);
+await storePassword(u.id, password);
 console.log(`Einmal-Passwort für ${email}: ${password}`);
 await sql.end();

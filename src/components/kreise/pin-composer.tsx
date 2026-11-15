@@ -11,6 +11,7 @@ import { useLocale } from "@/components/locale-provider";
 import { useToast } from "@/components/toast";
 import { Button, Field, Input, Notice, Segmented, Textarea, cx } from "@/components/ui";
 import { Counter, TAP, errText, type Post } from "./pin-post";
+import { DateField, DateTimeField } from "@/components/date-field";
 
 export type OwnCopy = { id: string; work_id: string; title: string; authors: string[]; cover_key: string | null; photo_key: string | null; photo_w: number | null; photo_h: number | null };
 type Edition = { id: string; work_id: string; title: string; authors: string[]; cover_key: string | null };
@@ -189,14 +190,14 @@ export function PinComposer({ circleId, admin, ownCopies, limits, onPosted, onCl
 
       {kind === "search" && (
         <Field label={<>{t.search.neededBy} <span className="font-medium text-muted">{t.optional}</span></>} className="max-w-xs">
-          <Input type="date" value={neededBy} min={todayCH()} onChange={(e) => setNeededBy(e.target.value)} />
+          <DateField value={neededBy} min={todayCH()} onChange={setNeededBy} />
         </Field>
       )}
 
       {kind === "announce" && (
         <div className="grid sm:grid-cols-2 gap-4">
           <Field label={<>{t.announce.when} <span className="font-medium text-muted">{t.optional}</span></>}>
-            <Input type="datetime-local" value={when} min={minLocal} onChange={(e) => setWhen(e.target.value)} />
+            <DateTimeField value={when} min={minLocal} onChange={setWhen} />
           </Field>
           <Field label={<>{t.announce.place} <span className="font-medium text-muted">{t.optional}</span></>}>
             <Input value={place} maxLength={120} placeholder={t.announce.placePlaceholder} onChange={(e) => setPlace(e.target.value)} />

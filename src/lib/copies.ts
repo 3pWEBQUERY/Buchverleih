@@ -6,6 +6,7 @@ import { z } from "zod";
 import { sql, type Tx } from "@/lib/db";
 import { err } from "@/lib/errors";
 import type { OfferKind } from "@/lib/loans/machine";
+import { requireFeature } from "@/lib/features";
 
 export const copySettingsSchema = z.object({
   condition: z.number().int().min(1).max(4).optional(),
@@ -66,6 +67,7 @@ export async function addCopy(userId: string, editionId: string, s: CopySettings
     if (!ed) throw err.notFound("Diese Ausgabe gibt es nicht.");
     // Kreis-Voreinstellungen: Leihfrist und «direkt weitergeben: immer»
     const settings: CopySettings = { offers: ["lend"], condition: 2, ...s };
+    if (settings.offers?.some((o) => o !== "lend")) await requireFeature("swap");
     if (settings.precious && !s.visibility) settings.visibility = "circles";
     if (s.circleIds?.length && !s.passOn) settings.passOn = "always";
     const row = { owner_id: userId, edition_id: editionId, ...toRow(settings) };
@@ -80,6 +82,7 @@ export async function updateCopy(userId: string, copyId: string, s: CopySettings
     const [own] = await tx<{ id: string; transfer_locked_until: Date | null }[]>`
       select id, transfer_locked_until from copies where id = ${copyId} and owner_id = ${userId} and removed_at is null`;
     if (!own) throw err.notFound("Dieses Buch ist nicht in deinem Regal.");
+    if (s.offers?.some((o) => o !== "lend")) await requireFeature("swap");
     if (s.offers && s.offers.some((o) => o !== "lend") && own.transfer_locked_until && own.transfer_locked_until > new Date())
       throw err.conflict("transfer_locked", "Geschenkte Bücher kannst du frühestens 30 Tage nach Erhalt weiterverschenken oder tauschen.");
     const row = toRow(s);
@@ -324,7 +327,10 @@ export async function copyDetail(copyId: string, viewerId: string | null, origin
 /** Exemplare eines Werks in der Nähe (Titelseite, PRD 8.4) */
 export async function copiesOfWork(workId: string, viewerId: string | null, origin: { lat: number; lng: number } | null) {
   return sql<(ShelfCopy & { dist: number | null; owner_name: string; owner_avatar: string | null; owner_trust: number; year: number | null; publisher: string | null; binding: string | null; language: string | null; median_response_seconds: number | null; free_now: boolean; loan_days: number })[]>`
-    select ${SHELF_SELECT}, c.loan_days, o.first_name as owner_name, o.avatar_key as owner_avatar, o.trust_level as owner_trust,
+    select ${SHELF_SELECT},
+           -- Wirksame Leihfrist für diese Person: im gemeinsamen Kreis gilt dessen Frist (wie auf der Exemplarseite)
+           coalesce((select ci.loan_days from circles ci where ci.id = shared_circle_for_copy(${viewerId}::uuid, c.id)), c.loan_days) as loan_days,
+           o.first_name as owner_name, o.avatar_key as owner_avatar, o.trust_level as owner_trust,
            e.year, e.publisher, e.binding, e.language, st.median_response_seconds,
            (not o.shelf_paused and not exists (select 1 from copy_bookings b where b.copy_id = c.id
               and daterange(lower(b.period), upper(b.period) + b.buffer_days) @> today_ch())) as free_now,

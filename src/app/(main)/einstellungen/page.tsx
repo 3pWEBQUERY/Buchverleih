@@ -11,7 +11,7 @@ import { PageTitle, cx } from "@/components/ui";
 import { StepSection } from "@/components/step-section";
 import { Monogram } from "@/components/person/monogram";
 import {
-  AvatarEditor, BlockList, CommunityPrefs, SmsAlarmPref, DeleteAccount, EmailPrefs, ExportData, Logout, PasskeyList, PasswordSection, PhoneSection, ProfileForm, PushSettings, ShelfPause, SpotList, ThemeChoice,
+  AvatarEditor, BlockList, CommunityPrefs, RadiusPref, SmsAlarmPref, DeleteAccount, EmailPrefs, ExportData, Logout, PasskeyList, PasswordSection, PhoneSection, ProfileForm, PushSettings, ShelfPause, SpotList, ThemeChoice,
 } from "./sections";
 import { SettingsNav, type NavGroup } from "./settings-nav";
 import { LanguageChoice } from "@/components/language-switch";
@@ -29,7 +29,7 @@ function nav(l: Locale): NavGroup[] {
   return [
     { title: g.account, items: items(["profilbild", "profil", "mobilnummer", "passwort", "passkeys"]) },
     { title: g.lending, items: items(["uebergabeorte", "ferienmodus", "blockiert"]) },
-    { title: g.general, items: items(["sprache", "push", "benachrichtigungen", "darstellung", "daten"]) },
+    { title: g.general, items: items(["sprache", "umkreis", "push", "benachrichtigungen", "darstellung", "daten"]) },
     { title: g.danger, danger: true, items: [{ id: "konto-loeschen", label: n.kontoLoeschen }] },
   ];
 }
@@ -117,6 +117,9 @@ export default async function Page() {
             <Card>
               <Row id="sprache" t={r.sprache}>
                 <LanguageChoice />
+              </Row>
+              <Row id="umkreis" t={r.umkreis}>
+                <RadiusPref km={user.radius_km} />
               </Row>
               <Row id="push" t={r.push}>
                 <PushSettings />

@@ -9,10 +9,11 @@ import { addDays, dayToDate, diffDays, fmtDay } from "@/lib/dates";
 import type { OfferKind } from "@/lib/loans/machine";
 import { CalendarView } from "@/components/calendar";
 import { OptionCard, Stepper } from "@/components/form-controls";
-import { Button, Input, LinkButton, Notice, Textarea, cx } from "@/components/ui";
+import { Button, LinkButton, Notice, Textarea, cx } from "@/components/ui";
 import { IconBookmark, IconLoans, IconSwap } from "@/components/icons";
 import { useLocale } from "@/components/locale-provider";
 import { EXEMPLAR } from "@/lib/i18n/messages/exemplar";
+import { DateField } from "@/components/date-field";
 
 /**
  * Anfrage (PRD 4.2, 4.8, 5): Eine Anfrage ist immer eine Anfrage für einen Zeitraum.
@@ -94,7 +95,7 @@ export function RequestPanel({
             <div className="rounded-md border border-line p-4">
               <label htmlFor="beginn" className="font-medium text-body block">{t.start}</label>
               <p className="text-meta text-muted mt-0.5 mb-3">{t.startHint(diffDays(calendar.today, calendar.horizonEnd) - 1)}</p>
-              <Input id="beginn" type="date" value={start} min={calendar.today} max={addDays(calendar.horizonEnd, -1)} onChange={(e) => e.target.value && setStart(e.target.value)} />
+              <DateField id="beginn" required value={start} min={calendar.today} max={addDays(calendar.horizonEnd, -1)} onChange={(v) => v && setStart(v)} />
             </div>
             <div className="rounded-md border border-line p-4">
               <p className="font-medium text-body">{t.duration}</p>

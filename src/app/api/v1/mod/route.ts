@@ -51,7 +51,7 @@ export const POST = route(async (req) => {
       z.object({ action: z.literal("suspend"), userId: z.string().uuid(), suspended: z.boolean() }),
       z.object({ action: z.literal("remove_avatar"), userId: z.string().uuid(), note: z.string().max(300).optional() }),
       z.object({ action: z.literal("correction"), id: z.string().uuid(), apply: z.boolean() }),
-      z.object({ action: z.literal("flag"), key: z.string().max(40), regionId: z.string().max(40), enabled: z.boolean() }),
+      z.object({ action: z.literal("flag"), key: z.string().max(40), regionId: z.string().max(40).optional(), enabled: z.boolean() }),
       z.object({ action: z.literal("area"), level: z.enum(["canton", "district", "commune"]), code: z.string().max(10), enabled: z.boolean().nullable(), clearBelow: z.boolean().optional() }),
       z.object({ action: z.literal("role"), userId: z.string().uuid(), role: z.enum(["member", "moderator"]) }),
       z.object({ action: z.literal("hide_content"), targetType: z.enum(mod.HIDEABLE), targetId: z.string().uuid(), hidden: z.boolean(), note: z.string().max(300).optional() }),
@@ -65,7 +65,7 @@ export const POST = route(async (req) => {
     case "suspend": await mod.setSuspension(m, b.userId, b.suspended); break;
     case "remove_avatar": await mod.removeAvatar(m, b.userId, b.note); break;
     case "correction": await mod.applyCorrection(m, b.id, b.apply); break;
-    case "flag": await mod.setFlag(m, b.key, b.regionId, b.enabled); break;
+    case "flag": await mod.setFlag(m, b.key, b.enabled); break;
     case "area": await setAreaRule(m, b.level, b.code, b.enabled, b.clearBelow); break;
     case "role": await mod.setRole(m, b.userId, b.role); break;
     case "hide_content": await mod.hideContent(m, b.targetType, b.targetId, b.hidden, b.note); break;

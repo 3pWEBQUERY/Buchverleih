@@ -33,6 +33,8 @@ export type SessionUser = {
   pulse_show_new_books: boolean;
   /** E-Mail und Push zur Pinnwand */
   pinboard_notify: "replies" | "all" | "off";
+  /** Standard-Umkreis für Start, Suche und neue Wünsche */
+  radius_km: number;
   session_id: string;
   /** Admin nur dank ADMIN_EMAILS (wird beim Entfernen aus der Liste entzogen) */
   admin_via_env?: boolean;
@@ -88,7 +90,7 @@ export const getUser = cache(async (): Promise<SessionUser | null> => {
     select u.id, u.email, u.first_name, u.role, u.trust_level, u.plz, u.municipality,
            u.home_lat, u.home_lng, u.email_verified_at, u.phone_verified_at, u.phone_e164,
            u.onboarded_at, u.age_confirmed_at, u.shelf_paused, u.banned_at, u.lending_suspended_at,
-           u.plan_id, u.avatar_key, u.email_prefs, u.pulse_show_new_books, u.pinboard_notify, u.admin_via_env, s.id as session_id
+           u.plan_id, u.avatar_key, u.email_prefs, u.pulse_show_new_books, u.pinboard_notify, u.admin_via_env, u.radius_km, s.id as session_id
       from s join users u on u.id = s.user_id
      where u.deleted_at is null`;
   return rows[0] ? applyAdminEmails(rows[0]) : null;
@@ -119,6 +121,12 @@ export async function applyAdminEmails<T extends Pick<SessionUser, "id" | "email
 
 function adminEmails(raw: string) {
   return new Set(raw.split(",").map((e) => e.trim().toLowerCase()).filter(Boolean));
+}
+
+/** Wie getUser, aber gesperrte Konten gelten als nicht angemeldet (kein Zugriff auf Kreis-Inhalte) */
+export async function getViewer(): Promise<SessionUser | null> {
+  const u = await getUser();
+  return u && !u.banned_at ? u : null;
 }
 
 export async function requireUser(): Promise<SessionUser> {

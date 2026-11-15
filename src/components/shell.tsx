@@ -11,6 +11,10 @@ import { getLocale } from "@/lib/i18n/server";
 import { labels } from "@/lib/i18n/labels";
 import { SHELL } from "@/lib/i18n/messages/shell";
 import { LanguageSwitch } from "./language-switch";
+import { features } from "@/lib/features";
+import { getUser } from "@/lib/auth/session";
+import { LogoutButton } from "@/app/gesperrt/logout";
+import { ONBOARDING } from "@/lib/i18n/messages/onboarding";
 
 export { Wordmark } from "./brand";
 
@@ -20,7 +24,7 @@ export { Wordmark } from "./brand";
  */
 export async function AppShell({ user, unread, children }: { user: SessionUser; unread: number; children: React.ReactNode }) {
   const mod = user.role !== "member";
-  const l = await getLocale();
+  const [l, f] = await Promise.all([getLocale(), features()]);
   const m = SHELL[l];
   const n = m.nav;
   return (
@@ -39,7 +43,7 @@ export async function AppShell({ user, unread, children }: { user: SessionUser; 
           <NavLink href="/vorgaenge" icon={<IconLoans />}>{n.loans}</NavLink>
           <NavLink href="/regal" icon={<IconShelf />}>{n.shelf}</NavLink>
           <NavLink href="/kreise" icon={<IconCircles />}>{n.circles}</NavLink>
-          <NavLink href="/wunschliste" icon={<IconBookmark />}>{n.wishlist}</NavLink>
+          {f.wishlist && <NavLink href="/wunschliste" icon={<IconBookmark />}>{n.wishlist}</NavLink>}
           <NavLink href="/benachrichtigungen" icon={<LiveBell />}>
             {n.notifications} <UnreadBadge />
           </NavLink>
@@ -84,7 +88,7 @@ export async function AppShell({ user, unread, children }: { user: SessionUser; 
             </Link>
             <MobileMore label={n.more} links={[
               { href: "/kreise", label: n.circles },
-              { href: "/wunschliste", label: n.wishlist },
+              ...(f.wishlist ? [{ href: "/wunschliste", label: n.wishlist }] : []),
               { href: "/regal/kalender", label: n.calendar },
               { href: "/einstellungen", label: n.settings },
               ...(mod ? [{ href: "/moderation", label: n.moderation }] : []),
@@ -115,7 +119,7 @@ export async function AppShell({ user, unread, children }: { user: SessionUser; 
 }
 
 export async function PublicShell({ children }: { children: React.ReactNode }) {
-  const l = await getLocale();
+  const [l, signedIn] = await Promise.all([getLocale(), getUser().then(Boolean)]);
   const m = SHELL[l];
   const f = m.footer;
   return (
@@ -126,8 +130,14 @@ export async function PublicShell({ children }: { children: React.ReactNode }) {
           <nav className="flex items-center gap-1 md:gap-2 text-body font-medium">
             <Link href="/suche" className="hidden sm:inline-flex px-3 h-10 items-center rounded-sm hover:bg-paper-2">{m.publicNav.find}</Link>
             <Link href="/hilfe" className="hidden lg:inline-flex px-3 h-10 items-center rounded-sm hover:bg-paper-2">{m.publicNav.how}</Link>
-            <LanguageSwitch className="hidden sm:inline-flex mx-1" />
-            <Link href="/anmelden" className="ml-1 inline-flex px-5 h-10 items-center rounded-sm bg-accent-soft text-accent-hover hover:bg-accent hover:text-accent-ink transition-colors">{m.publicNav.login}</Link>
+            {/* Eigener Wrapper: das inline-flex der Umschaltung würde «hidden» sonst überstimmen */}
+            <span className="hidden sm:block mx-1"><LanguageSwitch /></span>
+            {signedIn ? (
+              // Angemeldet, aber noch nicht fertig eingerichtet (Onboarding): Abmelden statt Anmelden
+              <LogoutButton label={ONBOARDING[l].banned.logout} />
+            ) : (
+              <Link href="/anmelden" className="ml-1 inline-flex px-3 sm:px-5 h-10 items-center rounded-sm bg-accent-soft text-accent-hover hover:bg-accent hover:text-accent-ink transition-colors whitespace-nowrap">{m.publicNav.login}</Link>
+            )}
           </nav>
         </div>
       </header>

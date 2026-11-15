@@ -1,5 +1,5 @@
 import { cx } from "@/components/ui";
-import { addDays, fmtDay, fmtDayTime, fmtTime, dueDay, relHours, relDays, dayToDate, diffDays, todayCH } from "@/lib/dates";
+import { addDays, fmtDay, fmtDeadline, fmtTime, dueDay, relHours, relDays, dayToDate, diffDays, todayCH } from "@/lib/dates";
 import { IconCheck } from "@/components/icons";
 import type { LoanView } from "@/lib/loans/queries";
 import { labels } from "@/lib/i18n/labels";
@@ -48,7 +48,7 @@ export function Timeline({ loan, l = "de" }: { loan: LoanView; l?: Locale }) {
       label: m.accepted,
       done: idx >= 1 && !ended,
       ...(t.accepted_at ? { ...at(t.accepted_at, l) }
-        : idx === 0 && !ended ? { note: m.answerBy(fmtDayTime(t.respond_by, l)), chip: relHours(t.respond_by, l) } : {}),
+        : idx === 0 && !ended ? { note: m.answerBy(fmtDeadline(t.respond_by, l)), chip: relHours(t.respond_by, l) } : {}),
     },
     {
       key: "active",
@@ -74,7 +74,7 @@ export function Timeline({ loan, l = "de" }: { loan: LoanView; l?: Locale }) {
         label: m.completed,
         done: idx >= 4,
         ...(t.closed_at && s === "completed" ? { ...at(t.closed_at, l) }
-          : t.inspection_until && s === "returned" ? { note: m.inspectBy(fmtDayTime(t.inspection_until, l)), chip: relHours(t.inspection_until, l) } : {}),
+          : t.inspection_until && s === "returned" ? { note: m.inspectBy(fmtDeadline(t.inspection_until, l)), chip: relHours(t.inspection_until, l) } : {}),
       },
     );
   }

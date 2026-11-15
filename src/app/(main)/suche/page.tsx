@@ -6,6 +6,7 @@ import { plzInfo } from "@/lib/account";
 import { SearchClient, type Filters } from "./search-client";
 import { getLocale } from "@/lib/i18n/server";
 import { SEARCH } from "@/lib/i18n/messages/search";
+import { features } from "@/lib/features";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: SEARCH[await getLocale()].title };
@@ -20,11 +21,12 @@ export default async function SuchePage({ searchParams }: { searchParams: Promis
   const user = await getUser();
   const loggedIn = !!user?.onboarded_at;
 
+  const defaultRadius = loggedIn && user ? user.radius_km : 10;
   const radius = Number(pick(sp.radius));
   const condition = Number(pick(sp.condition));
   const offer = pick(sp.offer);
   const filters: Filters = {
-    radius: RADII.includes(radius) ? radius : 25,
+    radius: RADII.includes(radius) ? radius : defaultRadius,
     offer: offer === "lend" || offer === "swap" || offer === "gift" ? offer : "",
     available: pick(sp.available) === "1",
     language: pick(sp.language).slice(0, 5),
@@ -61,6 +63,7 @@ export default async function SuchePage({ searchParams }: { searchParams: Promis
     }
   }
 
+  const mapEnabled = (await features()).map;
   return (
     <SearchClient
       // Navigation innerhalb von /suche (z. B. ?fokus=1 aus der Seitenleiste) startet mit frischem Zustand
@@ -73,7 +76,9 @@ export default async function SuchePage({ searchParams }: { searchParams: Promis
       initialFilters={filters}
       initialResults={initial}
       initialCenter={o ? { lat: Math.round(o.lat * 100) / 100, lng: Math.round(o.lng * 100) / 100 } : null}
-      initialView={pick(sp.ansicht) === "karte" ? "map" : "list"}
+      mapEnabled={mapEnabled}
+      defaultRadius={defaultRadius}
+      initialView={mapEnabled && pick(sp.ansicht) === "karte" ? "map" : "list"}
     />
   );
 }

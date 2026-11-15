@@ -8,6 +8,7 @@ import { wishersCount } from "@/lib/wishlist";
 import { CopyEditor, type HistoryRow } from "./copy-editor";
 import { getLocale } from "@/lib/i18n/server";
 import { COPY } from "@/lib/i18n/messages/copy";
+import { features } from "@/lib/features";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -47,6 +48,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       circles={circles.filter((c) => c.my_status === "active").map((c) => ({ id: c.id, name: c.name, loanDays: c.loan_days }))}
       history={history}
       wishers={wishers}
+      swapEnabled={(await features()).swap}
     />
   );
 }

@@ -27,6 +27,7 @@ import { MoreBooksLoader } from "@/components/more-books";
 import { ShareButton } from "@/components/share-button";
 import { RequestPanel } from "./request-panel";
 import { CorrectionForm } from "./correction";
+import { features } from "@/lib/features";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -54,7 +55,9 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const t = EXEMPLAR[l];
   const L = labels(l);
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const copy = await copyDetail(id, user?.id ?? null, origin(user));
+  const [found, f] = await Promise.all([copyDetail(id, user?.id ?? null, origin(user)), features()]);
+  // Abgeschaltetes Tauschen/Verschenken: nur noch als Leihe sichtbar und anfragbar
+  const copy = found && !f.swap ? { ...found, offers: found.offers.filter((o) => o === "lend") } : found;
   if (!copy) notFound();
   const own = user?.id === copy.owner_id;
   const [rawCal, blocker, myOffers, circles, owner, [sameWork]] = await Promise.all([

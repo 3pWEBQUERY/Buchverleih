@@ -51,7 +51,7 @@ export type HistoryRow = {
 
 const SECTIONS = ["angebot", "leihe", "kalender", "weitergabe", "zustand", "verlauf"] as const;
 
-export function CopyEditor({ copy, calendar, circles, history, wishers = 0 }: { copy: CopyDetail; calendar: Calendar; circles: { id: string; name: string; loanDays: number }[]; history: HistoryRow[]; wishers?: number }) {
+export function CopyEditor({ copy, calendar, circles, history, wishers = 0, swapEnabled = true }: { copy: CopyDetail; calendar: Calendar; circles: { id: string; name: string; loanDays: number }[]; history: HistoryRow[]; wishers?: number; swapEnabled?: boolean }) {
   const router = useRouter();
   const toast = useToast();
   const l = useLocale();
@@ -223,7 +223,7 @@ export function CopyEditor({ copy, calendar, circles, history, wishers = 0 }: { 
           </header>
 
           <nav aria-label={t.sectionsAria} className="sticky top-14 md:top-0 z-20 -mx-4 px-4 md:mx-0 md:px-0 mt-8 bg-paper/95 backdrop-blur-sm border-b border-line">
-            <ol className="flex gap-6 overflow-x-auto text-body-sm font-medium" style={{ scrollbarWidth: "none" }}>
+            <ol className="flex gap-6 overflow-x-auto text-body-sm font-medium scroll-x-fade" style={{ scrollbarWidth: "none" }}>
               {SECTIONS.map((id, i) => (
                 <li key={id}>
                   <a href={`#${id}`} className="group flex items-center gap-2 h-12 border-b-2 border-transparent hover:border-accent text-muted hover:text-ink transition-colors whitespace-nowrap">
@@ -242,7 +242,7 @@ export function CopyEditor({ copy, calendar, circles, history, wishers = 0 }: { 
                 ["lend", <IconLoans key="i" />],
                 ["swap", <IconSwap key="i" />],
                 ["gift", <IconBookmark key="i" />],
-              ] as const).map(([o, icon]) => {
+              ] as const).filter(([o]) => o === "lend" || swapEnabled || s.offers.includes(o)).map(([o, icon]) => {
                 const [title, desc] = t.offer[o];
                 const on = s.offers.includes(o);
                 return (

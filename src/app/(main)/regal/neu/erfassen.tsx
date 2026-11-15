@@ -222,7 +222,7 @@ export function Erfassen({ initial }: { initial: Added[] }) {
                         <label htmlFor="isbn-hand" className="font-medium text-body block">{t.isbnHand}</label>
                         <p className="text-meta text-muted mt-0.5 mb-3">{t.isbnHandHint}</p>
                         <div className="flex gap-2">
-                          <Input id="isbn-hand" className="flex-1 min-w-0" value={manualIsbn} onChange={(e) => setManualIsbn(e.target.value)} inputMode="numeric" autoComplete="off" placeholder="978 3 15 009152 1" />
+                          <Input id="isbn-hand" className="flex-1 min-w-0 text-body sm:text-body-lg tnum" value={manualIsbn} onChange={(e) => setManualIsbn(e.target.value)} inputMode="numeric" autoComplete="off" placeholder="978 3 15 009152 1" />
                           <Button type="submit" variant="secondary" className="h-12 flex-none" disabled={manualIsbn.replace(/\D/g, "").length < 10 || Boolean(batch && s.looking)}>{t.lookup}</Button>
                         </div>
                       </form>

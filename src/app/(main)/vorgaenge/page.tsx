@@ -53,7 +53,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
 
       {all.length > 0 && (
         <nav aria-label={t.filter} className="sticky top-14 md:top-0 z-20 -mx-4 px-4 md:mx-0 md:px-0 mt-10 bg-paper/95 backdrop-blur-sm border-b border-line">
-          <ul className="flex gap-6 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          <ul className="flex gap-6 overflow-x-auto scroll-x-fade" style={{ scrollbarWidth: "none" }}>
             {FILTERS.map((f) => {
               const on = f.id === filter;
               return (

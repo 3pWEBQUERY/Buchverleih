@@ -11,18 +11,30 @@ import { COMMON } from "@/lib/i18n/messages/common";
  */
 /** Auswahlkarte: gewählt in der Markenfarbe, nie Schwarz */
 export function OptionCard({ on, title, desc, icon, multi, compact, descDesktopOnly, onClick }: { on: boolean; title: string; desc?: string; icon?: ReactNode; multi?: boolean; compact?: boolean; descDesktopOnly?: boolean; onClick: () => void }) {
+  // Auswahlzeichen im Fluss neben dem Titel (nicht darübergelegt): lange Wörter in FR/IT überlappen so nie
+  const mark = (
+    <span className={cx("h-5 w-5 flex-none grid place-items-center border transition-colors",
+      multi ? "rounded-xs" : "rounded-full",
+      on ? "bg-accent border-accent text-accent-ink" : "border-field group-hover:border-ink-2")}>
+      {on && (multi ? <IconCheck width={13} height={13} strokeWidth={2.4} /> : <span className="h-1.5 w-1.5 rounded-full bg-accent-ink" />)}
+    </span>
+  );
   return (
     <button type="button" role={multi ? undefined : "radio"} aria-checked={multi ? undefined : on} aria-pressed={multi ? on : undefined} onClick={onClick}
       className={cx("group relative flex flex-col justify-start text-left rounded-md border transition-[border-color,background-color] duration-fast",
-        compact ? "px-4 py-3.5" : "px-4 py-3.5 sm:py-4",
+        compact ? "px-3 sm:px-4 py-3.5" : "px-3 sm:px-4 py-3.5 sm:py-4",
         on ? "border-accent bg-accent-soft/35" : "border-line hover:border-ink-2 bg-paper")}>
-      <span className={cx("absolute top-3.5 right-3.5 h-5 w-5 grid place-items-center border transition-colors",
-        multi ? "rounded-xs" : "rounded-full",
-        on ? "bg-accent border-accent text-accent-ink" : "border-field group-hover:border-ink-2")}>
-        {on && (multi ? <IconCheck width={13} height={13} strokeWidth={2.4} /> : <span className="h-1.5 w-1.5 rounded-full bg-accent-ink" />)}
+      {icon ? (
+        <span className="flex items-start justify-between gap-1.5 sm:mb-3">
+          <span className={cx("hidden sm:block transition-colors", on ? "text-accent-hover" : "text-muted")}>{icon}</span>
+          <span className="sm:hidden block font-medium text-body min-w-0 hyphens-auto break-words">{title}</span>
+          {mark}
+        </span>
+      ) : null}
+      <span className={cx("flex items-start justify-between gap-1.5", Boolean(icon) && "hidden sm:flex")}>
+        <span className="block font-medium text-body min-w-0 hyphens-auto break-words">{title}</span>
+        {!icon && mark}
       </span>
-      {icon && <span className={cx("hidden sm:block mb-3 transition-colors", on ? "text-accent-hover" : "text-muted")}>{icon}</span>}
-      <span className="block font-medium text-body pr-7">{title}</span>
       {desc && <span className={cx("text-meta text-muted mt-1 leading-snug pr-2", descDesktopOnly ? "hidden sm:block" : "block")}>{desc}</span>}
     </button>
   );

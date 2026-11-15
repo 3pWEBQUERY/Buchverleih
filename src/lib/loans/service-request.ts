@@ -16,6 +16,7 @@ import type { OfferKind } from "./machine";
 import { afterAcceptConsecutive, onPassOnBroken, releaseFollowers } from "./passon";
 import { SYSTEM, releaseBookings, offerEarlierStart } from "./service-shared";
 import type { TxSql } from "./service-shared";
+import { requireFeature } from "@/lib/features";
 
 // ---------------------------------------------------------------------------
 // Anfrage (4.2, 4.8, 5.1, 5.2)
@@ -31,6 +32,7 @@ export type RequestInput = {
 };
 
 export async function requestLoan(user: SessionUser, input: RequestInput) {
+  if (input.kind !== "lend") await requireFeature("swap");
   await rateLimit(`request:${user.id}`, 20, 3600);
   return sql.begin(async (tx) => {
     const blocker = await requestBlocker(tx, user);

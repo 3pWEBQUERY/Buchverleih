@@ -32,8 +32,8 @@ const de = {
     swap: ["Tauschen", "Bücher 1:1 tauschen und verschenken."],
     pass_on: ["Direkte Weitergabe", "Buch geht vom ersten zum zweiten Leiher, mit drei Zustimmungen."],
     wishlist: ["Wunschliste und Titelalarm", "Benachrichtigung, sobald ein Titel in der Nähe frei wird."],
-    map: ["Karte", "Regale als Flächen auf einer Karte. Phase 2."],
-    shipping: ["Versand", "Knopf «Versand gewünscht» zählt die Nachfrage. Phase 3."],
+    map: ["Karte", "Kartenansicht in der Suche."],
+    shipping: ["Versand", "Knopf «Versand gewünscht» zählt die Nachfrage."],
   } as Record<string, [label: string, hint: string]>,
   action: {
     read_chat: "Chat eingesehen",
@@ -70,6 +70,8 @@ const de = {
   role: { member: "Mitglied", moderator: "Moderation", admin: "Administration" } as Record<string, string>,
   reportStatus: { open: "Offen", actioned: "Erledigt", dismissed: "Verworfen" } as Record<string, string>,
   priority: { hoch: "Priorität hoch", mittel: "Priorität mittel", normal: "Läuft automatisch", niedrig: "Priorität niedrig" },
+  on: "Ein",
+  off: "Aus",
   tabs: { warteschlange: "Warteschlange", kennzahlen: "Kennzahlen", schalter: "Schalter", konten: "Konten", protokoll: "Protokoll" },
   tabsAria: "Bereiche der Moderation",
 };
@@ -106,8 +108,8 @@ const fr: ModLabels = {
     swap: ["Échanger", "Échanger des livres 1:1 et en donner."],
     pass_on: ["Transmission directe", "Le livre passe du premier au deuxième emprunteur, avec trois accords."],
     wishlist: ["Liste d’envies et alerte de titre", "Notification dès qu’un titre se libère à proximité."],
-    map: ["Carte", "Étagères affichées comme zones sur une carte. Phase 2."],
-    shipping: ["Envoi postal", "Le bouton « Envoi souhaité » compte la demande. Phase 3."],
+    map: ["Carte", "Vue carte dans la recherche."],
+    shipping: ["Envoi postal", "Le bouton « Envoi souhaité » compte la demande."],
   },
   action: {
     read_chat: "Chat consulté",
@@ -144,6 +146,8 @@ const fr: ModLabels = {
   role: { member: "Membre", moderator: "Modération", admin: "Administration" },
   reportStatus: { open: "Ouvert", actioned: "Traité", dismissed: "Rejeté" },
   priority: { hoch: "Priorité haute", mittel: "Priorité moyenne", normal: "Suit son cours", niedrig: "Priorité basse" },
+  on: "Activé",
+  off: "Désactivé",
   tabs: { warteschlange: "File d’attente", kennzahlen: "Indicateurs", schalter: "Fonctions", konten: "Comptes", protokoll: "Journal" },
   tabsAria: "Rubriques de la modération",
 };
@@ -179,8 +183,8 @@ const it: ModLabels = {
     swap: ["Scambiare", "Scambiare libri 1:1 e regalarli."],
     pass_on: ["Passaggio diretto", "Il libro passa dal primo al secondo lettore, con tre consensi."],
     wishlist: ["Lista dei desideri e avviso del titolo", "Notifica appena un titolo si libera nelle vicinanze."],
-    map: ["Mappa", "Scaffali mostrati come aree su una mappa. Fase 2."],
-    shipping: ["Spedizione", "Il pulsante «Spedizione desiderata» conta la domanda. Fase 3."],
+    map: ["Mappa", "Vista mappa nella ricerca."],
+    shipping: ["Spedizione", "Il pulsante «Spedizione desiderata» conta la domanda."],
   },
   action: {
     read_chat: "Chat consultata",
@@ -217,6 +221,8 @@ const it: ModLabels = {
   role: { member: "Membro", moderator: "Moderazione", admin: "Amministrazione" },
   reportStatus: { open: "Aperta", actioned: "Evasa", dismissed: "Respinta" },
   priority: { hoch: "Priorità alta", mittel: "Priorità media", normal: "Procede da sé", niedrig: "Priorità bassa" },
+  on: "Attivo",
+  off: "Disattivo",
   tabs: { warteschlange: "Coda", kennzahlen: "Indicatori", schalter: "Funzioni", konten: "Conti", protokoll: "Registro" },
   tabsAria: "Sezioni della moderazione",
 };
@@ -252,8 +258,8 @@ const en: ModLabels = {
     swap: ["Swapping", "Swap books 1:1 and give them away."],
     pass_on: ["Direct pass-on", "A book goes from the first borrower to the second, with three approvals."],
     wishlist: ["Wishlist and title alert", "Notification as soon as a title is free nearby."],
-    map: ["Map", "Shelves as areas on a map. Phase 2."],
-    shipping: ["Shipping", "A “Shipping wanted” button counts the demand. Phase 3."],
+    map: ["Map", "Map view in search."],
+    shipping: ["Shipping", "A “Shipping wanted” button counts the demand."],
   } as Record<string, [label: string, hint: string]>,
   action: {
     read_chat: "Chat viewed",
@@ -290,6 +296,8 @@ const en: ModLabels = {
   role: { member: "Member", moderator: "Moderation", admin: "Administration" } as Record<string, string>,
   reportStatus: { open: "Open", actioned: "Resolved", dismissed: "Dismissed" } as Record<string, string>,
   priority: { hoch: "High priority", mittel: "Medium priority", normal: "Runs automatically", niedrig: "Low priority" },
+  on: "On",
+  off: "Off",
   tabs: { warteschlange: "Queue", kennzahlen: "Metrics", schalter: "Switches", konten: "Accounts", protokoll: "Log" },
   tabsAria: "Moderation areas",
 };

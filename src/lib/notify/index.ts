@@ -33,6 +33,7 @@ export type NotificationType =
   | "returned"
   | "completed"
   | "damage_reported"
+  | "damage_reminder"
   | "case_opened"
   | "case_reminder"
   | "case_suspended"
@@ -84,6 +85,7 @@ export const EMAIL_CATEGORY: Partial<Record<NotificationType, "requests" | "acce
   return_reported: "deadlines",
   extension_requested: "requests",
   damage_reported: "cases",
+  damage_reminder: "cases",
   case_opened: "cases",
   case_reminder: "cases",
   case_suspended: "cases",

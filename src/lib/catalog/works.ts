@@ -107,6 +107,12 @@ export async function createManualEdition(
 ) {
   const isbn = input.isbn ? normalizeIsbn(input.isbn) : null;
   if (input.isbn && !isbn) throw err.invalid("Diese ISBN ist ungültig.");
+  if (isbn) {
+    // Gibt es die ISBN in einem Katalog, gilt dieser Eintrag – eine echte ISBN lässt sich nicht
+    // mit eigenem Titel vorab belegen.
+    const known = await editionByIsbn(isbn, userId).catch(() => null);
+    if (known) return known;
+  }
   return sql.begin(async (tx) => {
     if (isbn) {
       const [ex] = await tx<{ id: string }[]>`select id from editions where isbn13 = ${isbn}`;

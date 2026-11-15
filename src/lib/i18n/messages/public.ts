@@ -310,7 +310,7 @@ const it: M = {
 
 const en: M = {
   landing: {
-    beta: "Beta in Zurich and the Zürcher Unterland",
+    beta: "Beta in Zurich and the Zurich Unterland",
     hero: ["Borrow the book ", "next door."],
     lead: "Leihregal connects the bookshelves of a neighbourhood. You borrow what others have read and lend what’s just sitting on your shelf – free, with fixed deadlines and a scan at every handover.",
     stats: { books: "Books", members: "Members", fee: "CHF fee" },

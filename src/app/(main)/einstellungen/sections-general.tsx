@@ -10,6 +10,7 @@ import { WISHLIST } from "@/lib/i18n/messages/wishlist";
 import { useLocale } from "@/components/locale-provider";
 import { readTheme, saveTheme, type Theme } from "@/components/theme-sync";
 import { msg, useT } from "./sections-shared";
+import { SETTINGS } from "@/lib/i18n/messages/settings";
 
 /** Einstellungen, Bereich Allgemein: E-Mail, Darstellung, Push, Daten, Abmelden, Konto löschen */
 /* ------------------------------------------------- E-Mail-Benachrichtigungen */
@@ -93,6 +94,26 @@ export function CommunityPrefs({ pulse, notify }: { pulse: boolean; notify: "rep
           onChange={(v) => { const before = mode; setMode(v); save({ pinboardNotify: v }, () => setMode(before)); }} />
       </div>
     </div>
+  );
+}
+
+/** Standard-Umkreis für Start, Suche und neue Wünsche */
+export function RadiusPref({ km }: { km: number }) {
+  const T = useT();
+  const toast = useToast();
+  const router = useRouter();
+  const [v, setV] = useState(km);
+  const l = useLocale();
+  const label = SETTINGS[l].rows.umkreis[0];
+  return (
+    <Segmented name={label} value={String(v)} className="max-w-[460px]" size="lg"
+      options={[1, 2, 5, 10, 25].map((n) => ({ value: String(n), label: `${n} km` }))}
+      onChange={async (x) => {
+        const before = v;
+        setV(Number(x));
+        try { await api("/me", { method: "PATCH", body: { radiusKm: Number(x) } }); router.refresh(); toast.show({ text: COMMUNITY[l].settings.saved }, 2500); }
+        catch (e) { setV(before); toast.error(msg(e, T)); }
+      }} />
   );
 }
 

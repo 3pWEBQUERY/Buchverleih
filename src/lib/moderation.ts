@@ -17,12 +17,12 @@ async function log(modId: string, action: string, targetType: string, targetId: 
 export async function queue() {
   const cases = await sql<{ id: string; loan_id: string; kind: string; stage: number; opened_at: Date; response: string | null; title: string; owner: string; borrower: string; needs_decision: boolean }[]>`
     select c.id, c.loan_id, c.kind, c.stage, c.opened_at, c.response, e.title, o.first_name as owner, b.first_name as borrower,
-           (c.response = 'object' or c.stage >= 2) as needs_decision
+           (coalesce(c.response = 'object', false) or c.stage >= 2) as needs_decision
       from cases c join loans l on l.id = c.loan_id
       join copies cp on cp.id = l.copy_id join editions e on e.id = cp.edition_id
       join users o on o.id = l.owner_id join users b on b.id = l.borrower_id
      where c.closed_at is null
-     order by (c.response = 'object' or c.stage >= 2) desc, c.opened_at`;
+     order by (coalesce(c.response = 'object', false) or c.stage >= 2) desc, c.opened_at`;
   const open = await sql<{ id: string; target_type: string; target_id: string; reason: string; note: string | null; created_at: Date; reporter: string | null }[]>`
     select r.id, r.target_type, r.target_id, r.reason, r.note, r.created_at, u.first_name as reporter
       from reports r left join users u on u.id = r.reporter_id
@@ -140,9 +140,9 @@ export async function temporaryPassword(mod: SessionUser, userId: string) {
   const [t] = await sql<{ deleted_at: Date | null }[]>`select deleted_at from users where id = ${userId}`;
   if (!t || t.deleted_at) throw err.notFound();
   const { shortCode } = await import("@/lib/crypto");
-  const { setPassword } = await import("@/lib/auth/flows");
+  const { storePassword } = await import("@/lib/auth/flows");
   const password = `${shortCode(4)}-${shortCode(4)}-${shortCode(4)}`;
-  await setPassword(userId, password);
+  await storePassword(userId, password);
   await log(mod.id, "temp_password", "user", userId);
   return password;
 }
@@ -210,17 +210,15 @@ export async function applyCorrection(mod: SessionUser, id: string, apply: boole
 }
 
 export async function flags() {
-  return sql<{ key: string; region_id: string; region_name: string; enabled: boolean; region_enabled: boolean }[]>`
-    select f.key, f.region_id, r.name as region_name, f.enabled, r.enabled as region_enabled
-      from feature_flags f join regions r on r.id = f.region_id order by r.name, f.key`;
+  return sql<{ key: string; enabled: boolean }[]>`select key, enabled from features order by key`;
 }
 
-export async function setFlag(mod: SessionUser, key: string, regionId: string, enabled: boolean) {
-  // Regionen und Funktionen schalten nur Admins
+export async function setFlag(mod: SessionUser, key: string, enabled: boolean) {
+  // Funktionen schalten nur Admins
   if (mod.role !== "admin") throw err.forbidden("Regionen und Funktionen schalten nur Admins.");
-  if (key === "__region") await sql`update regions set enabled = ${enabled} where id = ${regionId}`;
-  else await sql`update feature_flags set enabled = ${enabled}, updated_at = now() where key = ${key} and region_id = ${regionId}`;
-  await log(mod.id, `flag_${enabled ? "on" : "off"}`, "flag", `${regionId}:${key}`);
+  const r = await sql`update features set enabled = ${enabled}, updated_at = now() where key = ${key} returning key`;
+  if (!r.length) throw err.notFound();
+  await log(mod.id, `flag_${enabled ? "on" : "off"}`, "flag", key);
 }
 
 /** Kennzahlen aus PRD Abschnitt 2 */

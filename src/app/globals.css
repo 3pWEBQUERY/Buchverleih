@@ -550,3 +550,29 @@ dialog.palette[open]::backdrop { opacity: 1; transition-timing-function: var(--e
 .select-list:popover-open { opacity: 1; transform: none; transition-timing-function: var(--ease-out-curve); }
 @starting-style { .select-list:popover-open { opacity: 0; transform: translateY(-4px); } .select-list[data-side="top"]:popover-open { transform: translateY(4px); } }
 @media (prefers-reduced-motion: reduce) { .select-list, .select-list[data-side="top"], .select-list:popover-open { transform: none; transition-duration: 80ms; } }
+
+/* Dunkelmodus: deaktivierte Knöpfe bleiben lesbar (40 % Deckkraft verschwindet auf dunklem Grund) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) :is(button, a, [role="button"]):disabled,
+  :root:not([data-theme="light"]) :is(button, [role="button"])[aria-disabled="true"] { opacity: 0.6; }
+}
+:root[data-theme="dark"] :is(button, a, [role="button"]):disabled,
+:root[data-theme="dark"] :is(button, [role="button"])[aria-disabled="true"] { opacity: 0.6; }
+
+/*
+ * Waagrecht scrollende Leisten (Tabs, Filter): ein weicher Rand zeigt, dass es weitergeht.
+ * Die Ränder folgen der Scrollposition (scroll-driven); ohne Überlauf bleibt alles scharf.
+ */
+@property --fade-l { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --fade-r { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@keyframes scroll-x-fade {
+  0% { --fade-l: 0px; --fade-r: 32px; }
+  8%, 92% { --fade-l: 32px; --fade-r: 32px; }
+  100% { --fade-l: 32px; --fade-r: 0px; }
+}
+.scroll-x-fade {
+  mask-image: linear-gradient(to right, transparent, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent);
+}
+@supports (animation-timeline: scroll()) {
+  .scroll-x-fade { animation: scroll-x-fade linear both; animation-timeline: scroll(self inline); }
+}

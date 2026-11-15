@@ -78,7 +78,7 @@ export function CorrectionActions({ id }: { id: string }) {
 }
 
 /** Feature-Schalter oder Region (key "__region"). Umkehrbar: sofort, mit «Rückgängig». */
-export function FlagSwitch({ regionId, flagKey, label, hint, checked }: { regionId: string; flagKey: string; label: ReactNode; hint?: ReactNode; checked: boolean }) {
+export function FlagSwitch({ flagKey, label, hint, checked }: { flagKey: string; label: ReactNode; hint?: ReactNode; checked: boolean }) {
   const t = useT();
   const router = useRouter();
   const toast = useToast();
@@ -87,7 +87,7 @@ export function FlagSwitch({ regionId, flagKey, label, hint, checked }: { region
   async function set(v: boolean, undoable = true) {
     setOn(v);
     try {
-      await mod({ action: "flag", key: flagKey, regionId, enabled: v });
+      await mod({ action: "flag", key: flagKey, enabled: v });
       router.refresh();
       if (undoable) toast.show({ text: `${typeof label === "string" ? label : t.flag}: ${v ? t.on : t.off}.`, undo: () => set(!v, false) });
     } catch (e) {

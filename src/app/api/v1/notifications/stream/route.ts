@@ -65,10 +65,13 @@ export async function GET(req: Request) {
       }
       send("unread", { unread: await unread().catch(() => 0) });
       ping = setInterval(() => { if (!closed) try { controller.enqueue(enc.encode(": ping\n\n")); } catch { cleanup(); } }, 25_000);
-      req.signal.addEventListener("abort", () => {
+      const onAbort = () => {
         cleanup();
         try { controller.close(); } catch {}
-      });
+      };
+      // Brach die Verbindung schon während des Aufbaus ab, sofort aufräumen (sonst liefen Ping und LISTEN weiter)
+      if (req.signal.aborted) onAbort();
+      else req.signal.addEventListener("abort", onAbort);
     },
     cancel() { cleanup(); },
   });

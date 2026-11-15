@@ -46,7 +46,7 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
     : sql``;
   const lat = origin?.lat ?? null;
   const lng = origin?.lng ?? null;
-  const radiusM = (f.radiusKm ?? 25) * 1000;
+  const radiusM = (f.radiusKm ?? 10) * 1000;
 
   const rows = await sql<(Omit<WorkHit, "offers"> & { o_lend: boolean; o_swap: boolean; o_gift: boolean })[]>`
     with cand as (
