@@ -2,6 +2,7 @@
 import { sql } from "@/lib/db";
 import { err } from "@/lib/errors";
 import { homeFromPlz } from "@/lib/geo";
+import type { Locale } from "@/lib/i18n/locale";
 
 export async function plzInfo(plz: string) {
   const [p] = await sql<{ plz: string; municipality: string; lat: number; lng: number; region_id: string | null; region_name: string | null; enabled: boolean | null }[]>`
@@ -20,8 +21,12 @@ export async function completeProfile(userId: string, input: { firstName: string
   sixteen.setFullYear(sixteen.getFullYear() + 16);
   if (sixteen > new Date()) throw err.conflict("too_young", "Für ein eigenes Konto brauchst du mindestens 16 Jahre. Kinderbücher leihen deine Eltern.");
   const p = await plzInfo(input.plz);
-  if (!p || !p.enabled)
-    throw err.conflict("region_closed", "Leihregal ist in deiner Region noch nicht offen. Trag dich auf die Warteliste ein, wir melden uns.");
+  if (!p) throw err.invalid("Diese Postleitzahl kennen wir nicht. Prüfe die vier Ziffern.");
+  if (!p.enabled) {
+    // Gleich auf die Warteliste dieser PLZ: wir kennen E-Mail und Sprache schon
+    await waitlistSelf(userId, p.plz);
+    throw err.conflict("region_closed", "Leihregal ist in deiner Gemeinde noch nicht offen. Wir haben dich auf die Warteliste gesetzt und schreiben dir, sobald es losgeht.");
+  }
   const { home, display } = homeFromPlz(p.lat, p.lng);
   await sql`
     update users set first_name = ${first}, plz = ${p.plz}, municipality = ${p.municipality},
@@ -35,8 +40,11 @@ export async function completeProfile(userId: string, input: { firstName: string
 /** Umzug innerhalb fertiger Profile: neuer Wohnort aus der PLZ, keine Änderung an Alter oder Onboarding */
 export async function movePlz(userId: string, plz: string) {
   const p = await plzInfo(plz);
-  if (!p || !p.enabled)
-    throw err.conflict("region_closed", "Leihregal ist in dieser Region noch nicht offen. Trag dich auf die Warteliste ein, wir melden uns.");
+  if (!p) throw err.invalid("Diese Postleitzahl kennen wir nicht. Prüfe die vier Ziffern.");
+  if (!p.enabled) {
+    await waitlistSelf(userId, p.plz);
+    throw err.conflict("region_closed", "Leihregal ist in dieser Gemeinde noch nicht offen. Wir haben dich auf die Warteliste gesetzt und schreiben dir, sobald es losgeht.");
+  }
   const { home, display } = homeFromPlz(p.lat, p.lng);
   await sql`
     update users set plz = ${p.plz}, municipality = ${p.municipality}, home_lat = ${home.lat}, home_lng = ${home.lng},
@@ -87,9 +95,16 @@ export async function setAvatar(userId: string, uploadId: string | null) {
   return key;
 }
 
-export async function joinWaitlist(email: string, plz: string) {
+export async function joinWaitlist(email: string, plz: string, locale: Locale = "de") {
   if (!/^\d{4}$/.test(plz)) throw err.invalid("Gib eine vierstellige Postleitzahl ein.");
-  await sql`insert into plz_waitlist (email, plz) values (${email.trim().toLowerCase()}, ${plz}) on conflict do nothing`;
+  await sql`insert into plz_waitlist (email, plz, locale) values (${email.trim().toLowerCase()}, ${plz}, ${locale})
+            on conflict (email, plz) do update set locale = excluded.locale, notified_at = null`;
+}
+
+/** Angemeldete Person mit geschlossener PLZ: mit ihrer E-Mail und Sprache auf die Warteliste */
+async function waitlistSelf(userId: string, plz: string) {
+  const [u] = await sql<{ email: string | null; locale: Locale }[]>`select email, locale from users where id = ${userId}`;
+  if (u?.email) await joinWaitlist(u.email, plz, u.locale);
 }
 
 /** Datenexport: alles, was zur Person gespeichert ist (DSG/DSGVO Auskunft) */

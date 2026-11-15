@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { body, route } from "@/lib/api";
+import { body, requestLocale, route } from "@/lib/api";
 import { joinWaitlist } from "@/lib/account";
 import { rateLimit } from "@/lib/ratelimit";
 
@@ -7,6 +7,6 @@ import { rateLimit } from "@/lib/ratelimit";
 export const POST = route(async (req) => {
   const b = await body(req, z.object({ email: z.string().email().max(200), plz: z.string().regex(/^\d{4}$/) }));
   await rateLimit(`waitlist:${b.email}`, 5, 3600);
-  await joinWaitlist(b.email, b.plz);
+  await joinWaitlist(b.email, b.plz, requestLocale(req));
   return { ok: true };
 });
