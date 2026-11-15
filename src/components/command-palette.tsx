@@ -11,6 +11,7 @@ import { IconArrowRight, IconBell, IconBookmark, IconCalendar, IconCircles, Icon
 import { useLocale } from "./locale-provider";
 import { useToast } from "./toast";
 import { cx } from "./ui";
+import { Cover, type CoverData } from "./cover";
 
 type M = (typeof SHELL)[Locale];
 
@@ -92,7 +93,7 @@ function Dialog({ open, onClose, label, children }: { open: boolean; onClose: ()
       // Tippen auf den Schleier schliesst – nur wenn der Druck auch dort begann (kein Schliessen beim Markieren)
       onPointerDown={(e) => { downOutside.current = e.target === e.currentTarget; }}
       onClick={(e) => { if (downOutside.current && e.target === e.currentTarget) onClose(); }}
-      className="palette fixed inset-0 mx-auto mt-4 md:mt-[12vh] mb-auto p-0 w-[calc(100vw-32px)] max-w-[640px] max-h-none overflow-hidden rounded-lg border border-field bg-paper text-ink">
+      className="palette fixed inset-0 mx-auto mt-4 md:mt-[12vh] mb-auto p-0 w-[calc(100vw-32px)] max-w-[640px] max-h-none overflow-hidden rounded-lg border border-line bg-paper text-ink">
       {children}
     </dialog>
   );
@@ -107,8 +108,8 @@ export function ShortcutHelp({ open, onClose }: { open: boolean; onClose: () => 
   const titleId = useId();
   return (
     <Dialog open={open} onClose={onClose} label={s.title}>
-      <div className="flex items-center justify-between gap-4 pl-5 pr-2 h-14 border-b border-line">
-        <h2 id={titleId} className="text-body-lg font-title">{s.title}</h2>
+      <div className="flex items-center justify-between gap-4 pl-5 pr-2 h-16 border-b border-line">
+        <h2 id={titleId} className="text-title-sm font-title tracking-title">{s.title}</h2>
         <button type="button" onClick={onClose} aria-label={s.close} className="press h-11 w-11 grid place-items-center rounded-sm text-muted hover:text-ink hover:bg-paper-2">
           <IconClose />
         </button>
@@ -116,7 +117,7 @@ export function ShortcutHelp({ open, onClose }: { open: boolean; onClose: () => 
       <div className="max-h-[calc(100dvh-140px)] md:max-h-[min(72dvh,640px)] overflow-y-auto overscroll-contain px-5 pt-1 pb-5">
         {(["general", "go"] as const).map((g) => (
           <section key={g} aria-labelledby={`${titleId}-${g}`}>
-            <h3 id={`${titleId}-${g}`} className="text-caption font-medium text-muted mt-4 mb-1">{s[g]}</h3>
+            <h3 id={`${titleId}-${g}`} className="eyebrow mt-5 mb-1">{s[g]}</h3>
             <dl>
               {SHORTCUTS.filter((x) => x.group === g).map((x) => (
                 <div key={x.id} className="flex items-center justify-between gap-4 min-h-11 py-1.5 border-b border-line last:border-b-0">
@@ -146,6 +147,8 @@ type Item = {
   note?: string;
   /** Buchtitel stehen in Literata */
   serif?: boolean;
+  /** Titel mit Cover: zeigt das Buch statt eines Symbols */
+  cover?: CoverData;
   icon: ReactNode;
   href?: string;
   run?: () => void;
@@ -355,7 +358,8 @@ function Body({ data, me, setMe, reload, onClose, onHelp }: {
     }));
     const books: Item[] = (d?.books ?? []).map((b) => ({ id: `book:${b.id}`, kind: "book", label: b.title, serif: true, sub: b.authors.join(", ") || undefined, icon: kindIcon.book, href: `/regal/${b.id}` }));
     const circles: Item[] = (d?.circles ?? []).map((c) => ({ id: `circle:${c.id}`, kind: "circle", label: c.name, icon: kindIcon.circle, href: `/kreise/${c.id}` }));
-    const found: Item[] = wantTitles ? titles.hits.map((h) => ({ id: `title:${h.work_id}`, kind: "title", label: h.title, serif: true, sub: h.authors.join(", ") || undefined, icon: kindIcon.title, href: `/titel/${h.work_id}` })) : [];
+    const found: Item[] = wantTitles ? titles.hits.map((h) => ({ id: `title:${h.work_id}`, kind: "title", label: h.title, serif: true, sub: h.authors.join(", ") || undefined, icon: kindIcon.title, href: `/titel/${h.work_id}`,
+      cover: { title: h.title, authors: h.authors, photoKey: h.cover?.photo_key, photoW: h.cover?.photo_w, photoH: h.cover?.photo_h, photoColor: h.cover?.photo_color, coverKey: h.cover?.cover_key, coverColor: h.cover?.cover_color, seed: h.work_id } })) : [];
 
     // Zuletzt Benutztes: Aktionen und Seiten in der heutigen Sprache, Bücher/Vorgänge/Kreise aus dem frischen Stand
     const live = new Map([...actions, ...pages, ...loans, ...books, ...circles].map((it) => [it.id, it]));
@@ -444,15 +448,15 @@ function Body({ data, me, setMe, reload, onClose, onHelp }: {
 
   return (
     <div className="flex flex-col">
-      <div className="flex items-center gap-3 pl-4 pr-2 md:pr-4 border-b border-line">
-        <IconSearch width={20} height={20} className="text-muted flex-none" />
+      <div className="flex items-center gap-3 pl-5 pr-2 md:pr-4 border-b border-line">
+        <IconSearch width={20} height={20} className="text-ink-2 flex-none" />
         <input
           type="text" role="combobox" aria-label={p.placeholder} aria-autocomplete="list" aria-haspopup="listbox"
           aria-expanded={options.length > 0} aria-controls={listId} aria-activedescendant={current ? optionId(current) : undefined}
           value={query} onChange={(e) => { setQuery(e.target.value); setActive(0); }} onKeyDown={onKeyDown}
           placeholder={p.placeholder} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} enterKeyHint="go"
           // Der Fokus bleibt immer hier; die gewählte Zeile trägt die sichtbare Marke
-          className="flex-1 min-w-0 h-14 bg-transparent text-body-lg placeholder:text-muted outline-none"
+          className="flex-1 min-w-0 h-16 bg-transparent text-lead tracking-ui placeholder:text-muted outline-none"
         />
         <kbd aria-hidden className={cx(kbdCls, "hidden md:inline-block")}>esc</kbd>
         <button type="button" onClick={onClose} aria-label={p.shortcuts.close} className="md:hidden press h-11 w-11 grid place-items-center rounded-sm text-muted hover:text-ink">
@@ -463,19 +467,19 @@ function Body({ data, me, setMe, reload, onClose, onHelp }: {
       {!online && <p className="px-4 py-2.5 text-body-sm text-ink-2 bg-paper-2 border-b border-line">{p.offline}</p>}
 
       <div ref={listRef} id={listId} role="listbox" aria-label={p.label} aria-busy={busy}
-        className="max-h-[calc(100dvh-180px)] md:max-h-[min(60dvh,460px)] overflow-y-auto overscroll-contain py-2">
+        className="max-h-[calc(100dvh-180px)] md:max-h-[min(60dvh,480px)] overflow-y-auto overscroll-contain p-2">
         {shown.map((g) => {
           const gid = `${uid}-g-${g.id}`;
           return (
             <div key={g.id} role="group" aria-labelledby={gid}>
-              <div id={gid} role="presentation" className="px-4 pt-2.5 pb-1 text-caption font-medium text-muted">{g.label}</div>
+              <div id={gid} role="presentation" className="eyebrow px-3 pt-3 pb-1.5">{g.label}</div>
               {g.loading && [0, 1, 2].slice(0, g.id === "titles" ? 2 : 3).map((i) => (
-                <div key={i} aria-hidden className="flex items-center gap-3 min-h-11 px-4">
-                  <span className="skeleton h-[18px] w-[18px] flex-none" />
+                <div key={i} aria-hidden className="flex items-center gap-3 min-h-12 px-3">
+                  <span className="skeleton h-9 w-9 rounded-md flex-none" />
                   <span className={cx("skeleton h-3.5", i === 0 ? "w-48" : i === 1 ? "w-36" : "w-56")} />
                 </div>
               ))}
-              {g.error && <p className="px-4 py-2 text-body-sm text-ink-2">{g.error}</p>}
+              {g.error && <p className="px-3 py-2 text-body-sm text-ink-2">{g.error}</p>}
               {g.items.map((it) => {
                 const on = it.id === current?.id;
                 return (
@@ -483,14 +487,20 @@ function Body({ data, me, setMe, reload, onClose, onHelp }: {
                     onMouseMove={() => { const i = options.indexOf(it); if (i !== active) setActive(i); }}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => run(it)}
-                    className={cx("relative flex items-center gap-3 min-h-11 px-4 py-1.5 cursor-pointer select-none", on && "bg-paper-2")}>
-                    {on && <span aria-hidden className="absolute left-0 inset-y-1.5 w-[3px] rounded-full bg-ink" />}
-                    <span className={cx("flex-none", on ? "text-ink" : "text-muted")}>{it.icon}</span>
+                    className={cx("relative flex items-center gap-3 min-h-12 px-3 py-1.5 rounded-md cursor-pointer select-none transition-colors", on ? "bg-paper-2 outline outline-1 outline-line-strong" : "hover:bg-paper-2/60")}>
+                    {/* Symbol in einer Kachel wie im Schnellzugriff der Startseite; Titel zeigen ihr Cover */}
+                    {it.cover
+                      ? <span className="flex-none w-9 grid place-items-center"><Cover data={it.cover} width={24} height={36} uniform /></span>
+                      : <span className={cx("flex-none h-9 w-9 rounded-md grid place-items-center transition-colors", on ? "bg-paper text-ink" : "bg-paper-2 text-ink-2")}>{it.icon}</span>}
                     <span className="min-w-0 flex-1">
                       <span title={it.label} className={cx("block truncate", it.serif ? "font-serif text-body" : "text-body")}>{it.label}</span>
                       {it.sub && <span className="block truncate text-meta text-muted">{it.sub}</span>}
                     </span>
-                    {it.note && <span className="chip flex-none">{it.note}</span>}
+                    {it.note && (
+                      <span className="flex-none inline-flex items-center gap-1.5 text-meta font-medium text-ink-2">
+                        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent" />{it.note}
+                      </span>
+                    )}
                     {it.keys && <span className="hidden md:inline-flex"><Keys keys={it.keys} mac={mac} /></span>}
                     {on && <kbd aria-hidden className={cx(kbdCls, "hidden md:inline-block flex-none")}>↵</kbd>}
                   </div>
@@ -499,10 +509,10 @@ function Body({ data, me, setMe, reload, onClose, onHelp }: {
             </div>
           );
         })}
-        {nothing && <p className="px-4 pt-1 pb-2 text-body-sm text-muted">{p.noResults}</p>}
+        {nothing && <p className="px-3 pt-2 pb-3 text-body-sm text-muted">{p.noResults}</p>}
       </div>
 
-      <div aria-hidden className="hidden md:flex items-center gap-5 px-4 h-10 border-t border-line text-caption text-muted">
+      <div aria-hidden className="hidden md:flex items-center gap-5 px-5 h-11 border-t border-line bg-paper-2 text-caption text-muted">
         <span className="inline-flex items-center gap-1.5"><kbd className={kbdCls}>↑</kbd><kbd className={kbdCls}>↓</kbd> {p.hintMove}</span>
         <span className="inline-flex items-center gap-1.5"><kbd className={kbdCls}>↵</kbd> {p.hintRun}</span>
         <span className="inline-flex items-center gap-1.5"><kbd className={kbdCls}>esc</kbd> {p.hintClose}</span>
