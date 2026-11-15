@@ -7,8 +7,9 @@ import type { HelpContent } from "./content/types";
 import { HELP_DE } from "./content/de";
 import { HELP_FR } from "./content/fr";
 import { HELP_IT } from "./content/it";
+import { HELP_EN } from "./content/en";
 
-const HELP: Record<Locale, HelpContent> = { de: HELP_DE, fr: HELP_FR, it: HELP_IT };
+const HELP: Record<Locale, HelpContent> = { de: HELP_DE, fr: HELP_FR, it: HELP_IT, en: HELP_EN };
 
 export async function generateMetadata() {
   const h = HELP[await getLocale()];
