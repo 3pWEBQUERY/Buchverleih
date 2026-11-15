@@ -429,19 +429,15 @@ export function StackReview({ s }: { s: Stack }) {
                 <div className="grid sm:grid-cols-2 gap-x-3 gap-y-2 mt-3 sm:pl-[50px]">
                   <label className="block min-w-0">
                     <span className="block text-meta text-muted mb-1">{CAPTURE[l].condition}</span>
-                    <Select disabled={busy} aria-label={t.conditionOf(e.title)} value={o.condition ?? ""} className="!text-body"
-                      onChange={(ev) => s.setOverride(e.id, { condition: ev.target.value ? Number(ev.target.value) : undefined })}>
-                      <option value="">{t.likeAll(L.conditionLabel[s.shared.condition])}</option>
-                      {CONDITIONS.map((c) => <option key={c} value={c}>{L.conditionLabel[c]}</option>)}
-                    </Select>
+                    <Select disabled={busy} aria-label={t.conditionOf(e.title)} value={o.condition != null ? String(o.condition) : ""}
+                      onChange={(v) => s.setOverride(e.id, { condition: v ? Number(v) : undefined })}
+                      options={[{ value: "", label: t.likeAll(L.conditionLabel[s.shared.condition]) }, ...CONDITIONS.map((c) => ({ value: String(c), label: L.conditionLabel[c], text: L.conditionLabel[c] }))]} />
                   </label>
                   <label className="block min-w-0">
                     <span className="block text-meta text-muted mb-1">{t.visibility}</span>
-                    <Select disabled={busy} aria-label={t.visibilityOf(e.title)} value={o.visibility ?? ""} className="!text-body"
-                      onChange={(ev) => s.setOverride(e.id, { visibility: (ev.target.value || undefined) as Visibility | undefined })}>
-                      <option value="">{t.likeAll(L.visibilityLabel[s.shared.visibility])}</option>
-                      {VIS_OPTIONS.map((v) => <option key={v} value={v}>{L.visibilityLabel[v]}</option>)}
-                    </Select>
+                    <Select disabled={busy} aria-label={t.visibilityOf(e.title)} value={o.visibility ?? ""}
+                      onChange={(v) => s.setOverride(e.id, { visibility: (v || undefined) as Visibility | undefined })}
+                      options={[{ value: "", label: t.likeAll(L.visibilityLabel[s.shared.visibility]) }, ...VIS_OPTIONS.map((v) => ({ value: v as string, label: L.visibilityLabel[v], text: L.visibilityLabel[v] }))]} />
                   </label>
                 </div>
                 {error && !busy && n > 1 && (

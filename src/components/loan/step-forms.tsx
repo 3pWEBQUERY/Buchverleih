@@ -45,9 +45,8 @@ export function AcceptForm({ loan, busy, onAccept, onDecline }: { loan: LoanView
       <div className="grid md:grid-cols-2 gap-5 md:gap-4">
       {loan.ownerSpots.length > 0 ? (
         <Field label={m.spot} hint={m.spotHint}>
-          <Select value={spot} onChange={(e) => setSpot(e.target.value)}>
-            {loan.ownerSpots.map((s) => <option key={s.id} value={s.id}>{s.label}{s.dropoff ? m.dropoffPossible : ""}</option>)}
-          </Select>
+          <Select value={spot} onChange={setSpot}
+            options={loan.ownerSpots.map((s) => ({ value: s.id, label: s.label, text: s.label, hint: s.dropoff ? m.dropoffPossible.replace(/^\s*[·(–-]\s*|\)$/g, "") : undefined }))} />
         </Field>
       ) : loan.circle?.fixed_spot ? (
         <div className="text-body"><span className="block text-meta font-medium mb-2">{m.circleSpot}</span><span className="flex items-center h-12 px-4 rounded-md bg-paper-2 border border-line">{loan.circle.fixed_spot}</span></div>
@@ -204,9 +203,8 @@ export function CaseResponse({ loan, onDone }: { loan: LoanView; onDone: () => v
       {choice === "return_date" && <Field label={m.returnOn}><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-52" /></Field>}
       {choice === "swap_offer" && (
         <Field label={m.yourBook}>
-          <Select value={swapCopy} onChange={(e) => setSwapCopy(e.target.value)}>
-            {loan.myOfferable.map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
-          </Select>
+          <Select value={swapCopy} onChange={setSwapCopy}
+            options={loan.myOfferable.map((o) => ({ value: o.id, label: <span className="font-serif">{o.title}</span>, text: o.title }))} />
         </Field>
       )}
       <Textarea aria-label={m.caseReply} value={detail} onChange={(e) => setDetail(e.target.value)} placeholder={choice === "object" ? m.objectPlaceholder : m.addition} maxLength={500} />

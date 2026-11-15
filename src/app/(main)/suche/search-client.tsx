@@ -8,7 +8,7 @@ import { BookRow } from "@/components/regal/book-row";
 import { StepSection } from "@/components/step-section";
 import { useToast } from "@/components/toast";
 import { IconSearch, IconClose, IconArrowRight } from "@/components/icons";
-import { Button, LinkButton, cx } from "@/components/ui";
+import { Button, LinkButton, Select, cx } from "@/components/ui";
 import { api } from "@/lib/client";
 import { fmtDistance } from "@/lib/geo";
 import { genres } from "@/lib/i18n/de-CH";
@@ -370,16 +370,8 @@ function FilterChips({ f, set, reset, n, hasOrigin }: { f: Filters; set: <K exte
 function PillSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
   const on = value !== "" && value !== "0";
   return (
-    <label className="relative flex-none">
-      <span className="sr-only">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)}
-        className={cx(chip, on ? chipOn : chipOff, "appearance-none [field-sizing:content] pr-8 cursor-pointer focus:outline-none focus-visible:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/20 [&>option]:bg-paper [&>option]:text-ink [&>option]:font-normal")}>
-        {options.map(([v, l]) => <option key={v} value={v}>{v === "" || v === "0" ? label : l}</option>)}
-      </select>
-      <svg aria-hidden viewBox="0 0 12 8" className={cx("absolute right-3 top-1/2 -translate-y-1/2 w-2.5 pointer-events-none", on ? "text-accent-hover" : "text-muted")} fill="none" stroke="currentColor" strokeWidth="1.6">
-        <path d="M1 1.5l5 5 5-5" />
-      </svg>
-    </label>
+    <Select variant="pill" active={on} label={label} value={value} onChange={onChange}
+      options={options.map(([v, l]) => ({ value: v, label: v === "" || v === "0" ? label : l, text: l }))} />
   );
 }
 
