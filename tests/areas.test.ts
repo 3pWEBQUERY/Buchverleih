@@ -7,9 +7,10 @@ import { makeUser, reset } from "./helpers";
 
 const open = async (plz: string) => (await plzInfo(plz))?.enabled ?? false;
 
+afterAll(async () => { await sql.end(); });
+
 describe("Freigabe nach Gebiet", () => {
   beforeEach(async () => { await reset(); await sql`delete from area_openings`; });
-  afterAll(async () => { await sql.end(); });
 
   it("kennt alle Kantone, Bezirke, Gemeinden und Postleitzahlen", async () => {
     const [n] = await sql<{ k: number; d: number; c: number; p: number }[]>`
@@ -59,5 +60,33 @@ describe("Freigabe nach Gebiet", () => {
     expect(zh.open).toBe(1);
     expect(zh.communes.find((c) => c.bfs === 53)?.open).toBe(true);
     expect(o.totals.communesOpen).toBe(1);
+  });
+});
+
+describe("Warteliste", () => {
+  beforeEach(async () => { await reset(); await sql`delete from area_openings`; await sql`delete from plz_waitlist`; });
+
+  it("geschlossene PLZ: Profil scheitert, Person steht automatisch auf der Warteliste", async () => {
+    const { completeProfile } = await import("@/lib/account");
+    const u = await makeUser("Basel");
+    await sql`update users set onboarded_at = null, locale = 'fr' where id = ${u.id}`;
+    await expect(completeProfile(u.id, { firstName: "Bea", plz: "4051", birthDate: "1990-01-01" })).rejects.toMatchObject({ code: "region_closed" });
+    const [w] = await sql<{ plz: string; locale: string }[]>`select plz, locale from plz_waitlist where email = ${u.email}`;
+    expect(w).toEqual({ plz: "4051", locale: "fr" });
+  });
+
+  it("nach der Öffnung genau eine Nachricht, erst wenn die Freigabe steht; fertige Konten bekommen keine", async () => {
+    const admin = { ...(await makeUser("Admin")), role: "admin" as const };
+    const { joinWaitlist } = await import("@/lib/account");
+    const { notifyOpenedWaitlist } = await import("@/lib/areas");
+    await joinWaitlist("warte@test.ch", "4051", "de");
+    await joinWaitlist("warte@test.ch", "4052", "de");
+    expect((await notifyOpenedWaitlist()).handled).toBe(0); // noch geschlossen
+    await setAreaRule(admin, "canton", "BS", true);
+    expect((await notifyOpenedWaitlist()).handled).toBe(0); // eben erst geöffnet: Schonfrist für «Rückgängig»
+    await sql`update area_openings set updated_at = now() - interval '11 minutes'`;
+    const r = await notifyOpenedWaitlist();
+    expect(r).toEqual({ sent: 1, handled: 1 }); // zwei PLZ derselben Gemeinde: eine E-Mail
+    expect((await notifyOpenedWaitlist()).handled).toBe(0); // nicht nochmals
   });
 });

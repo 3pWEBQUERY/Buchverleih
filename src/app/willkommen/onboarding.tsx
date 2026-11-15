@@ -30,7 +30,7 @@ export function Onboarding({ initialStep, next, firstName, devCodes }: { initial
     setError(null);
     try { await fn(); } catch (e) {
       const err = e as Error & { code?: string };
-      if (err.code === "region_closed") setClosed(true);
+      setClosed(err.code === "region_closed");
       setError(err.message);
     } finally { setBusy(false); }
   }
@@ -69,8 +69,14 @@ export function Onboarding({ initialStep, next, firstName, devCodes }: { initial
               <li className="grid grid-cols-[20px_1fr] gap-3"><IconPin /><span>{t.plzNote}</span></li>
               <li className="grid grid-cols-[20px_1fr] gap-3"><IconCalendar width={18} height={18} className="mt-0.5" /><span>{t.ageNote}</span></li>
             </ul>
-            {error && <p className="text-late" role="alert">{error}</p>}
-            {closed && <p className="text-body-sm"><Link href="/" className="font-medium text-accent-hover hover:underline underline-offset-4">{t.waitlist}</Link></p>}
+            {/* Geschlossene Gemeinde: keine Fehlermeldung, sondern der Hinweis, dass wir uns melden */}
+            {error && !closed && <p className="text-late" role="alert">{error}</p>}
+            {closed && error && (
+              <div role="status" className="rounded-md border-l-2 border-wait bg-paper-2 px-5 py-4">
+                <p className="text-body text-ink">{error}</p>
+                <p className="text-body-sm mt-2"><Link href="/" className="font-medium text-accent-hover hover:underline underline-offset-4">{t.waitlist}</Link></p>
+              </div>
+            )}
             <Button type="submit" variant="primary" size="lg" className="w-full sm:w-auto" disabled={busy}>{t.next} <IconArrowRight width={18} height={18} /></Button>
           </div>
         </form>

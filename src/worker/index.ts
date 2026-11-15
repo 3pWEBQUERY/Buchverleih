@@ -7,6 +7,7 @@ import path from "node:path";
 import { sql } from "@/lib/db";
 import { ensureCors } from "@/lib/storage";
 import { runTitleAlarms, runSwapMatches } from "@/lib/wishlist";
+import { notifyOpenedWaitlist } from "@/lib/areas";
 import { refreshGenreStats } from "@/lib/home-data";
 import { runDeadlines, runRetention } from "./deadlines";
 import { nextJob, runJob } from "./jobs";
@@ -84,6 +85,23 @@ async function runAlarms() {
   }
 }
 
+/**
+ * Warteliste: sobald ein Gebiet geöffnet ist (und die Freigabe 10 Minuten steht), eine E-Mail an alle,
+ * die dort warten. Prüft alle fünf Minuten; ohne SMTP_URL in Produktion scheitert der Versand sichtbar im Log.
+ */
+async function runWaitlist() {
+  const last = await lastRun("waitlist_open");
+  if (last && Date.now() - last.getTime() < 5 * 60_000) return;
+  try {
+    const r = await notifyOpenedWaitlist();
+    await heartbeat("waitlist_open", r);
+    if (r.handled) console.log("[waitlist_open]", JSON.stringify(r));
+  } catch (e) {
+    console.error("[waitlist_open]", (e as Error).message);
+    await heartbeat("waitlist_open", { error: (e as Error).message.slice(0, 300) }).catch(() => {});
+  }
+}
+
 /** Stündlich: Kennzahlen über den ganzen Bestand (app_stats), die alle Web-Instanzen gemeinsam lesen */
 async function runHourly() {
   const last = await lastRun("hourly_stats");
@@ -154,6 +172,7 @@ async function scheduler() {
       await withLock(DAILY_LOCK, runDaily);
       await withLock(HOURLY_LOCK, runHourly);
       await withLock(HOURLY_LOCK, runAlarms);
+      await withLock(HOURLY_LOCK, runWaitlist);
     } catch (e) {
       console.error("[scheduler]", (e as Error).message);
     }
