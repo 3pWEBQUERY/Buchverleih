@@ -61,4 +61,24 @@ const it: M = {
   showAll: "Mostra tutte",
 };
 
-export const NOTIF: Record<Locale, M> = { de, fr, it };
+const en: M = {
+  title: "Notifications",
+  heading: ["Notifi­cations. ", "What’s new."],
+  newSince: (n: number) => (n === 1 ? "1 new since your last visit" : `${n} new since your last visit`),
+  allRead: "All read",
+  sub: "Requests, deadlines and title alerts in one place. Opening this page marks them all as read.",
+  statNew: "new",
+  statAll: "in total",
+  filter: "Filter",
+  filters: { alle: "All", anfragen: "Loans and swaps", fristen: "Deadlines", alarme: "Title alerts", weiteres: "More" },
+  days: { today: "Today", yesterday: "Yesterday", week: "This week", earlier: "Earlier" },
+  empty: "Nothing yet.",
+  emptyText: "Requests for your books, return deadlines and title alerts from your wishlist will appear here.",
+  searchBooks: "Search books",
+  newSection: "New",
+  newSr: "New: ",
+  noneOfKind: "No notifications of this kind.",
+  showAll: "Show all",
+};
+
+export const NOTIF: Record<Locale, M> = { de, fr, it, en };

@@ -47,7 +47,7 @@ export function HideContent({ targetType, targetId, hidden }: { targetType: stri
   const toast = useToast();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  const label = { de: ["Inhalt ausblenden", "Wieder zeigen"], fr: ["Masquer le contenu", "Afficher à nouveau"], it: ["Nascondi il contenuto", "Mostra di nuovo"] }[l];
+  const label = { de: ["Inhalt ausblenden", "Wieder zeigen"], fr: ["Masquer le contenu", "Afficher à nouveau"], it: ["Nascondi il contenuto", "Mostra di nuovo"], en: ["Hide content", "Show again"] }[l];
   return (
     <button type="button" disabled={busy} className="min-h-9 text-body-sm font-medium underline underline-offset-4 hover:text-accent-hover disabled:opacity-50"
       onClick={async () => {

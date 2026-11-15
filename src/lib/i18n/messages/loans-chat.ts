@@ -167,4 +167,59 @@ const it: ChatMsg = {
   },
 };
 
-export const CHAT: Record<Locale, ChatMsg> = { de, fr, it };
+const en: ChatMsg = {
+  chat: {
+    reported: "Reported. Moderation will take a look.",
+    today: "Today",
+    yesterday: "Yesterday",
+    empty: "No messages yet. Suggest a time, that’s the quickest way.",
+    messages: "Messages",
+    you: "You",
+    proposal: "Suggested time",
+    agreed: "Agreed",
+    toCalendar: "Add to calendar",
+    replaced: "Replaced by a new suggestion",
+    accept: "Accept",
+    counter: "Suggest another",
+    acceptedOf: (a: number, b: number): string => `${a} of ${b} have accepted`,
+    waiting: "Waiting for a reply",
+    sending: "sending",
+    report: "Report",
+    closed: "This chat is closed.",
+    dateTime: "Date and time",
+    place: "Place",
+    placePlaceholder: "e.g. station, by the kiosk",
+    propose: "Suggest a time",
+    note: "Note about the meeting (optional)",
+    message: "Message",
+    submitPropose: "Suggest",
+    send: "Send",
+    newMessages: (n: number): string => (n === 1 ? "1 new message" : `${n} new messages`),
+    enterHint: "Enter sends, Shift+Enter adds a new line.",
+    read: "Read",
+    quickLabel: "Quick replies",
+    quick: {
+      arrange: ["Works for me", "Could we make it an hour later?", "On my way"],
+      back: ["When suits you for the return?", "Works for me", "On my way"],
+    },
+    safety: "Meeting in public places is the safest choice. Only share your phone number and address if you want to.",
+  },
+  code: {
+    screenOn: "Screen stays on",
+    close: "Close",
+    hold: "Hold your screen up to the other person. They scan it with their camera.",
+    digits: "Or enter the six digits",
+    codeAria: (c: string): string => `Code ${c}`,
+    valid: (mm: number, ss: string): string => `Valid for ${mm}:${ss} min. A new code then appears automatically.`,
+  },
+  scan: {
+    camera: "Camera",
+    close: "Close",
+    aim: "Point the camera at the code on the other screen.",
+    fallback: "Enter the six digits below the code.",
+    orDigits: "Or the six digits below the code",
+    confirm: "Confirm",
+  },
+};
+
+export const CHAT: Record<Locale, ChatMsg> = { de, fr, it, en };

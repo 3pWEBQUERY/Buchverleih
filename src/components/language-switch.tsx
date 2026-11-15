@@ -5,13 +5,13 @@ import { LOCALES, localeName, type Locale } from "@/lib/i18n/locale";
 import { useLocale } from "./locale-provider";
 import { cx } from "./ui";
 
-const LABEL: Record<Locale, string> = { de: "Sprache", fr: "Langue", it: "Lingua" };
+const LABEL: Record<Locale, string> = { de: "Sprache", fr: "Langue", it: "Lingua", en: "Language" };
 
 async function save(l: Locale) {
   await fetch("/api/v1/locale", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ locale: l }) });
 }
 
-/** Kurze Umschaltung DE · FR · IT (Seitenleiste, Fusszeile) */
+/** Kurze Umschaltung DE · FR · IT · EN (Seitenleiste, Fusszeile) */
 export function LanguageSwitch({ tone = "paper", className }: { tone?: "paper" | "night"; className?: string }) {
   const current = useLocale();
   const router = useRouter();

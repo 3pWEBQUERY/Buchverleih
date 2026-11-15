@@ -17,7 +17,7 @@ export async function DocPage({ eyebrow, title, lead, draft, toc, updated, intro
   eyebrow: string; title: ReactNode; lead?: ReactNode; draft?: boolean; toc: TocItem[]; updated?: string;
   /** Block über volle Breite zwischen Kopf und Text, z. B. ein Schnellstart */
   intro?: ReactNode;
-  /** Rechtstext, der nur auf Deutsch verbindlich ist: in FR/IT mit Hinweis */
+  /** Rechtstext, der nur auf Deutsch verbindlich ist: in FR/IT/EN mit Hinweis */
   germanOnly?: boolean;
   children: ReactNode;
 }) {

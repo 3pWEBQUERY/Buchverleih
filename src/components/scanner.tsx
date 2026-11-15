@@ -8,6 +8,7 @@ const T: Record<Locale, { blocked: string; unavailable: string; starting: string
   de: { blocked: "Die Kamera ist blockiert.", unavailable: "Die Kamera ist nicht verfügbar.", starting: "Kamera startet …" },
   fr: { blocked: "La caméra est bloquée.", unavailable: "La caméra n’est pas disponible.", starting: "Démarrage de la caméra …" },
   it: { blocked: "La fotocamera è bloccata.", unavailable: "La fotocamera non è disponibile.", starting: "Avvio della fotocamera …" },
+  en: { blocked: "The camera is blocked.", unavailable: "The camera isn’t available.", starting: "Starting camera …" },
 };
 
 /**

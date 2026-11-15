@@ -104,6 +104,7 @@ const handlers: Record<string, (p: Record<string, unknown>) => Promise<void>> = 
       de: ["Push ist eingerichtet", "So erscheinen Anfragen, Zusagen und Fristen auf diesem Gerät."],
       fr: ["Les notifications push sont activées", "Les demandes, réponses et échéances s’afficheront ainsi sur cet appareil."],
       it: ["Le notifiche push sono attive", "Richieste, conferme e scadenze appariranno così su questo dispositivo."],
+      en: ["Push is set up", "This is how requests, replies and deadlines will appear on this device."],
     }[loc(u?.locale)];
     await pushToUser(p.userId as string, { title: text[0], body: text[1], href: "/einstellungen#push", tag: "test" });
   },

@@ -9,7 +9,7 @@ import { fmtDistance } from "@/lib/geo";
 type Args = Record<string, string | number>;
 type Fn = (a: Args) => string;
 
-/** Entfernung genau wie überall sonst (fmtDistance): «ca. 900 m» / «env. 900 m» / «circa 900 m», «1,4 km», «12 km» */
+/** Entfernung genau wie überall sonst (fmtDistance): «ca. 900 m» / «env. 900 m» / «circa 900 m» / «approx. 900 m», «1,4 km» (englisch «1.4 km»), «12 km» */
 function dist(m: unknown, l: Locale) {
   const n = Number(m);
   return Number.isFinite(n) ? fmtDistance(n, l) ?? "" : "";
@@ -75,7 +75,27 @@ const it: typeof de = {
   pin_want: () => "Vorrebbe leggerlo anche.",
 };
 
-const ALL: Record<Locale, typeof de> = { de, fr, it };
+const en: typeof de = {
+  circle_auto_accepted: () => "Accepted automatically in the circle. Arrange the place and time in the loan.",
+  pass_on_owner: (a) => `Pass on directly from ${a.from} to ${a.to}?`,
+  pass_on_prev: (a) => `Will you pass the book directly to ${a.name}? That saves you two meetings.`,
+  pass_on_next: () => "Will you collect the book directly from the person who has it now?",
+  case_return_date: () => "A return date has been given.",
+  case_object: () => "Objection raised, moderation decides.",
+  case_replace: () => "A replacement has been offered.",
+  case_replaced: () => "The replacement is confirmed.",
+  case_rejected: () => "Moderation has decided: no damage.",
+  case_returned: () => "The book is back.",
+  circle_name: (a) => `Circle “${a.name}”`,
+  title_alarm_free: (a) => `A copy is free ${dist(a.meters, "en")} away.`,
+  chat_proposal: () => "Suggested time",
+  pin_search: (a) => `Looking for “${a.title}”.`,
+  pin_recommend: (a) => `Recommends “${a.title}”.`,
+  pin_thanks: () => "Says thank you.",
+  pin_want: () => "Would like to read it too.",
+};
+
+const ALL: Record<Locale, typeof de> = { de, fr, it, en };
 export type SystemTextKey = keyof typeof de;
 
 /** Deutscher Text für d.text (Rückfall) und Schlüssel samt Werten für die Übersetzung */

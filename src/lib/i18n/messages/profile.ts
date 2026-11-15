@@ -12,6 +12,11 @@ export function responseTextL(hours: number | null | undefined, l: Locale): stri
     if (hours < 24) return `en env. ${Math.round(hours)} h`;
     return days <= 1 ? "en un jour" : `en env. ${days} jours`;
   }
+  if (l === "en") {
+    if (hours < 1) return "within an hour";
+    if (hours < 24) return `in about ${Math.round(hours)} h`;
+    return days <= 1 ? "within a day" : `in about ${days} days`;
+  }
   if (hours < 1) return "in meno di un’ora";
   if (hours < 24) return `in circa ${Math.round(hours)} h`;
   return days <= 1 ? "entro un giorno" : `in circa ${days} giorni`;
@@ -249,4 +254,81 @@ const it: M = {
   },
 };
 
-export const PROFILE: Record<Locale, M> = { de, fr, it };
+const en: M = {
+  title: "Profile",
+  loading: "Loading profile",
+  levelHint: {
+    0: "Email and mobile number confirmed",
+    1: "at least 3 loans, all on time",
+    2: "at least 10 loans, no loss in 12 months",
+  } as Record<number, string>,
+  deleted: ["Account ", "deleted."],
+  deletedText: "This person is no longer on Leihregal.",
+  searchBooks: "Search books",
+  note: { free: "free", until: (d: string): string => `until ${d}`, booked: "booked", requested: "requested", paused: "paused", notOffered: "not offered" },
+  newcomer: "New",
+  answersUsually: "Usually replies",
+  booksInShelf: "Books on the shelf",
+  since: (s: string): string => `since ${s}`,
+  level: (l: string): string => `Level ${l}`,
+  levelLine: (l: string, hint: string): string => `${l}: ${hint}.`,
+  mostly: "Mostly on the shelf",
+  edit: "Edit profile",
+  manageShelf: "Manage my shelf",
+  yourProfile: "Your profile",
+  profile: "Profile",
+  ownHeading: ["How others ", "see you."],
+  otherHeading: (n: string): [string, string] => ["Borrow from ", `${n}.`],
+  lent: "lent",
+  borrowed: "borrowed",
+  punctual: "on time",
+  blocked: (n: string): string => `You’ve blocked ${n}. ${n} can’t see your shelf or send you requests.`,
+  yourShelf: "Your shelf",
+  shelfOf: (n: string): string => `${n}’s shelf`,
+  ownShelfDesc: "This is how your shelf looks to others. Only books you offer appear here.",
+  otherShelfDesc: "One tap opens the copy with its calendar and request.",
+  books: (n: number): string => (n === 1 ? "1 book" : `${n} books`),
+  ownEmpty: "There’s nothing on your shelf yet that others can see.",
+  addBook: "Add a book",
+  otherEmpty: (n: string): string => `${n} isn’t offering any books you can see right now.`,
+  searchOn: "Keep searching",
+  freeNow: "Free now",
+  busy: "Out or booked",
+  feedback: "Feedback",
+  feedbackDesc: "After every loan, both sides briefly say how it went. It only becomes visible once both have replied.",
+  punctualReturned: "Returned on time",
+  noReturns: "No completed loans as a reader yet.",
+  fromAll: (who: string | null): string => `From all loans in which ${who ?? "you"} had a book.`,
+  good: "Good feedback",
+  of: (n: number): string => `of ${n}`,
+  none: "none yet",
+  onRequests: "to requests",
+  problems: (n: number): string => `${n === 1 ? "1 piece of feedback" : `${n} pieces of feedback`} with small problems`,
+  trust: "Trust",
+  trustDesc: "The level comes only from completed loans. No stars, no points.",
+  toNext: (n: number, next: string): string => `${n} more ${n === 1 ? "loan" : "loans"} to “${next}”`,
+  soon: (next: string): string => `Soon “${next}”`,
+  highest: "Highest level",
+  current: "Current",
+  progress: (a: number, b: number): string => `${a} of ${b} loans`,
+  losses: (n: number): string => `${n === 1 ? "1 book counts as lost" : `${n} books count as lost`} (last 24 months)`,
+  sharedCircle: "Shared circle: ",
+  together: (n: string): string => `You and ${n}`,
+  togetherDesc: "Your loans together, newest first.",
+  loans: (n: number): string => (n === 1 ? "1 loan" : `${n} loans`),
+  youTo: (n: string): string => `you to ${n}`,
+  toYou: (n: string): string => `${n} to you`,
+  actions: {
+    unblocked: (n: string): string => `${n} is no longer blocked.`,
+    blocked: (n: string): string => `${n} is blocked and can no longer see your shelf.`,
+    thanks: "Thank you. Moderation will take a look.",
+    wrong: "Something not right?",
+    reported: "Reported",
+    report: "Report",
+    unblock: "Unblock",
+    block: "Block",
+    problem: "What’s the problem?",
+  },
+};
+
+export const PROFILE: Record<Locale, M> = { de, fr, it, en };

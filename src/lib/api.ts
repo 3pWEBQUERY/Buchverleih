@@ -13,10 +13,10 @@ export function requestLocale(req: Request): Locale {
 }
 
 /** Standardmeldungen von zod in der Sprache der Anfrage; eigene Meldungen im Schema haben Vorrang */
-const zodLocales = { de: z.locales.de(), fr: z.locales.fr(), it: z.locales.it() };
+const zodLocales = { de: z.locales.de(), fr: z.locales.fr(), it: z.locales.it(), en: z.locales.en() };
 const zodErrors = (l: Locale) => ({ error: zodLocales[l].localeError });
 
-const INPUT: Record<Locale, string> = { de: "Eingabe", fr: "Saisie", it: "Inserimento" };
+const INPUT: Record<Locale, string> = { de: "Eingabe", fr: "Saisie", it: "Inserimento", en: "Input" };
 
 /**
  * Hülle für alle Endpunkte unter /api/v1. Einheitliches Fehlerformat:

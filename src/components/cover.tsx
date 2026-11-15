@@ -2,7 +2,7 @@ import { ViewTransition, type ReactNode } from "react";
 import { cx } from "./ui";
 import type { Locale } from "@/lib/i18n/locale";
 
-const BY: Record<Locale, string> = { de: "von", fr: "de", it: "di" };
+const BY: Record<Locale, string> = { de: "von", fr: "de", it: "di", en: "by" };
 
 /**
  * Cover (PRD 8.1): immer im echten Seitenverhältnis, nie beschnitten, mit feiner Kante.
