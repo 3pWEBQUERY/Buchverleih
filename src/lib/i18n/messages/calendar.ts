@@ -81,4 +81,30 @@ const it: M = {
   demoHoliday: "Vacanze",
 };
 
-export const CALENDAR: Record<Locale, M> = { de, fr, it };
+const en: M = {
+  freeNow: "Free now",
+  freeFrom: (d) => `Free from ${d}`,
+  fullToHorizon: "Booked up to the horizon",
+  bookableUntil: "Bookable until",
+  loanPeriod: "Loan period",
+  buffer: "Buffer",
+  days: (n) => `${n} ${n === 1 ? "day" : "days"}`,
+  notBookableYet: "Not bookable yet",
+  notBookable: "not bookable",
+  freeFromLower: (d) => `free from ${d}`,
+  pickAria: (d, len) => `Free from ${d}, ${len}. Choose period`,
+  unlimited: "unlimited",
+  blocked: "blocked",
+  yourLoan: "your loan",
+  taken: "booked",
+  handoverChat: "Handover chat for the changeover",
+  yourRequest: "your request",
+  today: "Today",
+  legend: { lent: "lent", booked: "booked", free: "free", buffer: "buffer", blocked: "blocked", pick: "Tap a free period to choose it" },
+  srBlocked: "Blocked",
+  srTaken: "Booked",
+  srFreeFrom: "Free from",
+  demoHoliday: "Holidays",
+};
+
+export const CALENDAR: Record<Locale, M> = { de, fr, it, en };

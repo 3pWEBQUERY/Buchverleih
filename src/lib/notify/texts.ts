@@ -1,5 +1,5 @@
 /**
- * Texte der Benachrichtigungen in drei Sprachen. Gleiche Struktur pro Sprache:
+ * Texte der Benachrichtigungen in vier Sprachen. Gleiche Struktur pro Sprache:
  * jeder Typ liefert [Titel, Text]. Freitexte (d.text) stammen von Menschen und bleiben unübersetzt.
  */
 import type { Locale } from "@/lib/i18n/locale";
@@ -24,12 +24,14 @@ export const quote: Record<Locale, (t?: string) => string> = {
   de: (t) => (t ? `«${t}»` : "das Buch"),
   fr: (t) => (t ? `« ${t} »` : "le livre"),
   it: (t) => (t ? `«${t}»` : "il libro"),
+  en: (t) => (t ? `“${t}”` : "the book"),
 };
 
 export const verb: Record<Locale, (k?: string) => string> = {
   de: (k) => (k === "swap" ? "tauschen" : k === "gift" ? "geschenkt bekommen" : "leihen"),
   fr: (k) => (k === "swap" ? "échanger" : k === "gift" ? "recevoir en cadeau" : "emprunter"),
   it: (k) => (k === "swap" ? "scambiare" : k === "gift" ? "ricevere in regalo" : "prendere in prestito"),
+  en: (k) => (k === "swap" ? "swap" : k === "gift" ? "have" : "borrow"),
 };
 
 const de: Table = {
@@ -167,11 +169,57 @@ const it: Table = {
   circle_post_offer: ({ name, t }) => [`${name} ha ${t}`, "Lo cerchi in bacheca. Guarda l’esemplare e richiedilo come sempre."],
 };
 
-export const TEXTS: Record<Locale, Table> = { de, fr, it };
+const en: Table = {
+  request_new: ({ name, t, verb, d }) => [`${name} would like to ${verb} ${t}`, d.text ?? "You have 72 hours to reply. After that, the request expires."],
+  request_accepted: ({ name, t }) => [`${name} has accepted`, `${t}: the handover place and time are in the loan.`],
+  request_auto_accepted: ({ t }) => ["Accepted in the circle", `${t} is reserved for you. Arrange the handover in the loan.`],
+  request_declined: ({ t }) => [`Request for ${t} declined`, "There may be another copy near you."],
+  request_expired: ({ t }) => [`Request for ${t} expired`, "No reply came within 72 hours. The dates are free again."],
+  cancelled: ({ t, d }) => [`${t}: loan cancelled`, `${d.name ?? "The other person"} has cancelled. The dates are free again.`],
+  handover_reported: ({ t }) => [`Please confirm the handover of ${t}`, "If nobody objects, the report stands after 48 hours."],
+  handover_done: ({ t, due }) => [`${t} has been handed over`, due || "The loan is complete."],
+  handover_expired: ({ t }) => [`${t}: no handover`, "There was no handover within 7 days of the planned start. The loan has expired."],
+  due_soon: ({ t, due }) => [`${t} is due soon`, `${due}. You can extend or plan the return in the loan.`],
+  due_tomorrow: ({ t }) => [`${t} is due tomorrow`, "Plan the return in the loan."],
+  overdue: ({ t }) => [`${t} is overdue`, "Suggest a time for the return in the chat."],
+  overdue_late: ({ t }) => [`${t}: 3 days overdue`, "The grace period is over, so the loan counts as late. Please return the book as soon as you can."],
+  overdue_case_possible: ({ t }) => [`${t}: 7 days overdue`, "New requests are only possible again after the return."],
+  extended: ({ t, due }) => [`${t} extended`, due],
+  extension_requested: ({ name, t }) => [`${name} would like to keep ${t} longer`, "Decide in the loan."],
+  recalled: ({ name, t, due }) => [`${name} is recalling ${t}`, `Please return the book within 7 days. ${due}`],
+  return_reported: ({ t }) => [`Did you get ${t} back?`, "Confirm the return. If nobody objects, it stands after 48 hours."],
+  returned: ({ t }) => [`Return of ${t} confirmed`, "Thank you. The loan will be closed after the check."],
+  completed: ({ t }) => [`${t}: complete`, "How did it go? One answer is enough: “Happy to again” or “There were problems”."],
+  damage_reported: ({ t }) => [`Damage to ${t} reported`, "Choose one of three answers in the case."],
+  case_opened: ({ t }) => [`Case opened for ${t}`, "Name a return date, offer a replacement or suggest a swap."],
+  case_reminder: ({ t }) => [`Second reminder: ${t}`, "If you don’t respond, your account will be blocked from lending and swapping in 7 days."],
+  case_suspended: ({ t }) => ["Lending and swapping blocked", `The case about ${t} is still open. Moderation is looking into it.`],
+  case_lost: ({ t }) => [`${t} is considered lost`, "A later return or a replacement clears the entry."],
+  case_response: ({ t, d }) => [`Reply in the case about ${t}`, d.text ?? "The other person has replied. The details are in the loan."],
+  case_resolved: ({ t, d }) => [`Case about ${t} resolved`, d.text ?? "The loan is complete."],
+  pass_on_ask: ({ t, d }) => [`Pass on directly: ${t}`, d.text ?? "Do you agree to the book being passed on directly?"],
+  pass_on_agreed: ({ t }) => [`${t} goes straight on`, "All three have agreed. Arrange the place and time in the handover chat."],
+  handover_chat: ({ t }) => [`Handover chat for ${t}`, "Two loans follow each other. Arrange the changeover."],
+  start_earlier: ({ t, day }) => [`${t} is back early`, day ? `You can start from ${day}.` : "You can start earlier."],
+  bookings_paused: ({ t }) => [`Booking for ${t} paused`, "There’s an open case for this copy. You can cancel at no cost to you."],
+  someone_waiting: ({ name, t, day }) => [`${name} is waiting for ${t}`, day ? `From ${day}. Please return the book.` : "Please return the book."],
+  swap_offer: ({ name, t }) => [`${name} would like to keep ${t}`, "and is offering you one of their own books in return."],
+  title_alarm: ({ t, d }) => [`${t} is available`, d.text ?? "A copy within your radius is free."],
+  swap_match: ({ name, t }) => ["Swap match", `${name} has ${t} from your wishlist, and you have one from theirs.`],
+  message: ({ name, t, d }) => [`${name}: ${t}`, d.text ?? "New message"],
+  invite_own_books: () => ["Your shelf is still empty", "People who borrow often lend too. Adding a book takes under 20 seconds."],
+  circle_join_request: ({ name, d }) => [`${name} would like to join`, d.text ?? "Approve the request in the circle."],
+  circle_post_new: ({ name, d }) => [d.circle ? `${name} in the circle “${d.circle}”` : `${name} on the noticeboard`, d.text ?? "New note on the noticeboard."],
+  circle_post_reply: ({ name, d }) => [`${name} on your note`, d.text ?? "New reply on the noticeboard."],
+  circle_post_offer: ({ name, t }) => [`${name} has ${t}`, "You’re looking for it on the noticeboard. Take a look at the copy and request it as usual."],
+};
+
+export const TEXTS: Record<Locale, Table> = { de, fr, it, en };
 
 /** Rahmen der E-Mails und Knöpfe */
 export const MAIL: Record<Locale, { open: string; toLoan: string; settings: string; changeNotifications: string; tagline: string }> = {
   de: { open: "Öffnen", toLoan: "Zum Vorgang", settings: "Einstellungen", changeNotifications: "Benachrichtigungen ändern", tagline: "Bücher aus Regalen in deiner Nähe" },
   fr: { open: "Ouvrir", toLoan: "Voir la transaction", settings: "Paramètres", changeNotifications: "Modifier les notifications", tagline: "Des livres des étagères près de chez toi" },
   it: { open: "Apri", toLoan: "Vai alla pratica", settings: "Impostazioni", changeNotifications: "Modifica le notifiche", tagline: "Libri dagli scaffali vicino a te" },
+  en: { open: "Open", toLoan: "Go to loan", settings: "Settings", changeNotifications: "Change notifications", tagline: "Books from shelves near you" },
 };

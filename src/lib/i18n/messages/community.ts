@@ -183,4 +183,65 @@ const it: CommunityMsg = {
   pulseHome: { title: "Questa settimana nelle tue cerchie", desc: "Che cosa si è mosso – in cifre o condiviso dai membri stessi." },
 };
 
-export const COMMUNITY: Record<Locale, CommunityMsg> = { de, fr, it };
+const en: CommunityMsg = {
+  path: {
+    eyebrow: "This book’s journey",
+    summary: (hands: number, places: number, since: string): string =>
+      `This copy has been in ${hands} hands and ${places} ${places === 1 ? "municipality" : "municipalities"}, travelling since ${since}.`,
+    stations: "Stops",
+    unknownPlace: "On the way",
+    anonymous: "No names, no exact dates.",
+  },
+  notes: {
+    title: "Notes in the book",
+    desc: "A sentence from people who have read it – for the next readers.",
+    by: (name: string | null, month: string): string => (name ? `${name}, ${month}` : month),
+    hide: "Hide",
+    show: "Show again",
+    hidden: "Hidden – only you can see this note.",
+    hiddenDone: "Note hidden.",
+    shownDone: "Note visible again.",
+    report: "Report",
+    reported: "Reported. Moderation will take a look.",
+    formTitle: "A note for the next readers",
+    formHint: "A sentence that stays with the book. No judgement of people – only of the book.",
+    placeholder: "e.g. Read chapter 3 on a rainy day.",
+    label: "Your note",
+    anonymous: "Without my first name",
+    save: "Leave the note",
+    saved: "Your note is in the book.",
+    yours: "Your note in this book",
+    left: (n: number): string => `${n} characters left`,
+  },
+  wishers: {
+    count: (n: number): string => (n === 1 ? "1 person in your circles is looking for this book" : `${n} people in your circles are looking for this book`),
+    show: "Who?",
+    hide: "Close",
+    inCircle: (circle: string): string => `in the circle “${circle}”`,
+    error: "The names couldn’t be loaded.",
+  },
+  wish: {
+    share: "Show in circle",
+    shareFor: (title: string): string => `Show “${title}” as wanted in my circles`,
+    shareOn: (title: string): string => `“${title}” is visible as wanted in your circles.`,
+    shareOff: (title: string): string => `“${title}” is no longer visible in your circles.`,
+    inCircle: (circle: string): string => `Available in the circle “${circle}”`,
+    freeNow: "free now",
+    freeFrom: (d: string): string => `free from ${d}`,
+    taken: "currently on loan",
+    view: "View",
+  },
+  settings: {
+    title: "Community",
+    desc: "What your circles see of you and what the noticeboard notifies you about.",
+    pulse: "Show my new books in the pulse",
+    pulseHint: "“Lena put 3 books on her shelf” – only for members of your circles. Who borrowed what never appears there.",
+    notify: "Noticeboard: email and push",
+    notifyHint: "In the app you always see replies to your notes.",
+    options: { replies: "Replies only", all: "Everything new", off: "Off" },
+    saved: "Saved.",
+  },
+  pulseHome: { title: "This week in your circles", desc: "What has been happening – counted up or shared by members themselves." },
+};
+
+export const COMMUNITY: Record<Locale, CommunityMsg> = { de, fr, it, en };

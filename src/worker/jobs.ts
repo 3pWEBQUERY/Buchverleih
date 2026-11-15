@@ -10,7 +10,7 @@ import { coverCandidates, fetchImage } from "@/lib/catalog/covers";
 import { removeDemo, seedDemo } from "./seed-demo";
 import { pushToUser } from "@/lib/push";
 import { MAIL } from "@/lib/notify/texts";
-import { isLocale, type Locale } from "@/lib/i18n/locale";
+import { htmlLang, isLocale, type Locale } from "@/lib/i18n/locale";
 import { dominantColor } from "./image-color";
 
 let warnedNoMail = false;
@@ -93,19 +93,22 @@ const handlers: Record<string, (p: Record<string, unknown>) => Promise<void>> = 
     if (!n || n.read_at) return;
     // Nach einem Ausfall keine veralteten Hinweise nachschieben
     if (Date.now() - n.created_at.getTime() > 24 * 3600_000) return;
-    const { title, body } = renderNotification(n.type, n.payload, loc(n.locale));
+    const l = loc(n.locale);
+    const { title, body } = renderNotification(n.type, n.payload, l);
     const href = n.payload.href ?? (n.loan_id ? `/vorgaenge/${n.loan_id}` : "/benachrichtigungen");
-    await pushToUser(n.user_id, { title, body, href, tag: n.loan_id ? `loan-${n.loan_id}` : n.id });
+    await pushToUser(n.user_id, { title, body, href, tag: n.loan_id ? `loan-${n.loan_id}` : n.id, lang: htmlLang[l] });
   },
 
   async send_push_test(p) {
     const [u] = await sql<{ locale: string }[]>`select locale from users where id = ${p.userId as string}`;
+    const l = loc(u?.locale);
     const text = {
       de: ["Push ist eingerichtet", "So erscheinen Anfragen, Zusagen und Fristen auf diesem Gerät."],
       fr: ["Les notifications push sont activées", "Les demandes, réponses et échéances s’afficheront ainsi sur cet appareil."],
       it: ["Le notifiche push sono attive", "Richieste, conferme e scadenze appariranno così su questo dispositivo."],
-    }[loc(u?.locale)];
-    await pushToUser(p.userId as string, { title: text[0], body: text[1], href: "/einstellungen#push", tag: "test" });
+      en: ["Push is set up", "This is how requests, replies and deadlines will appear on this device."],
+    }[l];
+    await pushToUser(p.userId as string, { title: text[0], body: text[1], href: "/einstellungen#push", tag: "test", lang: htmlLang[l] });
   },
 
   async send_sms(p) {

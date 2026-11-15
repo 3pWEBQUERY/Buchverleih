@@ -127,4 +127,46 @@ const it: M = {
   },
 };
 
-export const SHELL: Record<Locale, M> = { de, fr, it };
+const en: M = {
+  skip: "Skip to content",
+  home: "Leihregal, home",
+  description: "Borrow, swap and give away books from shelves near you. Free, between private people.",
+  addBook: "Add a book",
+  nav: { main: "Main navigation", start: "Home", loans: "Loans", shelf: "My shelf", shelfShort: "Shelf", circles: "Circles", wishlist: "Wishlist", notifications: "Notifications", moderation: "Moderation", profile: "Profile", search: "Search", calendar: "Lending calendar", settings: "Settings", help: "Help", privacy: "Privacy", imprint: "Imprint", legal: "Legal", more: "More pages" },
+  searchPlaceholder: "Title, author, ISBN",
+  palette: {
+    label: "Command palette",
+    placeholder: "Search or type a command",
+    groups: { recent: "Recently used", actions: "Actions", loans: "Ongoing loans", books: "My books", circles: "My circles", pages: "Pages", titles: "Titles nearby", search: "Search" },
+    pauseShelf: "Pause shelf",
+    resumeShelf: "Resume shelf",
+    paused: "Your shelf is paused.",
+    resumed: "Your shelf is open again.",
+    language: (name: string): string => `Change language: ${name}`,
+    showShortcuts: "Show keyboard shortcuts",
+    yourTurn: "Your turn",
+    withPerson: (status: string, name: string): string => `${status} · with ${name}`,
+    openSearch: (q: string): string => `Search for “${q}”`,
+    noResults: "Nothing matching in your shelf, your circles or your loans.",
+    loadError: "Your books, circles and loans couldn’t be loaded.",
+    retry: "Reload",
+    searchError: "Title search isn’t available right now.",
+    offline: "You’re offline. Title search works again once you’re connected.",
+    count: (n: number): string => (n === 1 ? "1 result" : `${n} results`),
+    hintMove: "select",
+    hintRun: "open",
+    hintClose: "close",
+    shortcuts: { title: "Keyboard shortcuts", general: "General", go: "Go to", then: "then", close: "Close", openPalette: "Open command palette", focusSearch: "Open search", showHelp: "Show this overview", hint: "Shortcuts without ⌘ or Ctrl only work outside input fields." },
+  },
+  publicNav: { find: "Find books", how: "How it works", login: "Log in" },
+  footer: {
+    claim: "Books from shelves near you. Free between private people, with fixed deadlines and a confirmation at every handover.",
+    discover: "Discover", find: "Find books", addBook: "Add a book", newCircle: "Start a circle",
+    help: "Help", how: "How it works", damage: "Damage and loss", rules: "Rules",
+    legal: "Legal", terms: "Terms of use", privacy: "Privacy", imprint: "Imprint",
+    beta: "Leihregal · Beta Zurich and Zürcher Unterland", eu: "Data stored in the EU",
+    legalNote: "Legal texts are binding in German.",
+  },
+};
+
+export const SHELL: Record<Locale, M> = { de, fr, it, en };

@@ -6,7 +6,7 @@
 import type { LoanStatus, OfferKind } from "./machine";
 import type { Locale } from "@/lib/i18n/locale";
 
-/** Beschriftungen und Wartetexte auf Französisch und Italienisch (Deutsch steht unten im Code) */
+/** Beschriftungen und Wartetexte auf Französisch, Italienisch und Englisch (Deutsch steht unten im Code) */
 const TR: Record<Exclude<Locale, "de">, Record<string, string>> = {
   fr: {
     "Anfrage beantworten": "Répondre à la demande",
@@ -63,6 +63,34 @@ const TR: Record<Exclude<Locale, "de">, Record<string, string>> = {
     "Die Moderation entscheidet": "Decide la moderazione",
     "Kurz bewerten": "Valuta in breve",
     "Buch ist doch zurück": "Il libro è tornato",
+  },
+  en: {
+    "Anfrage beantworten": "Reply to request",
+    "Wartet auf Antwort": "Waiting for a reply",
+    "Weitergabe beantworten": "Reply to pass-on",
+    "Übergabe bestätigen": "Confirm handover",
+    "Wartet auf Bestätigung der Übergabe": "Waiting for the handover to be confirmed",
+    "Code der anderen Seite scannen": "Scan the other person’s code",
+    "Tauschcode zeigen": "Show swap code",
+    "Geht direkt weiter": "Goes straight on",
+    "Code scannen": "Scan code",
+    "Übergabecode zeigen": "Show handover code",
+    "Tauschangebot ansehen": "View swap offer",
+    "Verlängerung gewähren": "Grant extension",
+    "Rückgabe scannen": "Scan return",
+    "Ausgeliehen": "On loan",
+    "Zustand festhalten": "Note the condition",
+    "Rückgabecode zeigen": "Show return code",
+    "Rückgabe bestätigen": "Confirm return",
+    "Wartet auf Bestätigung der Rückgabe": "Waiting for the return to be confirmed",
+    "Alles in Ordnung": "All in order",
+    "Zurück, in Prüfung": "Returned, being checked",
+    "Im Fall antworten": "Reply in the case",
+    "Ersatz bestätigen": "Confirm replacement",
+    "Fall offen": "Case open",
+    "Die Moderation entscheidet": "Moderation decides",
+    "Kurz bewerten": "Leave a quick rating",
+    "Buch ist doch zurück": "The book is back after all",
   },
 };
 

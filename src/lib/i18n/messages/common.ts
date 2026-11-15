@@ -209,4 +209,73 @@ const it: M = {
   },
 };
 
-export const COMMON: Record<Locale, M> = { de, fr, it };
+const en: M = {
+  undo: "Undo",
+  stepDown: (l: string): string => `Decrease ${l}`,
+  stepUp: (l: string): string => `Increase ${l}`,
+  loading: "Loading …",
+  loadingPage: {
+    page: "Loading page",
+    settings: "Loading settings",
+    search: "Loading search",
+    moderation: "Loading moderation",
+    account: "Loading account",
+    loan: "Loading loan",
+    notifications: "Loading notifications",
+    book: "Loading book",
+    capture: "Loading add a book",
+  },
+  notFound: {
+    title: "Not found",
+    eyebrow: "Error 404",
+    heading: ["Nothing ", "here."],
+    text: "This page doesn’t exist, or no longer does. Maybe the book was taken off the shelf, or the link is incomplete.",
+    textApp: "This page doesn’t exist, or no longer does. Maybe the book was taken off the shelf, the loan isn’t yours, or the link is incomplete.",
+    motif: "Gap on the shelf",
+    home: "To the home page",
+    search: "Search books",
+  },
+  error: {
+    eyebrow: "Something went wrong",
+    heading: ["The page couldn’t ", "load."],
+    text: "That’s our fault, not yours. Try again in a moment. If the error persists, the ID below helps us track it down.",
+    retry: "Try again",
+    home: "To the home page",
+    id: "ID: ",
+    globalHeading: ["Nothing works ", "right now."],
+    globalText: "An error stopped the whole page. Try again in a moment.",
+  },
+  offline: {
+    motif: "No network",
+    eyebrow: "Offline",
+    heading: ["No ", "connection."],
+    text: "This page needs the network. As soon as you’re connected again, it reloads by itself – or with a tap.",
+    retry: "Try again",
+    waiting: "Waiting for the network",
+  },
+  doc: {
+    sections: (n: number): string => `${n} sections`,
+    updated: "Last updated: ",
+    toc: "Contents",
+    draftTitle: "Draft – review by an expert pending",
+    draftText: "This text has not yet been legally reviewed and only applies after review. Passages in square brackets will be completed beforehand.",
+    more: "Learn more",
+    germanOnly: "The German version of this text is binding.",
+  },
+  live: {
+    srNew: (t: string): string => `New notification: ${t}`,
+    newNow: "New notification · just now",
+    view: "View",
+    all: "All notifications",
+    close: "Close notice",
+    unread: (n: number): string => `${n} unread`,
+  },
+  manifest: {
+    description: "Borrow, swap and give away books from shelves near you. Free, between private people.",
+    search: ["Search", "Search"],
+    add: ["Add a book", "Add"],
+    loans: ["Loans", "Loans"],
+  },
+};
+
+export const COMMON: Record<Locale, M> = { de, fr, it, en };

@@ -86,6 +86,9 @@ const REL = {
   it: { today: "oggi", tomorrow: "domani", sinceYesterday: "da ieri", left: (n: number) => `ancora ${n} giorni`, since: (n: number) => `da ${n} giorni`, until: "Entro",
         expired: "scaduto", hLeft: (n: number) => `ancora ${n} h`, mLeft: (n: number) => `ancora ${n} min`,
         now: "proprio ora", mAgo: (n: number) => `${n} min fa`, hAgo: (n: number) => `${n} h fa`, dAgo: (n: number) => `${n} ${n === 1 ? "giorno" : "giorni"} fa` },
+  en: { today: "today", tomorrow: "tomorrow", sinceYesterday: "yesterday", left: (n: number) => `${n} days left`, since: (n: number) => `${n} days ago`, until: "Until",
+        expired: "expired", hLeft: (n: number) => `${n} hrs left`, mLeft: (n: number) => `${n} min left`,
+        now: "just now", mAgo: (n: number) => `${n} min ago`, hAgo: (n: number) => `${n} hrs ago`, dAgo: (n: number) => `${n} ${n === 1 ? "day" : "days"} ago` },
 } satisfies Record<Locale, unknown>;
 
 export function relDays(day: string, from = todayCH(), l: Locale = "de") {
@@ -135,7 +138,7 @@ export function parseRange(r: string | null | undefined): { start: string; end: 
   return { start: m[1], end: m[2] || null };
 }
 
-const FROM: Record<Locale, string> = { de: "ab", fr: "dès le", it: "dal" };
+const FROM: Record<Locale, string> = { de: "ab", fr: "dès le", it: "dal", en: "from" };
 
 export function fmtRange(r: { start: string; end: string | null }, l: Locale = "de") {
   if (!r.end) return `${FROM[l] ?? FROM.de} ${fmtDay(dayToDate(r.start), l)}`;

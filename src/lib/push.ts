@@ -72,7 +72,7 @@ export async function deviceCount(userId: string) {
   return r.n;
 }
 
-export type PushMessage = { title: string; body: string; href: string; tag?: string };
+export type PushMessage = { title: string; body: string; href: string; tag?: string; /** Sprache der Mitteilung, z. B. «en-GB» */ lang?: string };
 
 /** Harte Obergrenze pro Gerät, unabhängig davon, ob der Server tröpfchenweise antwortet */
 const SEND_DEADLINE_MS = 5_000;

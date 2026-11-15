@@ -5,8 +5,9 @@ import type { RulesContent } from "./content/types";
 import { RULES_DE } from "./content/de";
 import { RULES_FR } from "./content/fr";
 import { RULES_IT } from "./content/it";
+import { RULES_EN } from "./content/en";
 
-const RULES: Record<Locale, RulesContent> = { de: RULES_DE, fr: RULES_FR, it: RULES_IT };
+const RULES: Record<Locale, RulesContent> = { de: RULES_DE, fr: RULES_FR, it: RULES_IT, en: RULES_EN };
 
 export async function generateMetadata() {
   const r = RULES[await getLocale()];

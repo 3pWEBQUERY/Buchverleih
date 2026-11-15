@@ -128,4 +128,46 @@ const it: M = {
   },
 };
 
-export const SETTINGS: Record<Locale, M> = { de, fr, it };
+const en: M = {
+  title: "Settings",
+  eyebrow: "Account and preferences",
+  sub: "Profile, login, handover places and notifications. Changes apply immediately.",
+  heading: "Settings.",
+  sectionsAria: "Sections",
+  groups: { account: "Account", lending: "Lending", general: "General", danger: "Danger zone" },
+  nav: {
+    profilbild: "Profile picture", profil: "Profile", mobilnummer: "Mobile number", passwort: "Password", passkeys: "Passkeys",
+    uebergabeorte: "Handover places", ferienmodus: "Holiday mode", blockiert: "Blocked",
+    sprache: "Language", push: "Push", benachrichtigungen: "Email", darstellung: "Appearance", daten: "Data",
+    kontoLoeschen: "Delete account",
+  },
+  account: { title: "Account", desc: "What others see of you and how you log in." },
+  lending: { title: "Lending", desc: "Where you hand over books and who can send you requests." },
+  general: { title: "General", desc: "Notifications, appearance and your data." },
+  danger: { title: "Delete account", desc: "Possible once no loan is still open. This can’t be undone." },
+  rows: {
+    profilbild: ["Profile picture", "A picture of you, optional. No other people, no advertising."],
+    profil: ["Profile", "Others see your first name and your municipality, never your address."],
+    mobilnummer: ["Mobile number", "Needed before your first request. One number, one account. Other members never see it."],
+    passwort: ["Password", "For logging in with email address and password – in the app and on the web."],
+    passkeys: ["Passkeys", "Log in with your fingerprint, face or device PIN, without an email link."],
+    uebergabeorte: ["Handover places", "Three at most. People who send a request only see the name. We show the exact place only once you accept."],
+    ferienmodus: ["Holiday mode", "Your shelf stays visible, but nobody can send requests. Ongoing loans are not affected."],
+    blockiert: ["Blocked people", "Blocked people can’t see your shelf or send you requests."],
+    sprache: ["Language", "Applies to the app in this browser and to your emails and push notifications."],
+    push: ["Push notifications", "News straight to your phone or computer, even when Leihregal is closed. Set per device."],
+    benachrichtigungen: ["Email notifications", "In the app you always see everything. Here you choose what also comes by email."],
+    darstellung: ["Appearance", "Light, dark or like your system. Applies to this browser."],
+    daten: ["Data export", "Everything we have stored about you, as a JSON file."],
+    abmelden: ["Log out", "Ends the session on this device. Other devices stay logged in."],
+  } as Record<string, [string, string]>,
+  emailCategories: {
+    requests: "New requests and questions for you",
+    accepts: "Replies to your requests",
+    deadlines: "Deadlines and reminders",
+    matches: "Title alerts and swap matches",
+    cases: "Cases",
+  } as Record<string, string>,
+};
+
+export const SETTINGS: Record<Locale, M> = { de, fr, it, en };

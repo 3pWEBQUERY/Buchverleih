@@ -55,9 +55,13 @@ export async function AppShell({ user, unread, children }: { user: SessionUser; 
               <span className="block text-meta text-muted truncate">{labels(l).trustLabel[user.trust_level]} · {user.municipality}</span>
             </span>
           </Link>
-          <div className="flex items-center justify-between px-2 mt-3 text-caption text-muted">
-            <Link href="/einstellungen" className="inline-flex items-center gap-1.5 hover:text-ink"><IconSettings width={15} height={15} /> {n.settings}</Link>
-            <PaletteButton className="inline-flex items-center gap-1 hover:text-ink"><kbd className="font-sans border border-line-strong rounded-xs px-1.5 leading-5">⌘K</kbd> {m.palette.label}</PaletteButton>
+          {/* Zwei gleichwertige Zeilen statt einer gedrängten: in FR/IT/EN sind die Wörter länger */}
+          <div className="flex flex-col px-1 mt-3 text-meta text-muted">
+            <Link href="/einstellungen" className="flex items-center gap-2 h-9 px-1 rounded-sm hover:text-ink hover:bg-paper-3 transition-colors"><IconSettings width={16} height={16} className="flex-none" /> {n.settings}</Link>
+            <PaletteButton className="flex items-center gap-2 h-9 px-1 rounded-sm text-left hover:text-ink hover:bg-paper-3 transition-colors">
+              <IconSearch width={16} height={16} className="flex-none" /><span className="flex-1 truncate">{m.palette.label}</span>
+              <kbd className="font-sans text-caption border border-line-strong rounded-xs px-1.5 leading-5 flex-none">⌘K</kbd>
+            </PaletteButton>
           </div>
           <div className="flex items-center justify-between gap-2 px-2 mt-3">
             <nav aria-label={n.legal} className="flex flex-wrap gap-x-3 gap-y-1 text-caption text-muted">

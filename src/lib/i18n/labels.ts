@@ -127,7 +127,51 @@ const IT: Labels = {
   },
 };
 
-const ALL: Record<Locale, Labels> = { de: DE, fr: FR, it: IT };
+const EN: Labels = {
+  conditionLabel: { 1: "Like new", 2: "Good", 3: "Read", 4: "Well worn" },
+  conditionHint: {
+    1: "No signs of reading",
+    2: "Light signs of reading, spine intact",
+    3: "Clear signs of reading, possible creases",
+    4: "Loose pages, stains or notes",
+  },
+  offerLabel: { lend: "Lend", swap: "Swap", gift: "Give away" },
+  offerNoun: { lend: "Loan", swap: "Swap", gift: "Gift" },
+  trustLabel: { 0: "New", 1: "Proven", 2: "Trusted" },
+  statusLabel: {
+    requested: "Requested",
+    accepted: "Accepted",
+    active: "On loan",
+    return_reported: "Return reported",
+    returned: "Back, being checked",
+    disputed: "Case open",
+    completed: "Completed",
+    declined: "Declined",
+    withdrawn: "Withdrawn",
+    expired: "Expired",
+    cancelled: "Cancelled",
+    lost: "Lost",
+  },
+  languageLabel: { de: "German", en: "English", fr: "French", it: "Italian", es: "Spanish", rm: "Romansh" },
+  genreLabel: {
+    Roman: "Novel", Krimi: "Crime", Sachbuch: "Non-fiction", Kinderbuch: "Children’s book", Jugendbuch: "Young adult",
+    Lyrik: "Poetry", Biografie: "Biography", Geschichte: "History", Philosophie: "Philosophy", Wissenschaft: "Science",
+    Kochen: "Cooking", Reisen: "Travel", Comic: "Comics", Fantasy: "Fantasy", Ratgeber: "Self-help",
+  },
+  visibilityLabel: { all: "Everyone", proven: "From “Proven”", circles: "Only my circles" },
+  passOnLabel: { never: "Never", on_request: "On request", always: "Always" },
+  ratingReasonLabel: { late: "Not on time", condition: "Condition", communication: "Communication", no_show: "Didn’t show up" },
+  reportReasonLabel: { harassment: "Harassment", commercial: "Selling or commercial", inappropriate: "Inappropriate content", fake: "False information", price_pattern: "Price mentioned in chat", other: "Other" },
+  caseResponseLabel: {
+    return_date: "Name a return date",
+    replace_same: "Replace with the same copy",
+    replace_other: "Replace with another book of the lender’s choice",
+    swap_offer: "Keep it and give one of my own books instead",
+    object: "Object",
+  },
+};
+
+const ALL: Record<Locale, Labels> = { de: DE, fr: FR, it: IT, en: EN };
 
 export function labels(l: Locale): Labels {
   return ALL[l] ?? DE;

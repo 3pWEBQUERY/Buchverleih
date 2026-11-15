@@ -29,6 +29,7 @@ const LOGIN_MAIL: Record<Locale, [string, string, string]> = {
   de: ["Dein Anmeldelink", "Mit diesem Link meldest du dich bei Leihregal an. Er ist 20 Minuten gültig und funktioniert einmal.", "Anmelden"],
   fr: ["Ton lien de connexion", "Ce lien te connecte à Leihregal. Il est valable 20 minutes et ne fonctionne qu’une fois.", "Se connecter"],
   it: ["Il tuo link di accesso", "Con questo link accedi a Leihregal. È valido 20 minuti e funziona una sola volta.", "Accedi"],
+  en: ["Your sign-in link", "Use this link to sign in to Leihregal. It’s valid for 20 minutes and works once.", "Sign in"],
 };
 
 /**

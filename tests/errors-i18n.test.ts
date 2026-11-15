@@ -1,6 +1,6 @@
 /**
- * Übersetzung der Server-Meldungen: jede deutsche Meldung im Code hat einen französischen
- * und italienischen Eintrag (ERRORS oder ERROR_PATTERNS). Kommt eine neue Meldung dazu,
+ * Übersetzung der Server-Meldungen: jede deutsche Meldung im Code hat einen französischen,
+ * italienischen und englischen Eintrag (ERRORS oder ERROR_PATTERNS). Kommt eine neue Meldung dazu,
  * schlägt dieser Test fehl, bis sie übersetzt ist.
  */
 import { describe, expect, it } from "vitest";
@@ -64,11 +64,14 @@ describe("Server-Meldungen", () => {
   });
 
   it("Einträge sind vollständig und nicht deutsch geblieben", () => {
-    for (const [de, [fr, it]] of Object.entries(ERRORS)) {
-      expect(fr && it, de).toBeTruthy();
+    for (const [de, [fr, it, en]] of Object.entries(ERRORS)) {
+      expect(fr && it && en, de).toBeTruthy();
       expect(fr, de).not.toBe(de);
       expect(it, de).not.toBe(de);
+      expect(en, de).not.toBe(de);
+      expect(en, de).not.toBe(fr);
     }
+    for (const p of ERROR_PATTERNS) expect(typeof p.en, String(p.re)).toBe("function");
   });
 
   it("Muster setzen Zahlen und Namen ein", () => {
@@ -76,6 +79,10 @@ describe("Server-Meldungen", () => {
     expect(translateError("Marc hat gerade schon 2 Leihen laufen oder gebucht, mehr sind mit der aktuellen Stufe nicht möglich. Die Anfrage kann erst später angenommen werden.", "it")).toMatch(/^Marc ha già 2 prestiti/);
     expect(translateError("Du hast noch 2 offene Vorgänge. Schliesse sie ab, dann kannst du dein Konto löschen.", "fr")).toContain("2 transactions");
     expect(translateError("Du hast noch einen offenen Vorgang. Schliesse ihn ab, dann kannst du dein Konto löschen.", "it")).toContain("una pratica");
+    expect(translateError("Du hast 3 offene Anfragen, das ist deine Grenze. Warte auf Antworten oder ziehe eine Anfrage zurück.", "en")).toContain("3 open requests");
+    expect(translateError("Du hast noch 2 offene Vorgänge. Schliesse sie ab, dann kannst du dein Konto löschen.", "en")).toContain("2 open loans");
+    expect(translateError("Nicht gefunden.", "en")).toBe("Not found.");
+    expect(translateError("Nicht gefunden.", "it")).toBe("Non trovato.");
     expect(translateError("Nicht gefunden.", "de")).toBe("Nicht gefunden.");
     expect(translateError("Etwas Unbekanntes.", "fr")).toBe("Etwas Unbekanntes.");
   });
@@ -84,6 +91,9 @@ describe("Server-Meldungen", () => {
     const r = (h: Record<string, string>) => requestLocale(new Request("http://x/api", { headers: h }));
     expect(r({ cookie: "a=1; lr_lang=it", "accept-language": "fr-CH" })).toBe("it");
     expect(r({ "accept-language": "fr-CH,fr;q=0.9,de;q=0.8" })).toBe("fr");
+    expect(r({ "accept-language": "en-GB,en;q=0.9" })).toBe("en");
+    expect(r({ "accept-language": "en-US,de;q=0.5" })).toBe("en");
+    expect(r({ cookie: "lr_lang=en" })).toBe("en");
     expect(r({})).toBe("de");
   });
 });
@@ -94,9 +104,11 @@ describe("Systemtexte in Benachrichtigungen", () => {
     expect(d.text).toBe("Ein Exemplar ist 1,4 km entfernt frei.");
     expect(renderNotification("title_alarm", d, "de").body).toBe("Ein Exemplar ist 1,4 km entfernt frei.");
     expect(renderNotification("title_alarm", d, "fr").body).toBe("Un exemplaire est libre à 1,4 km.");
+    expect(renderNotification("title_alarm", d, "en").body).toBe("A copy is free 1.4 km away.");
     expect(renderNotification("pass_on_ask", { title: "X", ...systemText("pass_on_owner", { from: "Lea", to: "Jonas" }) }, "it").body).toBe("Passare direttamente da Lea a Jonas?");
     // Alte Einträge ohne Schlüssel: bekannte Systemtexte werden übersetzt, alles andere bleibt wie gespeichert
     expect(renderNotification("case_resolved", { title: "X", text: "Das Buch ist zurück." }, "fr").body).toBe("Le livre est rendu.");
+    expect(renderNotification("case_resolved", { title: "X", text: "Das Buch ist zurück." }, "en").body).toBe("The book is back.");
     expect(renderNotification("case_resolved", { title: "X", text: "Freitext von Marc" }, "fr").body).toBe("Freitext von Marc");
     expect(renderNotification("case_resolved", { title: "X", text: "Das Buch ist zurück." }, "de").body).toBe("Das Buch ist zurück.");
   });

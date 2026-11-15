@@ -12,6 +12,11 @@ export function responseText(hours: number | null | undefined, l: Locale = "de")
       if (hours < 24) return `en env. ${Math.round(hours)} h`;
       return days <= 1 ? "en un jour" : `en env. ${days} jours`;
     }
+    if (l === "en") {
+      if (hours < 1) return "in less than an hour";
+      if (hours < 24) return `in about ${Math.round(hours)} hrs`;
+      return days <= 1 ? "within a day" : `in about ${days} days`;
+    }
     if (hours < 1) return "in meno di un’ora";
     if (hours < 24) return `in circa ${Math.round(hours)} h`;
     return days <= 1 ? "entro un giorno" : `in circa ${days} giorni`;

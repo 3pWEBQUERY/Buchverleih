@@ -194,7 +194,9 @@ function num(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 /** Dezimalkomma wie in den Zielwerten des PRD («0,5 %»), Tausender mit ’ */
-const fmt = (n: number, digits = 1) => n.toLocaleString("de-CH", { maximumFractionDigits: digits }).replace(".", ",");
+const fmt = (n: number, digits = 1, l: Locale = "de") => l === "en"
+  ? n.toLocaleString("en-GB", { maximumFractionDigits: digits })
+  : n.toLocaleString("de-CH", { maximumFractionDigits: digits }).replace(".", ",");
 const reached = (k: Kpi) => k.value !== null && (k.dir === "min" ? k.value >= k.goal : k.value < k.goal);
 
 async function Kpis({ l }: { l: Locale }) {
@@ -207,17 +209,17 @@ async function Kpis({ l }: { l: Locale }) {
     { label: t.rows.response[0], def: t.rows.response[1], value: num(k.median_response_hours), unit: t.hours, target: `< 12 ${t.hoursShort}`, goal: 12, dir: "max" },
     { label: t.rows.onTime[0], def: t.rows.onTime[1], value: num(k.on_time_rate), unit: " %", target: "≥ 85 %", goal: 85, dir: "min" },
     { label: t.rows.dispute[0], def: t.rows.dispute[1], value: num(k.dispute_rate), unit: " %", target: "< 2 %", goal: 2, dir: "max", digits: 2 },
-    { label: t.rows.loss[0], def: t.rows.loss[1], value: num(k.loss_rate), unit: " %", target: "< 0,5 %", goal: 0.5, dir: "max", digits: 2 },
+    { label: t.rows.loss[0], def: t.rows.loss[1], value: num(k.loss_rate), unit: " %", target: l === "en" ? "< 0.5 %" : "< 0,5 %", goal: 0.5, dir: "max", digits: 2 },
     { label: t.rows.depth[0], def: t.rows.depth[1], value: num(k.shelf_depth), unit: "", target: "≥ 8", goal: 8, dir: "min" },
     { label: t.rows.liquidity[0], def: t.rows.liquidity[1], value: num(k.liquidity), unit: " %", target: "≥ 40 %", goal: 40, dir: "min" },
     { label: t.rows.returning[0], def: t.rows.returning[1], value: num(k.return_rate), unit: " %", target: "≥ 35 %", goal: 35, dir: "min" },
   ];
   const stock: [string, string][] = [
-    [t.stock.members, fmt(num(k.members) ?? 0, 0)],
-    [t.stock.copies, fmt(num(k.copies) ?? 0, 0)],
-    [t.stock.circles, fmt(num(k.circles) ?? 0, 0)],
-    [t.stock.circleShare, num(k.circle_share) === null ? "–" : `${fmt(num(k.circle_share)!)} %`],
-    [t.stock.shipping, fmt(num(k.shipping_interest) ?? 0, 0)],
+    [t.stock.members, fmt(num(k.members) ?? 0, 0, l)],
+    [t.stock.copies, fmt(num(k.copies) ?? 0, 0, l)],
+    [t.stock.circles, fmt(num(k.circles) ?? 0, 0, l)],
+    [t.stock.circleShare, num(k.circle_share) === null ? "–" : `${fmt(num(k.circle_share)!, 1, l)} %`],
+    [t.stock.shipping, fmt(num(k.shipping_interest) ?? 0, 0, l)],
   ];
   const hit = rows.filter(reached).length;
   const known = rows.filter((r) => r.value !== null).length;
@@ -234,7 +236,7 @@ async function Kpis({ l }: { l: Locale }) {
       <section className="surface-night rounded-lg p-6 md:p-8 grid gap-8 md:grid-cols-[1fr_auto] md:items-end anim-rise">
         <div>
           <p className="eyebrow !text-night-muted">{t.leadEyebrow}</p>
-          <p className="display text-hero tnum mt-3 leading-none">{fmt(num(k.completed_week) ?? 0, 0)}</p>
+          <p className="display text-hero tnum mt-3 leading-none">{fmt(num(k.completed_week) ?? 0, 0, l)}</p>
           <p className="text-night-muted text-body mt-4 max-w-md">{t.leadText}</p>
         </div>
         <dl className="grid grid-cols-2 gap-x-10 gap-y-1 md:text-right">
@@ -285,7 +287,7 @@ function KpiTile({ k, i, l }: { k: Kpi; i: number; l: Locale }) {
           : <Chip tone={ok ? "ok" : "late"} strong>{ok ? t.reached : t.below}</Chip>}
       </div>
       <p className="font-title tracking-display text-display leading-none tnum mt-5">
-        {k.value === null ? <span className="text-muted">–</span> : <>{fmt(k.value, k.digits)}<span className="text-title-sm text-muted">{k.unit}</span></>}
+        {k.value === null ? <span className="text-muted">–</span> : <>{fmt(k.value, k.digits, l)}<span className="text-title-sm text-muted">{k.unit}</span></>}
       </p>
       <div className="mt-auto pt-5">
         <div className="relative h-2 rounded-full bg-paper-3" aria-hidden>

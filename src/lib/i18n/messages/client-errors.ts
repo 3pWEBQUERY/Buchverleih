@@ -14,4 +14,8 @@ export const CLIENT_ERRORS: Record<Locale, { generic: string; upload: string }> 
     generic: "Qualcosa è andato storto. Riprova.",
     upload: "Non è stato possibile caricare la foto. Controlla la connessione e riprova.",
   },
+  en: {
+    generic: "Something went wrong. Please try again.",
+    upload: "The photo could not be uploaded. Check your connection and try again.",
+  },
 };
