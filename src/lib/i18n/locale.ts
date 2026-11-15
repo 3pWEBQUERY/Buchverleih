@@ -1,14 +1,14 @@
 /**
- * Sprachen der Oberfläche. Deutsch ist die Ausgangssprache; Französisch und Italienisch
+ * Sprachen der Oberfläche. Deutsch ist die Ausgangssprache; Französisch, Italienisch und Englisch
  * folgen derselben Struktur. Rechtstexte bleiben verbindlich auf Deutsch.
  */
-export const LOCALES = ["de", "fr", "it"] as const;
+export const LOCALES = ["de", "fr", "it", "en"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "de";
 export const LOCALE_COOKIE = "lr_lang";
 
-export const htmlLang: Record<Locale, string> = { de: "de-CH", fr: "fr-CH", it: "it-CH" };
-export const localeName: Record<Locale, string> = { de: "Deutsch", fr: "Français", it: "Italiano" };
+export const htmlLang: Record<Locale, string> = { de: "de-CH", fr: "fr-CH", it: "it-CH", en: "en-GB" };
+export const localeName: Record<Locale, string> = { de: "Deutsch", fr: "Français", it: "Italiano", en: "English" };
 
 export function isLocale(x: unknown): x is Locale {
   return typeof x === "string" && (LOCALES as readonly string[]).includes(x);
