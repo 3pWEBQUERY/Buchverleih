@@ -118,8 +118,8 @@ const de = {
     source: "Kantone, Bezirke, Gemeinden und Postleitzahlen aus den amtlichen Verzeichnissen von swisstopo und BFS.",
     loadError: "Die Gebiete konnten nicht geladen werden.",
     retry: "Erneut laden",
-    flagsTitle: "Funktionen pro Testregion",
-    flagsDesc: "Einzelne Funktionen lassen sich in den bisherigen Testregionen zu- oder abschalten.",
+    flagsTitle: "Funktionen",
+    flagsDesc: "Einzelne Funktionen für die ganze Plattform zu- oder abschalten. Abgeschaltete Funktionen verschwinden aus der Oberfläche und werden auch über die API abgelehnt.",
   },
   accounts: {
     team: "Moderationsteam",
@@ -258,8 +258,8 @@ const fr: ModMsg = {
     source: "Cantons, districts, communes et NPA issus des répertoires officiels de swisstopo et de l’OFS.",
     loadError: "Les territoires n’ont pas pu être chargés.",
     retry: "Recharger",
-    flagsTitle: "Fonctions par région test",
-    flagsDesc: "Certaines fonctions peuvent être activées ou désactivées dans les anciennes régions test.",
+    flagsTitle: "Fonctions",
+    flagsDesc: "Activer ou désactiver certaines fonctions pour toute la plateforme. Une fonction désactivée disparaît de l’interface et est aussi refusée par l’API.",
   },
   accounts: {
     team: "Équipe de modération",
@@ -397,8 +397,8 @@ const it: ModMsg = {
     source: "Cantoni, distretti, comuni e NPA dai registri ufficiali di swisstopo e UST.",
     loadError: "Impossibile caricare i territori.",
     retry: "Ricarica",
-    flagsTitle: "Funzioni per regione di prova",
-    flagsDesc: "Singole funzioni si possono attivare o disattivare nelle precedenti regioni di prova.",
+    flagsTitle: "Funzioni",
+    flagsDesc: "Attivare o disattivare singole funzioni per tutta la piattaforma. Le funzioni disattivate spariscono dall’interfaccia e vengono rifiutate anche dall’API.",
   },
   accounts: {
     team: "Team di moderazione",
@@ -536,8 +536,8 @@ const en: ModMsg = {
     source: "Cantons, districts, municipalities and postcodes from the official registers of swisstopo and the FSO.",
     loadError: "The areas could not be loaded.",
     retry: "Reload",
-    flagsTitle: "Features per test region",
-    flagsDesc: "Individual features can be switched on or off in the former test regions.",
+    flagsTitle: "Features",
+    flagsDesc: "Switch individual features on or off for the whole platform. A feature that is off disappears from the interface and is also refused by the API.",
   },
   accounts: {
     team: "Moderation team",

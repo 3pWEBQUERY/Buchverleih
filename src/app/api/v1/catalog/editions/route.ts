@@ -2,10 +2,12 @@ import { z } from "zod";
 import { body, route } from "@/lib/api";
 import { requireUser } from "@/lib/auth/session";
 import { createManualEdition } from "@/lib/catalog/works";
+import { rateLimit } from "@/lib/ratelimit";
 
 /** POST /api/v1/catalog/editions – Buch ohne ISBN oder ohne Treffer von Hand erfassen */
 export const POST = route(async (req) => {
   const u = await requireUser();
+  await rateLimit(`manualedition:${u.id}`, 30, 3600);
   const b = await body(
     req,
     z.object({

@@ -43,7 +43,7 @@ export function SettingsNav({ groups, label = "Abschnitte" }: { groups: NavGroup
     <>
       {/* Mobil und Tablet */}
       <div className="lg:hidden sticky top-14 md:top-0 z-20 -mx-4 md:-mx-12 bg-paper/95 backdrop-blur-md border-b border-line mb-8">
-        <div ref={bar} className="flex gap-1.5 overflow-x-auto px-4 md:px-12 py-2.5" style={{ scrollbarWidth: "none" }}>
+        <div ref={bar} className="flex gap-1.5 overflow-x-auto px-4 md:px-12 py-2.5 scroll-x-fade" style={{ scrollbarWidth: "none" }}>
           {groups.flatMap((g) => g.items.map((i) => (
             <a key={i.id} href={`#${i.id}`} data-id={i.id} aria-current={active === i.id ? "location" : undefined}
               className={cx(

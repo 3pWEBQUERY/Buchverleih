@@ -2,6 +2,7 @@ import { z } from "zod";
 import { body, route } from "@/lib/api";
 import { requireUser } from "@/lib/auth/session";
 import { addWish, circleHitsForWishlist, listWishlist, mySwapMatches, removeWish, updateWish } from "@/lib/wishlist";
+import { requireFeature } from "@/lib/features";
 
 export const GET = route(async () => {
   const u = await requireUser();
@@ -11,8 +12,9 @@ export const GET = route(async () => {
 
 export const POST = route(async (req) => {
   const u = await requireUser();
+  await requireFeature("wishlist");
   const b = await body(req, z.object({ workId: z.string().uuid(), radiusKm: z.number().int().min(1).max(50).optional(), shareCircles: z.boolean().optional() }));
-  await addWish(u.id, u.plan_id, b.workId, b.radiusKm, b.shareCircles);
+  await addWish(u.id, u.plan_id, b.workId, b.radiusKm ?? u.radius_km, b.shareCircles);
   return { ok: true };
 });
 

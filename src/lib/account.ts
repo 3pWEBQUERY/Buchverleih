@@ -59,6 +59,7 @@ export async function updateSettings(userId: string, s: {
   pulseShowNewBooks?: boolean;
   /** E-Mail und Push zur Pinnwand: nur Antworten auf eigene Zettel, alles, oder nichts */
   pinboardNotify?: "replies" | "all" | "off";
+  radiusKm?: number;
 }) {
   const row: Record<string, unknown> = {};
   if (s.firstName !== undefined) row.first_name = s.firstName.trim().slice(0, 40);
@@ -66,6 +67,7 @@ export async function updateSettings(userId: string, s: {
   if (s.avatarKey !== undefined) row.avatar_key = s.avatarKey;
   if (s.pulseShowNewBooks !== undefined) row.pulse_show_new_books = s.pulseShowNewBooks;
   if (s.pinboardNotify !== undefined) row.pinboard_notify = s.pinboardNotify;
+  if (s.radiusKm !== undefined) row.radius_km = s.radiusKm;
   if (Object.keys(row).length) await sql`update users set ${sql(row)} where id = ${userId}`;
   if (s.emailPrefs) {
     const clean = Object.fromEntries(Object.entries(s.emailPrefs).filter(([k]) => k !== "cases").map(([k, v]) => [k, Boolean(v)]));
@@ -97,8 +99,12 @@ export async function setAvatar(userId: string, uploadId: string | null) {
 
 export async function joinWaitlist(email: string, plz: string, locale: Locale = "de") {
   if (!/^\d{4}$/.test(plz)) throw err.invalid("Gib eine vierstellige Postleitzahl ein.");
+  // Offene Postleitzahl: keine Warteliste nötig, also auch keine E-Mail. Ein erneuter Eintrag setzt
+  // den Versand nicht zurück – sonst liesse sich die Warteliste als Mail-Schleuder missbrauchen.
+  const [o] = await sql<{ open: boolean }[]>`select plz_open(${plz}) as open`;
+  if (o?.open) return;
   await sql`insert into plz_waitlist (email, plz, locale) values (${email.trim().toLowerCase()}, ${plz}, ${locale})
-            on conflict (email, plz) do update set locale = excluded.locale, notified_at = null`;
+            on conflict (email, plz) do update set locale = excluded.locale`;
 }
 
 /** Angemeldete Person mit geschlossener PLZ: mit ihrer E-Mail und Sprache auf die Warteliste */
@@ -111,7 +117,7 @@ async function waitlistSelf(userId: string, plz: string) {
 export async function exportData(userId: string) {
   const [user] = await sql`select id, email, first_name, plz, municipality, phone_e164, trust_level, role, created_at, onboarded_at,
                                   age_confirmed_at, email_prefs, shelf_paused, avatar_key, home_lat, home_lng, display_lat, display_lng,
-                                  pulse_show_new_books, pinboard_notify
+                                  pulse_show_new_books, pinboard_notify, radius_km
                              from users where id = ${userId}`;
   const copies = await sql`select c.*, e.title, e.isbn13 from copies c join editions e on e.id = c.edition_id where c.owner_id = ${userId}`;
   const copyPhotos = await sql`select p.* from copy_photos p join copies c on c.id = p.copy_id where c.owner_id = ${userId}`;
@@ -143,10 +149,17 @@ export async function exportData(userId: string) {
   const circlePostReactions = await sql`select post_id, kind, created_at from circle_post_reactions where user_id = ${userId}`;
   const circlePostOffers = await sql`select post_id, copy_id, created_at from circle_post_offers where user_id = ${userId}`;
   const bookNotes = await sql`select id, copy_id, loan_id, body, anonymous, hidden_at, created_at from book_notes where author_id = ${userId}`;
+  const devices = await sql`select environment, created_at, last_ok_at from apns_devices where user_id = ${userId}`;
+  const phoneVerifications = await sql`select phone_e164, created_at, expires_at from phone_verifications where user_id = ${userId}`;
+  const catalogCorrections = await sql`select edition_id, field, suggestion, status, created_at from catalog_corrections where user_id = ${userId}`;
+  const blockedDays = await sql`
+    select b.copy_id, lower(b.period) as from_day, upper(b.period) as until_day, b.note, b.paused
+      from copy_bookings b join copies c on c.id = b.copy_id where c.owner_id = ${userId} and b.loan_id is null`;
   return {
     exportedAt: new Date().toISOString(), user, copies, copyPhotos, loans, events, messages, messagesReceived, ratingsGiven, ratingsReceived,
     cases, circles, wishlist, spots, notifications, threadReads, reports, blocks, uploads, passkeys, sessions, searches,
     circlePosts, circlePostComments, circlePostReactions, circlePostOffers, bookNotes,
+    devices, phoneVerifications, catalogCorrections, blockedDays,
   };
 }
 
@@ -183,8 +196,15 @@ export async function deleteAccount(userId: string) {
     await tx`update loans set message = null where borrower_id = ${userId}`;
     await tx`update messages set body = null, proposal_place = null where sender_id = ${userId} and body is not null and proposal_at is not null`;
     await tx`delete from messages where sender_id = ${userId} and proposal_at is null`;
-    if (me?.email) await tx`delete from plz_waitlist where lower(email) = lower(${me.email})`;
-    await tx`update users set email = ${"geloescht-" + userId + "@invalid"}, first_name = 'Ehemaliges Mitglied', phone_e164 = null,
+    if (me?.email) {
+      await tx`delete from plz_waitlist where lower(email) = lower(${me.email})`;
+      await tx`delete from login_tokens where lower(email) = lower(${me.email})`;
+    }
+    await tx`delete from apns_devices where user_id = ${userId}`;
+    await tx`delete from phone_verifications where user_id = ${userId}`;
+    await tx`update catalog_corrections set user_id = null where user_id = ${userId}`;
+    await tx`update interest_signals set user_id = null where user_id = ${userId}`;
+    await tx`update users set email = ${"geloescht-" + userId + "@invalid"}, first_name = 'Ehemaliges Mitglied', phone_e164 = null, password_hash = null,
                     plz = null, municipality = null,
                     home_lat = null, home_lng = null, display_lat = null, display_lng = null, avatar_key = null,
                     email_prefs = '{}', pulse_show_new_books = true, pinboard_notify = 'replies', deleted_at = now() where id = ${userId}`;

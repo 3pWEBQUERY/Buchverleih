@@ -3,6 +3,7 @@ import { getLocale } from "@/lib/i18n/server";
 import { PUBLIC } from "@/lib/i18n/messages/public";
 import { sql } from "@/lib/db";
 import { BookRow, type BookRowItem } from "@/components/regal/book-row";
+import { cx } from "@/components/ui";
 
 /**
  * Geteilte Bühne für Anmelden und Einrichten.
@@ -65,7 +66,7 @@ export async function AuthStage({ eyebrow, title, lead, steps, children }: { eye
           <p className="display text-display mt-6">{title}</p>
           <p className="mt-4 text-ink-2 text-body-lg leading-relaxed max-w-lg">{lead}</p>
 
-          <ol className="mt-8 grid sm:grid-cols-3 gap-2">
+          <ol className={cx("mt-8 grid gap-2", steps.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-3")}>
             {steps.map(([t, d], i) => (
               <li key={t} className="rounded-md bg-paper border border-line p-4">
                 <span className="text-caption tnum text-accent-hover font-medium">0{i + 1}</span>

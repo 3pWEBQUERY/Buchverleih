@@ -9,7 +9,7 @@
  * Ohne diese Variablen ist APNs aus; Web-Push läuft unverändert weiter.
  */
 import { connect, constants, type ClientHttp2Session } from "node:http2";
-import { createPrivateKey, sign } from "node:crypto";
+import { createPrivateKey, sign, type KeyObject } from "node:crypto";
 import { sql } from "@/lib/db";
 
 const HOSTS = { production: "https://api.push.apple.com", sandbox: "https://api.sandbox.push.apple.com" } as const;
@@ -23,16 +23,33 @@ function topic() {
   return process.env.APNS_TOPIC || "ch.leihregal.app";
 }
 
+/**
+ * Schlüssel aus APNS_KEY lesen – tolerant gegenüber der Art, wie er in Railway landet: ganze .p8-Datei,
+ * einzeilig mit «\\n» oder Leerzeichen statt Zeilenumbrüchen, nur der Base64-Teil ohne BEGIN/END-Zeilen
+ * oder die ganze Datei nochmals Base64-kodiert.
+ */
+export function apnsKey(raw: string): KeyObject {
+  let text = raw.trim().replace(/^["']|["']$/g, "");
+  if (!text.includes("PRIVATE KEY")) {
+    const decoded = Buffer.from(text.replace(/\s+/g, ""), "base64").toString("utf8");
+    if (decoded.includes("PRIVATE KEY")) text = decoded;
+  }
+  const body = text
+    .replace(/\\n/g, "\n")
+    .replace(/-----(BEGIN|END)[A-Z ]*-----/g, "")
+    .replace(/[^A-Za-z0-9+/=]/g, "");
+  return createPrivateKey({ key: Buffer.from(body, "base64"), format: "der", type: "pkcs8" });
+}
+
 /** JWT gilt bei Apple höchstens 60 Minuten; wir erneuern nach 50 */
 let cachedJwt: { token: string; at: number } | null = null;
 export function providerToken() {
   const now = Math.floor(Date.now() / 1000);
   if (cachedJwt && now - cachedJwt.at < 50 * 60) return cachedJwt.token;
-  const pem = (process.env.APNS_KEY ?? "").replace(/\\n/g, "\n");
   const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString("base64url");
   const head = b64({ alg: "ES256", kid: process.env.APNS_KEY_ID });
   const claims = b64({ iss: process.env.APNS_TEAM_ID, iat: now });
-  const sig = sign("sha256", Buffer.from(`${head}.${claims}`), { key: createPrivateKey(pem), dsaEncoding: "ieee-p1363" }).toString("base64url");
+  const sig = sign("sha256", Buffer.from(`${head}.${claims}`), { key: apnsKey(process.env.APNS_KEY ?? ""), dsaEncoding: "ieee-p1363" }).toString("base64url");
   cachedJwt = { token: `${head}.${claims}.${sig}`, at: now };
   return cachedJwt.token;
 }

@@ -335,12 +335,14 @@ export async function confirmReturn(user: SessionUser, loanId: string) {
   return sql.begin((tx) => executeReturn(tx, loanId, "confirm_return", { role: "owner", id: user.id }));
 }
 
+/** Einspruch gegen eine Rückgabemeldung. Läuft ein Fall, geht die Leihe in den Fall zurück statt auf «aktiv». */
 export async function objectReturn(user: SessionUser, loanId: string) {
-  return sql.begin((tx) =>
-    transition(tx, loanId, "object_return", { role: "owner", id: user.id }, {
+  return sql.begin(async (tx) => {
+    const [open] = await tx<{ id: string }[]>`select id from cases where loan_id = ${loanId} and closed_at is null limit 1`;
+    return transition(tx, loanId, open ? "object_return_case" : "object_return", { role: "owner", id: user.id }, {
       set: tx`return_reported_at = null, return_reported_by = null`,
-    }),
-  );
+    });
+  });
 }
 
 // ---------------------------------------------------------------------------

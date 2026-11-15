@@ -11,6 +11,7 @@ import { useLocale } from "@/components/locale-provider";
 import { htmlLang } from "@/lib/i18n/locale";
 import { CHAT } from "@/lib/i18n/messages/loans-chat";
 import type { QuickSet } from "@/lib/loans/next";
+import { DateTimeField } from "@/components/date-field";
 
 /**
  * Chat im Vorgang bzw. Übergabe-Chat (PRD 4.10, 7.4). Terminvorschläge sind antippbare Karten
@@ -235,6 +236,7 @@ export function Chat({
     return new Intl.DateTimeFormat(htmlLang[l], { weekday: "long", day: "numeric", month: "long" }).format(new Date(d));
   };
 
+  const latestProposalId = [...msgs].reverse().find((x) => x.proposal_at)?.id ?? null;
   return (
     <div className="flex flex-col">
       {msgs.length === 0 ? (
@@ -251,7 +253,9 @@ export function Chat({
             atEnd.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
             if (atEnd.current && unseen) { setUnseen(0); markRead(); }
           }}>
-          {msgs.map((m, i) => {
+          {msgs.map((m0, i) => {
+            // Ein späterer Terminvorschlag macht frühere offene Vorschläge hinfällig: nicht mehr annehmbar
+            const m = m0.proposal_at && m0.proposal_status === "open" && m0.id !== latestProposalId ? { ...m0, proposal_status: "countered" as const } : m0;
             const mine = m.sender_id === me;
             const prev = msgs[i - 1];
             const newDay = !prev || dayKey(prev.created_at) !== dayKey(m.created_at);
@@ -337,7 +341,7 @@ export function Chat({
             <div className="grid sm:grid-cols-2 gap-3 mb-3 p-3 rounded-md bg-paper-2">
               <label className="block">
                 <span className="block text-meta font-semibold mb-1.5">{t.dateTime}</span>
-                <Input type="datetime-local" required={proposing} min={minLocal} value={when} onChange={(e) => setWhen(e.target.value)} />
+                <DateTimeField required={proposing} min={minLocal} value={when} onChange={setWhen} />
               </label>
               <label className="block">
                 <span className="block text-meta font-semibold mb-1.5">{t.place}</span>

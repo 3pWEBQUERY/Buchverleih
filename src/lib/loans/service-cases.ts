@@ -13,6 +13,7 @@ import { onPassOnBroken, releaseFollowers } from "./passon";
 import { SYSTEM, releaseBookings, tryMoveBooking, transferOwnership, assertOwnPhotos, offerEarlierStart, pauseFutureBookings, resumePausedBookings, liftSuspensionIfClear } from "./service-shared";
 import { cancelTx } from "./service-request";
 import type { TxSql } from "./service-shared";
+import { requireFeature } from "@/lib/features";
 
 // ---------------------------------------------------------------------------
 // Frühere Rückgabe: nächste Person darf früher beginnen (4.6, 4.8)
@@ -273,6 +274,7 @@ async function offerSwapTx(tx: TxSql, user: SessionUser, loanId: string, copyId:
 }
 
 export async function offerSwap(user: SessionUser, loanId: string, copyId: string) {
+  await requireFeature("swap");
   return sql.begin((tx) => offerSwapTx(tx, user, loanId, copyId));
 }
 

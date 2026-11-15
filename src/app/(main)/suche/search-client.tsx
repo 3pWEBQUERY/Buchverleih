@@ -35,7 +35,7 @@ export type Filters = {
   condition: number;
 };
 
-const DEFAULTS: Filters = { radius: 25, offer: "", available: false, language: "", genre: "", condition: 0 };
+const DEFAULTS: Filters = { radius: 10, offer: "", available: false, language: "", genre: "", condition: 0 };
 const RADII = [1, 2, 5, 10, 25];
 
 function urlOf(key: string, view: View) {
@@ -45,10 +45,10 @@ function urlOf(key: string, view: View) {
   return s ? `/suche?${s}` : "/suche";
 }
 
-function paramsOf(q: string, f: Filters, plz: string) {
+function paramsOf(q: string, f: Filters, plz: string, defRadius: number) {
   const p = new URLSearchParams();
   if (q.trim()) p.set("q", q.trim());
-  if (f.radius !== DEFAULTS.radius) p.set("radius", String(f.radius));
+  if (f.radius !== defRadius) p.set("radius", String(f.radius));
   if (f.offer) p.set("offer", f.offer);
   if (f.available) p.set("available", "1");
   if (f.language) p.set("language", f.language);
@@ -58,8 +58,8 @@ function paramsOf(q: string, f: Filters, plz: string) {
   return p;
 }
 
-function activeCount(f: Filters) {
-  return (f.radius !== DEFAULTS.radius ? 1 : 0) + (f.offer ? 1 : 0) + (f.available ? 1 : 0) + (f.language ? 1 : 0) + (f.genre ? 1 : 0) + (f.condition ? 1 : 0);
+function activeCount(f: Filters, defRadius: number) {
+  return (f.radius !== defRadius ? 1 : 0) + (f.offer ? 1 : 0) + (f.available ? 1 : 0) + (f.language ? 1 : 0) + (f.genre ? 1 : 0) + (f.condition ? 1 : 0);
 }
 
 export function availabilityText(h: Pick<WorkHit, "copies" | "available_now">, l: Locale = "de") {
@@ -78,7 +78,7 @@ const coverOf = (h: WorkHit) => ({
 });
 
 export function SearchClient({
-  loggedIn, autoFocus, initialQ, initialPlz, initialPlace, initialFilters, initialResults, initialCenter, initialView,
+  loggedIn, autoFocus, initialQ, initialPlz, initialPlace, initialFilters, initialResults, initialCenter, initialView, mapEnabled = true, defaultRadius = 10,
 }: {
   loggedIn: boolean;
   autoFocus: boolean;
@@ -89,6 +89,8 @@ export function SearchClient({
   initialResults: WorkHit[] | null;
   initialCenter: Center | null;
   initialView: View;
+  mapEnabled?: boolean;
+  defaultRadius?: number;
 }) {
   const router = useRouter();
   const l = useLocale();
@@ -115,7 +117,7 @@ export function SearchClient({
     if (autoFocus) inputRef.current?.focus();
   }, [autoFocus]);
 
-  const key = useMemo(() => paramsOf(q, f, loggedIn ? "" : plz).toString(), [q, f, plz, loggedIn]);
+  const key = useMemo(() => paramsOf(q, f, loggedIn ? "" : plz, defaultRadius).toString(), [q, f, plz, loggedIn, defaultRadius]);
 
   useEffect(() => {
     if (first.current) {
@@ -137,7 +139,7 @@ export function SearchClient({
     const t = setTimeout(async () => {
       setLoading(true);
       try {
-        const p = paramsOf(q, f, loggedIn ? "" : plz);
+        const p = paramsOf(q, f, loggedIn ? "" : plz, defaultRadius);
         p.delete("radius");
         p.set("radius", String(f.radius));
         const r = await fetch(`/api/v1/search?${p}`, { signal: ctrl.signal, credentials: "same-origin" });
@@ -170,7 +172,7 @@ export function SearchClient({
   }
 
   const set = <K extends keyof Filters>(k: K, v: Filters[K]) => setF((x) => ({ ...x, [k]: v }));
-  const n = activeCount(f);
+  const n = activeCount(f, defaultRadius);
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter") {
@@ -240,7 +242,7 @@ export function SearchClient({
         <PlzBar plz={plz} place={place} onSet={(p, name) => { setPlz(p); setPlace(name); }} />
       )}
 
-      <FilterChips f={f} set={set} reset={() => setF(DEFAULTS)} n={n} hasOrigin={hasOrigin} />
+      <FilterChips f={f} set={set} reset={() => setF({ ...DEFAULTS, radius: defaultRadius })} n={n} hasOrigin={hasOrigin} />
 
       <div className="mt-10 md:mt-12 min-w-0" aria-busy={loading}>
         <p className="sr-only" aria-live="polite">{summary ?? ""}</p>
@@ -249,7 +251,7 @@ export function SearchClient({
         {results !== null && results.length > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6 md:mb-8">
             <p className="text-body-sm text-muted" aria-hidden>{summary}</p>
-            <ViewSwitch view={view} onChange={switchView} t={t.view} />
+            {mapEnabled && <ViewSwitch view={view} onChange={switchView} t={t.view} />}
           </div>
         )}
 
@@ -495,10 +497,13 @@ function PlzBar({ plz, place, onSet }: { plz: string; place: string | null; onSe
 
 type CatalogEdition = { id: string; work_id: string; title: string; authors: string[] };
 
+type WishCandidate = { key: string; workId?: string; isbn?: string; title: string; authors: string[] };
+
 function NoHits({ q, f, n, loggedIn, widen, reset }: { q: string; f: Filters; n: number; loggedIn: boolean; widen: () => void; reset: () => void }) {
   const toast = useToast();
   const t = SEARCH[useLocale()].none;
-  const [works, setWorks] = useState<CatalogEdition[] | null>(null);
+  // Titel für die Wunschliste: zuerst aus dem eigenen Katalog, sonst weltweit (wird beim Merken übernommen)
+  const [works, setWorks] = useState<WishCandidate[] | null>(null);
   const [added, setAdded] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -506,21 +511,31 @@ function NoHits({ q, f, n, loggedIn, widen, reset }: { q: string; f: Filters; n:
     setWorks(null);
     if (!loggedIn || q.length < 2) return;
     let alive = true;
-    api<{ editions: CatalogEdition[] }>(`/catalog/search?q=${encodeURIComponent(q)}`)
-      .then((d) => {
-        if (!alive) return;
-        const seen = new Set<string>();
-        setWorks(d.editions.filter((e) => (seen.has(e.work_id) ? false : (seen.add(e.work_id), true))).slice(0, 4));
-      })
+    (async () => {
+      const d = await api<{ editions: CatalogEdition[] }>(`/catalog/search?q=${encodeURIComponent(q)}`);
+      const seen = new Set<string>();
+      const own = d.editions.filter((e) => (seen.has(e.work_id) ? false : (seen.add(e.work_id), true))).slice(0, 4)
+        .map((e) => ({ key: e.work_id, workId: e.work_id, title: e.title, authors: e.authors }));
+      if (own.length) return own;
+      const ext = await api<{ results: { isbn13: string; title: string; authors: string[] }[] }>(`/catalog/search/external?q=${encodeURIComponent(q)}`);
+      return ext.results.slice(0, 4).map((h) => ({ key: h.isbn13, isbn: h.isbn13, title: h.title, authors: h.authors }));
+    })()
+      .then((list) => alive && setWorks(list))
       .catch(() => alive && setWorks([]));
     return () => { alive = false; };
   }, [q, loggedIn]);
 
-  async function wish(workId: string) {
-    setBusy(workId);
+  async function wish(c: WishCandidate) {
+    setBusy(c.key);
     try {
+      let workId = c.workId;
+      if (!workId && c.isbn) {
+        const r = await api<{ edition: { work_id: string } | null }>(`/catalog/isbn/${c.isbn}`);
+        workId = r.edition?.work_id;
+      }
+      if (!workId) throw new Error(t.notInCatalog(q));
       await api("/wishlist", { body: { workId, radiusKm: Math.min(f.radius, 25) } });
-      setAdded((s) => new Set(s).add(workId));
+      setAdded((s) => new Set(s).add(c.key));
       toast.show({ text: t.added });
     } catch (e) {
       toast.error((e as Error).message);
@@ -561,15 +576,15 @@ function NoHits({ q, f, n, loggedIn, widen, reset }: { q: string; f: Filters; n:
             <p className="px-5 md:px-6 pt-5 pb-3 text-body-sm text-muted">{t.wishIntro}</p>
             <ul className="divide-y divide-line border-t border-line">
               {works.map((w) => (
-                <li key={w.work_id} className="flex items-center justify-between gap-4 px-5 md:px-6 py-3.5">
+                <li key={w.key} className="flex items-center justify-between gap-4 px-5 md:px-6 py-3.5">
                   <div className="min-w-0">
                     <div className="font-serif text-lead leading-tight truncate">{w.title}</div>
                     {w.authors.length > 0 && <div className="text-body-sm text-muted truncate">{w.authors.join(", ")}</div>}
                   </div>
-                  {added.has(w.work_id) ? (
+                  {added.has(w.key) ? (
                     <Link href="/wunschliste" className="inline-flex items-center gap-1.5 text-meta font-medium text-ok hover:underline underline-offset-4"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok" /> {t.onList}</Link>
                   ) : (
-                    <Button type="button" variant={works.length === 1 ? "primary" : "secondary"} size="sm" disabled={busy === w.work_id} onClick={() => wish(w.work_id)}>
+                    <Button type="button" variant={works.length === 1 ? "primary" : "secondary"} size="sm" disabled={busy === w.key} onClick={() => wish(w)}>
                       {t.addWish}
                     </Button>
                   )}

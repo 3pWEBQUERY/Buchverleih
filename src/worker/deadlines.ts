@@ -201,6 +201,28 @@ export async function runDeadlines(): Promise<Result> {
     }
   }
 
+  // Schadenfall (4.5): ohne Antwort Erinnerung nach 7 Tagen, nach 14 Tagen entscheidet die Moderation.
+  // Auch eine Antwort, die der Verleiher nicht bestätigt, landet nach 14 Tagen dort – nichts bleibt ohne Frist.
+  const damages = await sql<{ id: string; loan_id: string; stage: number; age_days: number; responded: boolean; owner_id: string }[]>`
+    select c.id, c.loan_id, c.stage, extract(day from now() - c.opened_at)::int as age_days,
+           c.response is not null as responded, l.owner_id
+      from cases c join loans l on l.id = c.loan_id
+     where c.kind = 'damage' and c.closed_at is null and c.stage < 2`;
+  for (const c of damages) {
+    try {
+      if (c.age_days >= 14) {
+        await sql`update cases set stage = 2 where id = ${c.id}`;
+        out.damage_to_moderation = (out.damage_to_moderation ?? 0) + 1;
+      } else if (c.age_days >= 7 && c.stage < 1 && !c.responded) {
+        await sql`update cases set stage = 1 where id = ${c.id}`;
+        await remind(c.loan_id, `damage_${c.id}_d7`, ["borrower"], "damage_reminder");
+        out.damage_reminded = (out.damage_reminded ?? 0) + 1;
+      }
+    } catch (e) {
+      console.error("[deadlines] damage case", c.id, (e as Error).message);
+    }
+  }
+
   await sql`insert into worker_heartbeats (job, last_run_at, last_result) values ('deadlines', now(), ${sql.json(out)})
             on conflict (job) do update set last_run_at = now(), last_result = excluded.last_result`;
   return out;

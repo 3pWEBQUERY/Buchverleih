@@ -11,6 +11,7 @@ import { useLocale } from "@/components/locale-provider";
 import { Button, Field, Input, cx } from "@/components/ui";
 import { IconCamera, IconCheck, IconClose, IconPlus } from "@/components/icons";
 import { COPY } from "@/lib/i18n/messages/copy";
+import { DateField } from "@/components/date-field";
 
 /** Bausteine der Seite «Buch bearbeiten»: Speicherstand, Abschnitte, Fotos, Sperrzeiten */
 
@@ -207,8 +208,8 @@ export function BlockForm({ copyId, calendar }: { copyId: string; calendar: Cale
         <form onSubmit={submit} className="rounded-md bg-paper-2 p-4 md:p-5 anim-rise">
           <p className="text-body-sm text-muted mb-4">{t.intro}</p>
           <div className="grid sm:grid-cols-3 gap-4">
-            <Field label={t.first}><Input type="date" value={start} min={today} onChange={(e) => setStart(e.target.value)} required /></Field>
-            <Field label={t.last}><Input type="date" value={last} min={start} onChange={(e) => setLast(e.target.value)} required /></Field>
+            <Field label={t.first}><DateField value={start} min={today} onChange={setStart} required /></Field>
+            <Field label={t.last}><DateField value={last} min={start} onChange={setLast} required /></Field>
             <Field label={t.note}><Input value={note} maxLength={80} onChange={(e) => setNote(e.target.value)} placeholder={t.notePlaceholder} /></Field>
           </div>
           <div className="flex flex-wrap items-center gap-3 mt-5">

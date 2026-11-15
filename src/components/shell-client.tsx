@@ -62,7 +62,8 @@ export function Shortcuts() {
       else if (s.command === "help") setView((v) => ({ ...v, open: "help" }));
       else {
         const input = document.querySelector<HTMLInputElement>("[data-search-input]");
-        if (input) input.focus();
+        // Vorhandenen Suchtext markieren: die nächste Eingabe ersetzt ihn, statt davor zu landen
+        if (input) { input.focus(); input.select(); }
         else router.push("/suche?fokus=1");
       }
     };

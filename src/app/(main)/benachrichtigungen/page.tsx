@@ -7,7 +7,7 @@ import { ago, diffDays, fmtDayTime, isoDay, todayCH } from "@/lib/dates";
 import { LinkButton, PageTitle, cx } from "@/components/ui";
 import { StatTile, StepSection } from "@/components/step-section";
 import { IconArrowRight, IconBell, IconBookmark, IconCalendar, IconChat, IconCheck, IconCircles, IconFlag, IconLoans, IconSwap } from "@/components/icons";
-import { MarkAllRead } from "./mark-read";
+import { MarkAllRead, MarkUnread } from "./mark-read";
 import { timeMeter, TimeMeterInline, type MeterInput } from "@/components/loan/loan-row";
 import { getLocale } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/locale";
@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 type Row = { id: string; type: NotificationType; payload: NotifyData; loan_id: string | null; read_at: Date | null; created_at: Date };
-type Item = Row & { title: string; body: string; href: string | null; meter?: ReturnType<typeof timeMeter> };
+type Item = Row & { title: string; body: string; href: string | null; meter?: ReturnType<typeof timeMeter>; done?: boolean };
 type Group = "anfragen" | "fristen" | "alarme" | "weiteres";
 
 /** Symbol, Tonlage und Gruppe je Art – das Symbol ordnet ein, der Text sagt, was los ist */
@@ -26,7 +26,7 @@ function kindOf(t: NotificationType): { icon: typeof IconBell; tone: "late" | "o
   if (t.startsWith("request_") || t === "cancelled" || t === "extension_requested" || t === "start_earlier") return { icon: IconLoans, tone: "wait", group: "anfragen" };
   if (t === "overdue" || t === "overdue_late" || t === "overdue_case_possible" || t === "recalled") return { icon: IconCalendar, tone: "late", group: "fristen" };
   if (t.startsWith("due_") || t === "extended" || t === "bookings_paused" || t === "someone_waiting") return { icon: IconCalendar, tone: "plain", group: "fristen" };
-  if (t.startsWith("case_") || t === "damage_reported") return { icon: IconFlag, tone: "late", group: "weiteres" };
+  if (t.startsWith("case_") || t === "damage_reported" || t === "damage_reminder") return { icon: IconFlag, tone: "late", group: "weiteres" };
   if (t === "returned" || t === "completed" || t === "handover_done" || t === "return_reported") return { icon: IconCheck, tone: "ok", group: "anfragen" };
   if (t === "title_alarm") return { icon: IconBookmark, tone: "ok", group: "alarme" };
   if (t === "swap_offer" || t.startsWith("pass_on")) return { icon: IconSwap, tone: "plain", group: "anfragen" };
@@ -76,6 +76,18 @@ export default async function BenachrichtigungenPage({ searchParams }: { searchP
     const owner = x.owner_id === user.id;
     return [x.id, timeMeter({ ...x, role: owner ? "owner" : "borrower", other_name: owner ? x.borrower_name : x.owner_name }, l)] as const;
   }));
+  // Erledigt: Der Vorgang ist abgeschlossen oder die verlangte Antwort ist schon gegeben
+  const status = new Map(loans.map((x) => [x.id, x.status as string]));
+  const CLOSED = new Set(["completed", "declined", "withdrawn", "expired", "cancelled", "lost"]);
+  for (const i of all) {
+    const st = i.loan_id ? status.get(i.loan_id) : undefined;
+    if (!st) continue;
+    i.done = CLOSED.has(st)
+      || (i.type === "request_new" && st !== "requested")
+      || (i.type === "return_reported" && st !== "return_reported")
+      || (i.type === "handover_reported" && st !== "accepted")
+      || (i.type === "extension_requested" && st !== "active");
+  }
   const shown = new Set<string>();
   for (const i of all) {
     if (i.loan_id && !shown.has(i.loan_id) && meters.get(i.loan_id)) {
@@ -113,7 +125,7 @@ export default async function BenachrichtigungenPage({ searchParams }: { searchP
 
       {all.length > 0 && (
         <nav aria-label={m.filter} className="sticky top-14 md:top-0 z-20 -mx-4 px-4 md:mx-0 md:px-0 bg-paper/95 backdrop-blur-sm border-b border-line">
-          <ul className="flex gap-6 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          <ul className="flex gap-6 overflow-x-auto scroll-x-fade" style={{ scrollbarWidth: "none" }}>
             {FILTERS.filter((f) => f.id === "alle" || count(f.id) > 0).map((f) => {
               const on = f.id === filter;
               return (
@@ -168,11 +180,12 @@ function List({ items, unread, l }: { items: Item[]; unread?: boolean; l: Locale
               <Icon width={17} height={17} />
             </span>
             <span className="min-w-0">
-              <span className={cx("block leading-snug text-body", unread ? "font-medium text-ink" : "text-ink", n.href && "group-hover:underline underline-offset-4 decoration-1")}>
+              <span className={cx("block leading-snug text-body", unread ? "font-medium text-ink" : n.done ? "text-muted" : "text-ink", n.href && "group-hover:underline underline-offset-4 decoration-1")}>
                 {unread && <span className="sr-only">{NOTIF[l].newSr}</span>}{n.title}
+                {n.done && <span className="chip ml-2 align-middle">{NOTIF[l].done}</span>}
               </span>
               {n.body && <span className="block text-body-sm text-muted mt-0.5 leading-snug">{n.body}</span>}
-              {n.meter && <TimeMeterInline m={n.meter} className="mt-2.5" l={l} />}
+              {n.meter && !n.done && <TimeMeterInline m={n.meter} className="mt-2.5" l={l} />}
             </span>
             <span className="flex flex-col items-end gap-2 pt-0.5">
               <time dateTime={new Date(n.created_at).toISOString()} title={fmtDayTime(n.created_at, l)} className="text-meta text-muted whitespace-nowrap tnum flex items-center gap-1.5">
@@ -183,10 +196,11 @@ function List({ items, unread, l }: { items: Item[]; unread?: boolean; l: Locale
             </span>
           </>
         );
-        const cls = cx("group grid grid-cols-[36px_minmax(0,1fr)_auto] gap-x-4 px-4 md:px-5 py-3.5 items-start transition-colors", unread && "bg-accent-soft/15", n.href && "hover:bg-paper-2");
+        const cls = cx("group grid grid-cols-[36px_minmax(0,1fr)_auto] gap-x-4 px-4 md:px-5 py-3.5 items-start transition-colors", unread && "bg-accent-soft/15", !unread && "pb-10", n.done && "opacity-75", n.href && "hover:bg-paper-2");
         return (
-          <li key={n.id} className={unread ? "anim-flash" : undefined}>
+          <li key={n.id} className={cx(unread && "anim-flash", "relative")}>
             {n.href ? <Link href={n.href} className={cls}>{inner}</Link> : <div className={cls}>{inner}</div>}
+            {!unread && <div className="absolute right-4 md:right-5 bottom-1.5"><MarkUnread id={n.id} label={NOTIF[l].markUnread} /></div>}
           </li>
         );
       })}

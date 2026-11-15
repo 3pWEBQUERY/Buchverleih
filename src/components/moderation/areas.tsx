@@ -156,7 +156,7 @@ export function AreaManager({ data, admin }: { data: AreasOverview; admin: boole
           )}
         </label>
         {!searching && (
-          <div role="radiogroup" aria-label={t.filterLabel} className="flex gap-1 p-1 rounded-md bg-paper-2 border border-line overflow-x-auto [scrollbar-width:none]">
+          <div role="radiogroup" aria-label={t.filterLabel} className="flex gap-1 p-1 rounded-md bg-paper-2 border border-line overflow-x-auto [scrollbar-width:none] scroll-x-fade">
             {(["all", "open", "partial", "closed", "waitlist"] as const).map((f) => (
               <button key={f} type="button" role="radio" aria-checked={filter === f} onClick={() => setFilter(f)}
                 className={cx("h-9 px-3 rounded-sm text-body-sm font-medium whitespace-nowrap inline-flex items-center gap-2 transition-colors",

@@ -7,7 +7,7 @@ import { cx } from "@/components/ui";
 import { labels } from "@/lib/i18n/labels";
 import type { Locale } from "@/lib/i18n/locale";
 import { LOANS } from "@/lib/i18n/messages/loans";
-import { deadline, dueDay, parseRange, relHours, fmtRange, fmtDay, fmtDayTime, dayToDate, relDays, diffDays, isoDay, todayCH, addDays } from "@/lib/dates";
+import { deadline, dueDay, parseRange, relHours, fmtRange, fmtDay, fmtDeadline, dayToDate, relDays, diffDays, isoDay, todayCH, addDays } from "@/lib/dates";
 import { Monogram } from "@/components/person/monogram";
 
 export function loanTone(status: LoanListItem["status"], due: Date | null): Tone {
@@ -119,7 +119,7 @@ export function timeMeter(loan: MeterInput, l: Locale = "de"): Meter | null {
     const len = r?.end ? diffDays(r.start, r.end) : null;
     return {
       eyebrow: owner ? t.yourAnswer : t.answerLeft,
-      value: x.n, unit: x.unit, sideLabel: t.deadline, side: fmtDayTime(loan.respond_by, l),
+      value: x.n, unit: x.unit, sideLabel: t.deadline, side: fmtDeadline(loan.respond_by, l),
       pct: span(loan.requested_at, loan.respond_by),
       foot: r && loan.kind === "lend" ? [t.wanted(fmtRange(r, l)), len ? t.nDays(len) : ""] : null,
       tone: x.ms < 12 * 3_600_000 ? "late" : "accent", flow: !owner,
@@ -139,7 +139,7 @@ export function timeMeter(loan: MeterInput, l: Locale = "de"): Meter | null {
     if (loan.handover_by) {
       const x = leftOf(loan.handover_by, l);
       return {
-        eyebrow: t.handoverTime, value: x.n, unit: x.unit, sideLabel: t.handoverBy, side: fmtDayTime(loan.handover_by, l),
+        eyebrow: t.handoverTime, value: x.n, unit: x.unit, sideLabel: t.handoverBy, side: fmtDeadline(loan.handover_by, l),
         pct: null, foot: r && loan.kind === "lend" ? [t.periodX(fmtRange(r, l)), ""] : null, tone: x.ms < 24 * 3_600_000 ? "late" : "accent",
       };
     }
@@ -149,7 +149,7 @@ export function timeMeter(loan: MeterInput, l: Locale = "de"): Meter | null {
   if (loan.status === "returned" && loan.inspection_until) {
     const x = leftOf(loan.inspection_until, l);
     return {
-      eyebrow: owner ? t.inspectOwner : t.inspectBorrower, value: x.n, unit: x.unit, sideLabel: t.deadline, side: fmtDayTime(loan.inspection_until, l),
+      eyebrow: owner ? t.inspectOwner : t.inspectBorrower, value: x.n, unit: x.unit, sideLabel: t.deadline, side: fmtDeadline(loan.inspection_until, l),
       pct: loan.returned_at ? span(loan.returned_at, loan.inspection_until) : null,
       foot: owner ? [t.inspectNote, ""] : null, tone: "plain", flow: !owner,
     };

@@ -28,7 +28,7 @@ export async function Home({ user }: { user: SessionUser }) {
   const t = HOME[l];
   const [loans, nearby, circleCopies, [counts], genres, matches, week] = await Promise.all([
     myLoans(user.id, l),
-    newNearby(user.id, origin, 10, 24),
+    newNearby(user.id, origin, user.radius_km, 24),
     sql<{ id: string; work_id: string; title: string; authors: string[]; photo_key: string | null; photo_w: number | null; photo_h: number | null; photo_color: string | null; cover_key: string | null; cover_color: string | null; owner_name: string; circle: string }[]>`
       select distinct on (c.id) c.id, e.work_id, w.title, w.authors, e.cover_key, o.first_name as owner_name, ci.name as circle,
              ph.key as photo_key, ph.width as photo_w, ph.height as photo_h, ph.color as photo_color, e.cover_color, c.created_at
@@ -58,7 +58,7 @@ export async function Home({ user }: { user: SessionUser }) {
   const summary = [
     t.waiting(mine.length),
     counts.lent ? t.lent(counts.lent) : null,
-    nearby.length ? t.nearby(nearby.length) : null,
+    nearby.length ? t.nearby(nearby.length, user.radius_km) : null,
   ].filter(Boolean).join(" ");
   let n = 0;
 
@@ -160,11 +160,11 @@ export async function Home({ user }: { user: SessionUser }) {
         </StepSection>
       )}
 
-      <StepSection id="naehe" n={++n} title={t.nearTitle} desc={t.nearDesc}
+      <StepSection id="naehe" n={++n} title={t.nearTitle} desc={t.nearDesc(user.radius_km)}
         aside={<Link href="/suche" className="inline-flex items-center gap-1 font-medium text-accent-hover hover:underline underline-offset-4">{t.searchAll} <IconArrowRight width={14} height={14} /></Link>}>
         {nearby.length === 0 ? (
           <div className="rounded-md border border-dashed border-line-strong p-6 flex flex-wrap items-center justify-between gap-4">
-            <p className="text-ink-2 text-body">{t.nearEmpty}</p>
+            <p className="text-ink-2 text-body">{t.nearEmpty(user.radius_km)}</p>
             <LinkButton href="/suche" variant="secondary">{t.searchOn}</LinkButton>
           </div>
         ) : (

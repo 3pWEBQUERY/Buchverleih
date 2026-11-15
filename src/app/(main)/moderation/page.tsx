@@ -1,3 +1,4 @@
+import { sql } from "@/lib/db";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { pageUser } from "@/lib/page";
@@ -307,36 +308,30 @@ function KpiTile({ k, i, l }: { k: Kpi; i: number; l: Locale }) {
 
 /* ------------------------------------------------------------------ Schalter */
 async function Flags({ l, admin }: { l: Locale; admin: boolean }) {
-  const t = MOD[l].flags;
   const ta = MOD[l].areas;
   const ml = modLabels(l);
   const [areas, flags] = await Promise.all([areasOverview(), moderation.flags()]);
-  const regions = [...new Map(flags.map((f) => [f.region_id, { id: f.region_id, name: f.region_name }])).values()];
   return (
     <div>
       <AreaManager data={areas} admin={admin} />
-      {regions.length > 0 && (
-        <section aria-labelledby="funktionen-t" className="mt-14 pt-10 border-t border-line">
-          <h2 id="funktionen-t" className="text-title-sm font-title tracking-title">{ta.flagsTitle}</h2>
-          <p className="text-body-sm text-muted mt-1 max-w-2xl">{ta.flagsDesc}</p>
-          <div className="mt-5 grid gap-3 xl:grid-cols-2 items-start">
-            {regions.map((r) => (
-              <section key={r.id} className="rounded-md border border-line overflow-hidden">
-                <div className="px-5 md:px-6 pt-5 pb-2">
-                  <p className="eyebrow">{t.region}</p>
-                  <h3 className="text-title-sm font-title tracking-title mt-1">{r.name}</h3>
-                </div>
-                <div className="divide-y divide-line px-5 md:px-6 pb-2">
-                  {flags.filter((f) => f.region_id === r.id).map((f) => (
-                    <FlagSwitch key={f.key} regionId={r.id} flagKey={f.key} checked={f.enabled}
-                      label={ml.flag[f.key]?.[0] ?? f.key} hint={ml.flag[f.key]?.[1]} />
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        </section>
-      )}
+      <section aria-labelledby="funktionen-t" className="mt-14 pt-10 border-t border-line">
+        <h2 id="funktionen-t" className="text-title-sm font-title tracking-title">{ta.flagsTitle}</h2>
+        <p className="text-body-sm text-muted mt-1 max-w-2xl">{ta.flagsDesc}</p>
+        <div className="mt-5 max-w-2xl rounded-md border border-line divide-y divide-line px-5 md:px-6">
+          {flags.map((f) => admin ? (
+            <FlagSwitch key={f.key} flagKey={f.key} checked={f.enabled}
+              label={ml.flag[f.key]?.[0] ?? f.key} hint={ml.flag[f.key]?.[1]} />
+          ) : (
+            <div key={f.key} className="py-4 flex items-baseline justify-between gap-4">
+              <div>
+                <p className="text-body-sm font-medium">{ml.flag[f.key]?.[0] ?? f.key}</p>
+                <p className="text-meta text-muted mt-0.5">{ml.flag[f.key]?.[1]}</p>
+              </div>
+              <span className="text-meta text-muted shrink-0">{f.enabled ? ml.on : ml.off}</span>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
@@ -403,11 +398,11 @@ async function Log({ l }: { l: Locale }) {
   const ml = modLabels(l);
   const log = await moderation.moderationLog(100);
   if (!log.length) return <Empty text={MOD[l].log.empty} />;
-  const [links, flagRows] = await Promise.all([
+  const [links, regionRows] = await Promise.all([
     targetLinks(log as unknown as { target_type: string; target_id: string }[]),
-    moderation.flags(),
+    sql<{ id: string; name: string }[]>`select id, name from regions`,
   ]);
-  const regionNames = Object.fromEntries(flagRows.map((f) => [f.region_id, f.region_name]));
+  const regionNames = Object.fromEntries(regionRows.map((r) => [r.id, r.name]));
   return (
     <ol className="rounded-md border border-line divide-y divide-line">
       {log.map((e) => {
@@ -430,6 +425,8 @@ async function Log({ l }: { l: Locale }) {
 }
 
 function flagTarget(t: string, regions: Record<string, string>, l: Locale) {
+  // Neue Einträge: nur der Schlüssel; ältere: «Region:Schlüssel»
+  if (!t.includes(":")) return modLabels(l).flag[t]?.[0] ?? t;
   const [region, key] = t.split(":");
   return `${regions[region] ?? region} · ${key === "__region" ? MOD[l].log.region : modLabels(l).flag[key]?.[0] ?? key}`;
 }

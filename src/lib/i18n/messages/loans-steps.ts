@@ -4,7 +4,7 @@ import type { Locale } from "../locale";
 const de = {
   aria: "Nächster Schritt",
   more: "Weitere Möglichkeiten",
-  yourTurn: "Du bist dran",
+  yourTurn: "Du bist am Zug",
   done: "Abgeschlossen",
   moderation: "Am Zug: die Moderation",
   turnOf: (n: string): string => `Am Zug: ${n}`,

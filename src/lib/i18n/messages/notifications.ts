@@ -16,6 +16,8 @@ const de = {
   searchBooks: "Bücher suchen",
   newSection: "Neu",
   newSr: "Neu: ",
+  done: "Erledigt",
+  markUnread: "Als ungelesen markieren",
   noneOfKind: "Keine Benachrichtigungen dieser Art.",
   showAll: "Alle zeigen",
 };
@@ -37,6 +39,8 @@ const fr: M = {
   searchBooks: "Chercher des livres",
   newSection: "Nouveau",
   newSr: "Nouveau : ",
+  done: "Réglé",
+  markUnread: "Marquer comme non lu",
   noneOfKind: "Aucune notification de ce type.",
   showAll: "Tout afficher",
 };
@@ -57,6 +61,8 @@ const it: M = {
   searchBooks: "Cerca libri",
   newSection: "Nuove",
   newSr: "Nuova: ",
+  done: "Fatto",
+  markUnread: "Segna come non letta",
   noneOfKind: "Nessuna notifica di questo tipo.",
   showAll: "Mostra tutte",
 };
@@ -77,6 +83,8 @@ const en: M = {
   searchBooks: "Search books",
   newSection: "New",
   newSr: "New: ",
+  done: "Done",
+  markUnread: "Mark as unread",
   noneOfKind: "No notifications of this kind.",
   showAll: "Show all",
 };

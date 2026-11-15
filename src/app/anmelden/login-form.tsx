@@ -88,7 +88,7 @@ export function LoginForm({ next, mailEnabled }: { next: string | null; mailEnab
       {useLink && mailEnabled ? (
         <form onSubmit={submit} className="space-y-4">
           <Field label={a.email} error={error}>
-            <Input type="email" required autoComplete="email webauthn" autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder={a.emailPlaceholder} />
+            <Input type="email" required autoComplete="email webauthn" autoFocus value={email} onChange={(e) => { setEmail(e.target.value); setError(null); }} placeholder={a.emailPlaceholder} />
           </Field>
           <Button type="submit" variant="primary" size="lg" className="w-full" disabled={busy}>
             {busy ? a.sending : <>{a.send} <IconArrowRight width={18} height={18} /></>}
@@ -101,13 +101,13 @@ export function LoginForm({ next, mailEnabled }: { next: string | null; mailEnab
             options={[{ value: "login", label: a.modes.login }, { value: "register", label: a.modes.register }]} />
           <Field label={a.email}>
             <Input type="email" required autoComplete={mode === "login" ? "email webauthn" : "email"} autoFocus value={email}
-              onChange={(e) => setEmail(e.target.value)} placeholder={a.emailPlaceholder} />
+              onChange={(e) => { setEmail(e.target.value); setError(null); }} placeholder={a.emailPlaceholder} />
           </Field>
           <Field label={mode === "register" ? a.passwordNew : a.password} hint={mode === "register" ? a.passwordHint : undefined} error={error}>
             <div className="relative">
               <Input type={showPw ? "text" : "password"} required minLength={mode === "register" ? 8 : 1} maxLength={200}
                 autoComplete={mode === "register" ? "new-password" : "current-password"} value={password}
-                onChange={(e) => setPassword(e.target.value)} className="pr-24" />
+                onChange={(e) => { setPassword(e.target.value); setError(null); }} className="pr-24" />
               <button type="button" onClick={() => setShowPw((v) => !v)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 h-9 px-3 text-meta font-medium text-muted hover:text-ink rounded-sm">
                 {showPw ? a.hide : a.show}

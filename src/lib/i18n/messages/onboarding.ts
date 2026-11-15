@@ -10,7 +10,6 @@ const de = {
     steps: [
       ["Profil", "Vorname, Postleitzahl und Bestätigung, dass du mindestens 16 bist."],
       ["Mobilnummer", "Eine Nummer, ein Konto. Andere Mitglieder sehen sie nie."],
-      ["Loslegen", "Bücher in der Nähe anfragen oder das erste eigene Buch erfassen."],
     ] as [string, string][],
   },
   form: {
@@ -79,7 +78,6 @@ const fr: M = {
     steps: [
       ["Profil", "Prénom, numéro postal et confirmation que tu as au moins 16 ans."],
       ["Numéro de mobile", "Un numéro, un compte. Les autres membres ne le voient jamais."],
-      ["C’est parti", "Demander des livres près de chez toi ou ajouter ton premier livre."],
     ],
   },
   form: {
@@ -147,7 +145,6 @@ const it: M = {
     steps: [
       ["Profilo", "Nome, numero postale e conferma che hai almeno 16 anni."],
       ["Numero di cellulare", "Un numero, un conto. Gli altri membri non lo vedono mai."],
-      ["Si parte", "Richiedi libri vicino a te o aggiungi il tuo primo libro."],
     ],
   },
   form: {
@@ -215,7 +212,6 @@ const en: M = {
     steps: [
       ["Profile", "First name, postcode and confirmation that you’re at least 16."],
       ["Mobile number", "One number, one account. Other members never see it."],
-      ["Get started", "Request books nearby or add your first own book."],
     ] as [string, string][],
   },
   form: {

@@ -36,6 +36,8 @@ const de = {
     saved: "Passwort gespeichert.",
     show: "Anzeigen",
     hide: "Verbergen",
+    current: "Bisheriges Passwort",
+    others: "Andere Geräte werden dabei abgemeldet.",
   },
   phone: {
     confirmed: "Mobilnummer bestätigt.",
@@ -85,9 +87,9 @@ const de = {
     add: "Übergabeort hinzufügen",
   },
   pause: {
-    paused: "Regal pausiert. Niemand kann anfragen.",
+    paused: "Ferienmodus an. Niemand kann anfragen.",
     reopened: "Regal wieder offen für Anfragen.",
-    label: "Regal pausieren",
+    label: "Ferienmodus",
     hintOn: "Pausiert. Niemand kann anfragen.",
     hintOff: "Offen. Anfragen sind möglich.",
   },
@@ -171,6 +173,8 @@ const fr: M = {
     saved: "Mot de passe enregistré.",
     show: "Afficher",
     hide: "Masquer",
+    current: "Mot de passe actuel",
+    others: "Les autres appareils seront déconnectés.",
   },
   phone: {
     confirmed: "Numéro de mobile confirmé.",
@@ -222,7 +226,7 @@ const fr: M = {
   pause: {
     paused: "Étagère en pause. Personne ne peut faire de demande.",
     reopened: "Étagère de nouveau ouverte aux demandes.",
-    label: "Mettre l’étagère en pause",
+    label: "Mode vacances",
     hintOn: "En pause. Personne ne peut faire de demande.",
     hintOff: "Ouverte. Les demandes sont possibles.",
   },
@@ -305,6 +309,8 @@ const it: M = {
     saved: "Password salvata.",
     show: "Mostra",
     hide: "Nascondi",
+    current: "Password attuale",
+    others: "Gli altri dispositivi verranno disconnessi.",
   },
   phone: {
     confirmed: "Numero di cellulare confermato.",
@@ -356,7 +362,7 @@ const it: M = {
   pause: {
     paused: "Scaffale in pausa. Nessuno può fare richieste.",
     reopened: "Scaffale di nuovo aperto alle richieste.",
-    label: "Metti in pausa lo scaffale",
+    label: "Modalità vacanze",
     hintOn: "In pausa. Nessuno può fare richieste.",
     hintOff: "Aperto. Le richieste sono possibili.",
   },
@@ -439,6 +445,8 @@ const en: M = {
     saved: "Password saved.",
     show: "Show",
     hide: "Hide",
+    current: "Current password",
+    others: "Other devices will be signed out.",
   },
   phone: {
     confirmed: "Mobile number confirmed.",
@@ -490,7 +498,7 @@ const en: M = {
   pause: {
     paused: "Shelf paused. Nobody can send requests.",
     reopened: "Shelf open for requests again.",
-    label: "Pause shelf",
+    label: "Holiday mode",
     hintOn: "Paused. Nobody can send requests.",
     hintOff: "Open. Requests are possible.",
   },
