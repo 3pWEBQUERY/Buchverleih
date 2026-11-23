@@ -49,6 +49,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       history={history}
       wishers={wishers}
       swapEnabled={(await features()).swap}
+      shippingEnabled={(await features()).shipping}
     />
   );
 }

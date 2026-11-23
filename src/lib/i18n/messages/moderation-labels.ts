@@ -37,6 +37,7 @@ const de = {
   } as Record<string, [label: string, hint: string]>,
   action: {
     read_chat: "Chat eingesehen",
+    price_changed: "Preis geändert",
     case_returned: "Fall entschieden: zurückgegeben",
     case_replaced: "Fall entschieden: Ersatz",
     case_rejected: "Fall entschieden: kein Schaden",
@@ -113,6 +114,7 @@ const fr: ModLabels = {
   },
   action: {
     read_chat: "Chat consulté",
+    price_changed: "Prix modifié",
     case_returned: "Litige tranché : rendu",
     case_replaced: "Litige tranché : remplacement",
     case_rejected: "Litige tranché : aucun dommage",
@@ -188,6 +190,7 @@ const it: ModLabels = {
   },
   action: {
     read_chat: "Chat consultata",
+    price_changed: "Prezzo modificato",
     case_returned: "Caso deciso: restituito",
     case_replaced: "Caso deciso: sostituzione",
     case_rejected: "Caso deciso: nessun danno",
@@ -263,6 +266,7 @@ const en: ModLabels = {
   } as Record<string, [label: string, hint: string]>,
   action: {
     read_chat: "Chat viewed",
+    price_changed: "Price changed",
     case_returned: "Case decided: returned",
     case_replaced: "Case decided: replacement",
     case_rejected: "Case decided: no damage",

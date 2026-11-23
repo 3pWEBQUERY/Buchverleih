@@ -255,6 +255,13 @@ export async function loanView(loanId: string, userId: string, loc: Locale = "de
     handoverMethod: r.handover_method,
     dropoffPhotoKey: r.dropoff_photo_key,
     returnPhotoKey: r.return_photo_key,
+    /** Versand: Adressen erst nach der Annahme, jede Seite sieht die Adresse, an die sie schickt */
+    shipping: r.delivery === "shipping" ? {
+      shipTo: isBorrower || r.status !== "requested" ? r.ship_to : null,
+      returnTo: r.status === "requested" ? null : r.return_to,
+      trackingOut: r.tracking_out,
+      trackingBack: r.tracking_back,
+    } : null,
     conditionNote: r.condition_note,
     conditionPhotoKeys: r.condition_photo_keys,
     extensionsUsed: r.extensions_used,

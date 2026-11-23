@@ -20,6 +20,9 @@ export const POST = route(async (req) => {
       end: isoDay.optional(),
       message: z.string().max(500).optional(),
       swapOfferedCopyIds: z.array(z.string().uuid()).max(5).optional(),
+      /** Versand statt Abholung, mit Adresse (nur wenn das Buch verschickt wird) */
+      delivery: z.enum(["pickup", "shipping"]).optional(),
+      shipTo: z.string().max(300).optional(),
     }),
   );
   const loan = await requestLoan(u, b);

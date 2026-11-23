@@ -27,7 +27,7 @@ async function main() {
   const [copy] = await sql<{ id: string }[]>`select id from copies where owner_id <> ${user.id} and removed_at is null and cardinality(offers) > 0 order by created_at limit 1`;
   const [loan] = await sql<{ id: string }[]>`select id from loans where ${user.id} in (owner_id, borrower_id) order by requested_at desc limit 1`;
   const [circle] = await sql<{ circle_id: string }[]>`select circle_id from circle_members where user_id = ${user.id} and status = 'active' limit 1`;
-  const pages: [string, string][] = [["Start", "/"], ["Suche", "/suche?q=der"], ["Einstellungen", "/einstellungen"], ["Import", "/regal/import"], ["Kreis", "/kreise"]];
+  const pages: [string, string][] = [["Start", "/"], ["Suche", "/suche?q=der"], ["Einstellungen", "/einstellungen"], ["Import", "/regal/import"], ["Kreis", "/kreise"], ["Statistik", "/regal/statistik"], ["Kreisdetail", "/kreise/ccb7141f-1f1e-420e-ab13-13f84abda138"]];
   if (copy) pages.push(["Exemplar", `/exemplar/${copy.id}`]);
   if (loan) pages.push(["Vorgang", `/vorgaenge/${loan.id}`]);
   if (circle) pages.push(["Kreis", `/kreise/${circle.circle_id}`]);

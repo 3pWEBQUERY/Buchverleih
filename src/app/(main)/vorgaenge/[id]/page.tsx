@@ -25,6 +25,7 @@ import { HandoverStamp } from "@/components/motion";
 import { BookNoteForm } from "@/components/book-note";
 import { dayToDate, deadline, dueDay, fmtDay, fmtMonthYear, fmtRange } from "@/lib/dates";
 import { CalendarView } from "@/components/calendar";
+import { SHIPPING, trackingUrl } from "@/lib/i18n/messages/shipping";
 
 export async function generateMetadata() {
   return { title: LOANS[await getLocale()].detail.title };
@@ -205,6 +206,27 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               </div>
             )}
           </StepSection>
+
+          {loan.shipping && (loan.shipping.shipTo || loan.shipping.trackingOut || loan.shipping.trackingBack) && (
+            <StepSection id="versand" n={++n} title={SHIPPING[l].card}>
+              <dl className="grid sm:grid-cols-2 gap-3">
+                {[[SHIPPING[l].shipTo, loan.shipping.shipTo, loan.shipping.trackingOut], [SHIPPING[l].returnTo, loan.shipping.returnTo, loan.shipping.trackingBack]]
+                  .filter(([, addr, track]) => addr || track)
+                  .map(([label, addr, track]) => (
+                    <div key={label as string} className="rounded-md border border-line p-5">
+                      <dt className="text-meta text-muted">{label}</dt>
+                      {addr && <dd className="mt-1 whitespace-pre-line">{addr}</dd>}
+                      {track && (
+                        <dd className="mt-3 text-body-sm">
+                          {SHIPPING[l].inTransit(track as string)}{" "}
+                          {trackingUrl(track as string) && <a href={trackingUrl(track as string)!} target="_blank" rel="noopener noreferrer" className="font-medium text-accent-hover underline underline-offset-4">{SHIPPING[l].track}</a>}
+                        </dd>
+                      )}
+                    </div>
+                  ))}
+              </dl>
+            </StepSection>
+          )}
 
           {(loan.conditionNote || loan.conditionPhotoKeys.length > 0 || loan.dropoffPhotoKey || loan.returnPhotoKey || loan.case) && (
             <StepSection id="zustand" n={++n} title={loan.case ? d.caseAndCondition : d.condition} desc={d.conditionDesc}>

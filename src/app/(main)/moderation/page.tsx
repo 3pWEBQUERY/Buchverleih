@@ -19,6 +19,9 @@ import { Chip, PriorityChip, Quiet, StatTile, type Priority } from "@/components
 import { CorrectionActions, FlagSwitch, ReportActions, HideContent } from "@/components/moderation/actions";
 import { ModTabs, TABS, type Tab } from "./tabs";
 import { caseStageLabel, modLabels } from "./labels";
+import { billingEnabled, billingStats, prices } from "@/lib/billing";
+import { PriceEditor } from "@/components/billing";
+import { BILLING } from "@/lib/i18n/messages/billing";
 
 export async function generateMetadata() {
   return { title: MOD[await getLocale()].title };
@@ -310,7 +313,8 @@ function KpiTile({ k, i, l }: { k: Kpi; i: number; l: Locale }) {
 async function Flags({ l, admin }: { l: Locale; admin: boolean }) {
   const ta = MOD[l].areas;
   const ml = modLabels(l);
-  const [areas, flags] = await Promise.all([areasOverview(), moderation.flags()]);
+  const [areas, flags, price, bstats] = await Promise.all([areasOverview(), moderation.flags(), prices(), billingStats()]);
+  const bt = BILLING[l];
   return (
     <div>
       <AreaManager data={areas} admin={admin} />
@@ -331,6 +335,12 @@ async function Flags({ l, admin }: { l: Locale; admin: boolean }) {
             </div>
           ))}
         </div>
+      </section>
+      <section aria-labelledby="preise-t" className="mt-14 pt-10 border-t border-line">
+        <h2 id="preise-t" className="text-title-sm font-title tracking-title">{bt.prices.title}</h2>
+        <p className="text-body-sm text-muted mt-1 max-w-2xl">{bt.prices.desc}</p>
+        <p className="text-body-sm text-ink-2 mt-3 tnum">{bt.prices.stats(bstats.supporters, bstats.orgs, bt.chf(bstats.mrr))}{billingEnabled() ? "" : ` · ${bt.soon}`}</p>
+        <div className="mt-5"><PriceEditor prices={price} admin={admin} /></div>
       </section>
     </div>
   );

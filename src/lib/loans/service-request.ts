@@ -29,6 +29,9 @@ export type RequestInput = {
   end?: string;          // exklusiv
   message?: string;
   swapOfferedCopyIds?: string[];
+  /** Versand statt Abholung (Phase 3): Adresse der leihenden Person, nur nach Annahme sichtbar */
+  delivery?: "pickup" | "shipping";
+  shipTo?: string;
 };
 
 export async function requestLoan(user: SessionUser, input: RequestInput) {
@@ -41,9 +44,9 @@ export async function requestLoan(user: SessionUser, input: RequestInput) {
     const [copy] = await tx<{
       id: string; owner_id: string; offers: OfferKind[]; loan_days: number; horizon_days: number;
       max_future_bookings: number; transfer_locked_until: Date | null; shelf_paused: boolean; visible: boolean;
-      owner_banned: Date | null; owner_demo: boolean;
+      owner_banned: Date | null; owner_demo: boolean; shipping_allowed: boolean;
     }[]>`
-      select c.id, c.owner_id, c.offers, c.loan_days, c.horizon_days, c.max_future_bookings, c.transfer_locked_until,
+      select c.id, c.owner_id, c.offers, c.loan_days, c.horizon_days, c.max_future_bookings, c.transfer_locked_until, c.shipping_allowed,
              (o.shelf_paused and c.library_circle_id is null) as shelf_paused, o.banned_at as owner_banned, o.is_demo as owner_demo, copy_visible_to(c.id, ${user.id}) as visible
         from copies c join users o on o.id = c.owner_id
        where c.id = ${input.copyId} and c.removed_at is null`;
@@ -57,6 +60,13 @@ export async function requestLoan(user: SessionUser, input: RequestInput) {
     if (input.kind !== "lend" && copy.transfer_locked_until && copy.transfer_locked_until > new Date())
       throw err.conflict("transfer_locked", "Dieses Buch wurde kürzlich verschenkt und kann noch nicht weitergegeben werden.");
     if (await isBlockedBetween(tx, user.id, copy.owner_id)) throw err.notFound("Dieses Buch ist nicht mehr verfügbar.");
+    const shipping = input.delivery === "shipping";
+    const shipTo = input.shipTo?.trim() ?? "";
+    if (shipping) {
+      await requireFeature("shipping");
+      if (!copy.shipping_allowed || input.kind === "swap") throw err.invalid("Dieses Buch wird nicht verschickt.");
+      if (shipTo.length < 10) throw err.invalid("Gib die vollständige Adresse für den Versand an.");
+    }
 
     const [circle] = await tx<{ id: string; loan_days: number; auto_accept: boolean }[]>`
       select ci.id, ci.loan_days, ci.auto_accept from circles ci
@@ -100,10 +110,10 @@ export async function requestLoan(user: SessionUser, input: RequestInput) {
     }
 
     const [loan] = await tx<LoanRow[]>`
-      insert into loans (kind, copy_id, owner_id, borrower_id, wanted, circle_id, message, swap_offered_copy_ids)
+      insert into loans (kind, copy_id, owner_id, borrower_id, wanted, circle_id, message, swap_offered_copy_ids, delivery, ship_to)
       values (${input.kind}, ${copy.id}, ${copy.owner_id}, ${user.id},
               daterange(${start}::date, ${end}::date), ${circle?.id ?? null}, ${input.message?.trim() || null},
-              ${offered}::uuid[])
+              ${offered}::uuid[], ${shipping ? "shipping" : "pickup"}, ${shipping ? shipTo.slice(0, 300) : null})
       returning *`;
     await logEvent(tx, loan.id, user.id, "request", null, "requested", { kind: input.kind });
 
@@ -135,7 +145,7 @@ export async function requestLoan(user: SessionUser, input: RequestInput) {
 // Antwort des Verleihers
 // ---------------------------------------------------------------------------
 
-export type AcceptInput = { pickupSpotId?: string | null; proposalAt?: string | null; proposalPlace?: string | null; swapCopyId?: string | null };
+export type AcceptInput = { pickupSpotId?: string | null; proposalAt?: string | null; proposalPlace?: string | null; swapCopyId?: string | null; returnTo?: string | null };
 
 export async function accept(user: SessionUser, loanId: string, input: AcceptInput) {
   return sql.begin(async (tx) => {
@@ -177,6 +187,10 @@ async function acceptTx(tx: TxSql, loanId: string, actor: ActorRef, input: Accep
   }
 
   if (current.kind === "lend") await assertBorrowerCapacity(tx, current.borrower_id, Boolean(current.circle_id));
+  // Versand einer Leihe: die Rücksendeadresse gehört zur Annahme
+  const returnTo = input.returnTo?.trim() ?? "";
+  if (current.delivery === "shipping" && current.kind === "lend" && returnTo.length < 10)
+    throw err.invalid("Gib die Adresse für die Rücksendung an.");
 
   // Künftige Buchungen pro Exemplar begrenzen (4.8)
   const range = parseRange(current.wanted)!;
@@ -192,7 +206,9 @@ async function acceptTx(tx: TxSql, loanId: string, actor: ActorRef, input: Accep
     set: tx`accepted_at = now(),
             pickup_spot_id = ${spotId},
             swap_copy_id = ${swapCopy},
-            handover_by = day_start_ch(lower(l.wanted) + 8)`,
+            return_to = ${current.delivery === "shipping" && current.kind === "lend" ? returnTo.slice(0, 300) : null},
+            -- Versand: 5 Tage mehr für Verpacken und Postweg
+            handover_by = day_start_ch(lower(l.wanted) + 8 + case when l.delivery = 'shipping' then 5 else 0 end)`,
     where: tx`l.respond_by > now()`,
   });
 

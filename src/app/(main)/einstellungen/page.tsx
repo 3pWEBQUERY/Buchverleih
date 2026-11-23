@@ -18,6 +18,8 @@ import { LanguageChoice } from "@/components/language-switch";
 import { getLocale } from "@/lib/i18n/server";
 import { COMMUNITY } from "@/lib/i18n/messages/community";
 import { SETTINGS_UI } from "@/lib/i18n/messages/settings-sections";
+import { billingEnabled, prices, supporterStatus } from "@/lib/billing";
+import { SupporterCard } from "@/components/billing";
 
 export async function generateMetadata() {
   return { title: SETTINGS[await getLocale()].title };
@@ -30,13 +32,15 @@ function nav(l: Locale): NavGroup[] {
   return [
     { title: g.account, items: items(["profilbild", "profil", "mobilnummer", "passwort", "passkeys"]) },
     { title: g.lending, items: items(["uebergabeorte", "ferienmodus", "blockiert"]) },
-    { title: g.general, items: items(["sprache", "umkreis", "push", "benachrichtigungen", "darstellung", "daten"]) },
+    { title: g.general, items: items(["foerdern", "sprache", "umkreis", "push", "benachrichtigungen", "darstellung", "daten"]) },
     { title: g.danger, danger: true, items: [{ id: "konto-loeschen", label: n.kontoLoeschen }] },
   ];
 }
 
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ bezahlt?: string }> }) {
   const user = await pageUser("/einstellungen");
+  const justPaid = (await searchParams).bezahlt === "1";
+  const [sub, price] = await Promise.all([supporterStatus(user.id), prices()]);
   const l = await getLocale();
   const m = SETTINGS[l];
   const r = m.rows;
@@ -116,6 +120,10 @@ export default async function Page() {
 
           <StepSection n={3} title={m.general.title} desc={m.general.desc}>
             <Card>
+              <Row id="foerdern" t={r.foerdern}>
+                <SupporterCard enabled={billingEnabled()} justPaid={justPaid} prices={{ month: price.supporter_month, year: price.supporter_year }}
+                  sub={sub && { amount: sub.amount, interval: sub.interval, current_period_end: sub.current_period_end?.toISOString() ?? null, cancel_at_period_end: sub.cancel_at_period_end }} />
+              </Row>
               <Row id="sprache" t={r.sprache}>
                 <LanguageChoice />
               </Row>

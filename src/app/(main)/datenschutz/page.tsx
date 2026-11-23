@@ -48,6 +48,8 @@ export default function Page() {
           ["Chat", "Nachrichten und Terminvorschläge innerhalb eines Vorgangs"],
           ["Nutzung", "Suchbegriffe mit Trefferzahl für die Kennzahl «Liquidität», Benachrichtigungen, Meldungen"],
           ["Missbrauchsschutz", "Zähler für Ratenbegrenzung sowie Geräte- und IP-Signale als Hinweis für die Moderation"],
+          ["Versand", "Wenn du ein Buch per Post anfragst: deine Adresse und die Adresse für die Rücksendung, Sendungsnummern. Die Adressen löschen wir 30 Tage nach Abschluss."],
+          ["Bezahlung", "Bei Fördermitgliedschaft oder einem Kreis für Organisationen: Art, Betrag und Laufzeit des Abos. Zahlungsdaten wie Kartennummern sehen wir nie."],
         ]} />
       </DocSection>
 
@@ -86,6 +88,8 @@ export default function Page() {
           ["Railway", "Hosting der Anwendung, Datenbank, Speicher für Fotos", "EU-Region [Rechenzentrum zu ergänzen]"],
           ["[E-Mail-Anbieter]", "Versand von Anmeldelinks und Benachrichtigungen", "[Standort]"],
           ["[SMS-Anbieter]", "Bestätigung der Mobilnummer, Aufforderungen im Streitfall", "[Standort]"],
+          ["Stripe Payments Europe", "Zahlungsabwicklung für Fördermitgliedschaft und Kreise für Organisationen (E-Mail-Adresse, Zahlungsdaten)", "Irland, EU"],
+          ["Anthropic", "Erkennung der Buchrücken auf einem Regalfoto, nur wenn du diese Funktion nutzt. Das Foto wird nicht bei uns gespeichert.", "USA"],
         ]} />
         <p>
           Für Titeldaten fragen wir Bibliothekskataloge und Buchverzeichnisse ab (Deutsche Nationalbibliothek, Open Library, Google Books).

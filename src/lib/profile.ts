@@ -7,6 +7,8 @@ export type PublicProfile = {
   avatar_key: string | null;
   municipality: string | null;
   trust_level: number;
+  /** Fördermitglied (Abzeichen im Profil) */
+  supporter: boolean;
   member_since: Date;
   lent: number;
   borrowed: number;
@@ -22,7 +24,7 @@ export type PublicProfile = {
 
 export async function publicProfile(userId: string, viewerId: string | null): Promise<PublicProfile | null> {
   const [p] = await sql<PublicProfile[]>`
-    select u.id, u.first_name, u.avatar_key, u.municipality, u.trust_level, u.created_at as member_since,
+    select u.id, u.first_name, u.avatar_key, u.municipality, u.trust_level, u.plan_id = 'supporter' as supporter, u.created_at as member_since,
            s.lent_count::int as lent, s.borrowed_count::int as borrowed,
            case when s.rated_count > 0 then round(100.0 * s.punctual_count / s.rated_count)::int end as punctual_pct,
            s.visible_losses::int as visible_losses,

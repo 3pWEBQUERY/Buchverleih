@@ -9,6 +9,11 @@ import type { Locale } from "@/lib/i18n/locale";
 /** Beschriftungen und Wartetexte auf Französisch, Italienisch und Englisch (Deutsch steht unten im Code) */
 const TR: Record<Exclude<Locale, "de">, Record<string, string>> = {
   fr: {
+    "Empfang bestätigen": "Confirmer la réception",
+    "Unterwegs per Post": "En route par la poste",
+    "Buch verschicken": "Envoyer le livre",
+    "Wird verschickt": "Envoi en préparation",
+    "Zurückschicken": "Renvoyer",
     "Anfrage beantworten": "Répondre à la demande",
     "Wartet auf Antwort": "En attente de réponse",
     "Weitergabe beantworten": "Répondre à la transmission",
@@ -37,6 +42,11 @@ const TR: Record<Exclude<Locale, "de">, Record<string, string>> = {
     "Buch ist doch zurück": "Le livre est revenu",
   },
   it: {
+    "Empfang bestätigen": "Conferma la ricezione",
+    "Unterwegs per Post": "In viaggio per posta",
+    "Buch verschicken": "Spedisci il libro",
+    "Wird verschickt": "In attesa di spedizione",
+    "Zurückschicken": "Rispedisci",
     "Anfrage beantworten": "Rispondi alla richiesta",
     "Wartet auf Antwort": "In attesa di risposta",
     "Weitergabe beantworten": "Rispondi al passaggio",
@@ -65,6 +75,11 @@ const TR: Record<Exclude<Locale, "de">, Record<string, string>> = {
     "Buch ist doch zurück": "Il libro è tornato",
   },
   en: {
+    "Empfang bestätigen": "Confirm receipt",
+    "Unterwegs per Post": "On its way by post",
+    "Buch verschicken": "Send the book",
+    "Wird verschickt": "Being sent",
+    "Zurückschicken": "Send it back",
     "Anfrage beantworten": "Reply to request",
     "Wartet auf Antwort": "Waiting for a reply",
     "Weitergabe beantworten": "Reply to pass-on",
@@ -110,7 +125,9 @@ export type StepKey =
   | "accept_swap_offer"
   | "rate"
   | "clear_loss"
-  | "condition_note";
+  | "condition_note"
+  | "ship"
+  | "ship_back";
 
 export type NextStep = { key: StepKey; label: string } | null;
 export type Turn = "me" | "other" | "system" | "done";
@@ -134,6 +151,8 @@ export type NextInput = {
   case_response: string | null;
   case_kind: string | null;
   pass_on_pending_mine: boolean;
+  /** Versand statt Abholung (Phase 3) */
+  delivery?: "pickup" | "shipping";
 };
 
 export function nextStep(input: NextInput, loc: Locale = "de"): { step: NextStep; turn: Turn; waitingText: string | null } {
@@ -152,9 +171,15 @@ function nextStepDe(l: NextInput): { step: NextStep; turn: Turn; waitingText: st
         : { step: null, turn: "other", waitingText: "Wartet auf Antwort" };
     case "accepted": {
       if (l.pass_on_pending_mine) return { step: { key: "pass_on_consent", label: "Weitergabe beantworten" }, turn: "me", waitingText: null };
+      const shipping = l.delivery === "shipping" && !l.received_from_loan_id && l.kind !== "swap";
       if (l.handover_reported_by && l.handover_reported_by !== l.me)
-        return { step: { key: "confirm_handover", label: "Übergabe bestätigen" }, turn: "me", waitingText: null };
-      if (l.handover_reported_by === l.me) return { step: null, turn: "other", waitingText: "Wartet auf Bestätigung der Übergabe" };
+        return { step: { key: "confirm_handover", label: shipping ? "Empfang bestätigen" : "Übergabe bestätigen" }, turn: "me", waitingText: null };
+      if (l.handover_reported_by === l.me) return { step: null, turn: "other", waitingText: shipping ? "Unterwegs per Post" : "Wartet auf Bestätigung der Übergabe" };
+      // Versand: die verleihende Person verschickt, die andere Seite wartet
+      if (shipping)
+        return owner
+          ? { step: { key: "ship", label: "Buch verschicken" }, turn: "me", waitingText: null }
+          : { step: null, turn: "other", waitingText: "Wird verschickt" };
       if (l.kind === "swap") {
         const mineScanned = owner ? l.swap_scan_owner_at : l.swap_scan_borrower_at;
         return mineScanned
@@ -177,6 +202,7 @@ function nextStepDe(l: NextInput): { step: NextStep; turn: Turn; waitingText: st
       }
       if (l.condition_note_until && l.condition_note_until > new Date() && !l.condition_note && !l.condition_photo_keys?.length)
         return { step: { key: "condition_note", label: "Zustand festhalten" }, turn: "me", waitingText: null };
+      if (l.delivery === "shipping") return { step: { key: "ship_back", label: "Zurückschicken" }, turn: "me", waitingText: null };
       return { step: { key: "return_code", label: "Rückgabecode zeigen" }, turn: "me", waitingText: null };
     case "return_reported":
       return owner

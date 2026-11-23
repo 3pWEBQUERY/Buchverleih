@@ -12,6 +12,7 @@ import Link from "next/link";
 import { BookRow } from "@/components/regal/book-row";
 import { useToast } from "@/components/toast";
 import { Button, PageTitle, Switch, cx } from "@/components/ui";
+import { STATS } from "@/lib/i18n/messages/stats";
 import { IconArrowRight, IconCalendar, IconCheck, IconClose, IconScan, IconSearch } from "@/components/icons";
 import { StatTile, StepSection } from "@/components/step-section";
 import { timeMeter, TimeMeterInline } from "@/components/loan/loan-row";
@@ -193,6 +194,9 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
         </Link>
         <Link href="/regal/kalender" className="h-11 px-4 rounded-sm bg-accent-soft text-accent-hover font-medium text-body-sm inline-flex items-center gap-2 hover:bg-accent hover:text-accent-ink transition-colors">
           <IconCalendar width={18} height={18} /> {t.calendar}
+        </Link>
+        <Link href="/regal/statistik" className="h-11 px-4 rounded-sm bg-accent-soft text-accent-hover font-medium text-body-sm inline-flex items-center gap-2 hover:bg-accent hover:text-accent-ink transition-colors">
+          {STATS[l].link}
         </Link>
         <button type="button" aria-pressed={selecting} onClick={() => (selecting ? stopSelecting() : setSelecting(true))}
           className={cx("h-11 px-4 rounded-sm border font-medium text-body-sm inline-flex items-center gap-2 transition-colors",

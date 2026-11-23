@@ -12,13 +12,14 @@ import { useLocale } from "@/components/locale-provider";
 import { OptionCard } from "@/components/form-controls";
 import { StepSection } from "@/components/step-section";
 import { Button, Input, LinkButton, Notice, Segmented, cx } from "@/components/ui";
-import { IconArrowRight, IconScan, IconSearch } from "@/components/icons";
+import { IconArrowRight, IconCamera, IconScan, IconSearch } from "@/components/icons";
+import { ShelfPhotoTab } from "./shelf-photo";
 import { LookupSkeleton, ManualTab, PendingCard, SearchTab, coverOf } from "./erfassen-parts";
 import { StackBar, StackNote, StackReview, useStack } from "./stapel";
 import { ImportLink } from "../import/import-client";
 
 export type Added = { id: string; title: string; authors: string[]; condition: number; circlesOnly: boolean; cover: CoverData };
-type Tab = "scan" | "search" | "manual";
+type Tab = "scan" | "search" | "manual" | "photo";
 
 const IconPen = () => (
   <svg viewBox="0 0 24 24" width={22} height={22} fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -30,10 +31,11 @@ const TABS: { id: Tab; icon: React.ReactNode }[] = [
   { id: "scan", icon: <IconScan /> },
   { id: "search", icon: <IconSearch /> },
   { id: "manual", icon: <IconPen /> },
+  { id: "photo", icon: <IconCamera /> },
 ];
 const ASKED_KEY = "lr_precious_asked";
 
-export function Erfassen({ initial, library = null }: { initial: Added[]; library?: { id: string; name: string } | null }) {
+export function Erfassen({ initial, library = null, shelfPhoto = false }: { initial: Added[]; library?: { id: string; name: string } | null; shelfPhoto?: boolean }) {
   const toast = useToast();
   const l = useLocale();
   const t = CAPTURE[l];
@@ -173,7 +175,7 @@ export function Erfassen({ initial, library = null }: { initial: Added[]; librar
         <div className="min-w-0">
           {/* 01 – Weg wählen */}
           <StepSection n={1} first title={t.step1}>
-            <div role="radiogroup" aria-label={t.step1Aria} className="grid grid-cols-3 gap-2 sm:gap-3">
+            <div role="radiogroup" aria-label={t.step1Aria} className="grid grid-cols-2 gap-2 sm:gap-3">
               {TABS.map((x) => (
                 <OptionCard key={x.id} on={tab === x.id} onClick={() => switchTab(x.id)} icon={x.icon} title={t.tabs[x.id][0]} desc={t.tabs[x.id][1]} descDesktopOnly />
               ))}
@@ -244,6 +246,11 @@ export function Erfassen({ initial, library = null }: { initial: Added[]; librar
               <SearchTab hidden={Boolean(pending)} onPick={setPending} onIsbn={(q) => { switchTab("scan"); lookup(q); }} onManual={(title) => { setPrefill({ title }); setTab("manual"); }} />
             )}
 
+            {tab === "photo" && (
+              <ShelfPhotoTab enabled={shelfPhoto} libraryCircleId={library?.id}
+                onAdded={(a) => { setAdded((x) => [a, ...x]); setFresh(a.id); }}
+                onManual={(title) => { setPrefill({ title }); setTab("manual"); }} />
+            )}
             {tab === "manual" && (
               <ManualTab key={`${prefill.isbn ?? ""}|${prefill.title ?? ""}`} prefill={prefill} ask={!asked} onAsked={markAsked} add={add} />
             )}
@@ -260,7 +267,7 @@ export function Erfassen({ initial, library = null }: { initial: Added[]; librar
           )}
 
           {/* 03 – Zustand */}
-          {tab !== "manual" && !batch && (
+          {tab !== "manual" && tab !== "photo" && !batch && (
             <div ref={step3} className="scroll-mt-28">
               <StepSection n={3} title={t.step3} desc={t.step3Desc}>
                 {looking ? <LookupSkeleton isbn={looking} />

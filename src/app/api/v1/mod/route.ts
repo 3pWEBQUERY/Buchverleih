@@ -4,6 +4,7 @@ import { areasOverview, setAreaRule } from "@/lib/areas";
 import { requireModerator } from "@/lib/auth/session";
 import * as mod from "@/lib/moderation";
 import { correctionCurrent, targetLinks } from "@/lib/moderation-queries";
+import { setPrice } from "@/lib/billing";
 
 /**
  * GET /api/v1/mod?view=queue|kpis|flags|log|users|team&q= – interne Werkzeuge.
@@ -56,6 +57,7 @@ export const POST = route(async (req) => {
       z.object({ action: z.literal("role"), userId: z.string().uuid(), role: z.enum(["member", "moderator"]) }),
       z.object({ action: z.literal("hide_content"), targetType: z.enum(mod.HIDEABLE), targetId: z.string().uuid(), hidden: z.boolean(), note: z.string().max(300).optional() }),
       z.object({ action: z.literal("temp_password"), userId: z.string().uuid() }),
+      z.object({ action: z.literal("price"), key: z.enum(["supporter_month", "supporter_year", "org_month", "shipping_fee"]), amount: z.number().int().min(0).max(100000) }),
     ]),
   );
   switch (b.action) {
@@ -70,6 +72,7 @@ export const POST = route(async (req) => {
     case "role": await mod.setRole(m, b.userId, b.role); break;
     case "hide_content": await mod.hideContent(m, b.targetType, b.targetId, b.hidden, b.note); break;
     case "temp_password": return { ok: true, password: await mod.temporaryPassword(m, b.userId) };
+    case "price": await setPrice(m, b.key, b.amount); break;
   }
   return { ok: true };
 });

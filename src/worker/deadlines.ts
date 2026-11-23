@@ -56,7 +56,7 @@ async function expireHandover(id: string, reason: "deadline" | "period_over") {
       set: tx`closed_at = now()`,
       where: reason === "deadline"
         ? tx`l.handover_by < now() and l.handover_reported_at is null and l.received_from_loan_id is null`
-        : tx`l.handover_reported_at < now() - interval '48 hours'`,
+        : tx`l.handover_reported_at < now() - (case when l.handover_method = 'shipping' then interval '7 days' else interval '48 hours' end)`,
       meta: { reason },
     });
     await tx`delete from copy_bookings where loan_id = ${id}`;
@@ -87,17 +87,20 @@ export async function runDeadlines(): Promise<Result> {
   // Einseitige Übergabemeldung: Erinnerung nach 24 h, gilt nach 48 h ohne Einspruch
   for (const r of await sql<{ id: string; by_owner: boolean }[]>`
       select id, handover_reported_by = owner_id as by_owner from loans
-       where status = 'accepted' and handover_reported_at < now() - interval '24 hours' and handover_reported_at > now() - interval '48 hours'`) {
+       where status = 'accepted'
+         and handover_reported_at < now() - (case when handover_method = 'shipping' then interval '5 days' else interval '24 hours' end)
+         and handover_reported_at > now() - (case when handover_method = 'shipping' then interval '7 days' else interval '48 hours' end)`) {
     await remind(r.id, "handover_report_24h", [r.by_owner ? "borrower" : "owner"], "handover_reported");
   }
   await each(
-    await sql`select id from loans where status = 'accepted' and handover_reported_at < now() - interval '48 hours'`,
+    await sql`select id from loans where status = 'accepted' and handover_reported_at < now() - (case when handover_method = 'shipping' then interval '7 days' else interval '48 hours' end)`,
     (id) =>
       sql.begin(async (tx) => {
         const [l] = await tx<{ handover_method: string }[]>`select handover_method from loans where id = ${id}`;
+        // Versand: Empfang gilt erst nach 7 Tagen Postweg ohne Einspruch
         // Ein Einspruch zwischen Abfrage und Ausführung gewinnt (Meldung muss noch stehen und alt genug sein)
-        await executeHandover(tx, id, "handover_report_lapse", SYSTEM, (l.handover_method as "report" | "dropoff") ?? "report",
-          tx`l.handover_reported_at < now() - interval '48 hours'`);
+        await executeHandover(tx, id, "handover_report_lapse", SYSTEM, (l.handover_method as "report" | "dropoff" | "shipping") ?? "report",
+          tx`l.handover_reported_at < now() - (case when l.handover_method = 'shipping' then interval '7 days' else interval '48 hours' end)`);
       }).catch(async (e) => {
         // Gebuchter Zeitraum vorbei und danach vergeben: Vorgang verfällt, statt bei jedem Lauf zu scheitern
         if ((e as { code?: string }).code !== "period_over") throw e;
@@ -117,8 +120,11 @@ export async function runDeadlines(): Promise<Result> {
 
   // Rückgabemeldung gilt nach 48 h ohne Einspruch – schützt den Leiher
   await each(
-    await sql`select id from loans where status = 'return_reported' and return_reported_at < now() - interval '48 hours'`,
-    (id) => sql.begin((tx) => executeReturn(tx, id, "return_report_lapse", SYSTEM, tx`l.return_reported_at < now() - interval '48 hours'`)),
+    // Rücksendung per Post: 7 Tage statt 48 Stunden, bis die Rückgabe ohne Einspruch gilt
+    await sql`select id from loans where status = 'return_reported'
+                and return_reported_at < now() - (case when tracking_back is not null then interval '7 days' else interval '48 hours' end)`,
+    (id) => sql.begin((tx) => executeReturn(tx, id, "return_report_lapse", SYSTEM,
+      tx`l.return_reported_at < now() - (case when l.tracking_back is not null then interval '7 days' else interval '48 hours' end)`)),
     "return_reports_lapsed",
     out,
   );
@@ -262,6 +268,8 @@ export async function runRetention() {
   await sql`delete from notifications where channel <> 'app' and sent_at is null and created_at < now() - interval '30 days'`;
   await sql`delete from interest_signals where created_at < now() - interval '12 months'`;
   await sql`delete from account_signals where last_seen < now() - interval '90 days'`;
+  // Versandadressen nur so lange wie nötig: 30 Tage nach Abschluss entfernen
+  await sql`update loans set ship_to = null, return_to = null where closed_at < now() - interval '30 days' and (ship_to is not null or return_to is not null)`;
   const uploads = await cleanUploads();
   return { messagesDeleted: msgs.length, searchesDeleted: searches.length, deadJobsDeleted: dead.length, deadJobs: stuck.n, ...uploads };
 }
@@ -284,6 +292,7 @@ async function cleanUploads() {
      where u.status = 'processed' and u.key is not null and coalesce(u.processed_at, u.created_at) < now() - interval '7 days'
        and not exists (select 1 from copy_photos p where p.key = u.key)
        and not exists (select 1 from users x where x.avatar_key = u.key)
+       and not exists (select 1 from circles ci where ci.logo_key = u.key)
        and not exists (select 1 from loans l where l.dropoff_photo_key = u.key or l.return_photo_key = u.key or u.key = any(l.condition_photo_keys))
        and not exists (select 1 from cases c where u.key = any(c.photo_keys))
        and not exists (select 1 from editions e where e.cover_key = u.key)

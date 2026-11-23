@@ -7,6 +7,7 @@ import { caseResponseLabel } from "@/lib/i18n/de-CH";
 import { labels } from "@/lib/i18n/labels";
 import { useLocale } from "@/components/locale-provider";
 import { STEPS } from "@/lib/i18n/messages/loans-steps";
+import { SHIPPING } from "@/lib/i18n/messages/shipping";
 import { addDays, dayToDate, fmtDay } from "@/lib/dates";
 import { Button, Check, Field, Input, Notice, Select, Textarea, cx } from "@/components/ui";
 import { useToast } from "@/components/toast";
@@ -22,7 +23,11 @@ export function AcceptForm({ loan, busy, onAccept, onDecline }: { loan: LoanView
   const [spot, setSpot] = useState(loan.ownerSpots[0]?.id ?? "");
   const [when, setWhen] = useState("");
   const [swapCopy, setSwapCopy] = useState(loan.swapOffered[0]?.id ?? "");
-  const m = STEPS[useLocale()];
+  const [returnTo, setReturnTo] = useState("");
+  const l = useLocale();
+  const m = STEPS[l];
+  const sh = SHIPPING[l];
+  const shipping = Boolean(loan.shipping);
   const place = loan.ownerSpots.find((s) => s.id === spot)?.label ?? loan.circle?.fixed_spot ?? null;
   return (
     <div className="space-y-6 max-w-2xl">
@@ -43,6 +48,20 @@ export function AcceptForm({ loan, busy, onAccept, onDecline }: { loan: LoanView
           <Link href={`/profil/${loan.other?.id}`} className="text-body-sm font-medium text-accent-hover hover:underline underline-offset-4 mt-3 inline-block">{m.wholeSwapShelf}</Link>
         </fieldset>
       )}
+      {shipping ? (
+        <div className="grid md:grid-cols-2 gap-5 md:gap-4">
+          <div className="text-body">
+            <span className="block text-meta font-semibold mb-2">{sh.shipTo}</span>
+            <p className="rounded-md bg-paper-2 border border-line px-4 py-3 whitespace-pre-line">{loan.shipping?.shipTo}</p>
+            <p className="text-body-sm text-muted mt-1.5">{sh.ownerShipsAt}</p>
+          </div>
+          {loan.kind === "lend" && (
+            <Field label={sh.returnTo} hint={sh.returnToHint}>
+              <Textarea value={returnTo} onChange={(e) => setReturnTo(e.target.value)} maxLength={300} rows={3} />
+            </Field>
+          )}
+        </div>
+      ) : (
       <div className="grid md:grid-cols-2 gap-5 md:gap-4">
       {loan.ownerSpots.length > 0 ? (
         <Field label={m.spot} hint={m.spotHint}>
@@ -58,9 +77,12 @@ export function AcceptForm({ loan, busy, onAccept, onDecline }: { loan: LoanView
         <DateTimeField value={when} onChange={setWhen} />
       </Field>
       </div>
+      )}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-3 pt-1">
-        <Button variant="primary" size="lg" disabled={busy || (loan.kind === "swap" && !swapCopy)}
-          onClick={() => onAccept({ pickupSpotId: spot || null, proposalAt: when ? new Date(when).toISOString() : null, proposalPlace: when ? place : null, swapCopyId: loan.kind === "swap" ? swapCopy : null })}>
+        <Button variant="primary" size="lg" disabled={busy || (loan.kind === "swap" && !swapCopy) || (shipping && loan.kind === "lend" && returnTo.trim().length < 10)}
+          onClick={() => onAccept(shipping
+            ? { returnTo: loan.kind === "lend" ? returnTo.trim() : null }
+            : { pickupSpotId: spot || null, proposalAt: when ? new Date(when).toISOString() : null, proposalPlace: when ? place : null, swapCopyId: loan.kind === "swap" ? swapCopy : null })}>
           {m.accept}
         </Button>
         <Button variant="quiet" onClick={onDecline}>{m.decline}</Button>
@@ -165,6 +187,26 @@ export function ReportReturn({ loan, busy, onReport }: { loan: LoanView; busy: b
       <p className="text-body text-ink-2">{mode === "dropoff" ? m.returnDropoffText : m.reportText}</p>
       {mode === "dropoff" && <PhotoPicker loanId={loan.id} purpose="dropoff" keys={keys} setKeys={setKeys} max={1} />}
       <Button variant="secondary" disabled={busy || (mode === "dropoff" && !keys.length)} onClick={() => onReport(mode === "dropoff" ? keys[0] : null)}>{m.reportReturnBtn}</Button>
+    </div>
+  );
+}
+
+/** Versand: verschicken (verleihende Person) oder zurückschicken (leihende Person) mit Sendungsnummer */
+export function ShipForm({ address, busy, label, onSend }: { address: string | null; busy: boolean; label: string; onSend: (tracking: string) => void }) {
+  const sh = SHIPPING[useLocale()];
+  const [n, setN] = useState("");
+  return (
+    <div className="space-y-4 max-w-xl">
+      {address && (
+        <div>
+          <p className="text-meta font-semibold mb-2">{sh.shipTo}</p>
+          <p className="rounded-md bg-paper-2 border border-line px-4 py-3 whitespace-pre-line select-all">{address}</p>
+        </div>
+      )}
+      <Field label={sh.tracking} hint={sh.trackingHint}>
+        <Input value={n} onChange={(e) => setN(e.target.value)} maxLength={60} autoComplete="off" className="tnum" />
+      </Field>
+      <Button variant="primary" size="lg" disabled={busy || n.trim().length < 6} onClick={() => onSend(n.trim())}>{label}</Button>
     </div>
   );
 }

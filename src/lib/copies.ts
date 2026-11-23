@@ -22,6 +22,8 @@ export const copySettingsSchema = z.object({
   passOn: z.enum(["never", "on_request", "always"]).optional(),
   chainMax: z.number().int().min(1).max(4).optional(),
   dropoffAllowed: z.boolean().optional(),
+  /** Versand möglich (Porto für den Hinweg trägt die verleihende Person) */
+  shippingAllowed: z.boolean().optional(),
   precious: z.boolean().optional(),
   circleIds: z.array(z.string().uuid()).optional(),
 });
@@ -41,6 +43,7 @@ const COLS: Record<string, string> = {
   passOn: "pass_on",
   chainMax: "chain_max",
   dropoffAllowed: "dropoff_allowed",
+  shippingAllowed: "shipping_allowed",
   precious: "precious",
 };
 
@@ -306,6 +309,7 @@ export type CopyDetail = ShelfCopy & {
   pass_on: "never" | "on_request" | "always";
   chain_max: number;
   dropoff_allowed: boolean;
+  shipping_allowed: boolean;
   precious: boolean;
   transfer_locked_until: Date | null;
   isbn13: string | null;
@@ -332,7 +336,7 @@ export async function copyDetail(copyId: string, viewerId: string | null, origin
            case when c.owner_id = ${viewerId}::uuid then cur.borrower_name end as lent_to,
            case when c.owner_id = ${viewerId}::uuid then cur.handed_over_at end as lent_since,
            c.condition_note, c.loan_days, c.auto_extend, c.max_extensions, c.horizon_days, c.buffer_days,
-           c.max_future_bookings, c.pass_on, c.chain_max, c.dropoff_allowed, c.precious, c.transfer_locked_until,
+           c.max_future_bookings, c.pass_on, c.chain_max, c.dropoff_allowed, c.shipping_allowed, c.precious, c.transfer_locked_until,
            e.isbn13, e.publisher, e.year, e.language, e.binding, e.pages,
            o.first_name as owner_name, o.avatar_key as owner_avatar, o.trust_level as owner_trust, o.municipality as owner_municipality,
            o.shelf_paused as owner_paused, o.created_at as owner_since, o.is_demo as owner_demo,

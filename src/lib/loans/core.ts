@@ -27,6 +27,11 @@ export type LoanRow = {
   handover_reported_by: string | null;
   handover_method: string | null;
   dropoff_photo_key: string | null;
+  delivery: "pickup" | "shipping";
+  ship_to: string | null;
+  return_to: string | null;
+  tracking_out: string | null;
+  tracking_back: string | null;
   return_photo_key: string | null;
   handed_over_at: Date | null;
   condition_note_until: Date | null;

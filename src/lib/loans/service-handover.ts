@@ -28,7 +28,7 @@ export async function executeHandover(
   loanId: string,
   action: "handover" | "confirm_handover" | "handover_report_lapse",
   actor: ActorRef,
-  method: "scan" | "code" | "report" | "dropoff",
+  method: "scan" | "code" | "report" | "dropoff" | "shipping",
   /** Zusatzbedingung für den Wechsel, z. B. die Frist beim Fristablauf (atomar geprüft) */
   where?: Fragment,
 ) {
@@ -41,7 +41,8 @@ export async function executeHandover(
   if (current.kind === "lend" && diffDays(today, range.start) > 3)
     throw err.conflict("too_early", "Die Übergabe ist frühestens 3 Tage vor dem geplanten Beginn möglich.");
 
-  const handedAt = action === "handover_report_lapse" && current.handover_reported_at ? current.handover_reported_at : new Date();
+  // Gilt eine Meldung nach Ablauf, zählt der Zeitpunkt der Meldung; beim Versand der Ablauf selbst (Postweg)
+  const handedAt = action === "handover_report_lapse" && current.handover_reported_at && method !== "shipping" ? current.handover_reported_at : new Date();
 
   if (current.kind === "lend") {
     // Beginn verschiebt sich auf heute; das Ende nur, wenn der Kalender danach frei ist.
@@ -111,10 +112,13 @@ export async function executeHandover(
 // Einseitige Meldung und Ablage (4.3)
 // ---------------------------------------------------------------------------
 
-export async function reportHandover(user: SessionUser, loanId: string, input: { dropoffPhotoKey?: string | null }) {
+export async function reportHandover(user: SessionUser, loanId: string, input: { dropoffPhotoKey?: string | null; tracking?: string | null }) {
   return sql.begin(async (tx) => {
     const { loan: current, role } = await loanFor(tx, loanId, user.id);
     if (current.handover_reported_at) throw err.conflict("already_reported", "Die Übergabe ist bereits gemeldet.");
+    // Versand: die verleihende Person meldet «verschickt» mit Sendungsnummer; die andere Seite bestätigt den Empfang
+    const shipped = current.delivery === "shipping" && role === "owner";
+    if (shipped && !input.tracking?.trim()) throw err.invalid("Gib die Sendungsnummer an.");
     let action: "report_handover" | "dropoff" = "report_handover";
     if (input.dropoffPhotoKey) {
       const [c] = await tx<{ dropoff_allowed: boolean }[]>`select dropoff_allowed from copies where id = ${current.copy_id}`;
@@ -128,8 +132,9 @@ export async function reportHandover(user: SessionUser, loanId: string, input: {
       throw err.conflict("too_early", "Die Übergabe ist frühestens 3 Tage vor dem geplanten Beginn möglich.");
     const loan = await transition(tx, loanId, action, { role: role!, id: user.id }, {
       set: tx`handover_reported_at = now(), handover_reported_by = ${user.id},
-              handover_method = ${action === "dropoff" ? "dropoff" : "report"},
-              dropoff_photo_key = ${input.dropoffPhotoKey ?? null}`,
+              handover_method = ${action === "dropoff" ? "dropoff" : shipped ? "shipping" : "report"},
+              dropoff_photo_key = ${input.dropoffPhotoKey ?? null},
+              tracking_out = ${shipped ? input.tracking!.trim().slice(0, 60) : null}`,
       where: tx`l.handover_reported_at is null`,
     });
     const info = await loanInfo(tx, loanId);
@@ -144,7 +149,7 @@ export async function confirmHandover(user: SessionUser, loanId: string) {
     if (!loan.handover_reported_at || loan.handover_reported_by === user.id)
       throw err.conflict("nothing_to_confirm", "Es gibt keine Meldung der anderen Seite zu bestätigen.");
     // Ein Einspruch dazwischen gewinnt: die Meldung muss beim Wechsel noch stehen
-    return executeHandover(tx, loanId, "confirm_handover", { role: role!, id: user.id }, (loan.handover_method as "report" | "dropoff") ?? "report",
+    return executeHandover(tx, loanId, "confirm_handover", { role: role!, id: user.id }, (loan.handover_method as "report" | "dropoff" | "shipping") ?? "report",
       tx`l.handover_reported_at is not null and l.handover_reported_by <> ${user.id}`);
   });
 }
@@ -155,7 +160,7 @@ export async function objectHandover(user: SessionUser, loanId: string) {
     if (!loan.handover_reported_at || loan.handover_reported_by === user.id)
       throw err.conflict("nothing_to_object", "Es gibt keine Meldung der anderen Seite.");
     return transition(tx, loanId, "object_handover", { role: role!, id: user.id }, {
-      set: tx`handover_reported_at = null, handover_reported_by = null, handover_method = null, dropoff_photo_key = null`,
+      set: tx`handover_reported_at = null, handover_reported_by = null, handover_method = null, dropoff_photo_key = null, tracking_out = null`,
     });
   });
 }
@@ -322,7 +327,7 @@ export async function executeReturn(
   return loan;
 }
 
-export async function reportReturn(user: SessionUser, loanId: string, input: { dropoffPhotoKey?: string | null } = {}) {
+export async function reportReturn(user: SessionUser, loanId: string, input: { dropoffPhotoKey?: string | null; tracking?: string | null } = {}) {
   return sql.begin(async (tx) => {
     // Rückgabe über die Ablage: nur wenn das Buch sie erlaubt, mit Foto als Nachweis (4.3)
     let photo: string | null = null;
@@ -333,7 +338,8 @@ export async function reportReturn(user: SessionUser, loanId: string, input: { d
       [photo] = await assertOwnPhotos(tx, user.id, loanId, [input.dropoffPhotoKey], "dropoff");
     }
     const loan = await transition(tx, loanId, "report_return", { role: "borrower", id: user.id }, {
-      set: tx`return_reported_at = now(), return_reported_by = ${user.id}, return_photo_key = ${photo}`,
+      set: tx`return_reported_at = now(), return_reported_by = ${user.id}, return_photo_key = ${photo},
+              tracking_back = ${input.tracking?.trim().slice(0, 60) || null}`,
       where: tx`(l.status <> 'disputed' or exists (select 1 from cases c where c.loan_id = l.id and c.kind = 'nonreturn' and c.closed_at is null))`,
     });
     const info = await loanInfo(tx, loanId);
@@ -351,7 +357,7 @@ export async function objectReturn(user: SessionUser, loanId: string) {
   return sql.begin(async (tx) => {
     const [open] = await tx<{ id: string }[]>`select id from cases where loan_id = ${loanId} and closed_at is null limit 1`;
     return transition(tx, loanId, open ? "object_return_case" : "object_return", { role: "owner", id: user.id }, {
-      set: tx`return_reported_at = null, return_reported_by = null, return_photo_key = null`,
+      set: tx`return_reported_at = null, return_reported_by = null, return_photo_key = null, tracking_back = null`,
     });
   });
 }

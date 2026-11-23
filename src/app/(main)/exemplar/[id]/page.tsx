@@ -298,6 +298,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
               paused={copy.owner_paused}
               myOffers={myOffers}
               loanDays={loanDays}
+              shipping={copy.shipping_allowed && f.shipping}
               title={copy.title}
             />
           )}

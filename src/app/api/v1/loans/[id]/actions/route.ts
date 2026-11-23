@@ -10,21 +10,21 @@ import { createToken, redeemCode } from "@/lib/loans/handover";
  * Der Name entspricht der Handlung in der Zustandsmaschine (src/lib/loans/machine.ts).
  */
 const schema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("accept"), pickupSpotId: z.string().uuid().nullish(), proposalAt: z.string().datetime({ offset: true }).nullish(), proposalPlace: z.string().max(120).nullish(), swapCopyId: z.string().uuid().nullish() }),
+  z.object({ action: z.literal("accept"), pickupSpotId: z.string().uuid().nullish(), proposalAt: z.string().datetime({ offset: true }).nullish(), proposalPlace: z.string().max(120).nullish(), swapCopyId: z.string().uuid().nullish(), returnTo: z.string().max(300).nullish() }),
   z.object({ action: z.literal("decline") }),
   z.object({ action: z.literal("withdraw") }),
   z.object({ action: z.literal("cancel") }),
   z.object({ action: z.literal("cancel_without_penalty") }),
   z.object({ action: z.literal("show_code") }),
   z.object({ action: z.literal("enter_code"), code: z.string().min(6).max(8) }),
-  z.object({ action: z.literal("report_handover"), dropoffPhotoKey: z.string().max(300).nullish() }),
+  z.object({ action: z.literal("report_handover"), dropoffPhotoKey: z.string().max(300).nullish(), tracking: z.string().max(60).nullish() }),
   z.object({ action: z.literal("confirm_handover") }),
   z.object({ action: z.literal("object_handover") }),
   z.object({ action: z.literal("condition_note"), note: z.string().max(500), photoKeys: z.array(z.string().max(300)).max(6).default([]) }),
   z.object({ action: z.literal("extend") }),
   z.object({ action: z.literal("grant_extension") }),
   z.object({ action: z.literal("recall") }),
-  z.object({ action: z.literal("report_return"), dropoffPhotoKey: z.string().max(300).nullish() }),
+  z.object({ action: z.literal("report_return"), dropoffPhotoKey: z.string().max(300).nullish(), tracking: z.string().max(60).nullish() }),
   z.object({ action: z.literal("confirm_return") }),
   z.object({ action: z.literal("object_return") }),
   z.object({ action: z.literal("complete") }),
@@ -58,7 +58,7 @@ export const POST = route<{ id: string }>(async (req, p) => {
     case "extend": return svc.extend(u, id);
     case "grant_extension": return svc.grantExtension(u, id);
     case "recall": return svc.recall(u, id);
-    case "report_return": return svc.reportReturn(u, id, { dropoffPhotoKey: b.dropoffPhotoKey });
+    case "report_return": return svc.reportReturn(u, id, { dropoffPhotoKey: b.dropoffPhotoKey, tracking: b.tracking });
     case "confirm_return": return svc.confirmReturn(u, id);
     case "object_return": return svc.objectReturn(u, id);
     case "complete": return svc.complete(u, id);

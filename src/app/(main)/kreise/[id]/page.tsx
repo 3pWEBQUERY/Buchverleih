@@ -22,6 +22,13 @@ import { pulse } from "@/lib/pulse";
 import { Pinboard } from "@/components/kreise/pinboard";
 import { WantedBoard } from "@/components/kreise/wanted-board";
 import { PulseList } from "@/components/pulse";
+import { billingEnabled, organizationStatus, prices } from "@/lib/billing";
+import { OrgCard } from "@/components/billing";
+import { BILLING } from "@/lib/i18n/messages/billing";
+import { circleStats } from "@/lib/stats";
+import { STATS } from "@/lib/i18n/messages/stats";
+import { MonthBars } from "@/components/month-bars";
+import { Branding } from "@/components/kreise/branding";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -64,9 +71,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     );
   }
 
-  const [members, copies, board, wanted, pulseItems] = await Promise.all([
+  const [members, copies, board, wanted, pulseItems, org, price] = await Promise.all([
     circleMembers(id), circleShelf(id, user.id), listPosts(id, user.id), wantedInCircle(id, user.id), pulse(user.id, { circleId: id }),
+    organizationStatus(id), prices(),
   ]);
+  const orgStats = circle.plan_id === "organization" && circle.my_role === "admin" ? await circleStats(id) : null;
   const ownCopies = copies.filter((c) => c.owner_id === user.id && !c.library);
   const library = copies.filter((c) => c.library);
   const memberCopies = copies.filter((c) => !c.library);
@@ -97,8 +106,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
       <header className="mb-10 md:mb-12 flex flex-wrap items-end justify-between gap-x-10 gap-y-8">
         <div className="min-w-0 flex items-start gap-4 md:gap-6 anim-rise">
-          <span className="hidden sm:block"><CircleMark id={circle.id} name={circle.name} size={84} /></span>
-          <span className="sm:hidden"><CircleMark id={circle.id} name={circle.name} size={56} /></span>
+          <span className="hidden sm:block"><CircleMark id={circle.id} name={circle.name} size={84} color={circle.brand_color} logo={circle.logo_key} /></span>
+          <span className="sm:hidden"><CircleMark id={circle.id} name={circle.name} size={56} color={circle.brand_color} logo={circle.logo_key} /></span>
           <div className="min-w-0">
             <p className="eyebrow flex flex-wrap items-center gap-x-2 gap-y-1">
               <span>{admin ? t.youAdmin : t.member}</span><span aria-hidden>·</span>
@@ -213,6 +222,36 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             desc={admin ? d.membersAdmin : d.membersMember}>
             <MemberList circleId={circle.id} me={user.id} admin={admin} members={members} />
           </StepSection>
+
+          {/* Kreis für Organisationen (PRD 11.2): Angebot und Abo nur für Admins sichtbar */}
+          {admin && (
+            <StepSection id="organisation" n={++n} title={orgStats ? STATS[l].org.title : BILLING[l].org.title} desc={orgStats ? STATS[l].org.desc : undefined}>
+              {orgStats && (
+                <div className="mb-8">
+                  <dl className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
+                    <StatTile n={orgStats.totals.loans_30} label={STATS[l].org.loans30} />
+                    <StatTile n={orgStats.totals.loans_365} label={STATS[l].org.loans365} />
+                    <StatTile n={orgStats.totals.active_members} label={STATS[l].org.activeLabel(orgStats.totals.members)} />
+                    <StatTile n={orgStats.totals.books} label={STATS[l].org.books} />
+                  </dl>
+                  <MonthBars data={orgStats.byMonth} label={STATS[l].perMonth} l={l} unit={STATS[l].unit} />
+                  <p className="font-medium mt-6 mb-2">{STATS[l].org.popular}</p>
+                  {orgStats.popular.length === 0 ? <p className="text-body-sm text-muted">{STATS[l].org.none}</p> : (
+                    <ol className="divide-y divide-line rounded-md border border-line">
+                      {orgStats.popular.map((p, i) => (
+                        <li key={p.work_id} className="px-4 py-2.5 flex items-center justify-between gap-4">
+                          <Link href={`/titel/${p.work_id}`} className="font-serif hover:underline underline-offset-4"><span className="text-muted tnum mr-2">{i + 1}.</span>{p.title}</Link>
+                          <span className="text-meta text-muted tnum">{STATS[l].unit(p.loans)}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                  <Branding circleId={circle.id} name={circle.name} color={circle.brand_color} logo={circle.logo_key} />
+                </div>
+              )}
+              <OrgCard circleId={circle.id} active={Boolean(org)} payer={org?.user_id === user.id} price={price.org_month} enabled={billingEnabled()} />
+            </StepSection>
+          )}
 
           <StepSection id="regeln" n={++n} title={d.rulesTitle} desc={d.rulesDesc}>
             <dl className="grid sm:grid-cols-2 gap-2">

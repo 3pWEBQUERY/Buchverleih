@@ -33,6 +33,9 @@ export const PATCH = route<{ id: string }>(async (req, p) => {
       fixedSpot: z.string().max(80).nullish(),
       joinMode: z.enum(["link", "approval"]).optional(),
       renewInvite: z.boolean().optional(),
+      /** Organisationen: Farbe aus der Kreispalette und Logo (Upload mit Zweck «avatar»); null entfernt */
+      brandColor: z.string().regex(/^#[0-9a-f]{6}$/).nullable().optional(),
+      logoUploadId: z.string().uuid().nullable().optional(),
     }),
   );
   if (b.renewInvite) return { inviteCode: await renewInvite(u.id, p.id) };

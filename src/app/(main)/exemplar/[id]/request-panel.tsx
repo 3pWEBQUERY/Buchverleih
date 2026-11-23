@@ -9,10 +9,11 @@ import { addDays, dayToDate, diffDays, fmtDay } from "@/lib/dates";
 import type { OfferKind } from "@/lib/loans/machine";
 import { CalendarView } from "@/components/calendar";
 import { OptionCard, Stepper } from "@/components/form-controls";
-import { Button, LinkButton, Notice, Textarea, cx } from "@/components/ui";
+import { Button, Field, LinkButton, Notice, Segmented, Textarea, cx } from "@/components/ui";
 import { IconBookmark, IconLoans, IconSwap } from "@/components/icons";
 import { useLocale } from "@/components/locale-provider";
 import { EXEMPLAR } from "@/lib/i18n/messages/exemplar";
+import { SHIPPING } from "@/lib/i18n/messages/shipping";
 import { DateField } from "@/components/date-field";
 
 /**
@@ -21,10 +22,12 @@ import { DateField } from "@/components/date-field";
  * Unten läuft eine Zusammenfassung mit dem einzigen Akzent-Knopf mit.
  */
 export function RequestPanel({
-  copyId, offers, calendar, loggedIn, blocker, paused, myOffers, loanDays, title,
+  copyId, offers, calendar, loggedIn, blocker, paused, myOffers, loanDays, title, shipping = false,
 }: {
   copyId: string; offers: OfferKind[]; calendar: Calendar; loggedIn: boolean; blocker: string | null; paused: boolean;
   myOffers: { id: string; title: string }[]; loanDays: number; title: string;
+  /** Das Buch wird auch verschickt (und Versand ist eingeschaltet) */
+  shipping?: boolean;
 }) {
   const router = useRouter();
   const l = useLocale();
@@ -34,6 +37,10 @@ export function RequestPanel({
   const [start, setStart] = useState(firstFree?.start ?? calendar.today);
   const [days, setDays] = useState(loanDays);
   const [message, setMessage] = useState("");
+  const [delivery, setDelivery] = useState<"pickup" | "shipping">("pickup");
+  const [shipTo, setShipTo] = useState("");
+  const sh = SHIPPING[l];
+  const byPost = shipping && kind !== "swap" && delivery === "shipping";
   const [swapIds, setSwapIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -53,12 +60,15 @@ export function RequestPanel({
     setBusy(true);
     setError(null);
     try {
-      const body =
-        kind === "lend"
+      const post = byPost ? { delivery: "shipping" as const, shipTo: shipTo.trim() } : {};
+      const body = {
+        ...post,
+        ...(kind === "lend"
           ? { copyId, kind, start, end, message: message || undefined }
           : kind === "swap"
             ? { copyId, kind, swapOfferedCopyIds: swapIds, message: message || undefined }
-            : { copyId, kind, message: message || undefined };
+            : { copyId, kind, message: message || undefined }),
+      };
       const r = await api<{ id: string }>("/loans", { body });
       router.push(`/vorgaenge/${r.id}`);
     } catch (e) {
@@ -69,7 +79,7 @@ export function RequestPanel({
 
   let n = 0;
   const step = () => ++n;
-  const canSend = loggedIn && !blocker && !paused && !busy && (kind !== "lend" || ok) && (kind !== "swap" || swapIds.length > 0);
+  const canSend = loggedIn && !blocker && !paused && !busy && (kind !== "lend" || ok) && (kind !== "swap" || swapIds.length > 0) && (!byPost || shipTo.trim().length >= 10);
 
   return (
     <div className="mt-2" aria-label={t.aria}>
@@ -135,6 +145,18 @@ export function RequestPanel({
       {kind === "gift" && (
         <Section n={step()} title={t.giftTitle} desc={t.giftDescLong}>
           <></>
+        </Section>
+      )}
+
+      {shipping && kind !== "swap" && (
+        <Section n={step()} title={sh.byPost} desc={sh.byPostHint}>
+          <Segmented name={sh.byPost} value={delivery} onChange={setDelivery} className="max-w-sm"
+            options={[{ value: "pickup", label: sh.pickup }, { value: "shipping", label: sh.byPost }]} />
+          {delivery === "shipping" && (
+            <Field label={sh.address} hint={sh.addressHint} className="mt-4 max-w-md">
+              <Textarea value={shipTo} onChange={(e) => setShipTo(e.target.value)} maxLength={300} rows={3} autoComplete="street-address" />
+            </Field>
+          )}
         </Section>
       )}
 

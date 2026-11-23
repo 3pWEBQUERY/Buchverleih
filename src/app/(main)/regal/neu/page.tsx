@@ -1,5 +1,6 @@
 import { pageUser } from "@/lib/page";
 import { sql } from "@/lib/db";
+import { shelfPhotoEnabled } from "@/lib/shelf-photo";
 import { listShelf } from "@/lib/copies";
 import { isoDay, todayCH } from "@/lib/dates";
 import { Erfassen, type Added } from "./erfassen";
@@ -32,5 +33,5 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ k
       circlesOnly: c.visibility === "circles",
       cover: { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id },
     }));
-  return <Erfassen initial={library ? [] : added} library={library ?? null} />;
+  return <Erfassen initial={library ? [] : added} library={library ?? null} shelfPhoto={shelfPhotoEnabled()} />;
 }

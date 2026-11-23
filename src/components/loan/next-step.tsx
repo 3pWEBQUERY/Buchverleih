@@ -13,7 +13,8 @@ import { Button, Field, Select, cx } from "@/components/ui";
 import { useToast } from "@/components/toast";
 import { HandoverCode } from "./handover-code";
 import { ScanOverlay } from "./scan-overlay";
-import { AcceptForm, CaseResponse, ConditionForm, DamageForm, RateForm, ReportHandover, ReportReturn, Reschedule } from "./step-forms";
+import { AcceptForm, CaseResponse, ConditionForm, DamageForm, RateForm, ReportHandover, ReportReturn, Reschedule, ShipForm } from "./step-forms";
+import { SHIPPING } from "@/lib/i18n/messages/shipping";
 import { Presence, celebrateHandover } from "@/components/motion";
 
 /**
@@ -118,14 +119,26 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
         main = <Button variant="primary" size="lg" onClick={bar.run}>{step.label}</Button>;
         break;
       case "confirm_handover":
-        context = m.confirmHandover(loan.other?.first_name ?? "", loan.handoverMethod === "dropoff",
-          t.handover_reported_at ? m.inRel(relHours(new Date(new Date(t.handover_reported_at).getTime() + 48 * 3600_000), l)) : m.after48);
+        context = loan.handoverMethod === "shipping"
+          ? SHIPPING[l].confirmCtx(loan.other?.first_name ?? "")
+          : m.confirmHandover(loan.other?.first_name ?? "", loan.handoverMethod === "dropoff",
+            t.handover_reported_at ? m.inRel(relHours(new Date(new Date(t.handover_reported_at).getTime() + 48 * 3600_000), l)) : m.after48);
         main = (
           <div className="flex flex-wrap items-center gap-4">
             <Button variant="primary" size="lg" disabled={busy} onClick={() => act({ action: "confirm_handover" }, m.confirmed)}>{step.label}</Button>{(bar = { label: step.label, run: () => act({ action: "confirm_handover" }, m.confirmed) }) && null}
             <Button variant="quiet" onClick={() => act({ action: "object_handover" }, m.objected)}>{m.nothingReceived}</Button>
           </div>
         );
+        break;
+      case "ship":
+        context = SHIPPING[l].shipCtx(loan.other?.first_name ?? "");
+        main = <ShipForm address={loan.shipping?.shipTo ?? null} busy={off} label={SHIPPING[l].shipped}
+          onSend={(tracking) => act({ action: "report_handover", tracking }, SHIPPING[l].sentToast)} />;
+        break;
+      case "ship_back":
+        context = SHIPPING[l].shipBackCtx(t.due_at ? deadline(dueDay(t.due_at), m.returnBy, l) : "");
+        main = <ShipForm address={loan.shipping?.returnTo ?? null} busy={off} label={SHIPPING[l].shippedBack}
+          onSend={(tracking) => act({ action: "report_return", tracking }, SHIPPING[l].returnedToast)} />;
         break;
       case "return_code":
         context = t.due_at ? m.returnCode(deadline(dueDay(t.due_at), m.returnBy, l), loan.other?.first_name ?? "") : m.showOnReturn;
@@ -210,7 +223,7 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
   const secondary: React.ReactNode[] = [];
   if (can("withdraw")) secondary.push(<Button key="w" variant="quiet" disabled={off} onClick={() => deferred(m.withdrawn, { action: "withdraw" })}>{m.withdraw}</Button>);
   if (can("cancel")) secondary.push(<Button key="c" variant="quiet" disabled={off} onClick={() => deferred(m.cancelled, { action: "cancel" })}>{m.cancel}</Button>);
-  if (loan.status === "accepted" && !loan.handoverReportedBy && loan.kind !== "swap" && !loan.received_from_loan_id) {
+  if (loan.status === "accepted" && !loan.handoverReportedBy && loan.kind !== "swap" && !loan.received_from_loan_id && !loan.shipping) {
     secondary.push(<Button key="rh" variant="quiet" onClick={() => setPanel(panel === "report" ? null : "report")}>{m.reportHandoverBtn}</Button>);
   }
   if (loan.status === "active" && !owner) {

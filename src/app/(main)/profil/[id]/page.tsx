@@ -20,6 +20,7 @@ import { ProfileActions } from "./profile-actions";
 import { BookRow } from "@/components/regal/book-row";
 import { StatTile, StepSection } from "@/components/step-section";
 import { IconArrowRight, IconCheck } from "@/components/icons";
+import { BILLING } from "@/lib/i18n/messages/billing";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -113,6 +114,11 @@ export default async function ProfilPage({ params }: Params) {
                 <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", p.trust_level >= 2 ? "bg-ok" : p.trust_level === 1 ? "bg-wait" : "bg-done")} />
                 {t.level(level)}
               </p>
+              {p.supporter && (
+                <p className="mt-3 ml-2 inline-flex items-center gap-1.5 h-7 px-2.5 rounded-sm text-meta font-semibold bg-accent-soft text-accent-hover">
+                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent" />{BILLING[l].supporter.title}
+                </p>
+              )}
             </div>
           </div>
 

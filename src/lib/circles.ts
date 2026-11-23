@@ -5,6 +5,7 @@ import { err } from "@/lib/errors";
 import { shortCode } from "@/lib/crypto";
 import { notify } from "@/lib/notify";
 import { removeMemberContent } from "@/lib/pinboard";
+import { BRAND_COLORS } from "@/lib/monogram-colors";
 
 export type Circle = {
   id: string;
@@ -20,6 +21,9 @@ export type Circle = {
   copy_count: number;
   my_role: "admin" | "member" | null;
   my_status: "pending" | "active" | null;
+  plan_id: string;
+  brand_color: string | null;
+  logo_key: string | null;
 };
 
 export async function createCircle(userId: string, input: { name: string; description?: string | null; loanDays?: number; autoAccept?: boolean; fixedSpot?: string | null; joinMode?: "link" | "approval" }) {
@@ -84,9 +88,27 @@ async function assertAdmin(circleId: string, userId: string) {
   if (m?.role !== "admin") throw err.forbidden("Nur Admins des Kreises können das ändern.");
 }
 
-export async function updateCircle(userId: string, circleId: string, input: { name?: string; description?: string | null; loanDays?: number; autoAccept?: boolean; fixedSpot?: string | null; joinMode?: "link" | "approval" }) {
+export async function updateCircle(userId: string, circleId: string, input: { name?: string; description?: string | null; loanDays?: number; autoAccept?: boolean; fixedSpot?: string | null; joinMode?: "link" | "approval"; brandColor?: string | null; logoUploadId?: string | null }) {
   await assertAdmin(circleId, userId);
   const row: Record<string, unknown> = {};
+  // Eigenes Erscheinungsbild nur für Kreise von Organisationen (PRD 11.2); entfernen geht immer
+  if (input.brandColor || input.logoUploadId) {
+    const [c] = await sql<{ plan_id: string }[]>`select plan_id from circles where id = ${circleId}`;
+    if (c?.plan_id !== "organization") throw err.forbidden("Farbe und Logo gibt es für Kreise von Organisationen.");
+  }
+  if (input.brandColor !== undefined) {
+    if (input.brandColor && !BRAND_COLORS.includes(input.brandColor)) throw err.invalid("Diese Farbe gibt es nicht.");
+    row.brand_color = input.brandColor;
+  }
+  if (input.logoUploadId !== undefined) {
+    if (input.logoUploadId === null) row.logo_key = null;
+    else {
+      const [up] = await sql<{ key: string | null; status: string }[]>`
+        select key, status from uploads where id = ${input.logoUploadId} and user_id = ${userId} and purpose = 'avatar'`;
+      if (!up?.key || up.status === "pending" || up.status === "rejected") throw err.invalid("Dieses Bild können wir nicht verwenden. Lade es erneut hoch.");
+      row.logo_key = up.key;
+    }
+  }
   if (input.name !== undefined) row.name = input.name.trim();
   if (input.description !== undefined) row.description = input.description?.trim() || null;
   if (input.loanDays !== undefined) row.loan_days = input.loanDays;

@@ -11,6 +11,7 @@ import { fmtDay, fmtMonthYear } from "@/lib/dates";
 import { labels } from "@/lib/i18n/labels";
 import { COPY } from "@/lib/i18n/messages/copy";
 import { EXEMPLAR } from "@/lib/i18n/messages/exemplar";
+import { SHIPPING } from "@/lib/i18n/messages/shipping";
 import { shelfStatusLocal } from "@/lib/i18n/messages/shelf-status";
 import { CalendarView } from "@/components/calendar";
 import { Cover, CoverMorph, coverVt } from "@/components/cover";
@@ -42,6 +43,7 @@ type Settings = {
   passOn: CopyDetail["pass_on"];
   chainMax: number;
   dropoffAllowed: boolean;
+  shippingAllowed: boolean;
 };
 
 export type HistoryRow = {
@@ -52,7 +54,7 @@ export type HistoryRow = {
 
 const SECTIONS = ["angebot", "leihe", "kalender", "weitergabe", "zustand", "verlauf"] as const;
 
-export function CopyEditor({ copy, calendar, circles, history, wishers = 0, swapEnabled = true }: { copy: CopyDetail; calendar: Calendar; circles: { id: string; name: string; loanDays: number }[]; history: HistoryRow[]; wishers?: number; swapEnabled?: boolean }) {
+export function CopyEditor({ copy, calendar, circles, history, wishers = 0, swapEnabled = true, shippingEnabled = false }: { copy: CopyDetail; calendar: Calendar; circles: { id: string; name: string; loanDays: number }[]; history: HistoryRow[]; wishers?: number; swapEnabled?: boolean; shippingEnabled?: boolean }) {
   const router = useRouter();
   const toast = useToast();
   const l = useLocale();
@@ -74,6 +76,7 @@ export function CopyEditor({ copy, calendar, circles, history, wishers = 0, swap
     passOn: copy.pass_on,
     chainMax: copy.chain_max,
     dropoffAllowed: copy.dropoff_allowed,
+    shippingAllowed: copy.shipping_allowed,
   });
   const [note, setNote] = useState(copy.condition_note ?? "");
   const [saving, setSaving] = useState<"idle" | "saving" | "saved">("idle");
@@ -333,6 +336,12 @@ export function CopyEditor({ copy, calendar, circles, history, wishers = 0, swap
                 <Switch checked={s.dropoffAllowed} onChange={(v) => save({ dropoffAllowed: v })} label={<span className="font-medium">{t.lend.dropoff}</span>}
                   hint={t.lend.dropoffHint} />
               </div>
+              {shippingEnabled && (
+                <div className="px-5">
+                  <Switch checked={s.shippingAllowed} onChange={(v) => save({ shippingAllowed: v })} label={<span className="font-medium">{SHIPPING[l].allowed[0]}</span>}
+                    hint={SHIPPING[l].allowed[1]} />
+                </div>
+              )}
             </div>
           </Section>
 

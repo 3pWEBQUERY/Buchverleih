@@ -25,3 +25,9 @@ export function monogramColors(seed: string) {
   return CLOTH[hash(seed) % CLOTH.length];
 }
 
+
+/** Wählbare Kreisfarben (Organisationen): dieselben Buchleinen-Töne, mit lesbarer Schriftfarbe */
+export const BRAND_COLORS = CLOTH.map(([bg]) => bg);
+export function brandPair(bg: string): [string, string] {
+  return CLOTH.find(([b]) => b === bg) ?? CLOTH[0];
+}
