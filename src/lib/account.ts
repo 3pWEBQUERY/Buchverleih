@@ -70,7 +70,7 @@ export async function updateSettings(userId: string, s: {
   if (s.radiusKm !== undefined) row.radius_km = s.radiusKm;
   if (Object.keys(row).length) await sql`update users set ${sql(row)} where id = ${userId}`;
   if (s.emailPrefs) {
-    const clean = Object.fromEntries(Object.entries(s.emailPrefs).filter(([k]) => k !== "cases").map(([k, v]) => [k, Boolean(v)]));
+    const clean = Object.fromEntries(Object.entries(s.emailPrefs).filter(([k]) => k !== "cases" && k !== "push_cases").map(([k, v]) => [k, Boolean(v)]));
     await sql`update users set email_prefs = email_prefs || ${sql.json(clean)} where id = ${userId}`;
   }
 }
@@ -201,6 +201,7 @@ export async function deleteAccount(userId: string) {
       await tx`delete from login_tokens where lower(email) = lower(${me.email})`;
     }
     await tx`delete from apns_devices where user_id = ${userId}`;
+    await tx`delete from account_signals where user_id = ${userId}`;
     await tx`delete from phone_verifications where user_id = ${userId}`;
     await tx`update catalog_corrections set user_id = null where user_id = ${userId}`;
     await tx`update interest_signals set user_id = null where user_id = ${userId}`;

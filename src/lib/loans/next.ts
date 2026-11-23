@@ -128,6 +128,7 @@ export type NextInput = {
   swap_offer_copy_id: string | null;
   condition_note_until: Date | null;
   condition_note: string | null;
+  condition_photo_keys?: string[] | null;
   rating_closes_at: Date | null;
   rated_by_me: boolean;
   case_response: string | null;
@@ -174,7 +175,7 @@ function nextStepDe(l: NextInput): { step: NextStep; turn: Turn; waitingText: st
         if (l.extension_requested_at) return { step: { key: "grant_extension", label: "Verlängerung gewähren" }, turn: "me", waitingText: null };
         return { step: { key: "scan_return", label: "Rückgabe scannen" }, turn: "other", waitingText: "Ausgeliehen" };
       }
-      if (l.condition_note_until && l.condition_note_until > new Date() && !l.condition_note)
+      if (l.condition_note_until && l.condition_note_until > new Date() && !l.condition_note && !l.condition_photo_keys?.length)
         return { step: { key: "condition_note", label: "Zustand festhalten" }, turn: "me", waitingText: null };
       return { step: { key: "return_code", label: "Rückgabecode zeigen" }, turn: "me", waitingText: null };
     case "return_reported":

@@ -15,6 +15,7 @@ import { Button, Input, LinkButton, Notice, Segmented, cx } from "@/components/u
 import { IconArrowRight, IconScan, IconSearch } from "@/components/icons";
 import { LookupSkeleton, ManualTab, PendingCard, SearchTab, coverOf } from "./erfassen-parts";
 import { StackBar, StackNote, StackReview, useStack } from "./stapel";
+import { ImportLink } from "../import/import-client";
 
 export type Added = { id: string; title: string; authors: string[]; condition: number; circlesOnly: boolean; cover: CoverData };
 type Tab = "scan" | "search" | "manual";
@@ -32,7 +33,7 @@ const TABS: { id: Tab; icon: React.ReactNode }[] = [
 ];
 const ASKED_KEY = "lr_precious_asked";
 
-export function Erfassen({ initial }: { initial: Added[] }) {
+export function Erfassen({ initial, library = null }: { initial: Added[]; library?: { id: string; name: string } | null }) {
   const toast = useToast();
   const l = useLocale();
   const t = CAPTURE[l];
@@ -50,6 +51,7 @@ export function Erfassen({ initial }: { initial: Added[] }) {
   const camera = useRef<HTMLDivElement>(null);
   // Stapel: mehrere Bücher am Stück, Zustand und Sichtbarkeit am Schluss gemeinsam
   const s = useStack({
+    libraryCircleId: library?.id,
     onCreated: (item) => { setAdded((a) => [item, ...a]); setFresh(item.id); },
     onDeleted: (ids) => setAdded((a) => a.filter((x) => !ids.includes(x.id))),
   });
@@ -101,7 +103,7 @@ export function Erfassen({ initial }: { initial: Added[] }) {
   }
 
   async function add(edition: Edition, condition: number, precious: boolean, photo?: File | null) {
-    const r = await api<{ id: string }>("/copies", { body: { editionId: edition.id, condition, ...(precious ? { precious: true } : {}) } });
+    const r = await api<{ id: string }>("/copies", { body: { editionId: edition.id, condition, ...(precious ? { precious: true } : {}), ...(library ? { libraryCircleId: library.id } : {}) } });
     const item: Added = { id: r.id, title: edition.title, authors: edition.authors, condition, circlesOnly: precious, cover: coverOf(edition) };
     if (photo) {
       try {
@@ -159,6 +161,12 @@ export function Erfassen({ initial }: { initial: Added[] }) {
         <p className="text-body-lg text-ink-2 mt-3 leading-relaxed max-w-2xl">
           {t.lead}
         </p>
+        {library ? (
+          <Notice tone="accent" className="mt-5 max-w-2xl">
+            <p>{t.library(library.name)}</p>
+            <Link href={`/kreise/${library.id}#bibliothek`} className="mt-1 inline-flex font-medium underline underline-offset-4">{t.libraryBack}</Link>
+          </Notice>
+        ) : <ImportLink className="mt-3" />}
       </header>
 
       <div className="mt-10 md:mt-12 grid lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px] gap-x-10 xl:gap-x-16 gap-y-12 items-start">

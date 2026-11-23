@@ -9,9 +9,10 @@ export const GET = route(async () => ({ copies: await listShelf((await requireUs
 /** POST /api/v1/copies – Buch ins Regal stellen */
 export const POST = route(async (req) => {
   const u = await requireUser();
-  const b = await body(req, copySettingsSchema.extend({ editionId: z.string().uuid() }));
-  const { editionId, ...settings } = b;
-  return { id: await addCopy(u.id, editionId, settings) };
+  const b = await body(req, copySettingsSchema.extend({ editionId: z.string().uuid(), libraryCircleId: z.string().uuid().optional() }));
+  const { editionId, libraryCircleId, ...settings } = b;
+  // libraryCircleId: Buch gehört dem Kreis (Kreisbibliothek), nur für Admins des Kreises
+  return { id: await addCopy(u.id, editionId, settings, { libraryCircleId }) };
 });
 
 /** PATCH /api/v1/copies – Mehrfachauswahl: dieselben Einstellungen für mehrere Bücher */

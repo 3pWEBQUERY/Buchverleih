@@ -146,10 +146,12 @@ export async function notify(
   const pinboard = PINBOARD_TYPES.has(n.type);
   if (pinboard && row.pinboard_notify === "off") return;
 
-  // Push aufs Handy, sofern ein Gerät angemeldet ist (verweist auf die App-Benachrichtigung)
-  if (row.has_push) await enqueue(tx, "send_push", { notificationId: row.id });
-
   const cat = EMAIL_CATEGORY[n.type];
+  // Push aufs Handy, sofern ein Gerät angemeldet ist – pro Kategorie abschaltbar (Schlüssel «push_<Kategorie>»), Fälle immer
+  if (row.has_push && (pinboard || !cat || cat === "cases" || row.email_prefs?.[`push_${cat}`] !== false)) {
+    await enqueue(tx, "send_push", { notificationId: row.id });
+  }
+
   if (pinboard || (cat && (cat === "cases" || row.email_prefs?.[cat] !== false))) {
     const [mail] = await tx<{ id: string }[]>`
       insert into notifications (user_id, type, channel, loan_id, payload)

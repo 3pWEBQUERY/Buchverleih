@@ -167,6 +167,9 @@ export async function objectHandover(user: SessionUser, loanId: string) {
 export async function addConditionNote(user: SessionUser, loanId: string, input: { note: string; photoKeys: string[] }) {
   return sql.begin(async (tx) => {
     const photos = await assertOwnPhotos(tx, user.id, loanId, input.photoKeys, "condition");
+    // Direkte Weitergabe (4.9): Die Notiz ersetzt die Prüfung durch die verleihende Person, deshalb Pflicht mit Foto
+    const [l] = await tx<{ received_from_loan_id: string | null }[]>`select received_from_loan_id from loans where id = ${loanId}`;
+    if (l?.received_from_loan_id && !photos.length) throw err.invalid("Bei einer Weitergabe gehört ein Foto zur Zustandsnotiz.");
     return transition(tx, loanId, "condition_note", { role: "borrower", id: user.id }, {
       set: tx`condition_note = ${input.note.trim() || null}, condition_photo_keys = ${photos}::text[]`,
       where: tx`l.condition_note_until > now()`,
@@ -319,10 +322,18 @@ export async function executeReturn(
   return loan;
 }
 
-export async function reportReturn(user: SessionUser, loanId: string) {
+export async function reportReturn(user: SessionUser, loanId: string, input: { dropoffPhotoKey?: string | null } = {}) {
   return sql.begin(async (tx) => {
+    // Rückgabe über die Ablage: nur wenn das Buch sie erlaubt, mit Foto als Nachweis (4.3)
+    let photo: string | null = null;
+    if (input.dropoffPhotoKey) {
+      const [c] = await tx<{ dropoff_allowed: boolean }[]>`
+        select c.dropoff_allowed from loans l join copies c on c.id = l.copy_id where l.id = ${loanId} and l.borrower_id = ${user.id}`;
+      if (!c?.dropoff_allowed) throw err.invalid("Für dieses Buch ist keine Ablage erlaubt.");
+      [photo] = await assertOwnPhotos(tx, user.id, loanId, [input.dropoffPhotoKey], "dropoff");
+    }
     const loan = await transition(tx, loanId, "report_return", { role: "borrower", id: user.id }, {
-      set: tx`return_reported_at = now(), return_reported_by = ${user.id}`,
+      set: tx`return_reported_at = now(), return_reported_by = ${user.id}, return_photo_key = ${photo}`,
       where: tx`(l.status <> 'disputed' or exists (select 1 from cases c where c.loan_id = l.id and c.kind = 'nonreturn' and c.closed_at is null))`,
     });
     const info = await loanInfo(tx, loanId);
@@ -340,7 +351,7 @@ export async function objectReturn(user: SessionUser, loanId: string) {
   return sql.begin(async (tx) => {
     const [open] = await tx<{ id: string }[]>`select id from cases where loan_id = ${loanId} and closed_at is null limit 1`;
     return transition(tx, loanId, open ? "object_return_case" : "object_return", { role: "owner", id: user.id }, {
-      set: tx`return_reported_at = null, return_reported_by = null`,
+      set: tx`return_reported_at = null, return_reported_by = null, return_photo_key = null`,
     });
   });
 }

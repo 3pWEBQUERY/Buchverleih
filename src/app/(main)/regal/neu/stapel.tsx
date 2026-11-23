@@ -43,7 +43,7 @@ const subscribeOnline = (cb: () => void) => {
   };
 };
 
-export function useStack({ onCreated, onDeleted }: { onCreated: (a: Added) => void; onDeleted: (ids: string[]) => void }) {
+export function useStack({ onCreated, onDeleted, libraryCircleId }: { onCreated: (a: Added) => void; onDeleted: (ids: string[]) => void; libraryCircleId?: string }) {
   const toast = useToast();
   const c = CAPTURE[useLocale()];
   const t = c.batch;
@@ -170,7 +170,7 @@ export function useStack({ onCreated, onDeleted }: { onCreated: (a: Added) => vo
       }
       const s = { ...shared, ...overrides[e.id] };
       try {
-        const r = await api<{ id: string }>("/copies", { body: { editionId: e.id, condition: s.condition, visibility: s.visibility } });
+        const r = await api<{ id: string }>("/copies", { body: { editionId: e.id, condition: s.condition, visibility: s.visibility, ...(libraryCircleId ? { libraryCircleId } : {}) } });
         placed.current.push({ copyId: r.id, edition: e });
         ok++;
         onCreated({ id: r.id, title: e.title, authors: e.authors, condition: s.condition, circlesOnly: s.visibility === "circles", cover: coverOf(e) });

@@ -61,16 +61,24 @@ async function setCircles(tx: Tx, userId: string, copyId: string, circleIds: str
   for (const c of ok) await tx`insert into circle_copies (circle_id, copy_id) values (${c.circle_id}, ${copyId}) on conflict do nothing`;
 }
 
-export async function addCopy(userId: string, editionId: string, s: CopySettings) {
+export async function addCopy(userId: string, editionId: string, s: CopySettings, opts: { libraryCircleId?: string } = {}) {
   return sql.begin(async (tx) => {
     const [ed] = await tx<{ id: string }[]>`select id from editions where id = ${editionId}`;
     if (!ed) throw err.notFound("Diese Ausgabe gibt es nicht.");
+    if (opts.libraryCircleId) {
+      // Kreisbibliothek: nur Admins erfassen; sichtbar nur im Kreis, mit dessen Leihfrist
+      const [c] = await tx<{ loan_days: number }[]>`
+        select ci.loan_days from circles ci join circle_members m on m.circle_id = ci.id
+         where ci.id = ${opts.libraryCircleId} and m.user_id = ${userId} and m.role = 'admin' and m.status = 'active'`;
+      if (!c) throw err.forbidden("Bücher für die Kreisbibliothek erfassen nur Admins des Kreises.");
+      s = { ...s, visibility: "circles", circleIds: [opts.libraryCircleId], loanDays: (s.loanDays ?? c.loan_days) as CopySettings["loanDays"] };
+    }
     // Kreis-Voreinstellungen: Leihfrist und «direkt weitergeben: immer»
     const settings: CopySettings = { offers: ["lend"], condition: 2, ...s };
     if (settings.offers?.some((o) => o !== "lend")) await requireFeature("swap");
     if (settings.precious && !s.visibility) settings.visibility = "circles";
     if (s.circleIds?.length && !s.passOn) settings.passOn = "always";
-    const row = { owner_id: userId, edition_id: editionId, ...toRow(settings) };
+    const row = { owner_id: userId, edition_id: editionId, ...toRow(settings), ...(opts.libraryCircleId ? { library_circle_id: opts.libraryCircleId } : {}) };
     const [c] = await tx<{ id: string }[]>`insert into copies ${tx(row)} returning id`;
     if (s.circleIds) await setCircles(tx, userId, c.id, s.circleIds);
     return c.id;
@@ -79,12 +87,23 @@ export async function addCopy(userId: string, editionId: string, s: CopySettings
 
 export async function updateCopy(userId: string, copyId: string, s: CopySettings) {
   return sql.begin(async (tx) => {
-    const [own] = await tx<{ id: string; transfer_locked_until: Date | null }[]>`
-      select id, transfer_locked_until from copies where id = ${copyId} and owner_id = ${userId} and removed_at is null`;
+    const [own] = await tx<{ id: string; transfer_locked_until: Date | null; library_circle_id: string | null }[]>`
+      select id, transfer_locked_until, library_circle_id from copies where id = ${copyId} and owner_id = ${userId} and removed_at is null`;
     if (!own) throw err.notFound("Dieses Buch ist nicht in deinem Regal.");
+    // Kreisbibliothek: bleibt im eigenen Kreis sichtbar und nur dort
+    if (own.library_circle_id) {
+      if (s.visibility && s.visibility !== "circles") s = { ...s, visibility: "circles" };
+      if (s.circleIds) s = { ...s, circleIds: [own.library_circle_id] };
+    }
     if (s.offers?.some((o) => o !== "lend")) await requireFeature("swap");
     if (s.offers && s.offers.some((o) => o !== "lend") && own.transfer_locked_until && own.transfer_locked_until > new Date())
       throw err.conflict("transfer_locked", "Geschenkte Bücher kannst du frühestens 30 Tage nach Erhalt weiterverschenken oder tauschen.");
+    // Kommt ein Buch erstmals in einen Kreis und wurde die Weitergabe nie gewählt: in Kreisen gilt «immer» (4.9)
+    if (s.circleIds?.length && s.passOn === undefined) {
+      const [first] = await tx`select 1 from copies c where c.id = ${copyId} and c.pass_on = 'on_request'
+                                 and not exists (select 1 from circle_copies cc where cc.copy_id = c.id)`;
+      if (first) s = { ...s, passOn: "always" };
+    }
     const row = toRow(s);
     if (Object.keys(row).length) await tx`update copies set ${tx(row)} where id = ${copyId}`;
     if (s.circleIds) await setCircles(tx, userId, copyId, s.circleIds);
@@ -180,10 +199,14 @@ export type ShelfCopy = {
   lent_since?: Date | null;
   owner_id: string;
   created_at: Date;
+  /** Gehört einem Kreis (Kreisbibliothek); owner_id ist dann die betreuende Admin-Person */
+  library_circle_id: string | null;
+  library_name: string | null;
 };
 
 const SHELF_SELECT = sql`
   c.id, c.edition_id, e.work_id, w.title, w.authors, c.condition, c.offers, c.visibility, c.owner_id, c.created_at, e.cover_key, e.cover_color,
+  c.library_circle_id, (select ci.name from circles ci where ci.id = c.library_circle_id) as library_name,
   ph.key as photo_key, ph.width as photo_w, ph.height as photo_h, ph.color as photo_color,
   cur.id as loan_id, cur.due_at as lent_until,
   (select lower(b.period)::text from copy_bookings b join loans n on n.id = b.loan_id
@@ -193,7 +216,7 @@ const SHELF_SELECT = sql`
     when cur.id is not null then 'lent'
     when exists (select 1 from loans a where a.copy_id = c.id and a.status = 'accepted') then 'reserved'
     when exists (select 1 from loans r where r.copy_id = c.id and r.status = 'requested') then 'requested'
-    when o.shelf_paused and cardinality(c.offers) > 0 then 'paused'
+    when o.shelf_paused and c.library_circle_id is null and cardinality(c.offers) > 0 then 'paused'
     when cardinality(c.offers) = 0 then 'not_offered'
     else 'available'
   end as status`;
@@ -332,7 +355,7 @@ export async function copiesOfWork(workId: string, viewerId: string | null, orig
            coalesce((select ci.loan_days from circles ci where ci.id = shared_circle_for_copy(${viewerId}::uuid, c.id)), c.loan_days) as loan_days,
            o.first_name as owner_name, o.avatar_key as owner_avatar, o.trust_level as owner_trust,
            e.year, e.publisher, e.binding, e.language, st.median_response_seconds,
-           (not o.shelf_paused and not exists (select 1 from copy_bookings b where b.copy_id = c.id
+           ((not o.shelf_paused or c.library_circle_id is not null) and not exists (select 1 from copy_bookings b where b.copy_id = c.id
               and daterange(lower(b.period), upper(b.period) + b.buffer_days) @> today_ch())) as free_now,
            case when ${origin?.lat ?? null}::float8 is null then null
                 else greatest(100, round(earth_distance(ll_to_earth(${origin?.lat ?? null}::float8, ${origin?.lng ?? null}::float8), ll_to_earth(o.display_lat, o.display_lng)) / 100) * 100)::float8 end as dist

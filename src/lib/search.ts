@@ -53,7 +53,7 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
       select c.id as copy_id, c.owner_id, e.work_id, c.offers, c.condition,
              case when ${lat}::float8 is null then null
                   else earth_distance(ll_to_earth(${lat}::float8, ${lng}::float8), ll_to_earth(o.display_lat, o.display_lng)) end as dist,
-             (not o.shelf_paused and not exists (
+             ((not o.shelf_paused or c.library_circle_id is not null) and not exists (
                 select 1 from copy_bookings b
                  where b.copy_id = c.id and daterange(lower(b.period), upper(b.period) + b.buffer_days) @> today_ch()
              )) as free_now,
@@ -130,4 +130,28 @@ export async function searchCatalog(q: string, limit = 10) {
 export async function logSearch(userId: string | null, q: string, hits: WorkHit[]) {
   const near = hits.filter((h) => h.available_now > 0 && (h.nearest_m ?? Infinity) <= 5000).length;
   await sql`insert into search_log (user_id, q, hits, available_5km) values (${userId}, ${q.slice(0, 120)}, ${hits.length}, ${near})`;
+}
+
+/**
+ * Karte (PRD 7.3): Regale in den gewählten Kartenzellen (0.01°-Raster wie in searchWorks), mit Zahl der
+ * sichtbaren und der jetzt freien Bücher. Kein Standort, nur die Zelle, die schon auf der Karte steht.
+ */
+export async function shelvesInCells(viewerId: string, cells: [number, number][]) {
+  if (!cells.length) return [];
+  const lats = cells.map((c) => c[0]);
+  const lngs = cells.map((c) => c[1]);
+  return sql<{ owner_id: string; first_name: string; avatar_key: string | null; trust_level: number; copies: number; free: number }[]>`
+    with wanted as (select unnest(${lats}::float8[]) as lat, unnest(${lngs}::float8[]) as lng)
+    select o.id as owner_id, o.first_name, o.avatar_key, o.trust_level,
+           count(*)::int as copies,
+           count(*) filter (where not o.shelf_paused and not exists (
+             select 1 from copy_bookings b where b.copy_id = c.id and daterange(lower(b.period), upper(b.period) + b.buffer_days) @> today_ch()))::int as free
+      from copies c join users o on o.id = c.owner_id
+      join wanted w on round(o.display_lat::numeric, 2)::float8 = w.lat and round(o.display_lng::numeric, 2)::float8 = w.lng
+     where c.removed_at is null and cardinality(c.offers) > 0 and c.owner_id <> ${viewerId}
+       and o.deleted_at is null and o.banned_at is null
+       and copy_visible_to(c.id, ${viewerId}::uuid)
+     group by o.id
+     order by count(*) filter (where not o.shelf_paused) desc, o.first_name
+     limit 30`;
 }

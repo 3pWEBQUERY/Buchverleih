@@ -3,6 +3,7 @@ import type { Locale } from "../locale";
 
 const de = {
   account: {
+    related: { title: "Mögliche Mehrfachkonten", desc: "Konten, die sich in den letzten 90 Tagen vom selben Gerät oder derselben IP-Adresse angemeldet haben. Ein Hinweis, kein Beweis: Haushalte, Mobilfunk und Bibliotheken teilen Adressen.", none: "Keine Überschneidungen.", device: "gleiches Gerät", ip: "gleiche IP", banned: "gesperrt" },
     back: "Konten",
     level: "Stufe",
     numbers: {
@@ -139,6 +140,7 @@ export type ModDetailMsg = typeof de;
 
 const fr: ModDetailMsg = {
   account: {
+    related: { title: "Comptes multiples possibles", desc: "Comptes connectés au cours des 90 derniers jours depuis le même appareil ou la même adresse IP. Un indice, pas une preuve : foyers, réseaux mobiles et bibliothèques partagent des adresses.", none: "Aucun recoupement.", device: "même appareil", ip: "même IP", banned: "bloqué" },
     back: "Comptes",
     level: "Niveau",
     numbers: {
@@ -274,6 +276,7 @@ const fr: ModDetailMsg = {
 
 const it: ModDetailMsg = {
   account: {
+    related: { title: "Possibili account multipli", desc: "Account che negli ultimi 90 giorni hanno effettuato l’accesso dallo stesso dispositivo o dallo stesso indirizzo IP. Un indizio, non una prova: famiglie, reti mobili e biblioteche condividono indirizzi.", none: "Nessuna sovrapposizione.", device: "stesso dispositivo", ip: "stesso IP", banned: "bloccato" },
     back: "Conti",
     level: "Livello",
     numbers: {
@@ -409,6 +412,7 @@ const it: ModDetailMsg = {
 
 const en: ModDetailMsg = {
   account: {
+    related: { title: "Possible multiple accounts", desc: "Accounts that signed in from the same device or IP address in the last 90 days. A hint, not proof: households, mobile networks and libraries share addresses.", none: "No overlaps.", device: "same device", ip: "same IP", banned: "banned" },
     back: "Accounts",
     level: "Level",
     numbers: {

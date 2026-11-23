@@ -5,6 +5,11 @@
 import type { Locale } from "../locale";
 
 const EXACT: Record<string, { fr: string; it: string; en: string }> = {
+  "Die Leihfrist läuft ab. Schlagt hier einen Termin für die Rückgabe vor.": {
+    fr: "La durée du prêt arrive à échéance. Proposez ici un rendez-vous pour le retour.",
+    it: "La durata del prestito sta per scadere. Proponete qui un appuntamento per la restituzione.",
+    en: "The loan period is ending. Suggest a time for the return here.",
+  },
   "Zwei Leihen folgen aufeinander. Hier sprecht ihr den Wechsel ab: direkt oder über die verleihende Person.": {
     fr: "Deux prêts se suivent. Convenez ici du passage de relais : directement ou par la personne qui prête.",
     it: "Due prestiti si susseguono. Qui concordate il passaggio: direttamente o tramite chi presta.",

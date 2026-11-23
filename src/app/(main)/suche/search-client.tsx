@@ -258,7 +258,7 @@ export function SearchClient({
         {results === null && loading && <ResultSkeleton />}
 
         {view === "map" && results && results.length > 0 && (
-          <SearchMap hits={results} center={center} radiusKm={f.radius} href={href} loading={loading} />
+          <SearchMap hits={results} center={center} radiusKm={f.radius} href={href} loading={loading} loggedIn={loggedIn} />
         )}
 
         {view === "list" && stage.length > 0 && (

@@ -96,6 +96,8 @@ const de = {
   email: {
     toggled: (label: string, on: boolean): string => `${label}: E-Mail ${on ? "an" : "aus"}.`,
     locked: "Immer aktiv, damit dir bei einem offenen Fall keine Frist entgeht.",
+    pushToggled: (label: string, on: boolean): string => `${label}: Push ${on ? "an" : "aus"}.`,
+    pushTitle: "Was per Push kommt",
   },
   blocks: {
     lifted: (n: string): string => `Blockierung von ${n} aufgehoben.`,
@@ -232,6 +234,8 @@ const fr: M = {
   },
   email: {
     toggled: (label, on) => `${label} : e-mail ${on ? "activé" : "désactivé"}.`,
+    pushToggled: (label, on) => `${label} : push ${on ? "activé" : "désactivé"}.`,
+    pushTitle: "Ce qui arrive en push",
     locked: "Toujours actif, pour que tu ne manques aucune échéance lors d’un litige.",
   },
   blocks: {
@@ -368,6 +372,8 @@ const it: M = {
   },
   email: {
     toggled: (label, on) => `${label}: e-mail ${on ? "attiva" : "disattivata"}.`,
+    pushToggled: (label, on) => `${label}: push ${on ? "attivo" : "disattivo"}.`,
+    pushTitle: "Cosa arriva via push",
     locked: "Sempre attivo, così in un caso aperto non perdi nessuna scadenza.",
   },
   blocks: {
@@ -504,6 +510,8 @@ const en: M = {
   },
   email: {
     toggled: (label, on) => `${label}: email ${on ? "on" : "off"}.`,
+    pushToggled: (label, on) => `${label}: push ${on ? "on" : "off"}.`,
+    pushTitle: "What comes as push",
     locked: "Always on, so you don’t miss a deadline in an open case.",
   },
   blocks: {

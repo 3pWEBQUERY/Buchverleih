@@ -13,7 +13,7 @@ import { Button, Field, Select, cx } from "@/components/ui";
 import { useToast } from "@/components/toast";
 import { HandoverCode } from "./handover-code";
 import { ScanOverlay } from "./scan-overlay";
-import { AcceptForm, CaseResponse, ConditionForm, DamageForm, RateForm, ReportHandover, Reschedule } from "./step-forms";
+import { AcceptForm, CaseResponse, ConditionForm, DamageForm, RateForm, ReportHandover, ReportReturn, Reschedule } from "./step-forms";
 import { Presence, celebrateHandover } from "@/components/motion";
 
 /**
@@ -156,7 +156,7 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
         break;
       case "condition_note":
         context = m.conditionCtx(t.condition_note_until ? relHours(t.condition_note_until, l) : "", loan.handoverMethod === "pass_on");
-        main = <ConditionForm loanId={loan.id} busy={busy} onSubmit={(note, photoKeys) => act({ action: "condition_note", note, photoKeys }, m.conditionSaved)} onSkip={() => setPanel("skip-cond")} skipped={panel === "skip-cond"} />;
+        main = <ConditionForm loanId={loan.id} busy={busy} onSubmit={(note, photoKeys) => act({ action: "condition_note", note, photoKeys }, m.conditionSaved)} onSkip={() => setPanel("skip-cond")} skipped={panel === "skip-cond"} required={Boolean(loan.received_from_loan_id)} />;
         break;
       case "grant_extension":
         context = m.wantsLonger(loan.other?.first_name ?? "");
@@ -216,7 +216,9 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
   if (loan.status === "active" && !owner) {
     if (!loan.extensionRequested && loan.extensionsUsed < loan.copySettings.max_extensions && !t.recalled_at)
       secondary.push(<Button key="e" variant="quiet" disabled={off} onClick={() => act({ action: "extend" }, loan.copySettings.auto_extend ? m.extended : m.extensionAsked)}>{loan.copySettings.auto_extend ? m.extendAuto : m.extendAsk}</Button>);
-    secondary.push(<Button key="rr" variant="quiet" disabled={off} onClick={() => act({ action: "report_return" }, m.returnReported)}>{m.reportReturnBtn}</Button>);
+    secondary.push(loan.copySettings.dropoff_allowed
+      ? <Button key="rr" variant="quiet" disabled={off} onClick={() => setPanel(panel === "return" ? null : "return")}>{m.reportReturnBtn}</Button>
+      : <Button key="rr" variant="quiet" disabled={off} onClick={() => act({ action: "report_return" }, m.returnReported)}>{m.reportReturnBtn}</Button>);
     if (loan.myOfferable.length) secondary.push(<Button key="os" variant="quiet" onClick={() => setPanel(panel === "swap" ? null : "swap")}>{m.offerSwapBtn}</Button>);
   }
   if (loan.status === "active" && owner) {
@@ -271,6 +273,9 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
 
       <Presence show={panel === "report"}>
         <ReportHandover loan={loan} busy={busy} onReport={(dropoffPhotoKey) => act({ action: "report_handover", dropoffPhotoKey }, m.handoverReported)} />
+      </Presence>
+      <Presence show={panel === "return"}>
+        <ReportReturn loan={loan} busy={busy} onReport={(dropoffPhotoKey) => act({ action: "report_return", dropoffPhotoKey }, m.returnReported)} />
       </Presence>
       <Presence show={panel === "damage"}><DamageForm loan={loan} busy={busy} onSubmit={(description, photoKeys) => act({ action: "report_damage", description, photoKeys }, m.damageReported)} /></Presence>
       <Presence show={panel === "swap"}>

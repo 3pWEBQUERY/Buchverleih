@@ -67,7 +67,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const [members, copies, board, wanted, pulseItems] = await Promise.all([
     circleMembers(id), circleShelf(id, user.id), listPosts(id, user.id), wantedInCircle(id, user.id), pulse(user.id, { circleId: id }),
   ]);
-  const ownCopies = copies.filter((c) => c.owner_id === user.id);
+  const ownCopies = copies.filter((c) => c.owner_id === user.id && !c.library);
+  const library = copies.filter((c) => c.library);
+  const memberCopies = copies.filter((c) => !c.library);
+  const lib = d.library;
   const admin = circle.my_role === "admin";
   const inviteUrl = admin || circle.join_mode === "link" ? `${env.appUrl}/k/${circle.invite_code}` : null;
   const admins = members.filter((m) => m.role === "admin" && m.status === "active").length;
@@ -76,7 +79,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const pendingCount = members.filter((m) => m.status === "pending").length;
   const lent = copies.filter((c) => c.lent_until).length;
   const free = copies.length - lent;
-  const mine = copies.filter((c) => c.owner_id === user.id).length;
+  const mine = copies.filter((c) => c.owner_id === user.id && !c.library).length;
   const r = d.rules;
   const rules: [string, string, string][] = [
     [r.loanDays, r.loanDaysValue(circle.loan_days), r.loanDaysDesc],
@@ -143,7 +146,38 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           </div>
           <Faces names={active.slice(0, 5).map((m) => m.first_name)} seeds={active.slice(0, 5).map((m) => m.user_id)} photos={active.slice(0, 5).map((m) => m.avatar_key)} total={active.length} ring="ring-night" l={l} />
         </div>
-        {copies.length === 0 ? (
+        {/* Kreisbibliothek: Bücher, die dem Kreis gehören (PRD 7.5) */}
+        {(library.length > 0 || admin) && (
+          <div id="bibliothek" className="scroll-mt-24 mt-7 pt-6 border-t border-night-line">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h3 className="text-title-sm font-title tracking-title">{lib.title} <span className="text-night-muted tnum font-normal">{library.length}</span></h3>
+                <p className="text-meta text-night-muted mt-1 max-w-xl">{lib.desc}</p>
+              </div>
+              {admin && (
+                <Link href={`/regal/neu?kreis=${circle.id}`} className="h-11 px-5 rounded-sm bg-accent text-accent-ink font-medium inline-flex items-center hover:bg-accent-hover transition-colors">{lib.add}</Link>
+              )}
+            </div>
+            {library.length === 0 ? (
+              <p className="mt-4 mb-2 text-night-muted text-body-sm max-w-xl">{lib.empty}</p>
+            ) : (
+              <BookRow
+                morph="copy"
+                label={lib.title}
+                height={160}
+                items={library.map((c) => ({
+                  ...c,
+                  href: `/exemplar/${c.id}`,
+                  note: { tone: c.lent_until ? "lent" : "ok", text: `${c.lent_until ? d.until(fmtDay(dayToDate(dueDay(c.lent_until)), l)) : d.freeNote} · ${c.owner_id === user.id ? lib.you : lib.steward(c.owner_name)}` },
+                }))}
+              />
+            )}
+          </div>
+        )}
+        {(library.length > 0 || admin) && memberCopies.length > 0 && (
+          <h3 className="text-title-sm font-title tracking-title mt-7 pt-6 border-t border-night-line">{lib.members} <span className="text-night-muted tnum font-normal">{memberCopies.length}</span></h3>
+        )}
+        {memberCopies.length === 0 && library.length > 0 ? null : memberCopies.length === 0 ? (
           <div className="mt-6 mb-2 rounded-md border border-night-line p-6 flex flex-wrap items-center justify-between gap-4">
             <p className="text-night-muted">{d.noBooks}</p>
             <Link href="/regal" className="h-11 px-5 rounded-sm bg-accent text-accent-ink font-medium inline-flex items-center hover:bg-accent-hover transition-colors">{d.toShelf}</Link>
@@ -153,7 +187,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             morph="copy"
             label={d.shelfOf(circle.name)}
             height={160}
-            items={copies.map((c) => ({
+            items={memberCopies.map((c) => ({
               ...c,
               href: `/exemplar/${c.id}`,
               note: { tone: c.lent_until ? "lent" : "ok", text: `${c.lent_until ? d.until(fmtDay(dayToDate(dueDay(c.lent_until)), l)) : d.freeNote} · ${c.owner_id === user.id ? d.yourBook : c.owner_name}` },

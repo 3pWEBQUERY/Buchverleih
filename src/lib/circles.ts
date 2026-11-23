@@ -112,6 +112,7 @@ export async function setMember(userId: string, circleId: string, memberId: stri
       const [m] = await sql<{ n: number }[]>`select count(*)::int as n from circle_members where circle_id = ${circleId} and status = 'active'`;
       if (m.n > 1) throw err.conflict("last_admin", "Du bist die einzige Admin-Person. Mach zuerst jemand anderen zum Admin, dann kannst du austreten.");
     }
+    await handOverLibrary(circleId, userId);
     await sql`delete from circle_members where circle_id = ${circleId} and user_id = ${userId}`;
     await sql`delete from circle_copies cc using copies c where cc.circle_id = ${circleId} and c.id = cc.copy_id and c.owner_id = ${userId}`;
     await removeMemberContent(sql, circleId, userId);
@@ -121,10 +122,36 @@ export async function setMember(userId: string, circleId: string, memberId: stri
   if (action === "approve") await sql`update circle_members set status = 'active' where circle_id = ${circleId} and user_id = ${memberId}`;
   if (action === "make_admin") await sql`update circle_members set role = 'admin' where circle_id = ${circleId} and user_id = ${memberId}`;
   if (action === "remove") {
+    await handOverLibrary(circleId, memberId);
     await sql`delete from circle_members where circle_id = ${circleId} and user_id = ${memberId}`;
     await sql`delete from circle_copies cc using copies c where cc.circle_id = ${circleId} and c.id = cc.copy_id and c.owner_id = ${memberId}`;
     await removeMemberContent(sql, circleId, memberId);
   }
+}
+
+/**
+ * Kreisbibliothek: Wer austritt oder entfernt wird, gibt die Betreuung der Kreisbücher an die
+ * dienstälteste andere Admin-Person ab. Gibt es keine mehr, gehen die Bücher an die Person zurück.
+ * Laufende Leihen bleiben bei der bisherigen Betreuung, bis sie abgeschlossen sind.
+ */
+async function handOverLibrary(circleId: string, fromUser: string) {
+  const [next] = await sql<{ user_id: string }[]>`
+    select user_id from circle_members
+     where circle_id = ${circleId} and role = 'admin' and status = 'active' and user_id <> ${fromUser}
+     order by joined_at limit 1`;
+  if (next) await sql`update copies set owner_id = ${next.user_id} where library_circle_id = ${circleId} and owner_id = ${fromUser} and removed_at is null`;
+  else await sql`update copies set library_circle_id = null where library_circle_id = ${circleId} and owner_id = ${fromUser}`;
+}
+
+/** Admins übernehmen die Betreuung eines Kreisbuchs (z. B. bei Ferien). Nicht während einer laufenden Leihe. */
+export async function takeOverLibraryCopy(userId: string, circleId: string, copyId: string) {
+  await assertAdmin(circleId, userId);
+  const r = await sql`
+    update copies c set owner_id = ${userId}
+     where c.id = ${copyId} and c.library_circle_id = ${circleId} and c.removed_at is null
+       and not exists (select 1 from loans l where l.copy_id = c.id and l.status in ('requested', 'accepted', 'active', 'return_reported', 'returned', 'disputed'))
+     returning c.id`;
+  if (!r.length) throw err.conflict("library_busy", "Das geht erst, wenn keine Anfrage und keine Leihe zu diesem Buch läuft.");
 }
 
 export async function circleMembers(circleId: string) {

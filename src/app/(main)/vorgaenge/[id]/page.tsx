@@ -11,6 +11,7 @@ import { Notice, cx } from "@/components/ui";
 import { Timeline } from "@/components/loan/timeline";
 import { History } from "@/components/loan/history";
 import { NextStep } from "@/components/loan/next-step";
+import { PushPrompt } from "@/components/push-prompt";
 import { Monogram } from "@/components/person/monogram";
 import { StepSection } from "@/components/step-section";
 import { LiveChat } from "./live";
@@ -173,6 +174,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           )}
 
           <div className="mt-4 empty:hidden"><NextStep loan={loan} me={user.id} /></div>
+          <PushPrompt />
           {/* Zettel im Buch: im selben Moment wie die Bewertung, nur für die leihende Person nach Abschluss */}
           {(loan.canLeaveNote || loan.bookNote) && (
             <div className="rounded-md border border-line px-5 pb-6 md:px-8 mt-4">
@@ -204,7 +206,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             )}
           </StepSection>
 
-          {(loan.conditionNote || loan.conditionPhotoKeys.length > 0 || loan.dropoffPhotoKey || loan.case) && (
+          {(loan.conditionNote || loan.conditionPhotoKeys.length > 0 || loan.dropoffPhotoKey || loan.returnPhotoKey || loan.case) && (
             <StepSection id="zustand" n={++n} title={loan.case ? d.caseAndCondition : d.condition} desc={d.conditionDesc}>
               <div className="grid sm:grid-cols-2 gap-3">
                 {(loan.conditionNote || loan.conditionPhotoKeys.length > 0) && (
@@ -219,6 +221,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                     <p className="font-medium text-body mb-3">{d.dropoffPhoto}</p>
                     { }
                     <a href={imageUrl(loan.dropoffPhotoKey, false)} target="_blank"><img src={imageUrl(loan.dropoffPhotoKey)} alt={d.dropoffPhoto} className="w-full rounded-md" /></a>
+                  </div>
+                )}
+                {loan.returnPhotoKey && (
+                  <div className="rounded-md border border-line p-5">
+                    <p className="font-medium text-body mb-3">{d.returnPhoto}</p>
+                    <a href={imageUrl(loan.returnPhotoKey, false)} target="_blank"><img src={imageUrl(loan.returnPhotoKey)} alt={d.returnPhoto} className="w-full rounded-md" /></a>
                   </div>
                 )}
                 {loan.case && (

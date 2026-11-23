@@ -28,6 +28,7 @@ import { ShareButton } from "@/components/share-button";
 import { RequestPanel } from "./request-panel";
 import { CorrectionForm } from "./correction";
 import { features } from "@/lib/features";
+import { LibraryTakeover } from "@/components/kreise/library-takeover";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -60,6 +61,10 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const copy = found && !f.swap ? { ...found, offers: found.offers.filter((o) => o === "lend") } : found;
   if (!copy) notFound();
   const own = user?.id === copy.owner_id;
+  // Kreisbibliothek: andere Admins des Kreises dürfen die Betreuung übernehmen
+  const [libAdmin] = user && copy.library_circle_id && !own
+    ? await sql<{ ok: boolean }[]>`select true as ok from circle_members where circle_id = ${copy.library_circle_id} and user_id = ${user.id} and role = 'admin' and status = 'active'`
+    : [];
   const [rawCal, blocker, myOffers, circles, owner, [sameWork]] = await Promise.all([
     getCalendar(sql, id, user?.id ?? null),
     user ? requestBlocker(sql, user) : Promise.resolve(null),
@@ -219,13 +224,18 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             <div className="flex items-center gap-4 min-w-0">
               <Monogram name={copy.owner_name} seed={copy.owner_id} size={56} photo={copy.owner_avatar} />
               <div className="min-w-0">
-                <p className="text-meta text-muted">{own ? t.yourCopy : t.lends}</p>
+                <p className="text-meta text-muted">
+                  {copy.library_circle_id && copy.library_name
+                    ? <Link href={`/kreise/${copy.library_circle_id}#bibliothek`} className="hover:underline underline-offset-4">{t.libraryOf(copy.library_name)}</Link>
+                    : own ? t.yourCopy : t.lends}
+                </p>
                 <Link id="verleiher" href={`/profil/${copy.owner_id}`} className="text-title-sm font-title tracking-title leading-tight hover:underline underline-offset-4 decoration-1">{copy.owner_name}</Link>
                 <p className="text-body-sm text-muted mt-0.5">
                   {L.trustLabel[copy.owner_trust] ?? t.newTrust}{copy.owner_municipality && ` · ${copy.owner_municipality}`} · {t.since(fmtMonthYear(copy.owner_since, l))}
                 </p>
               </div>
             </div>
+            {libAdmin && copy.library_circle_id && <LibraryTakeover circleId={copy.library_circle_id} copyId={copy.id} />}
             {owner && (
               <dl className="grid grid-cols-3 gap-2">
                 {[[String(owner.lent), t.stats.lent], [String(owner.borrowed), t.stats.borrowed], [owner.punctual_pct == null ? "–" : `${owner.punctual_pct}%`, t.stats.punctual]].map(([n, lab]) => (

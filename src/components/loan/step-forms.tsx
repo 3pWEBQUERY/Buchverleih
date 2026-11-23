@@ -97,7 +97,7 @@ function PhotoPicker({ loanId, purpose, keys, setKeys, max = 6 }: { loanId: stri
   );
 }
 
-export function ConditionForm({ loanId, busy, onSubmit, onSkip, skipped }: { loanId: string; busy: boolean; onSubmit: (note: string, keys: string[]) => void; onSkip: () => void; skipped: boolean }) {
+export function ConditionForm({ loanId, busy, onSubmit, onSkip, skipped, required }: { loanId: string; busy: boolean; onSubmit: (note: string, keys: string[]) => void; onSkip: () => void; skipped: boolean; required?: boolean }) {
   const [note, setNote] = useState("");
   const [keys, setKeys] = useState<string[]>([]);
   const m = STEPS[useLocale()];
@@ -107,9 +107,11 @@ export function ConditionForm({ loanId, busy, onSubmit, onSkip, skipped }: { loa
       <Textarea aria-label={m.describeCondition} value={note} onChange={(e) => setNote(e.target.value)} placeholder={m.conditionPlaceholder} maxLength={500} />
       <PhotoPicker loanId={loanId} purpose="condition" keys={keys} setKeys={setKeys} />
       <div className="flex flex-wrap items-center gap-4">
-        <Button variant="primary" size="lg" disabled={busy || (!note.trim() && !keys.length)} onClick={() => onSubmit(note, keys)}>{m.saveCondition}</Button>
-        <Button variant="quiet" onClick={onSkip}>{m.noDefects}</Button>
+        <Button variant="primary" size="lg" disabled={busy || (required ? !keys.length : !note.trim() && !keys.length)} onClick={() => onSubmit(note, keys)}>{m.saveCondition}</Button>
+        {!required && <Button variant="quiet" onClick={onSkip}>{m.noDefects}</Button>}
       </div>
+      {/* Weitergabe: Pflicht, auch ohne Mängel – ein Foto genügt */}
+      {required && <p className="text-body-sm text-muted">{m.conditionRequired}</p>}
     </div>
   );
 }
@@ -145,6 +147,24 @@ export function ReportHandover({ loan, busy, onReport }: { loan: LoanView; busy:
       <p className="text-body text-ink-2">{mode === "dropoff" ? m.dropoffText : m.reportText}</p>
       {mode === "dropoff" && <PhotoPicker loanId={loan.id} purpose="dropoff" keys={keys} setKeys={setKeys} max={1} />}
       <Button variant="secondary" disabled={busy || (mode === "dropoff" && !keys.length)} onClick={() => onReport(mode === "dropoff" ? keys[0] : null)}>{m.reportHandover}</Button>
+    </div>
+  );
+}
+
+/** Rückgabe melden: persönlich oder über die Ablage mit Foto (nur wenn das Buch die Ablage erlaubt) */
+export function ReportReturn({ loan, busy, onReport }: { loan: LoanView; busy: boolean; onReport: (photoKey: string | null) => void }) {
+  const [mode, setMode] = useState<"report" | "dropoff">("report");
+  const [keys, setKeys] = useState<string[]>([]);
+  const m = STEPS[useLocale()];
+  return (
+    <div className="mt-6 border-t border-line pt-5 space-y-4 max-w-xl">
+      <div className="grid sm:grid-cols-2 gap-2 text-body">
+        <label className={radioCard}><input type="radio" checked={mode === "report"} onChange={() => setMode("report")} className="accent-[var(--ink)] h-4 w-4" /> {m.returnInPerson}</label>
+        <label className={radioCard}><input type="radio" checked={mode === "dropoff"} onChange={() => setMode("dropoff")} className="accent-[var(--ink)] h-4 w-4" /> {m.inDropoff}</label>
+      </div>
+      <p className="text-body text-ink-2">{mode === "dropoff" ? m.returnDropoffText : m.reportText}</p>
+      {mode === "dropoff" && <PhotoPicker loanId={loan.id} purpose="dropoff" keys={keys} setKeys={setKeys} max={1} />}
+      <Button variant="secondary" disabled={busy || (mode === "dropoff" && !keys.length)} onClick={() => onReport(mode === "dropoff" ? keys[0] : null)}>{m.reportReturnBtn}</Button>
     </div>
   );
 }

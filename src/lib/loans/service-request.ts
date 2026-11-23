@@ -44,7 +44,7 @@ export async function requestLoan(user: SessionUser, input: RequestInput) {
       owner_banned: Date | null; owner_demo: boolean;
     }[]>`
       select c.id, c.owner_id, c.offers, c.loan_days, c.horizon_days, c.max_future_bookings, c.transfer_locked_until,
-             o.shelf_paused, o.banned_at as owner_banned, o.is_demo as owner_demo, copy_visible_to(c.id, ${user.id}) as visible
+             (o.shelf_paused and c.library_circle_id is null) as shelf_paused, o.banned_at as owner_banned, o.is_demo as owner_demo, copy_visible_to(c.id, ${user.id}) as visible
         from copies c join users o on o.id = c.owner_id
        where c.id = ${input.copyId} and c.removed_at is null`;
     if (!copy || !copy.visible) throw err.notFound("Dieses Buch ist nicht mehr verfügbar.");
