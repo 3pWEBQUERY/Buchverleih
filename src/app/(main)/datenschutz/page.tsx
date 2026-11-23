@@ -128,7 +128,7 @@ export default function Page() {
 
       <DocSection id="cookies" title="Cookies und Speicher">
         <p>
-          Wir setzen ein einziges Cookie für die Anmeldung. Es gibt keine Analyse- oder Werbe-Cookies und keine Tracker von Dritten.
+          Wir setzen zwei Cookies: eines für die Anmeldung und eines, das dein Gerät wiedererkennt. Es gibt keine Analyse- oder Werbe-Cookies und keine Tracker von Dritten.
           Im Speicher deines Browsers liegen nur Einstellungen wie Hell- oder Dunkelmodus und, wenn du die App installierst, Dateien für die Offline-Anzeige.
         </p>
       </DocSection>
@@ -136,6 +136,8 @@ export default function Page() {
       <DocSection id="sicherheit" title="Sicherheit">
         <p>
           Verbindungen sind verschlüsselt. Anmeldelinks, Codes und Sitzungen speichern wir nur als Prüfsumme. Anmeldung, Anfragen und Nachrichten sind in der Anzahl begrenzt.
+          Gegen Mehrfachkonten halten wir bei jeder Anmeldung eine Prüfsumme der IP-Adresse und des Gerätes fest, nie die Adresse selbst.
+          Die Moderation sieht nur, ob sich zwei Konten vom selben Gerät oder derselben Adresse angemeldet haben. Nach 90 Tagen löschen wir die Prüfsummen.
           Fotos liegen in einem privaten Speicher und sind nur über kurzlebige Links abrufbar.
         </p>
       </DocSection>

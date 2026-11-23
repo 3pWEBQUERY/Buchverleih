@@ -2,6 +2,8 @@
 import type { Locale } from "../locale";
 
 const de = {
+  library: (name: string): string => `Du erfasst Bücher für die Kreisbibliothek «${name}». Sie gehören dem Kreis, du betreust Anfragen und Übergaben.`,
+  libraryBack: "Zurück zum Kreis",
   title: "Buch erfassen",
   eyebrow: "Mein Regal",
   heading: ["Buch erfassen. ", "Scannen, antippen, fertig."],
@@ -156,6 +158,8 @@ const de = {
 type M = typeof de;
 
 const fr: M = {
+  library: (name) => `Tu ajoutes des livres à la bibliothèque du cercle « ${name} ». Ils appartiennent au cercle, tu gères les demandes et les remises.`,
+  libraryBack: "Retour au cercle",
   title: "Ajouter un livre",
   eyebrow: "Mon étagère",
   heading: ["Ajouter un livre. ", "Scanner, toucher, c’est fait."],
@@ -309,6 +313,8 @@ const fr: M = {
 };
 
 const it: M = {
+  library: (name) => `Stai aggiungendo libri alla biblioteca della cerchia «${name}». Appartengono alla cerchia, tu gestisci richieste e consegne.`,
+  libraryBack: "Torna alla cerchia",
   title: "Aggiungi libro",
   eyebrow: "Il mio scaffale",
   heading: ["Aggiungi libro. ", "Scansiona, tocca, fatto."],
@@ -462,6 +468,8 @@ const it: M = {
 };
 
 const en: M = {
+  library: (name) => `You’re adding books to the circle library “${name}”. They belong to the circle; you handle requests and handovers.`,
+  libraryBack: "Back to the circle",
   title: "Add a book",
   eyebrow: "My shelf",
   heading: ["Add a book. ", "Scan, tap, done."],

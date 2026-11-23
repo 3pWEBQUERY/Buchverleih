@@ -50,9 +50,27 @@ async function sharedCircleOfThree(tx: Tx, a: string, b: string, c: string) {
  * Nach Annahme einer Leihe: Folgen zwei Leihen aufeinander, entsteht der Übergabe-Chat,
  * und – wenn die Regeln es erlauben – wird die direkte Weitergabe angeboten.
  */
-export async function afterAcceptConsecutive(tx: TxSql, next: LoanRow) {
-  const prev = await predecessor(tx, next);
-  if (!prev) return;
+export async function afterAcceptConsecutive(tx: TxSql, accepted: LoanRow) {
+  const prev = await predecessor(tx, accepted);
+  if (prev) await linkConsecutive(tx, prev, accepted);
+  // Auch in umgekehrter Reihenfolge: Die spätere Leihe war schon angenommen, jetzt kommt die frühere dazu
+  const next = await successor(tx, accepted);
+  if (next) await linkConsecutive(tx, accepted, next);
+}
+
+/** Folge-Leihe desselben Exemplars, die höchstens 7 Tage nach `loan` beginnt und schon angenommen ist. */
+async function successor(tx: Tx, loan: LoanRow) {
+  const [n] = await tx<LoanRow[]>`
+    select n.* from copy_bookings mine
+      join copy_bookings b on b.copy_id = mine.copy_id and b.loan_id <> mine.loan_id
+      join loans n on n.id = b.loan_id
+     where mine.loan_id = ${loan.id} and n.status = 'accepted' and n.kind = 'lend'
+       and lower(b.period) >= upper(mine.period) and lower(b.period) <= upper(mine.period) + 7
+     order by lower(b.period) limit 1`;
+  return n ?? null;
+}
+
+async function linkConsecutive(tx: TxSql, prev: LoanRow, next: LoanRow) {
   const info = await loanInfo(tx, next.id);
 
   // Übergabe-Chat: ein Chat pro Wechsel

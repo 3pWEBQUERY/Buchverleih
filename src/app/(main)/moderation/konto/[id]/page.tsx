@@ -13,6 +13,7 @@ import { Notice, cx } from "@/components/ui";
 import { BackLink, Chip, ModHead, Quiet, StatTile } from "@/components/moderation/ui";
 import { BanControls, RemoveAvatar, RoleControl, SuspendSwitch, TempPasswordControl } from "@/components/moderation/actions";
 import { modLabels } from "../../labels";
+import { relatedAccounts } from "@/lib/signals";
 
 export async function generateMetadata() {
   return { title: MOD[await getLocale()].accountTitle };
@@ -37,6 +38,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const l = await getLocale();
   const t = MOD[l].account;
   const ml = modLabels(l);
+  const related = await relatedAccounts(id);
   const L = labels(l);
   const { user: u, loans, reports } = d;
   const rated = Number(u.rated_count);
@@ -139,6 +141,28 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                     </li>
                   );
                 })}
+              </ul>
+            )}
+          </section>
+
+          <section aria-labelledby="mehrfach">
+            <ModHead id="mehrfach" title={t.related.title} count={related.length} />
+            <p className="text-meta text-muted -mt-2 mb-3 max-w-prose">{t.related.desc}</p>
+            {related.length === 0 ? <Quiet>{t.related.none}</Quiet> : (
+              <ul className="rounded-md border border-line divide-y divide-line">
+                {related.map((r) => (
+                  <li key={r.user_id} className="px-5 py-3.5 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+                    <Link href={`/moderation/konto/${r.user_id}`} className="min-w-0 font-medium hover:underline underline-offset-4">
+                      {r.first_name || MOD[l].accounts.noName} <span className="text-muted font-normal break-all">· {r.email}</span>
+                    </Link>
+                    <span className="flex flex-wrap gap-1.5">
+                      {r.device && <Chip tone="late" strong>{t.related.device}</Chip>}
+                      {r.ip && <Chip>{t.related.ip}</Chip>}
+                      {r.banned_at && <Chip tone="late">{t.related.banned}</Chip>}
+                      <span className="text-meta text-muted self-center">{ago(r.last_seen, l)}</span>
+                    </span>
+                  </li>
+                ))}
               </ul>
             )}
           </section>

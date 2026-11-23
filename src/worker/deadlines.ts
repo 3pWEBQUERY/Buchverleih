@@ -151,6 +151,13 @@ export async function runDeadlines(): Promise<Result> {
     const k = (m: string) => `${m}:${a.due_key}`;
     if (a.days_left >= 2 && a.days_left <= 5) await remind(a.id, k("due_5d"), ["borrower"], "due_soon");
     if (a.days_left >= 0 && a.days_left <= 1) await remind(a.id, k("due_1d"), ["borrower"], "due_tomorrow");
+    // Fälligkeit (4.5): Aufforderung im Chat, einen Rückgabetermin abzumachen – einmal pro Fälligkeit
+    if (a.days_left <= 0) {
+      await sql.begin(async (tx) => {
+        if (!(await mark(tx, a.id, k("due_chat")))) return;
+        await tx`insert into messages (loan_id, sender_id, body) values (${a.id}, null, ${DUE_CHAT})`;
+      });
+    }
     if (a.days_left < 0) await remind(a.id, k("overdue"), ["borrower", "owner"], "overdue");
     // «unpünktlich» gilt ab due_at + 3 Tage (= 4. Tag nach dem letzten Leihtag), ein Fall ab due_at + 7 Tage
     if (overdueDays >= 4) await remind(a.id, k("overdue_3d"), ["borrower"], "overdue_late");
@@ -228,6 +235,8 @@ export async function runDeadlines(): Promise<Result> {
   return out;
 }
 
+export const DUE_CHAT = "Die Leihfrist läuft ab. Schlagt hier einen Termin für die Rückgabe vor.";
+
 /** Tägliche Aufräumarbeiten (PRD 12: Aufbewahrung) */
 export async function runRetention() {
   // Chat-Inhalte 12 Monate nach Abschluss löschen
@@ -252,6 +261,7 @@ export async function runRetention() {
   // Nie versandte E-Mails/SMS nach 30 Tagen; Interessensignale nach 12 Monaten
   await sql`delete from notifications where channel <> 'app' and sent_at is null and created_at < now() - interval '30 days'`;
   await sql`delete from interest_signals where created_at < now() - interval '12 months'`;
+  await sql`delete from account_signals where last_seen < now() - interval '90 days'`;
   const uploads = await cleanUploads();
   return { messagesDeleted: msgs.length, searchesDeleted: searches.length, deadJobsDeleted: dead.length, deadJobs: stuck.n, ...uploads };
 }
@@ -274,7 +284,7 @@ async function cleanUploads() {
      where u.status = 'processed' and u.key is not null and coalesce(u.processed_at, u.created_at) < now() - interval '7 days'
        and not exists (select 1 from copy_photos p where p.key = u.key)
        and not exists (select 1 from users x where x.avatar_key = u.key)
-       and not exists (select 1 from loans l where l.dropoff_photo_key = u.key or u.key = any(l.condition_photo_keys))
+       and not exists (select 1 from loans l where l.dropoff_photo_key = u.key or l.return_photo_key = u.key or u.key = any(l.condition_photo_keys))
        and not exists (select 1 from cases c where u.key = any(c.photo_keys))
        and not exists (select 1 from editions e where e.cover_key = u.key)
      limit 500`;

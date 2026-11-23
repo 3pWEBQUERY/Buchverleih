@@ -17,6 +17,7 @@ import { SettingsNav, type NavGroup } from "./settings-nav";
 import { LanguageChoice } from "@/components/language-switch";
 import { getLocale } from "@/lib/i18n/server";
 import { COMMUNITY } from "@/lib/i18n/messages/community";
+import { SETTINGS_UI } from "@/lib/i18n/messages/settings-sections";
 
 export async function generateMetadata() {
   return { title: SETTINGS[await getLocale()].title };
@@ -123,6 +124,8 @@ export default async function Page() {
               </Row>
               <Row id="push" t={r.push}>
                 <PushSettings />
+                <p className="text-meta font-semibold mt-6 mb-1">{SETTINGS_UI[l].email.pushTitle}</p>
+                <EmailPrefs channel="push" categories={categories} prefs={user.email_prefs ?? {}} />
               </Row>
               <Row id="benachrichtigungen" t={r.benachrichtigungen}>
                 <EmailPrefs categories={categories} prefs={user.email_prefs ?? {}} />

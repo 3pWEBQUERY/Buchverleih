@@ -15,11 +15,14 @@ export type CircleShelfCopy = {
   owner_id: string;
   owner_name: string;
   lent_until: Date | null;
+  /** gehört dem Kreis (Kreisbibliothek) */
+  library: boolean;
 };
 
 export async function circleShelf(circleId: string, viewerId?: string) {
   return sql<CircleShelfCopy[]>`
     select c.id, e.work_id, w.title, w.authors, e.cover_key, e.cover_color, c.owner_id, o.first_name as owner_name,
+           coalesce(c.library_circle_id = cc.circle_id, false) as library,
            ph.key as photo_key, ph.width as photo_w, ph.height as photo_h, ph.color as photo_color,
            (select l.due_at from loans l where l.copy_id = c.id and l.status in ('active', 'return_reported', 'disputed') limit 1) as lent_until
       from circle_copies cc
@@ -31,5 +34,5 @@ export async function circleShelf(circleId: string, viewerId?: string) {
      where cc.circle_id = ${circleId}
        and (${viewerId ?? null}::uuid is null or not exists (select 1 from blocks bl
              where (bl.blocker_id = c.owner_id and bl.blocked_id = ${viewerId ?? null}::uuid) or (bl.blocker_id = ${viewerId ?? null}::uuid and bl.blocked_id = c.owner_id)))
-     order by c.created_at desc`;
+     order by (c.library_circle_id = cc.circle_id) desc nulls last, c.created_at desc`;
 }

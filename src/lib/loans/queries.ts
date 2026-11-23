@@ -254,6 +254,7 @@ export async function loanView(loanId: string, userId: string, loc: Locale = "de
     handoverReportedBy: r.handover_reported_by,
     handoverMethod: r.handover_method,
     dropoffPhotoKey: r.dropoff_photo_key,
+    returnPhotoKey: r.return_photo_key,
     conditionNote: r.condition_note,
     conditionPhotoKeys: r.condition_photo_keys,
     extensionsUsed: r.extensions_used,

@@ -184,7 +184,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             <h2 id="stamm" className="font-medium text-body-lg mb-3">{t.master}</h2>
             <Dl items={facts} className="border-line-strong/60" />
             {loan.condition_note && <p className="text-body-sm mt-4"><span className="text-muted">{t.conditionNote}</span>{loan.condition_note}</p>}
-            {(conditionPhotos.length > 0 || loan.dropoff_photo_key) && (
+            {(conditionPhotos.length > 0 || loan.dropoff_photo_key || loan.return_photo_key) && (
               <div className="flex gap-3 mt-4 overflow-x-auto pb-1">
                 {conditionPhotos.map((k) => (
                   <a key={k} href={imageUrl(k, false)} target="_blank" rel="noreferrer" className="flex-none">
@@ -196,6 +196,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                   <a href={imageUrl(loan.dropoff_photo_key, false)} target="_blank" rel="noreferrer" className="flex-none">
                     { }
                     <img src={imageUrl(loan.dropoff_photo_key)} alt={t.dropoffPhoto} className="h-24 w-auto rounded-md outline outline-1 outline-line" />
+                  </a>
+                )}
+                {loan.return_photo_key && (
+                  <a href={imageUrl(loan.return_photo_key, false)} target="_blank" rel="noreferrer" className="flex-none">
+                    <img src={imageUrl(loan.return_photo_key)} alt={t.dropoffPhoto} className="h-24 w-auto rounded-md outline outline-1 outline-line" />
                   </a>
                 )}
               </div>

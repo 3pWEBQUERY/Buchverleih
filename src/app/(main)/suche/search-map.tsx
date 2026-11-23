@@ -4,6 +4,7 @@ import type { GeoJSONSource, Map as GlMap, Marker, StyleSpecification } from "ma
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Cover } from "@/components/cover";
+import { Monogram } from "@/components/person/monogram";
 import { IconClose, IconPlus } from "@/components/icons";
 import { cx } from "@/components/ui";
 import { labels } from "@/lib/i18n/labels";
@@ -84,12 +85,14 @@ const MAX_ZOOM = 16;
  * Kartenansicht der Suche. Zeigt Titel pro Gebiet von rund einem Kilometer, nie den genauen Ort
  * eines Regals (PRD 12). Ein Tippen auf ein Gebiet listet die Titel dort.
  */
-export default function SearchMap({ hits, center, radiusKm, href, loading }: {
+export default function SearchMap({ hits, center, radiusKm, href, loading, loggedIn = false }: {
   hits: WorkHit[];
   center: Center | null;
   radiusKm: number;
   href: (h: WorkHit) => string;
   loading: boolean;
+  /** Angemeldet: im Gebiet auch die Regale zeigen (Tippen öffnet das Regal) */
+  loggedIn?: boolean;
 }) {
   const l = useLocale();
   const t = SEARCH[l].map;
@@ -112,6 +115,21 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
   const selCells = selected ? spots.filter((s) => selected.includes(s.key)) : [];
   const sel = selCells.length ? { items: mergeItems(selCells) } : null;
   const selFree = sel ? sel.items.filter((i) => i.free > 0).length : 0;
+  const [tab, setTab] = useState<"titles" | "shelves">("titles");
+  type ShelfHit = { owner_id: string; first_name: string; avatar_key: string | null; copies: number; free: number };
+  // Regale pro Auswahl: gehört die Antwort zu einer anderen Auswahl, gilt sie als «lädt noch»
+  const [shelfData, setShelfData] = useState<{ key: string; list: ShelfHit[] } | null>(null);
+  const selKey = selCells.map((c) => c.key).join(";");
+  const shelves = shelfData?.key === selKey ? shelfData.list : null;
+  useEffect(() => {
+    if (!loggedIn || !selKey || tab !== "shelves") return;
+    let alive = true;
+    fetch(`/api/v1/search/shelves?cells=${encodeURIComponent(selKey)}`, { credentials: "same-origin" })
+      .then((r) => (r.ok ? r.json() : { shelves: [] }))
+      .then((d) => alive && setShelfData({ key: selKey, list: d.shelves ?? [] }))
+      .catch(() => alive && setShelfData({ key: selKey, list: [] }));
+    return () => { alive = false; };
+  }, [selKey, tab, loggedIn]);
 
   // Karte einmal anlegen. MapLibre wird erst geladen, wenn jemand die Kartenansicht öffnet.
   useEffect(() => {
@@ -326,6 +344,33 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
                 <IconClose width={18} height={18} />
               </button>
             </header>
+            {loggedIn && (
+              <div role="tablist" aria-label={t.panelAria} className="flex gap-5 px-4 border-b border-line">
+                {(["titles", "shelves"] as const).map((x) => (
+                  <button key={x} type="button" role="tab" aria-selected={tab === x} onClick={() => setTab(x)}
+                    className={cx("relative h-10 text-body-sm font-medium", tab === x ? "text-ink" : "text-muted hover:text-ink")}>
+                    {x === "titles" ? t.tabTitles : t.tabShelves}
+                    {tab === x && <span aria-hidden className="absolute inset-x-0 -bottom-px h-[2px] bg-accent" />}
+                  </button>
+                ))}
+              </div>
+            )}
+            {tab === "shelves" && loggedIn ? (
+              <ul className="overflow-y-auto overscroll-contain divide-y divide-line" aria-busy={shelves === null}>
+                {shelves === null ? <li className="px-4 py-3 text-meta text-muted">{t.loadingShelves}</li> : shelves.map((s) => (
+                  <li key={s.owner_id}>
+                    <Link href={`/profil/${s.owner_id}#regal`} className="group flex items-center gap-3 px-4 py-3 hover:bg-paper-2 transition-colors">
+                      <Monogram name={s.first_name} seed={s.owner_id} size={36} photo={s.avatar_key} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-medium group-hover:text-accent-hover transition-colors">{s.first_name}</span>
+                        <span className="block text-meta text-muted">{t.shelfBooks(s.copies, s.free)}</span>
+                      </span>
+                      <span className="text-meta font-medium text-accent-hover">{t.viewShelf}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
             <ul className="overflow-y-auto overscroll-contain divide-y divide-line">
               {sel.items.map(({ h, free }) => (
                 <li key={h.work_id}>
@@ -348,6 +393,7 @@ export default function SearchMap({ hits, center, radiusKm, href, loading }: {
                 </li>
               ))}
             </ul>
+            )}
           </section>
         )}
       </div>

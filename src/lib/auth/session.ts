@@ -49,7 +49,31 @@ export async function createSession(userId: string, kind: "web" | "api" = "web")
     insert into sessions (user_id, token_hash, kind, user_agent, expires_at)
     values (${userId}, ${hashToken(token)}, ${kind}, ${h.get("user-agent")?.slice(0, 200) ?? null},
             now() + make_interval(days => ${days}))`;
+  await recordLoginSignals(userId, kind, h).catch(() => {});
   return { token, maxAge: days * 86400 };
+}
+
+const DEVICE_COOKIE = "lr_dev";
+
+/** Gerät und IP der Anmeldung als Hinweis für die Moderation (nur gehasht, siehe lib/signals) */
+async function recordLoginSignals(userId: string, kind: "web" | "api", h: Headers) {
+  const xff = h.get("x-forwarded-for")?.split(",").map((x) => x.trim()).filter(Boolean);
+  const ip = xff?.[xff.length - 1] ?? h.get("x-real-ip");
+  let device: string | null = null;
+  if (kind === "web") {
+    const c = await cookies();
+    device = c.get(DEVICE_COOKIE)?.value ?? null;
+    if (!device || !/^[A-Za-z0-9_-]{20,64}$/.test(device)) {
+      device = randomToken(16);
+      c.set(DEVICE_COOKIE, device, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 2 * 365 * 86400 });
+    }
+  } else {
+    // iOS-App: eigene Installationskennung im Header, falls mitgeschickt
+    const d = h.get("x-device-id");
+    device = d && /^[0-9A-Za-z-]{16,64}$/.test(d) ? d : null;
+  }
+  const { recordSignals } = await import("@/lib/signals");
+  await recordSignals(userId, { ip, device });
 }
 
 export async function setSessionCookie(token: string, maxAge: number) {

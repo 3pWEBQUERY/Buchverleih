@@ -24,7 +24,7 @@ const schema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("extend") }),
   z.object({ action: z.literal("grant_extension") }),
   z.object({ action: z.literal("recall") }),
-  z.object({ action: z.literal("report_return") }),
+  z.object({ action: z.literal("report_return"), dropoffPhotoKey: z.string().max(300).nullish() }),
   z.object({ action: z.literal("confirm_return") }),
   z.object({ action: z.literal("object_return") }),
   z.object({ action: z.literal("complete") }),
@@ -58,7 +58,7 @@ export const POST = route<{ id: string }>(async (req, p) => {
     case "extend": return svc.extend(u, id);
     case "grant_extension": return svc.grantExtension(u, id);
     case "recall": return svc.recall(u, id);
-    case "report_return": return svc.reportReturn(u, id);
+    case "report_return": return svc.reportReturn(u, id, { dropoffPhotoKey: b.dropoffPhotoKey });
     case "confirm_return": return svc.confirmReturn(u, id);
     case "object_return": return svc.objectReturn(u, id);
     case "complete": return svc.complete(u, id);

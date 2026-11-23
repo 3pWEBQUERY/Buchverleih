@@ -11,22 +11,25 @@ import { useLocale } from "@/components/locale-provider";
 import { readTheme, saveTheme, type Theme } from "@/components/theme-sync";
 import { msg, useT } from "./sections-shared";
 import { SETTINGS } from "@/lib/i18n/messages/settings";
+import { enablePush, swReady } from "@/lib/push-client";
 
 /** Einstellungen, Bereich Allgemein: E-Mail, Darstellung, Push, Daten, Abmelden, Konto löschen */
 /* ------------------------------------------------- E-Mail-Benachrichtigungen */
-export function EmailPrefs({ categories, prefs }: { categories: { key: string; label: string; locked: boolean }[]; prefs: Record<string, boolean> }) {
+/** Schalter pro Kategorie, für E-Mail oder Push (Push-Schlüssel mit Präfix «push_» im selben Feld) */
+export function EmailPrefs({ categories, prefs, channel = "email" }: { categories: { key: string; label: string; locked: boolean }[]; prefs: Record<string, boolean>; channel?: "email" | "push" }) {
   const T = useT();
   const router = useRouter();
   const toast = useToast();
+  const k = (key: string) => (channel === "push" ? `push_${key}` : key);
   const [state, setState] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(categories.map((c) => [c.key, c.locked || prefs[c.key] !== false])));
+    Object.fromEntries(categories.map((c) => [c.key, c.locked || prefs[k(c.key)] !== false])));
 
   async function set(key: string, label: string, v: boolean, undoable = true) {
     setState((s) => ({ ...s, [key]: v }));
     try {
-      await api("/me", { method: "PATCH", body: { emailPrefs: { [key]: v } } });
+      await api("/me", { method: "PATCH", body: { emailPrefs: { [k(key)]: v } } });
       router.refresh();
-      if (undoable) toast.show({ text: T.email.toggled(label, v), undo: () => set(key, label, !v, false) });
+      if (undoable) toast.show({ text: channel === "push" ? T.email.pushToggled(label, v) : T.email.toggled(label, v), undo: () => set(key, label, !v, false) });
     } catch (e) {
       setState((s) => ({ ...s, [key]: !v }));
       toast.error(msg(e, T));
@@ -145,15 +148,6 @@ export function ThemeChoice() {
 }
 
 /* ------------------------------------------------------------------- Push */
-function keyBytes(b64: string) {
-  const pad = "=".repeat((4 - (b64.length % 4)) % 4);
-  const raw = atob((b64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
-}
-
-/** Service Worker abwarten; ohne (z. B. lokal in der Entwicklung) nach kurzer Zeit aufgeben */
-const swReady = () => Promise.race([navigator.serviceWorker.ready, new Promise<null>((r) => setTimeout(() => r(null), 6000))]);
-
 type PushState = "loading" | "unsupported" | "ios-install" | "denied" | "off" | "on";
 
 export function PushSettings() {
@@ -192,16 +186,11 @@ export function PushSettings() {
   async function enable() {
     setBusy(true);
     try {
-      const perm = await Notification.requestPermission();
-      if (perm !== "granted") {
-        setState(perm === "denied" ? "denied" : "off");
+      const r = await enablePush(t.notReady);
+      if (!r || "denied" in r) {
+        setState(r ? "denied" : "off");
         return;
       }
-      const { publicKey } = await api<{ publicKey: string }>("/push");
-      const reg = await swReady();
-      if (!reg) throw new Error(t.notReady);
-      const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(publicKey) }));
-      const r = await api<{ devices: number }>("/push", { body: sub.toJSON() });
       setDevices(r.devices);
       setState("on");
       toast.show({ text: t.on });

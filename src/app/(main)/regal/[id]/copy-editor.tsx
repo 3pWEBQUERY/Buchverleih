@@ -10,6 +10,7 @@ import { api } from "@/lib/client";
 import { fmtDay, fmtMonthYear } from "@/lib/dates";
 import { labels } from "@/lib/i18n/labels";
 import { COPY } from "@/lib/i18n/messages/copy";
+import { EXEMPLAR } from "@/lib/i18n/messages/exemplar";
 import { shelfStatusLocal } from "@/lib/i18n/messages/shelf-status";
 import { CalendarView } from "@/components/calendar";
 import { Cover, CoverMorph, coverVt } from "@/components/cover";
@@ -55,6 +56,7 @@ export function CopyEditor({ copy, calendar, circles, history, wishers = 0, swap
   const router = useRouter();
   const toast = useToast();
   const l = useLocale();
+  const x = EXEMPLAR[l];
   const t = COPY[l];
   const L = labels(l);
   const [s, setS] = useState<Settings>({
@@ -253,6 +255,12 @@ export function CopyEditor({ copy, calendar, circles, history, wishers = 0, swap
             </div>
             {!offered && <Notice className="mt-4">{t.offer.notOffered}</Notice>}
 
+            {copy.library_circle_id ? (
+              // Kreisbibliothek: immer nur im eigenen Kreis sichtbar
+              <Notice tone="accent" className="mt-10">
+                <Link href={`/kreise/${copy.library_circle_id}#bibliothek`} className="font-medium underline underline-offset-4">{x.libraryOf(copy.library_name ?? "")}</Link>
+              </Notice>
+            ) : (<>
             <Label title={t.offer.who} className="mt-10" />
             <div role="radiogroup" aria-label={t.offer.whoAria} className="grid sm:grid-cols-3 gap-3">
               {([
@@ -288,6 +296,7 @@ export function CopyEditor({ copy, calendar, circles, history, wishers = 0, swap
             {s.visibility === "circles" && s.circleIds.length === 0 && (
               <Notice tone="late" className="mt-4">{t.offer.noneChosen}</Notice>
             )}
+            </>)}
           </Section>
 
           {/* 02 Leihe */}
