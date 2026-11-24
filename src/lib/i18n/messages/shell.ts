@@ -37,7 +37,7 @@ const de = {
     discover: "Entdecken", find: "Bücher finden", addBook: "Buch einstellen", newCircle: "Kreis gründen",
     help: "Hilfe", how: "So funktioniert es", damage: "Schaden und Verlust", rules: "Regeln",
     legal: "Rechtliches", terms: "Nutzungsbedingungen", privacy: "Datenschutz", imprint: "Impressum",
-    beta: "Leihregal · Beta Zürich und Zürcher Unterland", eu: "Daten in der EU gespeichert",
+    beta: "Leihregal · Beta Zürich, Zürcher Unterland & Winterthur",
     legalNote: "",
   },
 };
@@ -80,7 +80,7 @@ const fr: M = {
     discover: "Découvrir", find: "Trouver des livres", addBook: "Proposer un livre", newCircle: "Créer un cercle",
     help: "Aide", how: "Comment ça marche", damage: "Dommages et pertes", rules: "Règles",
     legal: "Informations légales", terms: "Conditions d’utilisation", privacy: "Confidentialité", imprint: "Mentions légales",
-    beta: "Leihregal · Bêta Zurich et Unterland zurichois", eu: "Données stockées dans l’UE",
+    beta: "Leihregal · Bêta Zurich, Unterland zurichois & Winterthour",
     legalNote: "Les textes juridiques font foi en allemand.",
   },
 };
@@ -122,7 +122,7 @@ const it: M = {
     discover: "Scopri", find: "Trova libri", addBook: "Aggiungi un libro", newCircle: "Crea una cerchia",
     help: "Aiuto", how: "Come funziona", damage: "Danni e perdite", rules: "Regole",
     legal: "Informazioni legali", terms: "Condizioni d’uso", privacy: "Privacy", imprint: "Note legali",
-    beta: "Leihregal · Beta Zurigo e Unterland zurighese", eu: "Dati conservati nell’UE",
+    beta: "Leihregal · Beta Zurigo, Unterland zurighese & Winterthur",
     legalNote: "I testi giuridici fanno fede in tedesco.",
   },
 };
@@ -164,7 +164,7 @@ const en: M = {
     discover: "Discover", find: "Find books", addBook: "Add a book", newCircle: "Start a circle",
     help: "Help", how: "How it works", damage: "Damage and loss", rules: "Rules",
     legal: "Legal", terms: "Terms of use", privacy: "Privacy", imprint: "Imprint",
-    beta: "Leihregal · Beta in Zurich and the Zurich Unterland", eu: "Data stored in the EU",
+    beta: "Leihregal · Beta Zurich, Zurich Unterland & Winterthur",
     legalNote: "Legal texts are binding in German.",
   },
 };

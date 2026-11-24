@@ -3,7 +3,7 @@ import type { Locale } from "../locale";
 
 const de = {
   landing: {
-    beta: "Beta in Zürich und im Zürcher Unterland",
+    beta: "Beta in Zürich, im Zürcher Unterland & Winterthur",
     hero: ["Leih dir das Buch ", "von nebenan."],
     lead: "Leihregal verbindet die Bücherregale einer Nachbarschaft. Du leihst, was andere gelesen haben, und verleihst, was bei dir nur steht – kostenlos, mit festen Fristen und einem Scan bei jeder Übergabe.",
     stats: { books: "Bücher", members: "Mitglieder", fee: "CHF Gebühr" },
@@ -106,7 +106,7 @@ type M = typeof de;
 
 const fr: M = {
   landing: {
-    beta: "Bêta à Zurich et dans l’Unterland zurichois",
+    beta: "Bêta à Zurich, dans l’Unterland zurichois & à Winterthour",
     hero: ["Emprunte le livre ", "d’à côté."],
     lead: "Leihregal relie les bibliothèques d’un quartier. Tu empruntes ce que d’autres ont lu et tu prêtes ce qui dort chez toi – gratuitement, avec des délais fixes et un scan à chaque remise.",
     stats: { books: "Livres", members: "Membres", fee: "CHF de frais" },
@@ -208,7 +208,7 @@ const fr: M = {
 
 const it: M = {
   landing: {
-    beta: "Beta a Zurigo e nell’Unterland zurighese",
+    beta: "Beta a Zurigo, nell’Unterland zurighese & a Winterthur",
     hero: ["Prendi in prestito il libro ", "della porta accanto."],
     lead: "Leihregal collega le librerie di un quartiere. Prendi in prestito ciò che altri hanno letto e presti ciò che da te resta sullo scaffale – gratis, con scadenze fisse e una scansione a ogni consegna.",
     stats: { books: "Libri", members: "Membri", fee: "CHF di costi" },
@@ -310,7 +310,7 @@ const it: M = {
 
 const en: M = {
   landing: {
-    beta: "Beta in Zurich and the Zurich Unterland",
+    beta: "Beta in Zurich, the Zurich Unterland & Winterthur",
     hero: ["Borrow the book ", "next door."],
     lead: "Leihregal connects the bookshelves of a neighbourhood. You borrow what others have read and lend what’s just sitting on your shelf – free, with fixed deadlines and a scan at every handover.",
     stats: { books: "Books", members: "Members", fee: "CHF fee" },

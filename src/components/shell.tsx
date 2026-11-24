@@ -155,7 +155,6 @@ export async function PublicShell({ children }: { children: React.ReactNode }) {
         </div>
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 pb-8 text-meta text-night-muted flex flex-wrap gap-x-6 gap-y-1 border-t border-night-line pt-6">
           <span>{f.beta}</span>
-          <span>{f.eu}</span>
           {f.legalNote && <span>{f.legalNote}</span>}
         </div>
       </footer>
