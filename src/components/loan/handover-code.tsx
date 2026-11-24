@@ -17,7 +17,7 @@ import { CHAT } from "@/lib/i18n/messages/loans-chat";
  * Kameras lesen den QR-Code so am sichersten, und das Display leuchtet am hellsten.
  * Darum stehen hier feste Grautöne statt der Farb-Tokens (die im Dunkelmodus kippen würden):
  *   #525252  Hinweistexte, 7.8:1 auf Weiss      #f5f5f5  Kacheln der Ziffern, Platzhalter
- *   #e5e5e5  Haarlinien und Spur der Restzeit   #d23c1a  Akzent der hellen Darstellung
+ *   #e5e5e5  Haarlinien und Spur der Restzeit   #e51e09  Akzent der hellen Darstellung
  * tests/contrast.test.ts rechnet die Paare nach.
  */
 type Token = { url: string; code: string; validUntil: string; direction: string };
@@ -75,7 +75,7 @@ export function HandoverCode({ loanId, label, onClose, onDone }: { loanId: strin
     <Modal label={label} onClose={onClose} className="bg-white text-black flex flex-col" style={{ colorScheme: "light" }}>
       <div className="flex items-center justify-between px-5 md:px-8 h-16 flex-none">
         <span className="text-meta font-medium text-[#525252] inline-flex items-center gap-2">
-          <span aria-hidden className="h-2 w-2 rounded-full bg-[#d23c1a] animate-pulse" /> {t.screenOn}
+          <span aria-hidden className="h-2 w-2 rounded-full bg-[#e51e09] animate-pulse" /> {t.screenOn}
         </span>
         <ModalClose className="press h-11 w-11 -mr-2 grid place-items-center rounded-md hover:bg-[#f5f5f5] transition-colors" label={t.close}><IconClose width={24} height={24} /></ModalClose>
       </div>
@@ -98,7 +98,7 @@ export function HandoverCode({ loanId, label, onClose, onDone }: { loanId: strin
               ))}
             </p>
             <div className="mt-8 w-[min(68vw,320px)]">
-              <div className="h-1 rounded-full bg-[#e5e5e5] overflow-hidden"><div className="h-full w-full bg-[#d23c1a] rounded-full origin-left transition-transform duration-1000 ease-linear" style={{ transform: `scaleX(${pct / 100})` }} /></div>
+              <div className="h-1 rounded-full bg-[#e5e5e5] overflow-hidden"><div className="h-full w-full bg-[#e51e09] rounded-full origin-left transition-transform duration-1000 ease-linear" style={{ transform: `scaleX(${pct / 100})` }} /></div>
               <p className="mt-2.5 text-meta text-[#525252] tnum">{t.valid(mm, ss)}</p>
             </div>
           </>

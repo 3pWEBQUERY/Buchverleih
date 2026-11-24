@@ -7,7 +7,7 @@ const CLOTH: [string, string][] = [
   ["#a34a29", "#f6ead8"], ["#55624a", "#f0e9d6"], ["#4b2e44", "#f1e4d8"], ["#2b5a5b", "#eef0e4"],
   ["#2f2d29", "#e9dfc9"], ["#d4a64a", "#1d1a12"], ["#7a3b2e", "#f4e8d6"], ["#384a6b", "#eee6d6"],
   ["#e6dcc4", "#2a241b"], ["#cdb98f", "#2a241b"], ["#1f2a26", "#d9c98f"], ["#8c2f39", "#f3e3cf"],
-  ["#d23c1a", "#fff4ec"],
+  ["#e51e09", "#fff4ec"],
 ];
 
 function hash(s: string) {

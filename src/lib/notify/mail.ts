@@ -50,7 +50,7 @@ function renderHtml(subject: string, text: string, link: { href: string; label: 
     .map((p) => `<p style="margin:0 0 16px">${esc(p).replace(/\n/g, "<br>")}</p>`)
     .join("");
   const button = link
-    ? `<p style="margin:24px 0"><a href="${esc(link.href)}" style="display:inline-block;background:#d23c1a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:600">${esc(link.label)}</a></p>`
+    ? `<p style="margin:24px 0"><a href="${esc(link.href)}" style="display:inline-block;background:#e51e09;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:600">${esc(link.label)}</a></p>`
     : "";
   return `<!doctype html><html lang="${htmlLang[l]}"><body style="margin:0;background:#faf8f4;color:#141413;font:16px/1.55 -apple-system,Segoe UI,Helvetica,Arial,sans-serif">
 <div style="max-width:520px;margin:0 auto;padding:32px 24px">

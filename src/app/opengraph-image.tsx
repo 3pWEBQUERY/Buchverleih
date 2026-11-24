@@ -22,7 +22,7 @@ export default function Image() {
           <div style={{ fontSize: 76, fontWeight: 700, letterSpacing: -3, lineHeight: 1.02, color: "#6f6a60" }}>in deiner Nähe.</div>
           <div style={{ fontSize: 30, color: "#3b3934", marginTop: 12 }}>Leihen, tauschen und verschenken. Kostenlos unter Privatpersonen.</div>
         </div>
-        <div style={{ display: "flex", height: 10, width: 220, background: "#d23c1a", borderRadius: 5 }} />
+        <div style={{ display: "flex", height: 10, width: 220, background: "#e51e09", borderRadius: 5 }} />
       </div>
     ),
     size,

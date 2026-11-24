@@ -162,7 +162,7 @@ export async function Landing() {
             <div className="mt-auto pt-7 flex items-center justify-between">
               <div className="flex -space-x-3">
                 {["L", "M", "J", "A", "S"].map((c, i) => (
-                  <span key={c} className="h-11 w-11 rounded-full ring-[3px] ring-paper grid place-items-center font-semibold text-lead" style={{ background: ["#22324a", "#d23c1a", "#2e4a3b", "#b8902f", "#4b2e44"][i], color: "#fff" }}>{c}</span>
+                  <span key={c} className="h-11 w-11 rounded-full ring-[3px] ring-paper grid place-items-center font-semibold text-lead" style={{ background: ["#22324a", "#e51e09", "#2e4a3b", "#b8902f", "#4b2e44"][i], color: "#fff" }}>{c}</span>
                 ))}
               </div>
               <Link href="/anmelden?next=/kreise/neu" className="inline-flex items-center gap-2 font-semibold link-grow">{m.newCircle} <IconArrowRight width={18} height={18} /></Link>

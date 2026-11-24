@@ -116,7 +116,7 @@ function InviteQr({ link, name }: { link: string; name: string }) {
     const g = c.getContext("2d");
     if (!g) return;
     g.fillStyle = "#faf8f4"; g.fillRect(0, 0, c.width, c.height);
-    g.fillStyle = "#d23c1a"; g.fillRect(90, 96, 12, 12);
+    g.fillStyle = "#e51e09"; g.fillRect(90, 96, 12, 12);
     g.fillStyle = "#6c665c"; g.font = "500 34px system-ui, sans-serif"; g.fillText("Leihregal", 120, 112);
     g.fillStyle = "#141413"; g.font = "600 56px system-ui, sans-serif";
     wrap(g, t.qrTitle(name), 90, 200, 900, 66);

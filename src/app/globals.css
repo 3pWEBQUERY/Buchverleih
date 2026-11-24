@@ -20,10 +20,10 @@
   --line: #e3ddd2;
   --line-strong: #c8c0b1;
   --field-border: #888070;   /* Rand von Eingabefeldern: mind. 3:1 auf Papier (WCAG 1.4.11) */
-  --accent: #d23c1a;
-  --accent-hover: #b5310f;
+  --accent: #e51e09;          /* Rot aus dem Logo */
+  --accent-hover: #b8190a;
   --accent-ink: #ffffff;
-  --accent-soft: #fbe3da;
+  --accent-soft: #fce2dd;
   --night: #141413;          /* invertierte Flächen */
   --night-2: #201f1c;
   --night-ink: #f4f1ea;
@@ -49,10 +49,10 @@
     --line: #2a2925;
     --line-strong: #46433c;
     --field-border: #7a7468;
-    --accent: #ff6a3d;
-    --accent-hover: #ff8660;
+    --accent: #ff2a12;
+    --accent-hover: #ff5240;
     --accent-ink: #140a06;
-    --accent-soft: #3c1a10;
+    --accent-soft: #3d1410;
     --night: #1c1b18;
     --night-2: #262521;
     --night-ink: #f4f1ea;
@@ -77,10 +77,10 @@
   --line: #2a2925;
   --line-strong: #46433c;
   --field-border: #7a7468;
-  --accent: #ff6a3d;
-  --accent-hover: #ff8660;
+  --accent: #ff2a12;
+  --accent-hover: #ff5240;
   --accent-ink: #140a06;
-  --accent-soft: #3c1a10;
+  --accent-soft: #3d1410;
   --night: #1c1b18;
   --night-2: #262521;
   --night-ink: #f4f1ea;
