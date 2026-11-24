@@ -3,7 +3,7 @@ import { useEffect } from "react";
 
 /**
  * Darstellung Hell, Dunkel oder System (PRD 8.1: Dunkelmodus von Anfang an).
- * Die Wahl liegt nur im Browser (localStorage). «System» entfernt das Attribut,
+ * Standard ist Hell. Die Wahl liegt nur im Browser (localStorage). «System» entfernt das Attribut,
  * dann gilt prefers-color-scheme aus globals.css.
  */
 export type Theme = "light" | "dark" | "system";
@@ -14,9 +14,9 @@ const META_COLOR = { light: "#faf8f4", dark: "#0f0f0e" } as const; // = --paper 
 export function readTheme(): Theme {
   try {
     const v = localStorage.getItem(THEME_KEY);
-    return v === "light" || v === "dark" ? v : "system";
+    return v === "dark" || v === "system" ? v : "light";
   } catch {
-    return "system";
+    return "light";
   }
 }
 
@@ -33,8 +33,7 @@ export function applyTheme(t: Theme) {
 
 export function saveTheme(t: Theme) {
   try {
-    if (t === "system") localStorage.removeItem(THEME_KEY);
-    else localStorage.setItem(THEME_KEY, t);
+    localStorage.setItem(THEME_KEY, t);
   } catch {
     // Speicher blockiert: Wahl gilt nur für diese Seite
   }

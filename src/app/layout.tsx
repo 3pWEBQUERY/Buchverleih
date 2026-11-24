@@ -44,7 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={htmlLang[l]} suppressHydrationWarning>
       <head>
         {/* Gewähltes Design vor dem ersten Zeichnen setzen, sonst blitzt kurz das andere auf */}
-        <script dangerouslySetInnerHTML={{ __html: "try{var t=localStorage.getItem('lr-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}" }} />
+        <script dangerouslySetInnerHTML={{ __html: "var d=document.documentElement;try{var t=localStorage.getItem('lr-theme');if(t!=='system')d.dataset.theme=t==='dark'?'dark':'light'}catch(e){d.dataset.theme='light'}" }} />
       </head>
       <body>
         <a href="#inhalt" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 bg-ink text-paper px-3 py-2 rounded-sm">

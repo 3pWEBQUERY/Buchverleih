@@ -123,7 +123,7 @@ export function RadiusPref({ km }: { km: number }) {
 /* ------------------------------------------------------------- Darstellung */
 export function ThemeChoice() {
   const t = useT().theme;
-  const [theme, setTheme] = useState<Theme>("system");
+  const [theme, setTheme] = useState<Theme>("light");
   useEffect(() => setTheme(readTheme()), []);
   const opts: { value: Theme; label: string; desc: string; swatch: string }[] = [
     { value: "light", label: t.light[0], desc: t.light[1], swatch: "bg-[#faf8f4]" },
