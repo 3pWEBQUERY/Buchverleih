@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="205 185 860 860" width="860" height="860">
+<title>Leihregal</title>
+<rect x="205" y="185" width="860" height="860" rx="196" fill="#000"/>
+<g id="books">
+  <g fill="#FFF3D7">
+    <rect x="277" y="358" width="112" height="587" rx="9"/>
+    <rect x="405" y="283" width="122" height="662" rx="9"/>
+    <rect x="544" y="367" width="102" height="578" rx="9"/>
+    <rect x="663" y="312" width="124" height="633" rx="9"/>
+  </g>
+  <g fill="#000">
+    <rect x="277" y="413" width="112" height="17"/><rect x="277" y="883" width="112" height="17"/>
+    <rect x="405" y="360" width="122" height="19"/><rect x="405" y="879" width="122" height="18"/>
+    <rect x="544" y="423" width="102" height="17"/><rect x="544" y="883" width="102" height="17"/>
+    <rect x="663" y="391" width="124" height="19"/><rect x="663" y="883" width="124" height="17"/>
+  </g>
+  <g transform="rotate(-7 875 946)">
+    <rect x="875" y="316" width="119" height="630" rx="9" fill="#E51E09"/>
+    <rect x="875" y="404" width="119" height="19" fill="#000"/>
+    <rect x="875" y="867" width="119" height="20" fill="#000"/>
+  </g>
+</g>
+</svg>
