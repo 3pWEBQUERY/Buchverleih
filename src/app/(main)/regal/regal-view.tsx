@@ -169,7 +169,7 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
           </picture>
           <div className="relative p-7 md:p-12 md:min-h-[460px] flex flex-col justify-center">
             <p className="eyebrow !text-night-muted">{t.emptyEyebrow}</p>
-            <h2 className="display text-display mt-3 max-w-[11ch]">{t.emptyTitle[0]}<em className="text-night-muted">{t.emptyTitle[1]}</em></h2>
+            <h2 className="display text-display mt-3 max-w-[12ch]">{t.emptyTitle[0]}<em className="text-night-muted">{t.emptyTitle[1]}</em></h2>
             <Link href="/regal/neu" className="mt-8 h-14 px-7 rounded-sm bg-accent text-accent-ink font-semibold inline-flex items-center gap-2 justify-center self-start hover:bg-accent-hover transition-colors"><IconScan width={20} height={20} /> {t.firstScan}</Link>
           </div>
         </section>
