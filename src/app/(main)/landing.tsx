@@ -187,14 +187,21 @@ export async function Landing() {
       </section>
 
       {/* ------------------------------------------------------- Abschluss */}
-      <section className="full-bleed bg-accent text-accent-ink mt-20 md:mt-32 -mb-10 md:-mb-16">
-        <div className="max-w-[1320px] mx-auto px-4 md:px-10 py-16 md:py-24 grid md:grid-cols-[1fr_auto] gap-8 items-end">
-          <h2 className="display text-display max-w-[16ch]">{m.ctaTitle[0]}<em>{m.ctaTitle[1]}</em></h2>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Link href="/anmelden?next=/regal/neu" className="h-14 px-8 rounded-sm bg-night-ink text-accent-hover font-semibold inline-flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+      {/* Foto (Higgsfield): ein Regalbrett mit einer Lücke – dort kommt das erste Buch hin.
+          Breit: Text auf der freien Wand links. Schmal: Foto oben, Text darunter auf Wandfarbe. */}
+      <section className="full-bleed relative overflow-hidden bg-[#3b3b3b] text-night-ink mt-20 md:mt-32 -mb-10 md:-mb-16">
+        <picture>
+          <source media="(min-width: 768px)" srcSet="/shelf/regal-luecke.webp" />
+          <img src="/shelf/regal-luecke-1200.webp" alt="" aria-hidden width={1200} height={514} loading="lazy" decoding="async"
+            className="block w-full h-[220px] sm:h-[300px] object-cover object-[78%_50%] md:absolute md:inset-0 md:h-full md:object-[70%_50%]" />
+        </picture>
+        <div className="relative max-w-[1320px] mx-auto px-4 md:px-10 py-12 md:py-0 md:min-h-[440px] lg:min-h-[520px] flex flex-col justify-center">
+          <h2 className="display text-display max-w-[13ch]">{m.ctaTitle[0]}<em className="text-night-muted">{m.ctaTitle[1]}</em></h2>
+          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <Link href="/anmelden?next=/regal/neu" className="h-14 px-8 rounded-sm bg-accent text-accent-ink font-semibold inline-flex items-center justify-center gap-2 hover:bg-accent-hover transition-colors">
               {m.ctaStart} <IconArrowRight width={18} height={18} />
             </Link>
-            <Link href="/hilfe" className="h-14 px-8 rounded-sm border-2 border-accent-ink/40 font-semibold inline-flex items-center justify-center hover:border-accent-ink transition-colors">
+            <Link href="/hilfe" className="h-14 px-8 rounded-sm border-2 border-night-ink/40 font-semibold inline-flex items-center justify-center hover:border-night-ink transition-colors">
               {m.ctaHow}
             </Link>
           </div>
