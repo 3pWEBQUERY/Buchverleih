@@ -1,4 +1,5 @@
 "use client";
+import { PhotoCard } from "@/components/photo-card";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ShelfCopy, ShelfStatus } from "@/lib/copies";
@@ -161,18 +162,8 @@ export function RegalView({ copies, loanDays, paused: initialPaused }: { copies:
       <div>
         <PageTitle sub={t.emptySub}>{t.heading[0]}<em>{t.heading[1]}</em></PageTitle>
         {/* Wie der Abschluss der Startseite: Regalfoto (Higgsfield) mit einer Lücke für das erste Buch */}
-        <section className="relative overflow-hidden rounded-lg bg-[#3b3b3b] text-night-ink anim-rise">
-          <picture>
-            <source media="(min-width: 768px)" srcSet="/shelf/regal-luecke.webp" />
-            <img src="/shelf/regal-luecke-1200.webp" alt="" aria-hidden width={1200} height={514} decoding="async"
-              className="block w-full h-[200px] sm:h-[260px] object-cover object-[78%_50%] md:absolute md:inset-0 md:h-full md:object-[20%_50%]" />
-          </picture>
-          <div className="relative p-7 md:p-12 md:min-h-[460px] flex flex-col justify-center">
-            <p className="eyebrow !text-night-muted">{t.emptyEyebrow}</p>
-            <h2 className="display text-display mt-3 max-w-[12ch]">{t.emptyTitle[0]}<em className="text-night-muted">{t.emptyTitle[1]}</em></h2>
-            <Link href="/regal/neu" className="mt-8 h-14 px-7 rounded-sm bg-accent text-accent-ink font-semibold inline-flex items-center gap-2 justify-center self-start hover:bg-accent-hover transition-colors"><IconScan width={20} height={20} /> {t.firstScan}</Link>
-          </div>
-        </section>
+        <PhotoCard src="regal-luecke" eyebrow={t.emptyEyebrow} title={t.emptyTitle}
+          actions={<Link href="/regal/neu" className="h-14 px-7 rounded-sm bg-accent text-accent-ink font-semibold inline-flex items-center gap-2 justify-center hover:bg-accent-hover transition-colors"><IconScan width={20} height={20} /> {t.firstScan}</Link>} />
       </div>
     );
   }

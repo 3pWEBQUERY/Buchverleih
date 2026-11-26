@@ -334,13 +334,17 @@ export async function rate(
     await tx`select id from loans where id = ${loanId} for update`;
     const [mine] = await tx`select 1 from ratings where loan_id = ${loanId} and from_user = ${user.id}`;
     if (mine) throw err.conflict("already_rated", "Du hast diesen Vorgang bereits bewertet.");
-    if (loan.status !== "completed" || !loan.rating_closes_at || loan.rating_closes_at < new Date())
+    // Leihende dürfen schon nach der Rückgabe bewerten (Prüfung läuft noch), alle anderen nach dem Abschluss
+    const early = loan.status === "returned" && role === "borrower" && loan.kind === "lend";
+    if (!early && (loan.status !== "completed" || !loan.rating_closes_at || loan.rating_closes_at < new Date()))
       throw err.conflict("rating_closed", "Für diesen Vorgang ist keine Bewertung mehr möglich.");
     const forUser = role === "owner" ? loan.borrower_id : loan.owner_id;
     await tx`
       insert into ratings (loan_id, from_user, for_user, verdict, reasons, note, visible_from)
       values (${loanId}, ${user.id}, ${forUser}, ${input.verdict},
-              ${input.verdict === "problems" ? input.reasons : []}::text[], ${input.note ?? null}, ${loan.rating_closes_at})`;
+              ${input.verdict === "problems" ? input.reasons : []}::text[], ${input.note ?? null},
+              -- frühe Bewertung: 48 h Prüfung + 14 Tage, wie nach dem Abschluss
+              coalesce(${loan.rating_closes_at ?? null}::timestamptz, now() + interval '16 days'))`;
     // Sichtbar, sobald beide abgegeben haben, sonst nach 14 Tagen
     await tx`
       update ratings set visible_from = now()

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { pageUser } from "@/lib/page";
 import { myCircles } from "@/lib/circles";
 import { circlePreviews } from "@/lib/kreise-queries";
-import { LinkButton, cx } from "@/components/ui";
+import { cx } from "@/components/ui";
 import { Cover } from "@/components/cover";
 import { CircleMark } from "@/components/kreise/circle-mark";
 import { Faces } from "@/components/kreise/faces";
@@ -48,23 +48,20 @@ export default async function Page() {
       </header>
 
       {circles.length === 0 ? (
-        <div className="mt-10">
-          <StepSection n={1} first title={m.howTitle} desc={m.howDesc}>
-            <ol className="grid sm:grid-cols-3 gap-3">
-              {m.steps.map(([st, d], i) => (
-                <li key={st} className="rounded-md border border-line p-5">
-                  <span className="text-meta tnum text-accent-hover font-medium">0{i + 1}</span>
-                  <p className="font-medium text-body-lg mt-3">{st}</p>
-                  <p className="text-body-sm text-muted mt-1 leading-snug">{d}</p>
-                </li>
-              ))}
-            </ol>
-            <div className="mt-6 flex flex-wrap items-center gap-4">
-              <LinkButton href="/kreise/neu" variant="primary" size="lg"><IconPlus width={18} height={18} /> {m.found}</LinkButton>
-              <p className="text-body-sm text-muted">{m.haveLink}</p>
-            </div>
-          </StepSection>
-        </div>
+        /* Wie das leere Regal: Foto (Higgsfield) und darunter bzw. daneben die dunkle Wand mit einer Aktion */
+        <section aria-labelledby="kreise-leer-t" className="mt-10 relative overflow-hidden rounded-lg bg-[#3b3b3b] text-night-ink anim-rise">
+          <picture>
+            <source media="(min-width: 768px)" srcSet="/shelf/leer-kreise.webp" />
+            <img src="/shelf/leer-kreise-1200.webp" alt="" aria-hidden width={1200} height={514} decoding="async"
+              className="block w-full h-[200px] sm:h-[260px] object-cover object-[78%_50%] md:absolute md:inset-0 md:h-full md:object-[20%_50%]" />
+          </picture>
+          <div className="relative p-7 md:p-12 md:min-h-[460px] flex flex-col justify-center">
+            <p className="eyebrow !text-night-muted">{t.emptyCard.eyebrow}</p>
+            <h2 id="kreise-leer-t" className="display text-display mt-3 max-w-[14ch]">{t.emptyCard.title[0]}<em className="text-night-muted">{t.emptyCard.title[1]}</em></h2>
+            <Link href="/kreise/neu" className="mt-8 h-14 px-7 rounded-sm bg-accent text-accent-ink font-semibold inline-flex items-center gap-2 justify-center self-start hover:bg-accent-hover transition-colors"><IconPlus width={20} height={20} /> {t.emptyCard.found}</Link>
+            <p className="mt-4 text-body-sm text-night-muted max-w-[44ch]">{m.haveLink}</p>
+          </div>
+        </section>
       ) : (
         <div className="mt-10">
           <StepSection n={1} first title={m.yours} aside={t.nCircles(circles.length)}

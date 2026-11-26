@@ -14,8 +14,17 @@ export type SearchFilters = {
   language?: string;
   genre?: string;
   maxCondition?: number;
+  /** Schnellfilter «≤ 2 km»: höchstens NEAR_M vom Ausgangsort (ohne Ausgangsort wirkungslos) */
+  near?: boolean;
+  /** Schnellfilter «Per Post»: nur Exemplare mit Versand */
+  shipping?: boolean;
+  /** Schnellfilter «Im Kreis»: nur Exemplare aus Kreisen, in denen die Person aktiv Mitglied ist (abgemeldet wirkungslos) */
+  inCircle?: boolean;
   limit?: number;
 };
+
+/** Grenze des Schnellfilters «≤ 2 km», auf den Anzeigeorten gemessen */
+export const NEAR_M = 2000;
 
 export type Origin = { lat: number; lng: number } | null;
 
@@ -46,7 +55,7 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
     : sql``;
   const lat = origin?.lat ?? null;
   const lng = origin?.lng ?? null;
-  const radiusM = (f.radiusKm ?? 10) * 1000;
+  const radiusM = Math.min((f.radiusKm ?? 10) * 1000, f.near ? NEAR_M : Infinity);
 
   const rows = await sql<(Omit<WorkHit, "offers"> & { o_lend: boolean; o_swap: boolean; o_gift: boolean })[]>`
     with cand as (
@@ -83,6 +92,14 @@ export async function searchWorks(viewerId: string | null, origin: Origin, f: Se
          ${f.language ? sql`and e.language = ${f.language}` : sql``}
          ${f.genre ? sql`and w.genre = ${f.genre}` : sql``}
          ${f.maxCondition ? sql`and c.condition <= ${f.maxCondition}` : sql``}
+         ${f.shipping ? sql`and c.shipping_allowed` : sql``}
+         ${f.inCircle && viewerId ? sql`and (
+           exists (select 1 from circle_copies cc
+                     join circle_members m on m.circle_id = cc.circle_id and m.status = 'active'
+                    where cc.copy_id = c.id and m.user_id = ${viewerId}::uuid)
+           or exists (select 1 from circle_members m
+                       where m.circle_id = c.library_circle_id and m.status = 'active' and m.user_id = ${viewerId}::uuid)
+         )` : sql``}
     ), hit as (
       select * from cand
        where (${lat}::float8 is null or dist <= ${radiusM})

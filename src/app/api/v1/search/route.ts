@@ -6,7 +6,13 @@ import { plzInfo } from "@/lib/account";
 import { rateLimit } from "@/lib/ratelimit";
 import { clientIp } from "@/lib/client-ip";
 
-/** GET /api/v1/search – Werke mit Exemplaren in der Nähe. Abgemeldet mit ?plz= */
+const flag = z.enum(["1", "0"]).optional();
+
+/**
+ * GET /api/v1/search – Werke mit Exemplaren in der Nähe. Abgemeldet mit ?plz=
+ * Schnellfilter (alle mit «1» an, kombiniert mit UND): frei (heute frei, wie available), nah (≤ 2 km),
+ * post (Versand möglich), kreis (aus eigenen Kreisen; abgemeldet ohne Wirkung).
+ */
 export const GET = route(async (req) => {
   const u = await getViewer();
   await rateLimit(u ? `search:${u.id}` : `searchip:${clientIp(req)}`, 1200, 3600);
@@ -16,7 +22,11 @@ export const GET = route(async (req) => {
       q: z.string().max(120).optional(),
       radius: z.coerce.number().min(1).max(50).optional(),
       offer: z.enum(["lend", "swap", "gift"]).optional(),
-      available: z.enum(["1", "0"]).optional(),
+      available: flag,
+      frei: flag,
+      nah: flag,
+      post: flag,
+      kreis: flag,
       language: z.string().max(5).optional(),
       genre: z.string().max(40).optional(),
       condition: z.coerce.number().int().min(1).max(4).optional(),
@@ -32,10 +42,13 @@ export const GET = route(async (req) => {
     q: q.q,
     radiusKm: q.radius ?? u?.radius_km,
     offer: q.offer,
-    availableNow: q.available === "1",
+    availableNow: q.available === "1" || q.frei === "1",
     language: q.language,
     genre: q.genre,
     maxCondition: q.condition,
+    near: q.nah === "1",
+    shipping: q.post === "1",
+    inCircle: q.kreis === "1",
   });
   if (q.q && q.q.length >= 2) logSearch(u?.id ?? null, q.q, hits).catch(() => {});
   // Kartenmitte nur grob (0.01°), nicht der gespeicherte Wohnort

@@ -35,11 +35,11 @@ const TABS: { id: Tab; icon: React.ReactNode }[] = [
 ];
 const ASKED_KEY = "lr_precious_asked";
 
-export function Erfassen({ initial, library = null, shelfPhoto = false }: { initial: Added[]; library?: { id: string; name: string } | null; shelfPhoto?: boolean }) {
+export function Erfassen({ initial, library = null, shelfPhoto = false, welcome = false }: { initial: Added[]; library?: { id: string; name: string } | null; shelfPhoto?: boolean; welcome?: boolean }) {
   const toast = useToast();
   const l = useLocale();
   const t = CAPTURE[l];
-  const [tab, setTab] = useState<Tab>("scan");
+  const [tab, setTab] = useState<Tab>(welcome && shelfPhoto ? "photo" : "scan");
   const [added, setAdded] = useState<Added[]>(initial);
   const [fresh, setFresh] = useState<string | null>(null);
   const [pending, setPending] = useState<Edition | null>(null);
@@ -169,6 +169,13 @@ export function Erfassen({ initial, library = null, shelfPhoto = false }: { init
             <Link href={`/kreise/${library.id}#bibliothek`} className="mt-1 inline-flex font-medium underline underline-offset-4">{t.libraryBack}</Link>
           </Notice>
         ) : <ImportLink className="mt-3" />}
+        {welcome && (
+          <Notice tone="accent" className="mt-5 max-w-2xl">
+            <p className="font-medium">{t.welcome[0]}</p>
+            <p className="mt-1">{shelfPhoto ? t.welcome[1] : t.welcome[2]}</p>
+            <Link href="/suche" className="mt-2 inline-flex font-medium underline underline-offset-4">{t.welcomeBrowse}</Link>
+          </Notice>
+        )}
       </header>
 
       <div className="mt-10 md:mt-12 grid lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px] gap-x-10 xl:gap-x-16 gap-y-12 items-start">

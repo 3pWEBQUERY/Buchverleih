@@ -209,9 +209,10 @@ function nextStepDe(l: NextInput): { step: NextStep; turn: Turn; waitingText: st
         ? { step: { key: "confirm_return", label: "Rückgabe bestätigen" }, turn: "me", waitingText: null }
         : { step: null, turn: "other", waitingText: "Wartet auf Bestätigung der Rückgabe" };
     case "returned":
-      return owner
-        ? { step: { key: "inspect", label: "Alles in Ordnung" }, turn: "me", waitingText: null }
-        : { step: null, turn: "other", waitingText: "Zurück, in Prüfung" };
+      if (owner) return { step: { key: "inspect", label: "Alles in Ordnung" }, turn: "me", waitingText: null };
+      // Leihende Person: gleich nach der Rückgabe bewerten, solange alles frisch ist (statt 48 h zu warten)
+      if (!l.rated_by_me && l.kind === "lend") return { step: { key: "rate", label: "Kurz bewerten" }, turn: "me", waitingText: null };
+      return { step: null, turn: "other", waitingText: "Zurück, in Prüfung" };
     case "disputed":
       if (!owner && !l.case_response) return { step: { key: "case_respond", label: "Im Fall antworten" }, turn: "me", waitingText: null };
       if (owner && l.swap_offer_copy_id) return { step: { key: "accept_swap_offer", label: "Tauschangebot ansehen" }, turn: "me", waitingText: null };

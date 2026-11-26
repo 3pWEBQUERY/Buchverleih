@@ -1,4 +1,5 @@
 "use client";
+import { setSound, soundOn, success } from "@/lib/feedback";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -143,6 +144,18 @@ export function ThemeChoice() {
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/** Erfolgston an/aus (nur dieses Gerät) */
+export function SoundChoice() {
+  const t = useT().theme;
+  const [on, setOn] = useState(true);
+  useEffect(() => setOn(soundOn()), []);
+  return (
+    <div className="mt-5 max-w-[460px]">
+      <Switch label={t.sound} hint={t.soundHint} checked={on} onChange={(v) => { setOn(v); setSound(v); if (v) success(); }} />
     </div>
   );
 }

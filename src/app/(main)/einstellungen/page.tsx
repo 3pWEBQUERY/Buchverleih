@@ -11,7 +11,7 @@ import { PageTitle, cx } from "@/components/ui";
 import { StepSection } from "@/components/step-section";
 import { Monogram } from "@/components/person/monogram";
 import {
-  AvatarEditor, BlockList, CommunityPrefs, RadiusPref, SmsAlarmPref, DeleteAccount, EmailPrefs, ExportData, Logout, PasskeyList, PasswordSection, PhoneSection, ProfileForm, PushSettings, ShelfPause, SpotList, ThemeChoice,
+  AvatarEditor, BlockList, CommunityPrefs, RadiusPref, SmsAlarmPref, DeleteAccount, EmailPrefs, ExportData, Logout, PasskeyList, PasswordSection, PhoneSection, ProfileForm, PushSettings, SoundChoice, ShelfPause, SpotList, ThemeChoice,
 } from "./sections";
 import { SettingsNav, type NavGroup } from "./settings-nav";
 import { LanguageChoice } from "@/components/language-switch";
@@ -144,6 +144,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ b
               </Row>
               <Row id="darstellung" t={r.darstellung}>
                 <ThemeChoice />
+                <SoundChoice />
               </Row>
               <Row id="daten" t={r.daten}>
                 <ExportData />

@@ -33,7 +33,9 @@ function useLater() {
 
 export function InviteBox({ circleId, name, url, admin, appUrl }: { circleId: string; name: string; url: string | null; admin: boolean; appUrl: string }) {
   const toast = useToast();
-  const t = CIRCLES[useLocale()].client;
+  const all = CIRCLES[useLocale()];
+  const t = all.client;
+  const poster = all.poster;
   const [link, setLink] = useState(url);
   const [busy, setBusy] = useState(false);
   const [showQr, setShowQr] = useState(false);
@@ -76,6 +78,9 @@ export function InviteBox({ circleId, name, url, admin, appUrl }: { circleId: st
             {showQr ? t.qrHide : t.qrShow}
           </Button>
           {showQr && <InviteQr link={link} name={name} />}
+          <Link href={`/kreise/${circleId}/plakat`} className="mt-2 w-full min-h-11 inline-flex items-center justify-center text-body-sm font-medium text-ink-2 hover:text-ink underline-offset-4 hover:underline">
+            {poster.link}
+          </Link>
           {admin && (
             <div className="mt-4 pt-3 border-t border-line flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
               <p className="text-meta text-muted">{t.wrongHands}</p>

@@ -58,4 +58,27 @@ describe("Prüfung November 2026", () => {
     const [r] = await sql<{ left: number }[]>`select extract(epoch from inspection_until - now())::int as left from loans where id = ${l.id}`;
     expect(r.left).toBeGreaterThan(47 * 3600);
   });
+
+  it("lässt die leihende Person gleich nach der Rückgabe bewerten, sichtbar erst mit beiden", async () => {
+    const marc = await makeUser("Marc");
+    const lea = await makeUser("Lea");
+    const copy = await makeCopy(marc, "Momo");
+    const l = await svc.requestLoan(lea, { copyId: copy, kind: "lend", start: day(0), end: day(14) });
+    await svc.accept(marc, l.id, {});
+    await svc.reportHandover(lea, l.id, {});
+    await svc.confirmHandover(marc, l.id);
+    await svc.reportReturn(lea, l.id, {});
+    await svc.confirmReturn(marc, l.id);
+    expect(await status(l.id)).toBe("returned");
+    expect((await loanView(l.id, lea.id))!.step?.key).toBe("rate");
+    // Die verleihende Person prüft noch und darf erst nach dem Abschluss bewerten
+    await expect(svc.rate(marc, l.id, { verdict: "good", reasons: [] })).rejects.toMatchObject({ status: 409 });
+    await svc.rate(lea, l.id, { verdict: "good", reasons: [] });
+    const [r] = await sql<{ visible: boolean }[]>`select visible_from <= now() as visible from ratings where loan_id = ${l.id}`;
+    expect(r.visible).toBe(false);
+    await svc.complete(marc, l.id);
+    await svc.rate(marc, l.id, { verdict: "good", reasons: [] });
+    const rows = await sql<{ visible: boolean }[]>`select visible_from <= now() as visible from ratings where loan_id = ${l.id}`;
+    expect(rows.every((x) => x.visible)).toBe(true);
+  });
 });

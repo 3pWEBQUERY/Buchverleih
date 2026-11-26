@@ -15,6 +15,7 @@ import { genres } from "@/lib/i18n/de-CH";
 import { labels } from "@/lib/i18n/labels";
 import { useLocale } from "@/components/locale-provider";
 import { SEARCH } from "@/lib/i18n/messages/search";
+import { SEARCH_FILTERS } from "@/lib/i18n/messages/search-filters";
 import type { Locale } from "@/lib/i18n/locale";
 import type { WorkHit } from "@/lib/search";
 import type { Center } from "./search-map";
@@ -33,9 +34,15 @@ export type Filters = {
   language: string;
   genre: string;
   condition: number;
+  /** Schnellfilter unter dem Suchfeld (URL: nah, post, kreis; «Heute frei» ist available, URL: frei) */
+  near: boolean;
+  post: boolean;
+  circle: boolean;
 };
 
-const DEFAULTS: Filters = { radius: 10, offer: "", available: false, language: "", genre: "", condition: 0 };
+const DEFAULTS: Filters = { radius: 10, offer: "", available: false, language: "", genre: "", condition: 0, near: false, post: false, circle: false };
+/** Umkreis des Schnellfilters «≤ 2 km» */
+const NEAR_KM = 2;
 const RADII = [1, 2, 5, 10, 25];
 
 function urlOf(key: string, view: View) {
@@ -50,7 +57,10 @@ function paramsOf(q: string, f: Filters, plz: string, defRadius: number) {
   if (q.trim()) p.set("q", q.trim());
   if (f.radius !== defRadius) p.set("radius", String(f.radius));
   if (f.offer) p.set("offer", f.offer);
-  if (f.available) p.set("available", "1");
+  if (f.available) p.set("frei", "1");
+  if (f.near) p.set("nah", "1");
+  if (f.post) p.set("post", "1");
+  if (f.circle) p.set("kreis", "1");
   if (f.language) p.set("language", f.language);
   if (f.genre) p.set("genre", f.genre);
   if (f.condition) p.set("condition", String(f.condition));
@@ -59,7 +69,8 @@ function paramsOf(q: string, f: Filters, plz: string, defRadius: number) {
 }
 
 function activeCount(f: Filters, defRadius: number) {
-  return (f.radius !== defRadius ? 1 : 0) + (f.offer ? 1 : 0) + (f.available ? 1 : 0) + (f.language ? 1 : 0) + (f.genre ? 1 : 0) + (f.condition ? 1 : 0);
+  return (f.radius !== defRadius ? 1 : 0) + (f.offer ? 1 : 0) + (f.available ? 1 : 0) + (f.language ? 1 : 0) + (f.genre ? 1 : 0) + (f.condition ? 1 : 0)
+    + (f.near ? 1 : 0) + (f.post ? 1 : 0) + (f.circle ? 1 : 0);
 }
 
 export function availabilityText(h: Pick<WorkHit, "copies" | "available_now">, l: Locale = "de") {
@@ -78,7 +89,7 @@ const coverOf = (h: WorkHit) => ({
 });
 
 export function SearchClient({
-  loggedIn, autoFocus, initialQ, initialPlz, initialPlace, initialFilters, initialResults, initialCenter, initialView, mapEnabled = true, defaultRadius = 10,
+  loggedIn, autoFocus, initialQ, initialPlz, initialPlace, initialFilters, initialResults, initialCenter, initialView, mapEnabled = true, shippingEnabled = true, defaultRadius = 10,
 }: {
   loggedIn: boolean;
   autoFocus: boolean;
@@ -90,6 +101,7 @@ export function SearchClient({
   initialCenter: Center | null;
   initialView: View;
   mapEnabled?: boolean;
+  shippingEnabled?: boolean;
   defaultRadius?: number;
 }) {
   const router = useRouter();
@@ -112,6 +124,8 @@ export function SearchClient({
   const enterFor = useRef<string | null>(null);
   const href = (h: WorkHit) => `/titel/${h.work_id}${!loggedIn && plz ? `?plz=${plz}` : ""}`;
   const hasOrigin = loggedIn || !!plz;
+  // «≤ 2 km» engt den gewählten Umkreis ein (ohne Ausgangsort wirkungslos, der Chip ist dann ausgeblendet)
+  const radius = f.near && hasOrigin ? Math.min(f.radius, NEAR_KM) : f.radius;
 
   useEffect(() => {
     if (autoFocus) inputRef.current?.focus();
@@ -189,8 +203,8 @@ export function SearchClient({
 
   const summary = results
     ? resultsFor
-      ? `${t.titles(results.length)}${hasOrigin ? t.inRadius(f.radius, place) : ""}`
-      : `${t.titles(results.length)}${t.inRadius(f.radius, place)}`
+      ? `${t.titles(results.length)}${hasOrigin ? t.inRadius(radius, place) : ""}`
+      : `${t.titles(results.length)}${t.inRadius(radius, place)}`
     : null;
 
   // Ohne Suchbegriff: die nächsten freien Titel als Regal auf der dunklen Bühne, der Rest als Karten
@@ -238,6 +252,8 @@ export function SearchClient({
         )}
       </form>
 
+      <QuickFilters f={f} set={set} near={hasOrigin} post={shippingEnabled} circle={loggedIn} />
+
       {!loggedIn && (
         <PlzBar plz={plz} place={place} onSet={(p, name) => { setPlz(p); setPlace(name); }} />
       )}
@@ -258,11 +274,11 @@ export function SearchClient({
         {results === null && loading && <ResultSkeleton />}
 
         {view === "map" && results && results.length > 0 && (
-          <SearchMap hits={results} center={center} radiusKm={f.radius} href={href} loading={loading} loggedIn={loggedIn} />
+          <SearchMap hits={results} center={center} radiusKm={radius} href={href} loading={loading} loggedIn={loggedIn} />
         )}
 
         {view === "list" && stage.length > 0 && (
-          <StepSection id="frei" n={1} first title={t.stageTitle} desc={t.stageDesc(f.radius, place)}
+          <StepSection id="frei" n={1} first title={t.stageTitle} desc={t.stageDesc(radius, place)}
             aside={t.titles(stage.length)}>
             <Stage hits={stage} href={href} />
           </StepSection>
@@ -282,8 +298,8 @@ export function SearchClient({
         )}
 
         {results && results.length === 0 && !loading && (
-          <NoHits q={resultsFor} f={f} n={n} loggedIn={loggedIn}
-            widen={() => set("radius", 25)} reset={() => setF({ ...DEFAULTS, radius: f.radius })} />
+          <NoHits q={resultsFor} f={{ ...f, radius }} n={n} loggedIn={loggedIn}
+            widen={() => setF((x) => ({ ...x, radius: 25, near: false }))} reset={() => setF({ ...DEFAULTS, radius: f.radius })} />
         )}
       </div>
     </div>
@@ -314,6 +330,29 @@ const chip = "h-9 px-3.5 rounded-sm text-body-sm font-medium inline-flex items-c
 const chipOff = "border-line bg-paper text-ink-2 hover:border-ink-2 hover:text-ink";
 const chipOn = "border-accent bg-accent-soft/50 text-accent-hover";
 
+/** Schnellfilter direkt unter dem Suchfeld; kombiniert mit UND, in der URL als frei/nah/post/kreis */
+function QuickFilters({ f, set, near, post, circle }: {
+  f: Filters; set: <K extends keyof Filters>(k: K, v: Filters[K]) => void; near: boolean; post: boolean; circle: boolean;
+}) {
+  const t = SEARCH_FILTERS[useLocale()];
+  const toggle = (k: "available" | "near" | "post" | "circle", label: string, hint?: string, dot?: boolean) => (
+    <button key={k} type="button" aria-pressed={f[k]} title={hint} onClick={() => set(k, !f[k])} className={cx(chip, f[k] ? chipOn : chipOff)}>
+      {dot && <span aria-hidden className="h-2 w-2 rounded-full bg-ok" />}
+      <span className={k === "near" ? "tnum" : undefined}>{label}</span>
+    </button>
+  );
+  return (
+    <div className="mt-3 -mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto anim-rise [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div role="group" aria-label={t.label} className="flex items-center gap-2 w-max pb-1">
+        {toggle("available", t.freeToday, undefined, true)}
+        {near && toggle("near", t.near, t.nearHint)}
+        {post && toggle("post", t.byPost)}
+        {circle && toggle("circle", t.inCircle, t.inCircleHint)}
+      </div>
+    </div>
+  );
+}
+
 function FilterChips({ f, set, reset, n, hasOrigin }: { f: Filters; set: <K extends keyof Filters>(k: K, v: Filters[K]) => void; reset: () => void; n: number; hasOrigin: boolean }) {
   const l = useLocale();
   const t = SEARCH[l];
@@ -334,12 +373,6 @@ function FilterChips({ f, set, reset, n, hasOrigin }: { f: Filters; set: <K exte
             );
           })}
         </div>
-
-        <button type="button" aria-pressed={f.available} onClick={() => set("available", !f.available)} className={cx(chip, f.available ? chipOn : chipOff)}>
-          <span aria-hidden className="h-2 w-2 rounded-full bg-ok" /> {t.freeNow}
-        </button>
-
-        <span aria-hidden className="h-5 w-px bg-line-strong mx-1 flex-none" />
 
         {(["lend", "swap", "gift"] as const).map((o) => {
           const on = f.offer === o;

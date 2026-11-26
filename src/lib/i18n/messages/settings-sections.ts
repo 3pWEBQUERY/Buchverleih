@@ -110,6 +110,8 @@ const de = {
     light: ["Hell", "Papier und Tinte"],
     dark: ["Dunkel", "Für den Abend"],
     system: ["System", "Wie dein Gerät"],
+    sound: "Ton bei Erfolgen",
+    soundHint: "Ein kurzer, leiser Klang, wenn ein Scan glückt oder eine Übergabe bestätigt ist. Gilt für dieses Gerät.",
   },
   push: {
     notReady: "Die App ist auf diesem Gerät noch nicht bereit. Lade die Seite neu und versuche es erneut.",
@@ -249,6 +251,8 @@ const fr: M = {
     light: ["Clair", "Papier et encre"],
     dark: ["Sombre", "Pour le soir"],
     system: ["Système", "Comme ton appareil"],
+    sound: "Son en cas de réussite",
+    soundHint: "Un son bref et discret quand un scan réussit ou qu’une remise est confirmée. Vaut pour cet appareil.",
   },
   push: {
     notReady: "L’application n’est pas encore prête sur cet appareil. Recharge la page et réessaie.",
@@ -387,6 +391,8 @@ const it: M = {
     light: ["Chiaro", "Carta e inchiostro"],
     dark: ["Scuro", "Per la sera"],
     system: ["Sistema", "Come il tuo dispositivo"],
+    sound: "Suono in caso di successo",
+    soundHint: "Un suono breve e discreto quando una scansione riesce o una consegna è confermata. Vale per questo dispositivo.",
   },
   push: {
     notReady: "L’app non è ancora pronta su questo dispositivo. Ricarica la pagina e riprova.",
@@ -525,6 +531,8 @@ const en: M = {
     light: ["Light", "Paper and ink"],
     dark: ["Dark", "For the evening"],
     system: ["System", "Like your device"],
+    sound: "Sound on success",
+    soundHint: "A short, quiet sound when a scan works or a handover is confirmed. Applies to this device.",
   },
   push: {
     notReady: "The app isn’t ready on this device yet. Reload the page and try again.",

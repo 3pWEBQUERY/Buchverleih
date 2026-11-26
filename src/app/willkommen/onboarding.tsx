@@ -12,6 +12,9 @@ import { ONBOARDING } from "@/lib/i18n/messages/onboarding";
 import { DateField } from "@/components/date-field";
 
 /** Anmeldung ohne Hürden: drei Angaben, dann die Mobilnummer (PRD 6.1, 6.6). */
+
+/** Ohne bestimmtes Ziel geht es nach der Einrichtung direkt zum ersten Buch (Regalfoto als schnellster Weg) */
+const FIRST_BOOK = "/regal/neu?start=1";
 export function Onboarding({ initialStep, next, firstName, devCodes }: { initialStep: "profile" | "phone"; next: string; firstName: string; devCodes: boolean }) {
   const router = useRouter();
   const t = ONBOARDING[useLocale()].form;
@@ -94,7 +97,7 @@ export function Onboarding({ initialStep, next, firstName, devCodes }: { initial
               <Button type="submit" variant="primary" size="lg" className="w-full sm:w-auto" disabled={busy}>{t.send} <IconArrowRight width={18} height={18} /></Button>
             </form>
           ) : (
-            <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); run(async () => { await api("/me/phone/verify", { body: { code } }); router.replace(safeNext(next) || "/"); router.refresh(); }); }}>
+            <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); run(async () => { await api("/me/phone/verify", { body: { code } }); router.replace(safeNext(next) || FIRST_BOOK); router.refresh(); }); }}>
               <Field label={t.code} error={error} hint={codeSent.devCode ? t.devCode(codeSent.devCode) : t.codeHint}>
                 <Input required autoFocus inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className="max-w-[240px] text-title tracking-code tnum h-14 text-center font-medium" placeholder="······" />
               </Field>
@@ -105,7 +108,7 @@ export function Onboarding({ initialStep, next, firstName, devCodes }: { initial
             </form>
           )}
           <div className="mt-10 pt-6 border-t border-line">
-            <Button type="button" variant="quiet" className="h-11 text-body-sm" onClick={() => { router.replace("/"); router.refresh(); }}>
+            <Button type="button" variant="quiet" className="h-11 text-body-sm" onClick={() => { router.replace(safeNext(next) || FIRST_BOOK); router.refresh(); }}>
               {t.later}
             </Button>
           </div>

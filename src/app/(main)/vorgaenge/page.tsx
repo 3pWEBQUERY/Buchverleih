@@ -1,3 +1,4 @@
+import { PhotoCard } from "@/components/photo-card";
 import Link from "next/link";
 import { pageUser } from "@/lib/page";
 import { myLoans } from "@/lib/loans/queries";
@@ -71,16 +72,15 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
       )}
 
       {all.length === 0 ? (
-        <div className="mt-12 rounded-md border border-line p-6 md:p-10 grid md:grid-cols-[minmax(0,1fr)_auto] items-end gap-6">
-          <div>
-            <p className="text-title font-title tracking-title">{t.empty}</p>
-            <p className="text-body text-muted mt-1.5 max-w-md">{t.emptyText}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <LinkButton href="/regal/neu" variant="secondary">{t.addBook}</LinkButton>
-            <LinkButton href="/suche" variant="primary">{t.searchBooks}</LinkButton>
-          </div>
-          {example && <div className="md:col-span-2 pt-6 border-t border-line"><ExampleBook copy={example} l={l} /></div>}
+        <div className="mt-12 space-y-8">
+          <PhotoCard src="leer-vorgaenge" eyebrow={t.empty} title={t.emptyTitle}
+            actions={<>
+              <LinkButton href="/suche" variant="primary" size="lg">{t.searchBooks}</LinkButton>
+              <LinkButton href="/regal/neu" variant="ghost" size="lg" className="!text-night-ink !border-night-ink/40 hover:!border-night-ink">{t.addBook}</LinkButton>
+            </>}>
+            {t.emptyText}
+          </PhotoCard>
+          {example && <div className="rounded-md border border-line p-6"><ExampleBook copy={example} l={l} /></div>}
         </div>
       ) : (
         <div className="mt-4">

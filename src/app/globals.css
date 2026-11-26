@@ -391,7 +391,7 @@
 
 /* Endloses Band der Buchrücken */
 .marquee { display: flex; width: max-content; animation: marquee 60s linear infinite; }
-.marquee-wrap:hover .marquee { animation-play-state: paused; }
+.marquee-wrap:hover .marquee, .marquee-wrap[data-paused] .marquee { animation-play-state: paused; }
 
 /* Rückgängig-Frist im Toast: läuft von voller Breite auf null */
 .toast-timer { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--accent); transform-origin: left; animation: timer linear both; }

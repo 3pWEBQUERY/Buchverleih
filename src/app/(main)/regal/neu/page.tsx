@@ -12,9 +12,9 @@ export async function generateMetadata() {
 }
 
 /** Erfassen ohne Formular (PRD 7.1, 8.3 Punkt 4): Scan, Zustand antippen, fertig. */
-export default async function Page({ searchParams }: { searchParams: Promise<{ kreis?: string }> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ kreis?: string; start?: string }> }) {
   const user = await pageUser("/regal/neu");
-  const { kreis } = await searchParams;
+  const { kreis, start } = await searchParams;
   // Kreisbibliothek: nur Admins des Kreises erfassen für den Kreis
   const [library] = kreis && /^[0-9a-f-]{36}$/.test(kreis)
     ? await sql<{ id: string; name: string }[]>`
@@ -33,5 +33,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ k
       circlesOnly: c.visibility === "circles",
       cover: { title: c.title, authors: c.authors, photoKey: c.photo_key, photoW: c.photo_w, photoH: c.photo_h, coverKey: c.cover_key, seed: c.work_id },
     }));
-  return <Erfassen initial={library ? [] : added} library={library ?? null} shelfPhoto={shelfPhotoEnabled()} />;
+  // Direkt nach der Einrichtung und noch ohne Bücher: Begrüssung, Regalfoto zuerst (wenn eingerichtet)
+  const welcome = start === "1" && shelf.length === 0 && !library;
+  return <Erfassen initial={library ? [] : added} library={library ?? null} shelfPhoto={shelfPhotoEnabled()} welcome={welcome} />;
 }

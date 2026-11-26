@@ -1,4 +1,5 @@
 "use client";
+import { PhotoCard } from "@/components/photo-card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -135,15 +136,10 @@ export function WishlistClient({ items: initial, matches, sms = "on" }: { items:
       <StepSection id="titel" n={++n} title={t.yourTitles} aside={items.length > 0 ? t.nTitles(items.length) : undefined}
         desc={t.titlesDesc}>
         {items.length === 0 ? (
-          <div className="rounded-md border border-dashed border-line-strong p-6 md:p-8 flex flex-col sm:flex-row sm:items-end gap-6 anim-rise">
-            <div aria-hidden className="flex items-end gap-1.5 flex-none">
-              {[0, 1, 2].map((k) => <span key={k} className="block w-[34px] h-[51px] rounded-xs border border-dashed border-line-strong" />)}
-            </div>
-            <div className="flex-1 flex flex-wrap items-center justify-between gap-4">
-              <p className="text-body text-ink-2 max-w-md">{t.empty}</p>
-              <LinkButton href="/suche" variant="secondary">{t.browse}</LinkButton>
-            </div>
-          </div>
+          <PhotoCard src="leer-wunsch" title={t.emptyTitle}
+            actions={<LinkButton href="/suche" variant="primary" size="lg">{t.browse}</LinkButton>}>
+            {t.empty}
+          </PhotoCard>
         ) : (
           <ul className="grid xl:grid-cols-2 gap-3">
             {items.map((it, i) => <WishCard key={it.work_id} it={it} i={i} onRadius={(r) => setRadius(it, r)} onAlarm={(v) => setAlarm(it, v)} onShare={(v) => setShare(it, v)} onRemove={() => remove(it)} />)}

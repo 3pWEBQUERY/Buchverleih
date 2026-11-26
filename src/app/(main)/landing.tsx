@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MarqueePause } from "@/components/marquee-pause";
 import { sql } from "@/lib/db";
 import { Spine } from "@/components/spine";
 import { PlzExplorer } from "./plz-explorer";
@@ -72,11 +73,12 @@ export async function Landing() {
         </div>
 
         {/* Endloses Regal aus Buchrücken */}
-        <div className="marquee-wrap shelf-wall relative mt-4 pt-6" aria-hidden>
-          <div className="marquee gap-[6px] items-end px-2" style={{ height: 250 }}>
+        <div className="marquee-wrap shelf-wall relative mt-4 pt-6">
+          <MarqueePause pause={m.marqueePause} play={m.marqueePlay} />
+          <div className="marquee gap-[6px] items-end px-2" style={{ height: 250 }} aria-hidden>
             {band.map(([t, a], i) => <Spine key={i} title={t} author={a} height={240} />)}
           </div>
-          <div className="shelf-plank" />
+          <div className="shelf-plank" aria-hidden />
         </div>
 
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 py-12 md:py-16">

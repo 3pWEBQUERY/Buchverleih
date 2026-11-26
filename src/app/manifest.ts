@@ -27,9 +27,9 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
       { src: "/icons/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
     ],
     shortcuts: [
-      { name: t.search[0], short_name: t.search[1], url: "/suche?fokus=1", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
       { name: t.add[0], short_name: t.add[1], url: "/regal/neu", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
       { name: t.loans[0], short_name: t.loans[1], url: "/vorgaenge", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
+      { name: t.search[0], short_name: t.search[1], url: "/suche?fokus=1", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
     ],
   };
 }

@@ -1,4 +1,5 @@
 "use client";
+import { success } from "@/lib/feedback";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type RefObject } from "react";
 import type { Edition } from "@/lib/catalog/works";
 import type { CopySettings, ShelfCopy } from "@/lib/copies";
@@ -122,7 +123,7 @@ export function useStack({ onCreated, onDeleted, libraryCircleId }: { onCreated:
       setMessage({ kind: "added", title: e.title });
       // Der Scanner vibriert beim Treffer selbst; von Hand eingegeben fehlt dieses Zeichen sonst
       if (source === "manual") {
-        try { navigator.vibrate?.(40); } catch {}
+        success();
       }
       return true;
     } catch (err) {

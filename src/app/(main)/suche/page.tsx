@@ -20,6 +20,7 @@ export default async function SuchePage({ searchParams }: { searchParams: Promis
   const sp = await searchParams;
   const user = await getUser();
   const loggedIn = !!user?.onboarded_at;
+  const feats = await features();
 
   const defaultRadius = loggedIn && user ? user.radius_km : 10;
   const radius = Number(pick(sp.radius));
@@ -28,10 +29,14 @@ export default async function SuchePage({ searchParams }: { searchParams: Promis
   const filters: Filters = {
     radius: RADII.includes(radius) ? radius : defaultRadius,
     offer: offer === "lend" || offer === "swap" || offer === "gift" ? offer : "",
-    available: pick(sp.available) === "1",
+    // «Heute frei»: ?frei=1, ältere Links mit ?available=1 bleiben gültig
+    available: pick(sp.frei) === "1" || pick(sp.available) === "1",
     language: pick(sp.language).slice(0, 5),
     genre: pick(sp.genre).slice(0, 40),
     condition: condition >= 1 && condition <= 3 ? condition : 0,
+    near: pick(sp.nah) === "1",
+    post: feats.shipping && pick(sp.post) === "1",
+    circle: loggedIn && pick(sp.kreis) === "1",
   };
   const q = pick(sp.q).slice(0, 120);
   const plz = /^\d{4}$/.test(pick(sp.plz)) ? pick(sp.plz) : "";
@@ -57,13 +62,16 @@ export default async function SuchePage({ searchParams }: { searchParams: Promis
         language: filters.language || undefined,
         genre: filters.genre || undefined,
         maxCondition: filters.condition || undefined,
+        near: filters.near,
+        shipping: filters.post,
+        inCircle: filters.circle,
       });
     } catch {
       initial = null;
     }
   }
 
-  const mapEnabled = (await features()).map;
+  const mapEnabled = feats.map;
   return (
     <SearchClient
       // Navigation innerhalb von /suche (z. B. ?fokus=1 aus der Seitenleiste) startet mit frischem Zustand
@@ -77,6 +85,7 @@ export default async function SuchePage({ searchParams }: { searchParams: Promis
       initialResults={initial}
       initialCenter={o ? { lat: Math.round(o.lat * 100) / 100, lng: Math.round(o.lng * 100) / 100 } : null}
       mapEnabled={mapEnabled}
+      shippingEnabled={feats.shipping}
       defaultRadius={defaultRadius}
       initialView={mapEnabled && pick(sp.ansicht) === "karte" ? "map" : "list"}
     />

@@ -7,6 +7,8 @@ const de = {
   title: "Buch erfassen",
   eyebrow: "Mein Regal",
   heading: ["Buch erfassen. ", "Scannen, antippen, fertig."],
+  welcome: ["Willkommen bei Leihregal!", "Am schnellsten füllst du dein Regal mit einem Foto: Fotografiere ein Regalbrett, wir erkennen die Buchrücken.", "Scann die ISBN auf der Rückseite deines ersten Buches – in wenigen Sekunden steht es im Regal."] as [string, string, string],
+  welcomeBrowse: "Erst mal stöbern",
   lead: "Alles Weitere hat Standardwerte: verleihbar für 28 Tage, sichtbar für alle in deiner Umgebung. Ändern kannst du das später bei jedem Buch.",
   tabs: {
     scan: ["Scannen", "Strichcode auf der Rückseite, mit der Kamera."],
@@ -165,6 +167,8 @@ const fr: M = {
   title: "Ajouter un livre",
   eyebrow: "Mon étagère",
   heading: ["Ajouter un livre. ", "Scanner, toucher, c’est fait."],
+  welcome: ["Bienvenue sur Leihregal !", "Le plus rapide pour remplir ton étagère : photographie une planche, nous reconnaissons les dos de livres.", "Scanne l’ISBN au dos de ton premier livre – il est sur ton étagère en quelques secondes."] as [string, string, string],
+  welcomeBrowse: "D’abord explorer",
   lead: "Tout le reste a des valeurs par défaut : prêtable 28 jours, visible pour tout le monde près de chez toi. Tu peux le modifier plus tard pour chaque livre.",
   tabs: {
     scan: ["Scanner", "Code-barres au dos, avec la caméra."],
@@ -322,6 +326,8 @@ const it: M = {
   title: "Aggiungi libro",
   eyebrow: "Il mio scaffale",
   heading: ["Aggiungi libro. ", "Scansiona, tocca, fatto."],
+  welcome: ["Benvenuto su Leihregal!", "Il modo più rapido per riempire lo scaffale: fotografa un ripiano, riconosciamo i dorsi.", "Scansiona l’ISBN sul retro del tuo primo libro: in pochi secondi è sullo scaffale."] as [string, string, string],
+  welcomeBrowse: "Prima dai un’occhiata",
   lead: "Tutto il resto ha valori predefiniti: prestabile per 28 giorni, visibile a tutti vicino a te. Puoi cambiarlo in seguito per ogni libro.",
   tabs: {
     scan: ["Scansiona", "Codice a barre sul retro, con la fotocamera."],
@@ -479,6 +485,8 @@ const en: M = {
   title: "Add a book",
   eyebrow: "My shelf",
   heading: ["Add a book. ", "Scan, tap, done."],
+  welcome: ["Welcome to Leihregal!", "The fastest way to fill your shelf: photograph a shelf board and we’ll recognise the spines.", "Scan the ISBN on the back of your first book – it’s on your shelf in seconds."] as [string, string, string],
+  welcomeBrowse: "Just browse first",
   lead: "Everything else has default settings: lendable for 28 days, visible to everyone near you. You can change this later for each book.",
   tabs: {
     scan: ["Scan", "Barcode on the back, with your camera."],

@@ -26,6 +26,7 @@ const de = {
   nTitles: (n: number): string => (n === 1 ? "1 Titel" : `${n} Titel`),
   titlesDesc: "Pro Titel bestimmst du den Umkreis und ob wir uns melden, sobald ein Exemplar frei wird.",
   empty: "Noch leer. Such oben einen Titel, dann melden wir uns, sobald er in deiner Nähe frei wird.",
+  emptyTitle: ["Was möchtest du ", "als Nächstes lesen?"] as [string, string],
   browse: "Im Bestand stöbern",
   card: {
     since: (d: string): string => `Seit ${d} auf der Liste`,
@@ -109,6 +110,7 @@ const fr: M = {
   nTitles: (n) => (n === 1 ? "1 titre" : `${n} titres`),
   titlesDesc: "Pour chaque titre, tu choisis le rayon et si nous te prévenons dès qu’un exemplaire se libère.",
   empty: "Encore vide. Cherche un titre ci-dessus, nous te prévenons dès qu’il est libre près de chez toi.",
+  emptyTitle: ["Que veux-tu ", "lire ensuite ?"] as [string, string],
   browse: "Parcourir les livres",
   card: {
     since: (d) => `Sur la liste depuis le ${d}`,
@@ -191,6 +193,7 @@ const it: M = {
   nTitles: (n) => (n === 1 ? "1 titolo" : `${n} titoli`),
   titlesDesc: "Per ogni titolo scegli il raggio e se ti avvisiamo appena un esemplare si libera.",
   empty: "Ancora vuota. Cerca un titolo qui sopra, ti avvisiamo appena è libero vicino a te.",
+  emptyTitle: ["Cosa vuoi ", "leggere dopo?"] as [string, string],
   browse: "Sfoglia i libri",
   card: {
     since: (d) => `In lista dal ${d}`,
@@ -273,6 +276,7 @@ const en: M = {
   nTitles: (n: number): string => (n === 1 ? "1 title" : `${n} titles`),
   titlesDesc: "For each title, you choose the radius and whether we let you know as soon as a copy is free.",
   empty: "Still empty. Search for a title above and we’ll let you know as soon as it’s free near you.",
+  emptyTitle: ["What would you like ", "to read next?"] as [string, string],
   browse: "Browse the books",
   card: {
     since: (d: string): string => `On the list since ${d}`,

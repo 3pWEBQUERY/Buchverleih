@@ -3,8 +3,13 @@ import { body, route } from "@/lib/api";
 import { requireUser } from "@/lib/auth/session";
 import { circleFor, circleMembers, renewInvite, setMember, updateCircle } from "@/lib/circles";
 import { sql } from "@/lib/db";
+import { circleOverview } from "@/lib/circle-overview";
 
-/** GET /api/v1/circles/:id – Kreis mit Mitgliedern und gemeinsamem Regal */
+/**
+ * GET /api/v1/circles/:id – Kreis mit Mitgliedern und gemeinsamem Regal.
+ * `overview` («Auf einen Blick»): new (neueste Bücher, 14 Tage), wanted (gesuchte Titel, die ein Mitglied hat),
+ * handovers (eigene Übergaben/Rückgaben mit Kreismitgliedern in den nächsten 7 Tagen).
+ */
 export const GET = route<{ id: string }>(async (_req, p) => {
   const u = await requireUser();
   const circle = await circleFor(p.id, u.id);
@@ -18,7 +23,8 @@ export const GET = route<{ id: string }>(async (_req, p) => {
      where cc.circle_id = ${p.id} and o.banned_at is null
        and not exists (select 1 from blocks bl where (bl.blocker_id = c.owner_id and bl.blocked_id = ${u.id}) or (bl.blocker_id = ${u.id} and bl.blocked_id = c.owner_id))
      order by c.created_at desc`;
-  return { circle: circle.my_role === "admin" ? circle : { ...circle, invite_code: circle.join_mode === "link" ? circle.invite_code : null }, members, copies };
+  const overview = await circleOverview(p.id, u.id);
+  return { circle: circle.my_role === "admin" ? circle : { ...circle, invite_code: circle.join_mode === "link" ? circle.invite_code : null }, members, copies, overview };
 });
 
 export const PATCH = route<{ id: string }>(async (req, p) => {

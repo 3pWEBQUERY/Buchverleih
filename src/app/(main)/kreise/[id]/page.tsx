@@ -30,6 +30,8 @@ import { circleStats } from "@/lib/stats";
 import { STATS } from "@/lib/i18n/messages/stats";
 import { MonthBars } from "@/components/month-bars";
 import { Branding } from "@/components/kreise/branding";
+import { circleOverview } from "@/lib/circle-overview";
+import { CircleGlance } from "./overview";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -80,6 +82,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     circleMembers(id, user.id), circleShelf(id, user.id), listPosts(id, user.id), wantedInCircle(id, user.id), pulse(user.id, { circleId: id }),
     organizationStatus(id), prices(),
   ]);
+  const overview = await circleOverview(id, user.id, { wanted });
   const orgStats = circle.plan_id === "organization" && circle.my_role === "admin" ? await circleStats(id) : null;
   const ownCopies = copies.filter((c) => c.owner_id === user.id && !c.library);
   const library = copies.filter((c) => c.library);
@@ -135,6 +138,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <StatTile n={circle.loan_days} label={t.loanDaysLabel} href="#regeln" />
         </dl>
       </header>
+
+      {/* Auf einen Blick: neu im Regal, gesuchte Titel mit Treffer, eigene Übergaben */}
+      <CircleGlance data={overview} me={user.id} l={l} />
 
       {/* Puls: was diese Woche im Kreis passiert ist – nur Aggregiertes oder selbst Veröffentlichtes */}
       {pulseItems.length > 0 && (

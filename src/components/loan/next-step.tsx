@@ -16,6 +16,7 @@ import { ScanOverlay } from "./scan-overlay";
 import { AcceptForm, CaseResponse, ConditionForm, DamageForm, RateForm, ReportHandover, ReportReturn, Reschedule, ShipForm } from "./step-forms";
 import { SHIPPING } from "@/lib/i18n/messages/shipping";
 import { Presence, celebrateHandover } from "@/components/motion";
+import { success } from "@/lib/feedback";
 
 /**
  * Der nächste Schritt: genau ein hervorgehobener Knopf (PRD 8.3). Alles andere ist sekundär
@@ -40,6 +41,7 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
     setBusy(true);
     try {
       await api(`/loans/${loanId}/actions`, { body });
+      if (["confirm_handover", "confirm_return", "complete", "rate"].includes(String(body.action))) success();
       if (done) toast.show({ text: done });
       setPanel(null);
       refresh();
@@ -147,7 +149,8 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
         break;
       case "scan_return":
         context = t.due_at ? m.scanReturnCtx(loan.other?.first_name ?? "", deadline(dueDay(t.due_at), m.returnBy, l)) : null;
-        main = <Button variant="secondary" size="lg" onClick={() => setOverlay({ kind: "scan", label: m.scanReturn })}>{step.label}</Button>;
+        bar = { label: step.label, run: () => setOverlay({ kind: "scan", label: m.scanReturn }) };
+        main = <Button variant="secondary" size="lg" onClick={bar.run}>{step.label}</Button>;
         break;
       case "confirm_return":
         context = m.confirmReturn(loan.other?.first_name ?? "");
@@ -162,7 +165,7 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
         context = m.inspect(t.inspection_until ? m.inRel(relHours(t.inspection_until, l)) : m.after48);
         main = (
           <div className="flex flex-wrap items-center gap-4">
-            <Button variant="primary" size="lg" disabled={busy} onClick={() => act({ action: "complete" }, m.completed)}>{step.label}</Button>
+            <Button variant="primary" size="lg" disabled={busy} onClick={() => act({ action: "complete" }, m.completed)}>{step.label}</Button>{(bar = { label: step.label, run: () => act({ action: "complete" }, m.completed) }) && null}
             <Button variant="quiet" onClick={() => setPanel(panel === "damage" ? null : "damage")}>{m.reportDamage}</Button>
           </div>
         );
@@ -173,11 +176,13 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
         break;
       case "grant_extension":
         context = m.wantsLonger(loan.other?.first_name ?? "");
-        main = <Button variant="primary" size="lg" disabled={busy} onClick={() => act({ action: "grant_extension" }, m.extended)}>{step.label}</Button>;
+        bar = { label: step.label, run: () => act({ action: "grant_extension" }, m.extended) };
+        main = <Button variant="primary" size="lg" disabled={busy} onClick={bar.run}>{step.label}</Button>;
         break;
       case "accept_swap_offer":
         context = m.swapOfferCtx(loan.other?.first_name ?? "", loan.title, loan.swapOffer?.title ?? "");
-        main = <Button variant="primary" size="lg" disabled={busy} onClick={() => act({ action: "accept_swap_offer" }, m.swapDone)}>{m.acceptSwap}</Button>;
+        bar = { label: m.acceptSwap, run: () => act({ action: "accept_swap_offer" }, m.swapDone) };
+        main = <Button variant="primary" size="lg" disabled={busy} onClick={bar.run}>{m.acceptSwap}</Button>;
         break;
       case "case_respond":
         context = loan.case?.kind === "damage" ? m.caseDamage : m.caseNonreturn;
@@ -314,8 +319,8 @@ export function NextStep({ loan, me }: { loan: LoanView; me: string }) {
 }
 
 /**
- * «Ein Blick, ein Schritt»: auf dem Telefon klebt der nächste Schritt als Leiste über der Tab-Navigation,
- * sobald der Abschnitt aus dem Bild gescrollt ist. data-sheet am <body> schiebt die Toasts darüber
+ * «Ein Blick, ein Schritt»: sobald der Abschnitt aus dem Bild gescrollt ist, klebt der nächste Schritt
+ * auf dem Telefon als Leiste über der Tab-Navigation, am Desktop als schwebende Leiste unten. data-sheet am <body> schiebt die Toasts darüber
  * und vergrössert den Abstand für den Tastaturfokus (globals.css).
  */
 function StickyStep({ show, label, eyebrow, disabled, onRun }: { show: boolean; label: string; eyebrow: string; disabled: boolean; onRun: () => void }) {
@@ -330,8 +335,9 @@ function StickyStep({ show, label, eyebrow, disabled, onRun }: { show: boolean; 
   if (!host) return null;
   return createPortal(
     <Presence show={show} enter="anim-sheet"
-      className="md:hidden fixed z-30 inset-x-0 bottom-[calc(68px+env(safe-area-inset-bottom))] bg-paper border-t border-line px-4 py-3">
-      <div className="flex items-center justify-between gap-4">
+      className="fixed z-30 inset-x-0 bottom-[calc(68px+env(safe-area-inset-bottom))] bg-paper border-t border-line px-4 py-3
+                 md:inset-x-auto md:bottom-6 md:left-[calc(50%+128px)] md:-translate-x-1/2 md:w-[min(620px,calc(100%-256px-3rem))] md:rounded-md md:border md:px-5">
+      <div role="region" aria-label={eyebrow} className="flex items-center justify-between gap-4">
         <p className="min-w-0 text-meta text-muted flex items-center gap-2"><span aria-hidden className="h-2 w-2 rounded-full bg-accent flex-none" /><span className="truncate">{eyebrow}</span></p>
         <Button variant="primary" className="flex-none max-w-[70%] !whitespace-normal text-left leading-tight min-h-11 h-auto py-2" disabled={disabled} onClick={onRun}>{label}</Button>
       </div>

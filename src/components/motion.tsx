@@ -1,4 +1,5 @@
 "use client";
+import { success } from "@/lib/feedback";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { cx } from "./ui";
@@ -97,7 +98,7 @@ const CEREMONY_MS = 2600;
 export function celebrateHandover() {
   const root = document.documentElement;
   root.dataset.ceremony = "handover";
-  try { navigator.vibrate?.(40); } catch {}
+  success();
   window.dispatchEvent(new CustomEvent("lr:handover"));
   window.setTimeout(() => { delete root.dataset.ceremony; }, CEREMONY_MS);
 }
