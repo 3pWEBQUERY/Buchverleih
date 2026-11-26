@@ -21,6 +21,8 @@ import { BookRow } from "@/components/regal/book-row";
 import { StatTile, StepSection } from "@/components/step-section";
 import { IconArrowRight, IconCheck } from "@/components/icons";
 import { BILLING } from "@/lib/i18n/messages/billing";
+import { RATINGS } from "@/lib/i18n/messages/ratings";
+import { ratingProfile, type RatingSide } from "@/lib/rating-profile";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -58,7 +60,7 @@ export default async function ProfilPage({ params }: Params) {
   }
 
   const own = viewer?.id === p.id;
-  const [shelf, genres, together] = await Promise.all([
+  const [shelf, genres, together, rp] = await Promise.all([
     listVisibleShelf(p.id, viewer?.id ?? null),
     sql<{ genre: string; n: number }[]>`
       select w.genre, count(*)::int as n from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id
@@ -72,7 +74,10 @@ export default async function ProfilPage({ params }: Params) {
            where (l.owner_id = ${viewer.id} and l.borrower_id = ${p.id}) or (l.owner_id = ${p.id} and l.borrower_id = ${viewer.id})
            order by l.requested_at desc limit 6`
       : Promise.resolve([]),
+    ratingProfile(p.id),
   ]);
+  const R = RATINGS[l];
+  const monthFmt = new Intl.DateTimeFormat(htmlLang[l], { month: "long", year: "numeric", timeZone: TZ });
   const freeShelf = shelf.filter((c) => c.status === "available");
   const busyShelf = shelf.filter((c) => c.status !== "available");
   const noteFor = (c: ShelfCopy) =>
@@ -238,7 +243,60 @@ export default async function ProfilPage({ params }: Params) {
           )}
         </StepSection>
 
-        <StepSection id="vertrauen" n={3} title={t.trust} desc={t.trustDesc}
+        <StepSection id="bewertungen" n={3} title={R.title} desc={R.desc} aside={rp.total ? R.count(rp.total) : undefined}>
+          {rp.total === 0 ? (
+            <div className="rounded-md border border-dashed border-line-strong p-6">
+              <p className="text-ink-2 text-body">{R.none(own ? null : p.first_name)}</p>
+              <p className="text-meta text-muted mt-1">{R.noneHint}</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="grid sm:grid-cols-3 gap-2">
+                <div className="rounded-md border border-line p-4 flex flex-col">
+                  <p className="text-meta text-muted">{R.goodShare}</p>
+                  <p className="text-display font-title tracking-display tnum leading-none mt-auto pt-3 text-ok">{rp.goodPct}%</p>
+                  <p className="text-meta text-muted mt-1">{R.ofSide(rp.good, rp.total)}</p>
+                </div>
+                <RatingSideTile label={R.asLender} side={rp.asLender} text={R.ofSide} />
+                <RatingSideTile label={R.asBorrower} side={rp.asBorrower} text={R.ofSide} />
+              </div>
+              <div className="rounded-md border border-line p-4">
+                <p className="text-meta text-muted">{R.reasonsTitle}</p>
+                {rp.problems === 0 ? (
+                  <p className="mt-2 text-body-sm text-ink-2 inline-flex items-center gap-2"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok" />{R.noProblems}</p>
+                ) : (
+                  <ul className="mt-2 flex flex-wrap gap-1.5">
+                    {(Object.entries(rp.reasons) as [keyof typeof rp.reasons, number][]).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).map(([k, n]) => (
+                      <li key={k} className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-sm bg-paper-2 text-meta font-medium text-ink-2">
+                        {L.ratingReasonLabel[k]}<span className="text-muted tnum text-caption">{n}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className="rounded-md border border-line overflow-hidden">
+                <p className="px-4 pt-3.5 pb-2 text-meta text-muted">{R.recent}</p>
+                <ul className="divide-y divide-line">
+                  {rp.recent.map((r, i) => (
+                    <li key={i} className="px-4 py-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
+                      <span aria-hidden className={cx("h-2 w-2 rounded-full", r.verdict === "good" ? "bg-ok" : "bg-wait")} />
+                      <div className="min-w-0">
+                        <p className="text-body-sm font-medium">
+                          {r.verdict === "good" ? R.good : R.problems}
+                          {r.reasons.length > 0 && <span className="font-normal text-ink-2"> · {r.reasons.map((x) => L.ratingReasonLabel[x]).join(", ")}</span>}
+                        </p>
+                        <p className="text-meta text-muted truncate">{p.first_name} {r.role === "lender" ? R.roleLender : R.roleBorrower} · {R.from(r.from)}</p>
+                      </div>
+                      <span className="text-meta text-muted whitespace-nowrap tnum">{monthFmt.format(new Date(r.month + "T12:00:00Z"))}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </StepSection>
+
+        <StepSection id="vertrauen" n={4} title={t.trust} desc={t.trustDesc}
           aside={toNext != null ? (toNext > 0 ? t.toNext(toNext, L.trustLabel[p.trust_level + 1]) : t.soon(L.trustLabel[p.trust_level + 1])) : t.highest}>
           <ol className="grid sm:grid-cols-3 gap-2">
             {levels.map((lv) => {
@@ -290,7 +348,7 @@ export default async function ProfilPage({ params }: Params) {
         </StepSection>
 
         {together.length > 0 && (
-          <StepSection id="mit-dir" n={4} title={t.together(p.first_name)} desc={t.togetherDesc} aside={t.loans(together.length)}>
+          <StepSection id="mit-dir" n={5} title={t.together(p.first_name)} desc={t.togetherDesc} aside={t.loans(together.length)}>
             <ul className="rounded-md border border-line divide-y divide-line overflow-hidden">
               {together.map((tg) => (
                 <li key={tg.id}>
@@ -308,6 +366,24 @@ export default async function ProfilPage({ params }: Params) {
           </StepSection>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Bewertungen in einer Rolle: Anteil guter Rückmeldungen als Balken */
+function RatingSideTile({ label, side, text }: { label: string; side: RatingSide; text: (good: number, total: number) => string }) {
+  const total = side.good + side.problems;
+  const pct = total ? Math.round((100 * side.good) / total) : 0;
+  return (
+    <div className="rounded-md border border-line p-4 flex flex-col">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-meta text-muted">{label}</p>
+        <p className="text-title-sm font-title tracking-display tnum leading-none">{total ? `${pct}%` : "–"}</p>
+      </div>
+      <div className="mt-3 h-2 rounded-full bg-paper-3 overflow-hidden" aria-hidden>
+        <span className={cx("block h-full rounded-full", pct >= 90 ? "bg-ok" : pct >= 70 ? "bg-wait" : "bg-late")} style={{ width: `${pct}%` }} />
+      </div>
+      <p className="text-meta text-muted mt-2">{text(side.good, total)}</p>
     </div>
   );
 }
