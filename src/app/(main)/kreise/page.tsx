@@ -173,7 +173,7 @@ function CircleCard({ c, p, i, l }: { c: CircleRow; p: Preview | undefined; i: n
         ) : (
           <p className="h-[72px] flex items-center text-body-sm text-night-muted">{m.noBooks}</p>
         )}
-        <span className="absolute inset-x-0 bottom-0 h-[3px] bg-night-ink/90" />
+        <span className="shelf-plank shelf-plank-sm !absolute inset-x-0 bottom-0" />
       </div>
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">

@@ -474,7 +474,52 @@ html[data-ceremony] .stamp { animation: stamp var(--dur-slow) var(--ease-spring-
 .shelf { display: flex; gap: 20px; align-items: flex-end; overflow-x: auto; scroll-snap-type: x proximity; padding: 12px 2px 0; scrollbar-width: none; overscroll-behavior-x: contain; }
 .shelf::-webkit-scrollbar { display: none; }
 .shelf > * { scroll-snap-align: start; flex: none; }
-.shelf-board { height: 2px; background: var(--ink); }
+.shelf-board { height: 9px; margin-top: -1px; }
+/* Durchgehendes Brett unter einer Reihe mit Abständen */
+.shelf > li:not(:last-child) .shelf-board { margin-right: -20px; }
+
+/* ----------------------------------------------------------- Realistisches Regal
+ * Texturen: Higgsfield (Buchleinen, Leder, Eiche, Rückwand). Licht: Blender (gerundeter Rücken,
+ * Regalbrett aus Eiche, Licht von links oben). Farben und Titel der Bücher bleiben aus den Daten.
+ */
+.shelf-plank, .shelf-board {
+  position: relative;
+  background: url(/shelf/board.jpg) repeat-x 0 0 / auto 100%, #8a6a45;
+  border-radius: 1px;
+  box-shadow: 0 7px 12px -5px rgb(0 0 0 / 0.55);
+}
+/* Kontaktschatten der Bücher auf der Oberkante */
+.shelf-plank::before, .shelf-board::before {
+  content: ""; position: absolute; inset: -6px 0 auto 0; height: 6px; pointer-events: none;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.38), transparent);
+}
+.shelf-plank { height: 12px; }
+.shelf-plank-sm { height: 8px; }
+/* Dunkle Rückwand hinter den Büchern: oben und am Brett etwas dunkler */
+.shelf-wall {
+  background:
+    linear-gradient(to bottom, rgb(0 0 0 / 0.4), transparent 28%, transparent 78%, rgb(0 0 0 / 0.35)),
+    url(/shelf/wall.jpg) repeat 0 0 / 256px, #17171a;
+}
+/* Buchrücken: Einbandfarbe aus den Daten, darüber Gewebe oder Leder und die Lichtkarte des Rückens */
+.spine {
+  background-blend-mode: overlay, overlay, normal;
+  box-shadow: 3px 0 5px -1px rgb(0 0 0 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+.spine-cloth { background-image: url(/shelf/spine-light.png), url(/shelf/cloth.jpg); background-size: 100% 100%, 128px 128px; }
+.spine-leather { background-image: url(/shelf/spine-light.png), url(/shelf/leather.jpg); background-size: 100% 100%, 160px 160px; }
+.spine-title { text-shadow: 0 1px 0 rgb(0 0 0 / 0.28), 0 -0.5px 0 rgb(255 255 255 / 0.12); }
+.spine-gold { background: linear-gradient(100deg, #b8913f, #f0d48a 45%, #c79c48 60%, #8f6c2a); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.35)); }
+.cover-cloth {
+  /* Ersatzcover als Leinenband: Gelenk am Rücken, Licht von links, Gewebe aus der Textur */
+  background-image:
+    linear-gradient(90deg, rgb(0 0 0 / 0.3), rgb(255 255 255 / 0.1) 3%, rgb(0 0 0 / 0.2) 6.5%, transparent 10%, transparent 82%, rgb(0 0 0 / 0.14)),
+    url(/shelf/cloth.jpg);
+  background-size: 100% 100%, 128px 128px;
+  background-blend-mode: normal, overlay;
+  box-shadow: 2px 3px 7px -2px rgb(0 0 0 / 0.45);
+}
+.spine-foil { background: linear-gradient(90deg, #a8822f, #f0d48a 50%, #a8822f); }
 
 /* Das Buch hebt sich beim Hover aus dem Regal und setzt beim Drücken wieder auf */
 .book-face { transition: transform var(--dur-base) var(--ease-spring-curve); transform-origin: bottom center; }

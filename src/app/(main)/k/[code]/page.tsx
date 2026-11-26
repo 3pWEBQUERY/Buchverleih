@@ -27,6 +27,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
             <Spine title="Der Process" author="Franz Kafka" height={88} />
             <Spine title="Homo faber" author="Max Frisch" height={88} />
           </div>
+          <div aria-hidden className="shelf-plank shelf-plank-sm max-w-[200px] mx-auto opacity-60" />
           <p className="eyebrow mt-8">{t.title}</p>
           <h1 className="display text-display mt-3">{t.invalidHeading[0]}<em>{t.invalidHeading[1]}</em></h1>
           <p className="text-ink-2 text-body-lg mt-5 max-w-sm mx-auto">{t.invalidText}</p>
@@ -51,7 +52,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
               <span key={t} className="anim-rise"><Spine title={t} author={a} height={112} /></span>
             ))}
           </div>
-          <div aria-hidden className="h-[3px] bg-night-ink/90 rounded-full max-w-[420px] mx-auto" />
+          <div aria-hidden className="shelf-plank shelf-plank-sm max-w-[420px] mx-auto" />
           <p className="text-caption font-medium text-night-muted mt-8">{t.eyebrow}</p>
           <h1 className="display text-display mt-3 break-words">{circle.name}</h1>
           {circle.description && <p className="text-lead text-night-ink/85 mt-5 leading-relaxed max-w-md mx-auto">{circle.description}</p>}

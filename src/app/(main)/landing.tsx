@@ -72,11 +72,11 @@ export async function Landing() {
         </div>
 
         {/* Endloses Regal aus Buchrücken */}
-        <div className="marquee-wrap relative mt-4" aria-hidden>
+        <div className="marquee-wrap shelf-wall relative mt-4 pt-6" aria-hidden>
           <div className="marquee gap-[6px] items-end px-2" style={{ height: 250 }}>
             {band.map(([t, a], i) => <Spine key={i} title={t} author={a} height={240} />)}
           </div>
-          <div className="h-[6px] bg-night-ink/90" />
+          <div className="shelf-plank" />
         </div>
 
         <div className="max-w-[1320px] mx-auto px-4 md:px-10 py-12 md:py-16">

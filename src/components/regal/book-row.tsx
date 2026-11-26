@@ -38,7 +38,7 @@ export function BookRow({ items, height = 168, hrefBase = "/regal/", label, wrap
         return (
           <li key={c.id} style={{ width: w + (wrap ? 14 : last ? 0 : 22) }} className="relative">
             {/* durchgehendes Brett: läuft unter dem Zwischenraum weiter */}
-            <div aria-hidden className="absolute left-0 right-0 h-[3px] bg-night-ink/90" style={{ top: height }} />
+            <div aria-hidden className="shelf-plank !absolute left-0 right-0 !h-[10px]" style={{ top: height, backgroundPositionX: -i * (w + (wrap ? 14 : 22)) }} />
             <Link href={c.href ?? `${hrefBase}${c.id}`} className="book group flex flex-col h-full" style={{ width: w }}>
               <div className="flex items-end flex-none" style={{ height }}>
                 <div className="book-face"><CoverMorph name={morph ? coverVt(morph, morph === "work" ? c.work_id : c.id) : null}><Cover data={cover} width={bw} height={height} uniform l={l} /></CoverMorph></div>
@@ -59,7 +59,7 @@ export function BookRow({ items, height = 168, hrefBase = "/regal/", label, wrap
       })}
       {/* Rest des Bretts bis zum rechten Rand */}
       {!wrap && <li aria-hidden className="relative min-w-[22px]" style={{ flex: "1 0 22px" }}>
-        <div className="absolute left-0 right-0 h-[3px] bg-night-ink/90" style={{ top: height }} />
+        <div className="shelf-plank !absolute left-0 right-0 !h-[10px]" style={{ top: height, backgroundPositionX: -(items.length * (Math.max(128, Math.round(height * (2 / 3))) + 22) - 22) }} />
       </li>}
     </ul>
   );

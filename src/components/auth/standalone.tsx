@@ -33,11 +33,11 @@ function Motif({ label, gap }: { label: ReactNode; gap?: number }) {
     <div className="order-1 lg:order-2 surface-night rounded-lg overflow-hidden flex flex-col h-[148px] lg:h-[460px] anim-rise" aria-hidden>
       <p className="eyebrow !text-night-muted px-5 pt-4 lg:px-9 lg:pt-8">{label}</p>
       {/* Mobil verkleinert gesetzt, damit die Proportionen gleich bleiben */}
-      <div className="mt-auto overflow-hidden lg:hidden" style={{ height: 105 }}>
+      <div className="mt-auto overflow-hidden lg:hidden shelf-wall" style={{ height: 105 }}>
         <div style={{ transform: "scale(0.42)", transformOrigin: "top left", width: "238%" }}><Row gap={gap} /></div>
       </div>
-      <div className="mt-auto hidden lg:block overflow-hidden"><Row gap={gap} /></div>
-      <div className="h-[6px] bg-night-ink/90 flex-none" />
+      <div className="mt-auto hidden lg:block overflow-hidden shelf-wall"><Row gap={gap} /></div>
+      <div className="shelf-plank flex-none" />
     </div>
   );
 }

@@ -109,8 +109,8 @@ export function Cover({
     <div
       role="img"
       aria-label={alt}
-      className={cx("relative overflow-hidden rounded-xs flex flex-col select-none", className)}
-      style={{ width: w, height: h, background: bg, color: fg, padding: `${Math.round(w * 0.1)}px ${Math.round(w * 0.09)}px` }}
+      className={cx("cover-cloth relative overflow-hidden rounded-xs flex flex-col select-none", className)}
+      style={{ width: w, height: h, backgroundColor: bg, color: fg, padding: `${Math.round(w * 0.1)}px ${Math.round(w * 0.09)}px` }}
     >
       {/* feine Kante und Rückenfalz */}
       <span aria-hidden className="absolute inset-0 rounded-xs" style={{ boxShadow: `inset 0 0 0 1px ${fg}22` }} />

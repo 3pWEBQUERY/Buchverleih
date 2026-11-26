@@ -1,6 +1,8 @@
 /**
  * Buchrücken: das Signatur-Element. Ein Regal von der Seite gesehen –
- * Farbe, Höhe und Breite ergeben sich deterministisch aus dem Titel.
+ * Farbe, Höhe, Breite und Einband ergeben sich deterministisch aus dem Titel.
+ * Realistisch: Buchleinen oder Leder (Higgsfield-Texturen), gerundeter Rücken mit Licht von
+ * links oben (Blender), Goldprägung auf dunklen Einbänden. Siehe .spine in globals.css.
  */
 const CLOTH: [string, string][] = [
   ["#6d2b2a", "#f3e7d3"], ["#2e4a3b", "#eee4cc"], ["#22324a", "#efe6d2"], ["#b8902f", "#1f1b12"],
@@ -16,15 +18,23 @@ function hash(s: string) {
   return h >>> 0;
 }
 
+function dark(hex: string) {
+  const n = parseInt(hex.slice(1), 16);
+  return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255 < 0.32;
+}
+
 export function spineStyle(title: string, author = "") {
   const h = hash(title + author);
   const [bg, fg] = CLOTH[h % CLOTH.length];
+  const isDark = dark(bg);
   return {
     bg,
     fg,
     height: 0.78 + ((h >> 5) % 23) / 100, // 78–100 %
     width: 34 + ((h >> 9) % 5) * 6, // 34–58 px
     band: (h >> 13) % 3, // Zierband oben, unten oder keins
+    leather: isDark && (h >> 17) % 3 === 0,
+    gold: isDark && (h >> 19) % 2 === 0,
   };
 }
 
@@ -32,15 +42,19 @@ export function Spine({ title, author, height = 220, className = "" }: { title: 
   const s = spineStyle(title, author);
   const h = Math.round(height * s.height);
   return (
-    <div className={`spine relative flex-none rounded-[3px] overflow-hidden ${className}`} style={{ width: s.width, height: h, background: s.bg, color: s.fg }}>
+    <div
+      className={`spine ${s.leather ? "spine-leather" : "spine-cloth"} relative flex-none rounded-[3px] overflow-hidden ${className}`}
+      style={{ width: s.width, height: h, backgroundColor: s.bg, color: s.fg }}
+    >
       {s.band !== 2 && (
-        <span aria-hidden className="absolute inset-x-0 h-[3px]" style={{ background: s.fg, opacity: 0.55, [s.band === 0 ? "top" : "bottom"]: 14 }} />
+        <span aria-hidden className={`absolute inset-x-0 h-[3px] ${s.gold ? "spine-foil" : ""}`}
+          style={{ ...(s.gold ? {} : { background: s.fg, opacity: 0.55 }), [s.band === 0 ? "top" : "bottom"]: 14 }} />
       )}
       <span
         className="absolute inset-0 flex items-center justify-start px-3 font-serif whitespace-nowrap overflow-hidden"
         style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", fontSize: Math.min(17, s.width * 0.42), letterSpacing: "-0.01em" }}
       >
-        {title}
+        <span className={s.gold ? "spine-gold" : "spine-title"}>{title}</span>
       </span>
     </div>
   );
