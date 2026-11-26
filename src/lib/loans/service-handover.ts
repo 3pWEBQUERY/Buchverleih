@@ -116,6 +116,9 @@ export async function reportHandover(user: SessionUser, loanId: string, input: {
   return sql.begin(async (tx) => {
     const { loan: current, role } = await loanFor(tx, loanId, user.id);
     if (current.handover_reported_at) throw err.conflict("already_reported", "Die Übergabe ist bereits gemeldet.");
+    // Direkte Weitergabe läuft nur über den Weitergabecode: sonst wären zwei Leihen gleichzeitig aktiv
+    if (current.received_from_loan_id)
+      throw err.conflict("pass_on_code", "Bei einer direkten Weitergabe wird der Code der vorherigen Person gescannt.");
     // Versand: die verleihende Person meldet «verschickt» mit Sendungsnummer; die andere Seite bestätigt den Empfang
     const shipped = current.delivery === "shipping" && role === "owner";
     if (shipped && !input.tracking?.trim()) throw err.invalid("Gib die Sendungsnummer an.");
@@ -135,7 +138,7 @@ export async function reportHandover(user: SessionUser, loanId: string, input: {
               handover_method = ${action === "dropoff" ? "dropoff" : shipped ? "shipping" : "report"},
               dropoff_photo_key = ${input.dropoffPhotoKey ?? null},
               tracking_out = ${shipped ? input.tracking!.trim().slice(0, 60) : null}`,
-      where: tx`l.handover_reported_at is null`,
+      where: tx`l.handover_reported_at is null and l.received_from_loan_id is null`,
     });
     const info = await loanInfo(tx, loanId);
     await notify(tx, { userId: role === "owner" ? loan.borrower_id : loan.owner_id, type: "handover_reported", loanId, data: { title: info.title } });
@@ -305,7 +308,11 @@ export async function executeReturn(
 
   const loan = await transition(tx, loanId, action, actor, {
     set: tx`returned_at = ${returnedAt},
-            inspection_until = ${returnedAt}::timestamptz + interval '48 hours', -- bei gemeldeter Rückgabe zählt die Einspruchsfrist als Prüfung (PRD)
+            -- bei gemeldeter Rückgabe zählt die Einspruchsfrist als Prüfung (PRD); bei Rücksendung per Post
+            -- ist unklar, wann das Paket ankam: dann 48 h ab jetzt, damit ein Schaden noch gemeldet werden kann
+            inspection_until = case when l.delivery = 'shipping'
+                                    then greatest(${returnedAt}::timestamptz, now()) + interval '48 hours'
+                                    else ${returnedAt}::timestamptz + interval '48 hours' end,
             late = (${returnedAt}::timestamptz > l.due_at + interval '3 days')`,
     // Aus «Fall offen» nur bei ausbleibender Rückgabe, nicht bei einem Schadenfall
     where: extra ? tx`(l.status <> 'disputed' or ${hadCase}) and ${extra}` : tx`(l.status <> 'disputed' or ${hadCase})`,

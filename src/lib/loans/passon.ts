@@ -7,9 +7,10 @@ import { sql, type Tx, PG, pgCode } from "@/lib/db";
 import { err } from "@/lib/errors";
 import type { SessionUser } from "@/lib/auth/session";
 import { notify } from "@/lib/notify";
-import { addDays, parseRange } from "@/lib/dates";
+import { addDays, diffDays, parseRange, todayCH } from "@/lib/dates";
 import { getLoan, loanInfo, logEvent, type LoanRow } from "./core";
 import { requireFeature } from "@/lib/features";
+import { tryMoveBooking } from "./service-shared";
 
 type TxSql = postgres.TransactionSql;
 
@@ -192,6 +193,17 @@ export async function passOnConsent(user: SessionUser, nextLoanId: string, agree
  * startet die Folge-Leihe im selben Moment. Beide wechseln zusammen oder gar nicht.
  */
 export async function executePassOn(tx: TxSql, prevId: string, nextId: string, giverId: string, receiverId: string) {
+  // Kommt das Buch später als geplant weiter, verschiebt sich die Leihfrist der nächsten Person
+  // wie bei einer normalen Übergabe – sonst wäre sie beim Scan womöglich schon überfällig.
+  const [next] = await tx<{ wanted: string }[]>`select wanted from loans where id = ${nextId}`;
+  const range = next ? parseRange(next.wanted) : null;
+  const today = todayCH();
+  if (range?.end && today > range.start) {
+    const duration = diffDays(range.start, range.end);
+    if (!(await tryMoveBooking(tx, nextId, today, addDays(today, duration))) && range.end > today) {
+      await tryMoveBooking(tx, nextId, today, range.end);
+    }
+  }
   const rows = await tx<{ returned_loan: string | null; started_loan: string | null }[]>`
     with pair as (
       select p.id as prev_id, n.id as next_id, b.period
@@ -210,7 +222,8 @@ export async function executePassOn(tx: TxSql, prevId: string, nextId: string, g
     ), nxt as (
       update loans l
          set status = 'active', handed_over_at = now(), handover_method = 'pass_on',
-             due_at = day_start_ch(upper(pair.period)),
+             -- Lässt sich der Zeitraum nicht verschieben (danach gebucht), bleiben mindestens 3 Tage
+             due_at = greatest(day_start_ch(upper(pair.period)), now() + interval '3 days'),
              condition_note_until = now() + interval '24 hours'
         from pair where l.id = pair.next_id
       returning l.id

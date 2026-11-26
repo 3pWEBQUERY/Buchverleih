@@ -65,6 +65,8 @@ export default async function ProfilPage({ params }: Params) {
     sql<{ genre: string; n: number }[]>`
       select w.genre, count(*)::int as n from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id
        where c.owner_id = ${p.id} and c.removed_at is null and w.genre is not null
+         -- nur Bücher, die die betrachtende Person auch im Regal sehen kann
+         and (${own} or (cardinality(c.offers) > 0 and copy_visible_to(c.id, ${viewer?.id ?? null}::uuid)))
        group by w.genre order by n desc limit 4`,
     viewer && viewer.id !== p.id
       ? sql<{ id: string; kind: "lend" | "swap" | "gift"; status: keyof typeof statusLabel; title: string; authors: string[]; work_id: string; cover_key: string | null; mine: boolean; at: string }[]>`
@@ -285,7 +287,7 @@ export default async function ProfilPage({ params }: Params) {
                           {r.verdict === "good" ? R.good : R.problems}
                           {r.reasons.length > 0 && <span className="font-normal text-ink-2"> · {r.reasons.map((x) => L.ratingReasonLabel[x]).join(", ")}</span>}
                         </p>
-                        <p className="text-meta text-muted truncate">{p.first_name} {r.role === "lender" ? R.roleLender : R.roleBorrower} · {R.from(r.from)}</p>
+                        <p className="text-meta text-muted truncate">{p.first_name} {r.role === "lender" ? R.roleLender : R.roleBorrower}</p>
                       </div>
                       <span className="text-meta text-muted whitespace-nowrap tnum">{monthFmt.format(new Date(r.month + "T12:00:00Z"))}</span>
                     </li>

@@ -68,7 +68,11 @@ function session(env: Env) {
 
 function post(env: Env, token: string, headers: Record<string, string>, body: string): Promise<{ status: number; reason?: string }> {
   return new Promise((resolve) => {
-    const req = session(env).request({
+    // Ein Fehler beim Aufbau (Sitzung geschlossen, Schlüssel ungültig) gilt als fehlgeschlagene Zustellung
+    // an dieses Gerät – sonst würde der ganze Push-Auftrag wiederholt und andere Geräte doppelt benachrichtigt
+    let req: ReturnType<ReturnType<typeof session>["request"]>;
+    try {
+      req = session(env).request({
       [constants.HTTP2_HEADER_METHOD]: "POST",
       [constants.HTTP2_HEADER_PATH]: `/3/device/${token}`,
       authorization: `bearer ${providerToken()}`,
@@ -76,7 +80,11 @@ function post(env: Env, token: string, headers: Record<string, string>, body: st
       "apns-push-type": "alert",
       "apns-priority": "10",
       ...headers,
-    });
+      });
+    } catch {
+      resolve({ status: 0, reason: "Verbindung" });
+      return;
+    }
     let status = 0;
     let data = "";
     const timer = setTimeout(() => { req.close(); resolve({ status: 0, reason: "Timeout" }); }, 8_000);

@@ -194,6 +194,9 @@ export async function deleteAccount(userId: string) {
     await tx`delete from search_log where user_id = ${userId}`;
     await tx`delete from uploads where user_id = ${userId}`;
     await tx`update loans set message = null where borrower_id = ${userId}`;
+    // Versandadressen und Sendungsnummern der gelöschten Person nicht bei der anderen Seite stehen lassen
+    await tx`update loans set ship_to = null, tracking_back = null where borrower_id = ${userId}`;
+    await tx`update loans set return_to = null, tracking_out = null where owner_id = ${userId}`;
     await tx`update messages set body = null, proposal_place = null where sender_id = ${userId} and body is not null and proposal_at is not null`;
     await tx`delete from messages where sender_id = ${userId} and proposal_at is null`;
     if (me?.email) {

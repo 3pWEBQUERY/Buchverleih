@@ -14,7 +14,7 @@ export async function shelfStats(ownerId: string) {
     select count(*)::int as loans,
            count(*) filter (where status in ('active', 'return_reported', 'disputed'))::int as lent_now,
            count(distinct borrower_id)::int as borrowers,
-           coalesce(sum(extract(epoch from coalesce(returned_at, now()) - handed_over_at) / 86400), 0)::int as days_out
+           coalesce(sum(extract(epoch from coalesce(returned_at, closed_at, now()) - handed_over_at) / 86400), 0)::int as days_out
       from loans where owner_id = ${ownerId} and kind = 'lend' and handed_over_at is not null`;
   const byMonth = await sql<MonthCount[]>`
     select m.month, count(l.id)::int as n from ${months} m
@@ -23,7 +23,7 @@ export async function shelfStats(ownerId: string) {
   const books = await sql<{ copy_id: string; title: string; authors: string[]; loans: number; days_out: number; last_at: Date | null }[]>`
     select c.id as copy_id, w.title, w.authors,
            count(l.id)::int as loans,
-           coalesce(sum(extract(epoch from coalesce(l.returned_at, now()) - l.handed_over_at) / 86400), 0)::int as days_out,
+           coalesce(sum(extract(epoch from coalesce(l.returned_at, l.closed_at, now()) - l.handed_over_at) / 86400), 0)::int as days_out,
            max(l.handed_over_at) as last_at
       from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id
       left join loans l on l.copy_id = c.id and l.kind = 'lend' and l.handed_over_at is not null

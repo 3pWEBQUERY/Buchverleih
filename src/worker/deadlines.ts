@@ -90,10 +90,12 @@ export async function runDeadlines(): Promise<Result> {
        where status = 'accepted'
          and handover_reported_at < now() - (case when handover_method = 'shipping' then interval '5 days' else interval '24 hours' end)
          and handover_reported_at > now() - (case when handover_method = 'shipping' then interval '7 days' else interval '48 hours' end)`) {
-    await remind(r.id, "handover_report_24h", [r.by_owner ? "borrower" : "owner"], "handover_reported");
+    await remind(r.id, "handover_report_24h", [r.by_owner ? "borrower" : "owner"], "handover_reported")
+      .catch((e) => console.error("[deadlines] handover reminder", r.id, (e as Error).message));
   }
   await each(
-    await sql`select id from loans where status = 'accepted' and handover_reported_at < now() - (case when handover_method = 'shipping' then interval '7 days' else interval '48 hours' end)`,
+    await sql`select id from loans where status = 'accepted' and received_from_loan_id is null
+                and handover_reported_at < now() - (case when handover_method = 'shipping' then interval '7 days' else interval '48 hours' end)`,
     (id) =>
       sql.begin(async (tx) => {
         const [l] = await tx<{ handover_method: string }[]>`select handover_method from loans where id = ${id}`;
@@ -122,9 +124,9 @@ export async function runDeadlines(): Promise<Result> {
   await each(
     // Rücksendung per Post: 7 Tage statt 48 Stunden, bis die Rückgabe ohne Einspruch gilt
     await sql`select id from loans where status = 'return_reported'
-                and return_reported_at < now() - (case when tracking_back is not null then interval '7 days' else interval '48 hours' end)`,
+                and return_reported_at < now() - (case when tracking_back is not null or delivery = 'shipping' then interval '7 days' else interval '48 hours' end)`,
     (id) => sql.begin((tx) => executeReturn(tx, id, "return_report_lapse", SYSTEM,
-      tx`l.return_reported_at < now() - (case when l.tracking_back is not null then interval '7 days' else interval '48 hours' end)`)),
+      tx`l.return_reported_at < now() - (case when l.tracking_back is not null or l.delivery = 'shipping' then interval '7 days' else interval '48 hours' end)`)),
     "return_reports_lapsed",
     out,
   );
@@ -151,29 +153,34 @@ export async function runDeadlines(): Promise<Result> {
       left join users u on u.id = n.borrower_id
      where l.status = 'active' and l.kind = 'lend'`;
   for (const a of active) {
-    const overdueDays = -a.days_left; // Tage seit dem letzten Leihtag
-    // Merker hängen an der Fälligkeit: nach einer Verlängerung oder einem Rückruf kommen die Erinnerungen neu.
-    // Bereiche statt genauer Tage: fällt der Worker einen Tag aus, wird nachgeholt.
-    const k = (m: string) => `${m}:${a.due_key}`;
-    if (a.days_left >= 2 && a.days_left <= 5) await remind(a.id, k("due_5d"), ["borrower"], "due_soon");
-    if (a.days_left >= 0 && a.days_left <= 1) await remind(a.id, k("due_1d"), ["borrower"], "due_tomorrow");
-    // Fälligkeit (4.5): Aufforderung im Chat, einen Rückgabetermin abzumachen – einmal pro Fälligkeit
-    if (a.days_left <= 0) {
-      await sql.begin(async (tx) => {
-        if (!(await mark(tx, a.id, k("due_chat")))) return;
-        await tx`insert into messages (loan_id, sender_id, body) values (${a.id}, null, ${DUE_CHAT})`;
-      });
-    }
-    if (a.days_left < 0) await remind(a.id, k("overdue"), ["borrower", "owner"], "overdue");
-    // «unpünktlich» gilt ab due_at + 3 Tage (= 4. Tag nach dem letzten Leihtag), ein Fall ab due_at + 7 Tage
-    if (overdueDays >= 4) await remind(a.id, k("overdue_3d"), ["borrower"], "overdue_late");
-    if (overdueDays >= 8) await remind(a.id, k("overdue_7d"), ["borrower", "owner"], "overdue_case_possible");
-    if (a.days_left < 0 && a.waiting) {
-      await sql.begin(async (tx) => {
-        if (!(await mark(tx, a.id, "someone_waiting"))) return;
-        const info = await loanInfo(tx, a.id);
-        await notify(tx, { userId: info.borrower_id, type: "someone_waiting", loanId: a.id, data: { title: info.title, name: a.waiting_name ?? "", day: a.waiting_day ?? undefined } });
-      });
+    // Ein fehlerhafter Vorgang darf den Rest des Laufs (Fälle, Herzschlag) nicht aufhalten
+    try {
+      const overdueDays = -a.days_left; // Tage seit dem letzten Leihtag
+      // Merker hängen an der Fälligkeit: nach einer Verlängerung oder einem Rückruf kommen die Erinnerungen neu.
+      // Bereiche statt genauer Tage: fällt der Worker einen Tag aus, wird nachgeholt.
+      const k = (m: string) => `${m}:${a.due_key}`;
+      if (a.days_left >= 2 && a.days_left <= 5) await remind(a.id, k("due_5d"), ["borrower"], "due_soon");
+      if (a.days_left >= 0 && a.days_left <= 1) await remind(a.id, k("due_1d"), ["borrower"], "due_tomorrow");
+      // Fälligkeit (4.5): Aufforderung im Chat, einen Rückgabetermin abzumachen – einmal pro Fälligkeit
+      if (a.days_left <= 0) {
+        await sql.begin(async (tx) => {
+          if (!(await mark(tx, a.id, k("due_chat")))) return;
+          await tx`insert into messages (loan_id, sender_id, body) values (${a.id}, null, ${DUE_CHAT})`;
+        });
+      }
+      if (a.days_left < 0) await remind(a.id, k("overdue"), ["borrower", "owner"], "overdue");
+      // «unpünktlich» gilt ab due_at + 3 Tage (= 4. Tag nach dem letzten Leihtag), ein Fall ab due_at + 7 Tage
+      if (overdueDays >= 4) await remind(a.id, k("overdue_3d"), ["borrower"], "overdue_late");
+      if (overdueDays >= 8) await remind(a.id, k("overdue_7d"), ["borrower", "owner"], "overdue_case_possible");
+      if (a.days_left < 0 && a.waiting) {
+        await sql.begin(async (tx) => {
+          if (!(await mark(tx, a.id, "someone_waiting"))) return;
+          const info = await loanInfo(tx, a.id);
+          await notify(tx, { userId: info.borrower_id, type: "someone_waiting", loanId: a.id, data: { title: info.title, name: a.waiting_name ?? "", day: a.waiting_day ?? undefined } });
+        });
+      }
+    } catch (e) {
+      console.error("[deadlines] active", a.id, (e as Error).message);
     }
   }
 

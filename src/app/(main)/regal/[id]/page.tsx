@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { pageUser, origin } from "@/lib/page";
+import { getUser } from "@/lib/auth/session";
 import { sql } from "@/lib/db";
 import { copyDetail } from "@/lib/copies";
 import { getCalendar } from "@/lib/loans/calendar";
@@ -16,7 +17,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const t = COPY[await getLocale()];
   if (!UUID.test(id)) return { title: t.titleFallback };
-  const [c] = await sql<{ title: string }[]>`select w.title from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id where c.id = ${id}`;
+  // Titel nur für die Besitzerin: der Seitentitel darf nichts verraten, was die Seite selbst schützt
+  const u = await getUser();
+  const [c] = u ? await sql<{ title: string }[]>`
+    select w.title from copies c join editions e on e.id = c.edition_id join works w on w.id = e.work_id
+     where c.id = ${id} and c.owner_id = ${u.id}` : [];
   return { title: c ? t.editTitle(c.title) : t.titleFallback };
 }
 

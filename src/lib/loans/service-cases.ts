@@ -70,8 +70,11 @@ export async function cancelWithoutPenalty(user: SessionUser, loanId: string) {
          and p.due_at < now()`;
     const [paused] = await tx<{ paused: boolean }[]>`select paused from copy_bookings where loan_id = ${loanId}`;
     if (!blocked.n && !paused?.paused) return cancelTx(tx, user, loanId);
+    if (current.handover_reported_at)
+      throw err.conflict("handover_reported", "Die Übergabe ist schon gemeldet. Bestätige sie oder widersprich zuerst.");
     const loan = await transition(tx, loanId, "cancel", { role: "borrower", id: user.id }, {
       set: tx`closed_at = now(), cancelled_by = ${user.id}, cancelled_late = false`,
+      where: tx`l.handover_reported_at is null`,
       meta: { reason: "predecessor_late" },
     });
     await releaseBookings(tx, loan);

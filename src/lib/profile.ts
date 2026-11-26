@@ -37,7 +37,7 @@ export async function publicProfile(userId: string, viewerId: string | null): Pr
            exists (select 1 from blocks where blocker_id = ${viewerId}::uuid and blocked_id = u.id) as blocked_by_me,
            u.deleted_at is not null as deleted
       from users u join user_stats s on s.user_id = u.id
-     where u.id = ${userId}
+     where u.id = ${userId} and u.banned_at is null
        and not exists (select 1 from blocks where blocker_id = u.id and blocked_id = ${viewerId}::uuid)`;
   return p ?? null;
 }

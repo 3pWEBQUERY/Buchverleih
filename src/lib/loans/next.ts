@@ -217,7 +217,10 @@ function nextStepDe(l: NextInput): { step: NextStep; turn: Turn; waitingText: st
       if (owner && l.swap_offer_copy_id) return { step: { key: "accept_swap_offer", label: "Tauschangebot ansehen" }, turn: "me", waitingText: null };
       if (owner && l.case_response && l.case_response !== "object" && l.case_response !== "return_date")
         return { step: { key: "case_resolve", label: "Ersatz bestätigen" }, turn: "me", waitingText: null };
-      if (!owner && l.case_kind === "nonreturn") return { step: { key: "return_code", label: "Rückgabecode zeigen" }, turn: "me", waitingText: null };
+      if (!owner && l.case_kind === "nonreturn")
+        return l.delivery === "shipping"
+          ? { step: { key: "ship_back", label: "Zurückschicken" }, turn: "me", waitingText: null }
+          : { step: { key: "return_code", label: "Rückgabecode zeigen" }, turn: "me", waitingText: null };
       if (owner && l.case_kind === "nonreturn") return { step: { key: "scan_return", label: "Rückgabe scannen" }, turn: "other", waitingText: "Fall offen" };
       return { step: null, turn: l.case_response === "object" ? "system" : "other", waitingText: l.case_response === "object" ? "Die Moderation entscheidet" : "Fall offen" };
     case "completed":

@@ -156,9 +156,13 @@ export async function handleEvent(event: Stripe.Event) {
     case "customer.subscription.updated":
     case "customer.subscription.deleted":
     case "customer.subscription.paused":
-    case "customer.subscription.resumed":
-      await syncSubscription(event.data.object as Stripe.Subscription);
+    case "customer.subscription.resumed": {
+      // Stripe liefert Ereignisse nicht sicher in Reihenfolge: den aktuellen Stand holen statt
+      // den mitgeschickten zu speichern, sonst kann ein verspätetes «updated» ein gekündigtes Abo zurückholen
+      const sub = event.data.object as Stripe.Subscription;
+      await syncSubscription(s ? await s.subscriptions.retrieve(sub.id) : sub);
       break;
+    }
   }
 }
 

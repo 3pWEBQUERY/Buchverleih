@@ -8,14 +8,14 @@ import { sql } from "@/lib/db";
 export const GET = route<{ id: string }>(async (_req, p) => {
   const u = await requireUser();
   const circle = await circleFor(p.id, u.id);
-  const members = await circleMembers(p.id);
+  const members = await circleMembers(p.id, u.id);
   const copies = await sql`
     select c.id, w.title, w.authors, o.first_name as owner_name, c.owner_id, ph.key as photo_key, ph.color as photo_color,
            e.cover_key, e.cover_color
       from circle_copies cc join copies c on c.id = cc.copy_id and c.removed_at is null
       left join lateral (select key, color from copy_photos p where p.copy_id = c.id order by position limit 1) ph on true
       join editions e on e.id = c.edition_id join works w on w.id = e.work_id join users o on o.id = c.owner_id
-     where cc.circle_id = ${p.id}
+     where cc.circle_id = ${p.id} and o.banned_at is null
        and not exists (select 1 from blocks bl where (bl.blocker_id = c.owner_id and bl.blocked_id = ${u.id}) or (bl.blocker_id = ${u.id} and bl.blocked_id = c.owner_id))
      order by c.created_at desc`;
   return { circle: circle.my_role === "admin" ? circle : { ...circle, invite_code: circle.join_mode === "link" ? circle.invite_code : null }, members, copies };

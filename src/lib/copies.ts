@@ -342,7 +342,8 @@ export async function copyDetail(copyId: string, viewerId: string | null, origin
            o.shelf_paused as owner_paused, o.created_at as owner_since, o.is_demo as owner_demo,
            coalesce((select json_agg(json_build_object('id', p.id, 'key', p.key, 'width', p.width, 'height', p.height, 'color', p.color) order by p.position)
                        from copy_photos p where p.copy_id = c.id), '[]') as photos,
-           array(select circle_id from circle_copies where copy_id = c.id) as circle_ids,
+           -- Kreis-IDs nur für die Besitzerin (Kreise sind privat)
+           case when c.owner_id = ${viewerId}::uuid then array(select circle_id from circle_copies where copy_id = c.id) else '{}'::uuid[] end as circle_ids,
            case when ${origin?.lat ?? null}::float8 is null then null
                 else greatest(100, round(earth_distance(ll_to_earth(${origin?.lat ?? null}::float8, ${origin?.lng ?? null}::float8), ll_to_earth(o.display_lat, o.display_lng)) / 100) * 100)::float8 end as dist
       from ${SHELF_FROM}

@@ -3,7 +3,7 @@ import type { Locale } from "@/lib/i18n/locale";
 /** Texte des öffentlichen Bewertungsprofils */
 const de = {
   title: "Bewertungen",
-  desc: "Was andere nach abgeschlossenen Leihen zurückgemeldet haben. Ohne Sterne und ohne Buchtitel.",
+  desc: "Was andere nach abgeschlossenen Leihen zurückgemeldet haben. Ohne Sterne, ohne Buchtitel und ohne Namen.",
   count: (n: number) => (n === 1 ? "1 Bewertung" : `${n} Bewertungen`),
   none: (name: string | null) => (name ? `${name} hat noch keine Bewertungen.` : "Du hast noch keine Bewertungen."),
   noneHint: "Bewertungen erscheinen, sobald beide Seiten nach einer Leihe geantwortet haben.",
@@ -18,13 +18,12 @@ const de = {
   problems: "Gab Probleme",
   roleLender: "hat verliehen",
   roleBorrower: "hat geliehen",
-  from: (name: string | null) => (name ? `von ${name}` : "von einem gelöschten Konto"),
 };
 type M = typeof de;
 
 const fr: M = {
   title: "Évaluations",
-  desc: "Ce que les autres ont indiqué après des prêts terminés. Sans étoiles ni titres de livres.",
+  desc: "Ce que les autres ont indiqué après des prêts terminés. Sans étoiles, titres de livres ni noms.",
   count: (n) => (n === 1 ? "1 évaluation" : `${n} évaluations`),
   none: (name) => (name ? `${name} n’a pas encore d’évaluations.` : "Tu n’as pas encore d’évaluations."),
   noneHint: "Les évaluations apparaissent dès que les deux personnes ont répondu après un prêt.",
@@ -39,12 +38,11 @@ const fr: M = {
   problems: "Il y a eu des problèmes",
   roleLender: "a prêté",
   roleBorrower: "a emprunté",
-  from: (name) => (name ? `de ${name}` : "d’un compte supprimé"),
 };
 
 const it: M = {
   title: "Valutazioni",
-  desc: "Ciò che altri hanno segnalato dopo prestiti conclusi. Senza stelle e senza titoli di libri.",
+  desc: "Ciò che altri hanno segnalato dopo prestiti conclusi. Senza stelle, titoli di libri né nomi.",
   count: (n) => (n === 1 ? "1 valutazione" : `${n} valutazioni`),
   none: (name) => (name ? `${name} non ha ancora valutazioni.` : "Non hai ancora valutazioni."),
   noneHint: "Le valutazioni appaiono quando entrambe le parti hanno risposto dopo un prestito.",
@@ -59,12 +57,11 @@ const it: M = {
   problems: "Ci sono stati problemi",
   roleLender: "ha prestato",
   roleBorrower: "ha preso in prestito",
-  from: (name) => (name ? `da ${name}` : "da un account eliminato"),
 };
 
 const en: M = {
   title: "Ratings",
-  desc: "What others said after finished loans. No stars and no book titles.",
+  desc: "What others said after finished loans. No stars, book titles or names.",
   count: (n) => (n === 1 ? "1 rating" : `${n} ratings`),
   none: (name) => (name ? `${name} has no ratings yet.` : "You have no ratings yet."),
   noneHint: "Ratings appear once both sides have answered after a loan.",
@@ -79,7 +76,6 @@ const en: M = {
   problems: "There were problems",
   roleLender: "lent",
   roleBorrower: "borrowed",
-  from: (name) => (name ? `from ${name}` : "from a deleted account"),
 };
 
 export const RATINGS: Record<Locale, M> = { de, fr, it, en };

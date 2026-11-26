@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { pageUser } from "@/lib/page";
+import { getUser } from "@/lib/auth/session";
 import { sql } from "@/lib/db";
 import { env } from "@/lib/env";
 import { circleFor, circleMembers, myCircles, type Circle } from "@/lib/circles";
@@ -36,7 +37,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const fallback = CIRCLES[await getLocale()].circle;
   if (!UUID.test(id)) return { title: fallback };
-  const [c] = await sql<{ name: string }[]>`select name from circles where id = ${id}`;
+  // Kreisname nur für Mitglieder (auch wartende): Kreise sind privat
+  const u = await getUser();
+  const [c] = u ? await sql<{ name: string }[]>`
+    select ci.name from circles ci join circle_members m on m.circle_id = ci.id and m.user_id = ${u.id}
+     where ci.id = ${id}` : [];
   return { title: c?.name ?? fallback };
 }
 
@@ -72,7 +77,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   }
 
   const [members, copies, board, wanted, pulseItems, org, price] = await Promise.all([
-    circleMembers(id), circleShelf(id, user.id), listPosts(id, user.id), wantedInCircle(id, user.id), pulse(user.id, { circleId: id }),
+    circleMembers(id, user.id), circleShelf(id, user.id), listPosts(id, user.id), wantedInCircle(id, user.id), pulse(user.id, { circleId: id }),
     organizationStatus(id), prices(),
   ]);
   const orgStats = circle.plan_id === "organization" && circle.my_role === "admin" ? await circleStats(id) : null;

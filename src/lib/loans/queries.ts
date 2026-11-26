@@ -232,7 +232,10 @@ export async function loanView(loanId: string, userId: string, loc: Locale = "de
     step: s.step,
     turn: s.turn,
     waitingText: s.waitingText,
-    actions: availableActions(r.status, s.role, r.kind) as Action[],
+    // Gemeldete Übergabe: kein Storno und keine zweite Meldung, bis bestätigt oder widersprochen
+    actions: (availableActions(r.status, s.role, r.kind) as Action[])
+      .filter((a) => !(r.handover_reported_at && (a === "cancel" || a === "report_handover" || a === "dropoff")))
+      .filter((a) => !(r.received_from_loan_id && (a === "report_handover" || a === "dropoff"))),
     title: r.title,
     authors: r.authors,
     copyId: r.copy_id,
@@ -257,8 +260,9 @@ export async function loanView(loanId: string, userId: string, loc: Locale = "de
     returnPhotoKey: r.return_photo_key,
     /** Versand: Adressen erst nach der Annahme, jede Seite sieht die Adresse, an die sie schickt */
     shipping: r.delivery === "shipping" ? {
-      shipTo: isBorrower || r.status !== "requested" ? r.ship_to : null,
-      returnTo: r.status === "requested" ? null : r.return_to,
+      // Nur nach einer Annahme: abgelehnte, zurückgezogene oder verfallene Anfragen zeigen keine Adresse
+      shipTo: isBorrower || r.accepted_at ? r.ship_to : null,
+      returnTo: r.accepted_at ? r.return_to : null,
       trackingOut: r.tracking_out,
       trackingBack: r.tracking_back,
     } : null,

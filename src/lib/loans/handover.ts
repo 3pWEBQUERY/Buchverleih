@@ -99,6 +99,9 @@ export async function redeemToken(user: SessionUser, token: string) {
  */
 export async function redeemCode(user: SessionUser, loanId: string, code: string) {
   await rateLimit(`handovercode:${user.id}`, 20, 600);
+  // Nur Beteiligte dürfen Ziffern probieren – sonst könnte jemand mit der Vorgangs-ID die Versuche aufbrauchen
+  const [mine] = await sql`select 1 from loans where id = ${loanId} and (owner_id = ${user.id} or borrower_id = ${user.id})`;
+  if (!mine) throw err.notFound();
   const [hit] = await sql<{ id: string }[]>`
     select id from handover_tokens
      where loan_id = ${loanId} and code_hash = ${hashToken(`${loanId}:${code.replace(/\D/g, "")}`)}

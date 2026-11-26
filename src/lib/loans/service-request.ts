@@ -264,12 +264,17 @@ export async function cancel(user: SessionUser, loanId: string) {
 /** Storno in einer laufenden Transaktion (ohne eigene; sonst zwei Verbindungen gleichzeitig) */
 export async function cancelTx(tx: TxSql, user: SessionUser, loanId: string) {
   const { loan: current, role } = await loanFor(tx, loanId, user.id);
+  // Übergabe, Ablage oder Versand ist gemeldet: das Buch ist womöglich schon unterwegs.
+  // Erst bestätigen oder widersprechen – sonst bliebe es ohne Rückgabe beim Leiher.
+  if (current.handover_reported_at)
+    throw err.conflict("handover_reported", "Die Übergabe ist schon gemeldet. Bestätige sie oder widersprich zuerst.");
   const start = parseRange(current.wanted)!.start;
   const daysToStart = diffDays(todayCH(), start);
   // Leiher: weniger als 48 h vor Beginn zählt wie unpünktlich. Verleiher: weniger als 7 Tage.
   const late = role === "borrower" ? daysToStart < 2 : daysToStart < 7;
   const loan = await transition(tx, loanId, "cancel", { role: role!, id: user.id }, {
     set: tx`closed_at = now(), cancelled_by = ${user.id}, cancelled_late = ${late}`,
+    where: tx`l.handover_reported_at is null`,
   });
   await releaseBookings(tx, loan);
   if (loan.received_from_loan_id) await onPassOnBroken(tx, loan);

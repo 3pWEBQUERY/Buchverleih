@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { handleEvent, stripe } from "@/lib/billing";
+import { readLimited } from "@/lib/api";
 
 /**
  * POST /api/v1/billing/webhook – Ereignisse von Stripe. Nicht über route(): kommt von Stripe, nicht aus
@@ -10,8 +11,11 @@ export async function POST(req: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!s || !secret) return NextResponse.json({ error: "billing_off" }, { status: 503 });
   const sig = req.headers.get("stripe-signature");
-  const payload = await req.text();
-  if (!sig || payload.length > 1_000_000) return NextResponse.json({ error: "bad_request" }, { status: 400 });
+  if (!sig) return NextResponse.json({ error: "bad_request" }, { status: 400 });
+  // Grösse beim Lesen begrenzen, nicht erst danach
+  let payload: string;
+  try { payload = new TextDecoder().decode(await readLimited(req, 1_000_000)); }
+  catch { return NextResponse.json({ error: "too_large" }, { status: 413 }); }
   let event;
   try {
     event = await s.webhooks.constructEventAsync(payload, sig, secret);
